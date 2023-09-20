@@ -33,6 +33,10 @@ resource "vcd_api_token" "cse_admin_token" {
   allow_token_file = true
 }
 
+data "local_file" "api_token_file" {
+  filename = vcd_api_token.cse_admin_token
+}
+
 # This is the CSE Server vApp
 resource "vcd_vapp" "cse_server_vapp" {
   org  = vcd_org.solutions_organization.name
@@ -55,10 +59,6 @@ resource "vcd_vapp_org_network" "cse_server_network" {
   org_network_name = vcd_network_routed_v2.solutions_routed_network.name
 
   reboot_vapp_on_removal = true
-}
-
-locals {
-  token = jsondecode(file(vcd_api_token.cse_admin_token.file_name))["access_token"]
 }
 
 # The CSE Server VM. It requires guest properties to be introduced for it to work
@@ -87,7 +87,7 @@ resource "vcd_vapp_vm" "cse_server_vm" {
     "cse.vAppOrg" = vcd_org.solutions_organization.name
 
     # CSE admin account's Access Token
-    "cse.vcdRefreshToken" = local.token
+    "cse.vcdRefreshToken" = jsondecode(data.local_file.api_token_file.content)["access_token"]
 
     # CSE admin account's username
     "cse.vcdUsername" = var.cse_admin_username
