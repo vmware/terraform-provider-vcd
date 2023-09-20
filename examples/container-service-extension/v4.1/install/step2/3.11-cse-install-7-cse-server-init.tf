@@ -34,7 +34,7 @@ resource "vcd_api_token" "cse_admin_token" {
 }
 
 data "local_file" "api_token_file" {
-  filename = vcd_api_token.cse_admin_token
+  filename = vcd_api_token.cse_admin_token.file_name
 }
 
 # This is the CSE Server vApp
