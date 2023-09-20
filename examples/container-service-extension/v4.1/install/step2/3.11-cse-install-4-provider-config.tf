@@ -18,6 +18,14 @@ terraform {
       source  = "vmware/vcd"
       version = ">= 3.11"
     }
+    time = {
+      source  = "hashicorp/time"
+      version = "0.9.1"
+    }
+    local = {
+      source  = "hashicorp/local"
+      version = "2.4.0"
+    }
   }
 }
 
