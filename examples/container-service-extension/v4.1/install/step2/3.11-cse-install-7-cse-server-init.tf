@@ -57,6 +57,10 @@ resource "vcd_vapp_org_network" "cse_server_network" {
   reboot_vapp_on_removal = true
 }
 
+locals {
+  token = jsondecode(file(vcd_api_token.cse_admin_token.file_name))["access_token"]
+}
+
 # The CSE Server VM. It requires guest properties to be introduced for it to work
 # properly. You can troubleshoot it by checking the cse.log file.
 resource "vcd_vapp_vm" "cse_server_vm" {
@@ -83,7 +87,7 @@ resource "vcd_vapp_vm" "cse_server_vm" {
     "cse.vAppOrg" = vcd_org.solutions_organization.name
 
     # CSE admin account's Access Token
-    "cse.vcdRefreshToken" = jsondecode(file(vcd_api_token.cse_admin_token.file_name))["access_token"]
+    "cse.vcdRefreshToken" = local.token
 
     # CSE admin account's username
     "cse.vcdUsername" = var.cse_admin_username
