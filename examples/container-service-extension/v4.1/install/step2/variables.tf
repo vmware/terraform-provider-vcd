@@ -241,7 +241,7 @@ variable "cse_admin_password" {
 variable "cse_admin_api_token_file" {
   description = "The file where the API Token for the CSE Administrator will be stored"
   type        = string
-  default = "cse_admin_api_token.json"
+  default     = "cse_admin_api_token.json"
 }
 
 # ------------------------------------------------

@@ -3,6 +3,16 @@
 # https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_install
 
 # ------------------------------------------------
+# VCD Provider config
+# ------------------------------------------------
+
+vcd_url                = "https://vcd.my-awesome-corp.com"
+administrator_user     = "administrator"
+administrator_password = "change-me"
+administrator_org      = "System"
+insecure_login         = "false"
+
+# ------------------------------------------------
 # Infrastructure
 # ------------------------------------------------
 

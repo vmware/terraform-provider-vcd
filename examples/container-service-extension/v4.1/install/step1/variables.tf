@@ -53,7 +53,7 @@ variable "cse_admin_password" {
 variable "vcdkeconfig_template_filepath" {
   type        = string
   description = "Path to the VCDKEConfig JSON template"
-  default     = "../entities/vcdkeconfig.json.template"
+  default     = "../../entities/vcdkeconfig.json.template"
 }
 
 variable "capvcd_version" {
