@@ -392,7 +392,17 @@ func GetVarsFromTemplate(tmpl string) []string {
 // configuration.
 // Returns the text of a ready-to-use Terraform directive. It also saves the filled
 // template to a file, for further troubleshooting.
-func templateFill(tmpl string, data StringMap) string {
+func templateFill(tmpl string, inputData StringMap) string {
+
+	// Copying the input data, to prevent side effects in the original string map:
+	// When we use the option -vcd-add-provider, the data will also contain the fields
+	// needed to populate the provider. Some of those fields are empty (e.g. "Token")
+	// If the data is evaluated (testParamsNotEmpty) after filling the template, the
+	// test gets skipped for what happen to be mysterious reasons.
+	data := make(StringMap)
+	for k, v := range inputData {
+		data[k] = v
+	}
 
 	// Gets the name of the function containing the template
 	caller := callFuncName()
