@@ -684,7 +684,6 @@ data "vcd_network_isolated_v2" "test-network-isolated-v2-ds" {
 `
 
 func TestAccVcdIsolatedNetworkV2MetadataIgnore(t *testing.T) {
-	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
@@ -707,5 +706,4 @@ func TestAccVcdIsolatedNetworkV2MetadataIgnore(t *testing.T) {
 		testAccCheckVcdIsolatedNetworkV2Metadata, "vcd_network_isolated_v2.test-network-isolated-v2",
 		testAccCheckVcdIsolatedNetworkV2MetadataDatasource, "data.vcd_network_isolated_v2.test-network-isolated-v2-ds",
 		getObjectById, nil)
-	postTestChecks(t)
 }

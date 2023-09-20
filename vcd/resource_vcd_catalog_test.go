@@ -972,7 +972,6 @@ data "vcd_catalog" "test-catalog-ds" {
 `
 
 func TestAccVcdCatalogMetadataIgnore(t *testing.T) {
-	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
@@ -991,7 +990,6 @@ func TestAccVcdCatalogMetadataIgnore(t *testing.T) {
 		testAccCheckVcdCatalogMetadata, "vcd_catalog.test-catalog",
 		testAccCheckVcdCatalogMetadataDatasource, "data.vcd_catalog.test-catalog-ds",
 		getObjectById, nil)
-	postTestChecks(t)
 }
 
 func getVdcProviderVdcStorageProfileHref(client *VCDClient, pvdcReference string) string {

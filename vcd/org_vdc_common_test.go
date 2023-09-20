@@ -469,7 +469,6 @@ data "vcd_org_vdc" "test-vdc-ds" {
 `
 
 func TestAccVcdVdcMetadataIgnore(t *testing.T) {
-	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
@@ -491,5 +490,4 @@ func TestAccVcdVdcMetadataIgnore(t *testing.T) {
 			"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
 			"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		})
-	postTestChecks(t)
 }

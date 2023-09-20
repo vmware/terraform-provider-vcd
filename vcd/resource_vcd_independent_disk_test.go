@@ -698,7 +698,6 @@ data "vcd_independent_disk" "test-independent-disk-ds" {
 `
 
 func TestAccVcdIndependentDiskMetadataIgnore(t *testing.T) {
-	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
@@ -723,5 +722,4 @@ func TestAccVcdIndependentDiskMetadataIgnore(t *testing.T) {
 		getObjectById, StringMap{
 			"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		})
-	postTestChecks(t)
 }

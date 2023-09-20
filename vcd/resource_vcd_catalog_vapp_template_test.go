@@ -18,8 +18,6 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 	vAppTemplateDescription := vAppTemplateName + "Description"
 	vAppTemplateFromUrlName := t.Name() + "FromUrl"
 
-	preTestChecks(t)
-
 	if testConfig.Ova.OvfUrl == "" {
 		t.Skip("Variable Ova.OvfUrl must be set in test configuration")
 	}
@@ -355,7 +353,6 @@ data "vcd_catalog_vapp_template" "test-catalog-vapp-template-ds" {
 `
 
 func TestAccVcdCatalogVAppTemplateMetadataIgnore(t *testing.T) {
-	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
@@ -381,5 +378,4 @@ func TestAccVcdCatalogVAppTemplateMetadataIgnore(t *testing.T) {
 			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"OvfUrl":  testConfig.Ova.OvfUrl,
 		})
-	postTestChecks(t)
 }

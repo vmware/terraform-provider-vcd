@@ -953,7 +953,6 @@ data "vcd_network_routed_v2" "test-network-routed-v2-ds" {
 `
 
 func TestAccVcdRoutedNetworkV2MetadataIgnore(t *testing.T) {
-	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
@@ -978,5 +977,4 @@ func TestAccVcdRoutedNetworkV2MetadataIgnore(t *testing.T) {
 		getObjectById, StringMap{
 			"EdgeGateway": testConfig.Nsxt.EdgeGateway,
 		})
-	postTestChecks(t)
 }

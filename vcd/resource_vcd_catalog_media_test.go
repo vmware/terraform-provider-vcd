@@ -269,7 +269,6 @@ data "vcd_catalog_media" "test-catalog-media-ds" {
 `
 
 func TestAccVcdCatalogMediaMetadataIgnore(t *testing.T) {
-	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
@@ -295,5 +294,4 @@ func TestAccVcdCatalogMediaMetadataIgnore(t *testing.T) {
 			"Catalog":   testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"MediaPath": testConfig.Media.MediaPath,
 		})
-	postTestChecks(t)
 }

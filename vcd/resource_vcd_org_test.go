@@ -448,7 +448,6 @@ data "vcd_org" "test-org-ds" {
 `
 
 func TestAccVcdOrgMetadataIgnore(t *testing.T) {
-	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
@@ -463,5 +462,4 @@ func TestAccVcdOrgMetadataIgnore(t *testing.T) {
 		testAccCheckVcdOrgMetadata, "vcd_org.test-org",
 		testAccCheckVcdOrgMetadataDatasource, "data.vcd_org.test-org-ds",
 		getObjectById, nil)
-	postTestChecks(t)
 }
