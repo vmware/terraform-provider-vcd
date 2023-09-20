@@ -72,6 +72,23 @@ data "vcd_nsxt_edge_cluster" "nsxt_edgecluster" {
   name            = var.nsxt_edge_cluster_name
 }
 
+# Fetch the VM Sizing Policies created in step 1
+data "vcd_vm_sizing_policy" "tkg_s" {
+  name = "TKG small"
+}
+
+data "vcd_vm_sizing_policy" "tkg_m" {
+  name = "TKG medium"
+}
+
+data "vcd_vm_sizing_policy" "tkg_l" {
+  name = "TKG large"
+}
+
+data "vcd_vm_sizing_policy" "tkg_xl" {
+  name = "TKG extra-large"
+}
+
 # The VDC that will host the Kubernetes clusters.
 resource "vcd_org_vdc" "tenant_vdc" {
   name        = "tenant_vdc"
@@ -109,13 +126,13 @@ resource "vcd_org_vdc" "tenant_vdc" {
   delete_force             = true
   delete_recursive         = true
 
-  # Make sure you specify the required VM Sizing Policies managed by the resources specified above.
-  default_compute_policy_id = vcd_vm_sizing_policy.tkg_s.id
+  # Make sure you specify the required VM Sizing Policies managed by the data sources specified above.
+  default_compute_policy_id = data.vcd_vm_sizing_policy.tkg_s.id
   vm_sizing_policy_ids = [
-    vcd_vm_sizing_policy.tkg_xl.id,
-    vcd_vm_sizing_policy.tkg_l.id,
-    vcd_vm_sizing_policy.tkg_m.id,
-    vcd_vm_sizing_policy.tkg_s.id,
+    data.vcd_vm_sizing_policy.tkg_xl.id,
+    data.vcd_vm_sizing_policy.tkg_l.id,
+    data.vcd_vm_sizing_policy.tkg_m.id,
+    data.vcd_vm_sizing_policy.tkg_s.id,
   ]
 }
 

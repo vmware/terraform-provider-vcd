@@ -1,8 +1,11 @@
 # ------------------------------------------------------------------------------------------------------------
-# CSE v4.1 installation:
+# CSE v4.1 installation, step 1:
 #
 # * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_install
 #   before applying this configuration.
+#
+# * The installation process is split into two steps as the first one creates a CSE admin user that needs to be
+#   used in a "provider" block in the second one.
 #
 # * This file contains the same resources created by the "Configure Settings for CSE Server > Set Up Prerequisites" step in the
 #   UI wizard.
@@ -29,7 +32,7 @@ resource "vcd_rde_type" "vcdkeconfig_type" {
   nss           = "VCDKEConfig"
   version       = "1.1.0"
   name          = "VCD-KE RDE Schema"
-  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/vcdkeconfig-type-schema-v1.1.0.json"
+  schema_url    = "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/upgrade-cse41/examples/container-service-extension/v4.1/schemas/vcdkeconfig-type-schema-v1.1.0.json"
   interface_ids = [vcd_rde_interface.vcdkeconfig_interface.id]
 }
 
@@ -70,7 +73,7 @@ resource "vcd_rde_type" "capvcdcluster_type" {
   nss           = "capvcdCluster"
   version       = "1.2.0"
   name          = "CAPVCD Cluster"
-  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/capvcd-type-schema-v1.2.0.json"
+  schema_url    = "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/upgrade-cse41/examples/container-service-extension/v4.1/schemas/capvcd-type-schema-v1.2.0.json"
   interface_ids = [data.vcd_rde_interface.kubernetes_interface.id]
 
   depends_on = [vcd_rde_interface_behavior.capvcd_behavior] # Interface Behaviors must be created before any RDE Type
@@ -107,37 +110,13 @@ resource "vcd_role" "cse_admin_role" {
 }
 
 # This will allow to have a user with a limited set of rights that can access the Provider area of VCD.
-# This user will be used by the CSE Server, with an API token that must be created afterwards.
+# This user will be used by the CSE Server, with an API token that must be created in Step 2.
 # This should not be changed.
 resource "vcd_org_user" "cse_admin" {
   org      = var.administrator_org
   name     = var.cse_admin_username
   password = var.cse_admin_password
   role     = vcd_role.cse_admin_role.name
-}
-
-# Login into VCD with the cse_admin username created above. This will be used to provision
-# an API token that must be consumed by the CSE Server.
-# This should not be changed.
-provider "vcd" {
-  alias                = "cse_admin"
-  url                  = "${var.vcd_url}/api"
-  user                 = vcd_org_user.cse_admin.name
-  password             = vcd_org_user.cse_admin.password
-  auth_type            = "integrated"
-  org                  = vcd_org_user.cse_admin.org
-  allow_unverified_ssl = var.insecure_login
-  logging              = true
-  logging_file         = "cse_install_cse_admin.log"
-}
-
-# Generates an API token for the CSE Admin user, that will be used to instantiate the CSE Server.
-# This should not be changed.
-resource "vcd_api_token" "cse_admin_token" {
-  provider         = vcd.cse_admin
-  name             = "CSE Admin API Token"
-  file_name        = var.cse_admin_api_token_file
-  allow_token_file = true
 }
 
 # This resource manages the Rights Bundle required by tenants to create and consume Kubernetes clusters.

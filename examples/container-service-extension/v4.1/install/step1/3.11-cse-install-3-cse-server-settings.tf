@@ -1,15 +1,18 @@
 # ------------------------------------------------------------------------------------------------------------
-# CSE v4.1 installation:
+# CSE v4.1 installation, step 1:
 #
 # * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_install
 #   before applying this configuration.
+#
+# * The installation process is split into two steps as the first one creates a CSE admin user that needs to be
+#   used in a "provider" block in the second one.
 #
 # * This file contains the same resources created by the "Configure Settings for CSE Server > Set Configuration Parameters" step in the
 #   UI wizard.
 #
 # * Rename "terraform.tfvars.example" to "terraform.tfvars" and adapt the values to your needs.
 #   Other than that, this snippet should be applied as it is.
-#   You can check the comments on each resource/data source for more help and context.
+#   You can check the comments on the resource for context.
 # ------------------------------------------------------------------------------------------------------------
 
 # This RDE configures the CSE Server. It can be customised through variables, and the bootstrap_cluster_sizing_policy

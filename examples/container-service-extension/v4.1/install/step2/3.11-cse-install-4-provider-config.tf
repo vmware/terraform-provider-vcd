@@ -1,8 +1,11 @@
 # ------------------------------------------------------------------------------------------------------------
-# CSE v4.1 installation:
+# CSE v4.1 installation, step 2:
 #
 # * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_install
 #   before applying this configuration.
+#
+# * The installation process is split into two steps as the first one creates a CSE admin user that needs to be
+#   used in a "provider" block in the second one.
 #
 # * Rename "terraform.tfvars.example" to "terraform.tfvars" and adapt the values to your needs.
 #   Other than that, this snippet should be applied as it is.
@@ -14,10 +17,6 @@ terraform {
     vcd = {
       source  = "vmware/vcd"
       version = ">= 3.11"
-    }
-    time = {
-      source  = "hashicorp/time"
-      version = ">= 0.9"
     }
   }
 }

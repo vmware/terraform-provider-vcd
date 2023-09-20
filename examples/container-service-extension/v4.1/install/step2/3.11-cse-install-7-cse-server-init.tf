@@ -9,6 +9,30 @@
 #   You can check the comments on each resource/data source for more help and context.
 # ------------------------------------------------------------------------------------------------------------
 
+# Login into VCD with the cse_admin username created above. This will be used to provision
+# an API token that must be consumed by the CSE Server.
+# This should not be changed.
+provider "vcd" {
+  alias                = "cse_admin"
+  url                  = "${var.vcd_url}/api"
+  user                 = var.cse_admin_username
+  password             = var.cse_admin_password
+  auth_type            = "integrated"
+  org                  = var.administrator_org
+  allow_unverified_ssl = var.insecure_login
+  logging              = true
+  logging_file         = "cse_install_cse_admin.log"
+}
+
+# Generates an API token for the CSE Admin user, that will be used to instantiate the CSE Server.
+# This should not be changed.
+resource "vcd_api_token" "cse_admin_token" {
+  provider         = vcd.cse_admin
+  name             = "CSE Admin API Token"
+  file_name        = var.cse_admin_api_token_file
+  allow_token_file = true
+}
+
 # This is the CSE Server vApp
 resource "vcd_vapp" "cse_server_vapp" {
   org  = vcd_org.solutions_organization.name
@@ -62,10 +86,10 @@ resource "vcd_vapp_vm" "cse_server_vm" {
     "cse.vcdRefreshToken" = jsondecode(file(vcd_api_token.cse_admin_token.file_name))["access_token"]
 
     # CSE admin account's username
-    "cse.vcdUsername" = vcd_org_user.cse_admin.name
+    "cse.vcdUsername" = var.cse_admin_username
 
     # CSE admin account's org
-    "cse.userOrg" = vcd_org_user.cse_admin.password
+    "cse.userOrg" = vcd_org.solutions_organization.name
   }
 
   customization {
@@ -74,8 +98,4 @@ resource "vcd_vapp_vm" "cse_server_vm" {
     allow_local_admin_password = true
     auto_generate_password     = true
   }
-
-  depends_on = [
-    vcd_rde.vcdkeconfig_instance
-  ]
 }
