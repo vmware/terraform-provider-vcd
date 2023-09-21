@@ -60,8 +60,8 @@ modified and be applied as they are.
 CSE v4.1 requires a set of Runtime Defined Entity items, such as [Interfaces][rde_interface], [Types][rde_type] and [Behaviors][rde_interface_behavior].
 In the [proposed configuration][step1] you can find the following:
 
-- The required `VCDKEConfig` [RDE Interface][rde_interface] and [RDE Type][rde_type]. These two resources specify the schema of the CSE Server
-  configuration (called "VCDKEConfig") that will be instantiated with a [RDE][rde].
+- The required `VCDKEConfig` [RDE Interface][rde_interface] and [RDE Type][rde_type]. These two resources specify the schema of the **CSE Server
+  configuration** (called "VCDKEConfig") that will be instantiated with a [RDE][rde].
 
 - The required `capvcd` [RDE Interface][rde_interface] and `capvcdCluster` [RDE Type][rde_type].
   These two resources specify the schema of the [TKGm clusters][tkgm_docs].
@@ -72,22 +72,22 @@ In the [proposed configuration][step1] you can find the following:
 ### RDE (CSE Server configuration / VCDKEConfig)
 
 The CSE Server configuration lives in a [Runtime Defined Entity][rde] that uses the `VCDKEConfig` [RDE Type][rde_type].
-To customise it, the [configuration][step1] asks for the following variables that you can set in `terraform.tfvars`:
+To customise it, the [sample configuration][step1] asks for the following variables that you can set in `terraform.tfvars`:
 
 - `vcdkeconfig_template_filepath` references a local file that defines the `VCDKEConfig` [RDE][rde] contents. It should be a JSON template, like
   [the one used in the configuration](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/entities/vcdkeconfig.json.template).
   (Note: In `terraform.tfvars.example` the correct path is already provided).
 - `capvcd_version`: The version for CAPVCD. By default, is "1.1.0" for CSE v4.1. Do not confuse with the version of the `capvcdCluster` [RDE Type][rde_type],
   which **must be "1.2.0"** for CSE v4.1 and cannot be changed through a variable.
-- `cpi_version`: The version for CPI. By default, is "1.4.0" for CSE v4.1.
-- `csi_version`: The version for CSI. By default, is "1.4.0" for CSE v4.1.
+- `cpi_version`: The version for CPI (Cloud Provider Interface). By default, is "1.4.0" for CSE v4.1.
+- `csi_version`: The version for CSI (Cloud Storage Interface). By default, is "1.4.0" for CSE v4.1.
 - `github_personal_access_token`: Create this one [here](https://github.com/settings/tokens),
   this will avoid installation errors caused by GitHub rate limiting, as the TKGm cluster creation process requires downloading
   some Kubernetes components from GitHub.
   The token should have the `public_repo` scope for classic tokens and `Public Repositories` for fine-grained tokens.
 - `http_proxy` (Optional): Address of your HTTP proxy server.
 - `https_proxy` (Optional): Address of your HTTPS proxy server.
-- `no_proxy` (Optional): A list of comma-separated domains without spaces that indicate the targets that must not go through the configured proxy.
+- `no_proxy` (Optional): A list of comma-separated domains without spaces that indicate the targets that must **not** go through the configured proxy.
 - `syslog_host` (Optional): Domain where to send the system logs.
 - `syslog_port` (Optional): Port where to send the system logs.
 - `node_startup_timeout`: A node will be considered unhealthy and remediated if joining the cluster takes longer than this timeout (seconds, defaults to 900).
@@ -110,11 +110,11 @@ account to be created, where you can provide a username of your choice (`cse_adm
 This account will be used to provision an [API Token][api_token] to deploy the CSE Server, in the next step. Once all variables are reviewed and set,
 you can start the installation with `terraform apply`. When it finishes successfully, you can continue with the **step 2**.
 
-### Step 2: Install CSE
+### Step 2: Create the infrastructure and deploy the CSE Server
 
 -> This step of the installation refers to the Terraform configuration present [here][step2].
 
-~> Be sure that previous step is successfully completed and the API token for the CSE Administrator user was created.
+~> Be sure that previous step is successfully completed.
 
 This step will create all the remaining elements to install CSE v4.1 in VCD. You can read subsequent sections
 to have a better understanding of the building blocks that are described in the [proposed Terraform configuration][step2].
@@ -133,19 +133,6 @@ The [proposed configuration][step2] will create two new [Organizations][org], as
 -> If you already have these two [Organizations][org] created and you want to use them instead,
 you can leverage customising the [proposed configuration][step2] to use the Organization [data source][org_d] to fetch them.
 
-#### VM Sizing Policies
-
-The [proposed configuration][step2] will create four VM Sizing Policies:
-
-- `TKG extra-large`: 8 CPU, 32GB memory.
-- `TKG large`: 4 CPU, 16GB memory.
-- `TKG medium`: 2 CPU, 8GB memory.
-- `TKG small`: 2 CPU, 4GB memory.
-
-These VM Sizing Policies should be applied as they are, so nothing should be changed here as these are the exact same
-VM Sizing Policies created during CSE installation in UI. They will be assigned to the Tenant
-Organization's VDC to be able to dimension the created [TKGm clusters][tkgm_docs] (see section below).
-
 #### VDCs
 
 The [proposed configuration][step2] will create two [VDCs][vdc], one for the Solutions Organization and another one for the Tenant Organization.
@@ -161,8 +148,8 @@ You need to specify the following values in `terraform.tfvars`:
 - `network_pool_name`: This references an existing Network Pool, which is used to create both VDCs.
   If you are going to use more than one Network Pool, please consider modifying the proposed configuration.
 
-In the [proposed configuration][step2] the Tenant Organization's VDC has all the required VM Sizing Policies assigned, with the `TKG small` being the default one.
-You can customise it to make any other TKG policy the default one.
+In the [proposed configuration][step2] the Tenant Organization's VDC has all the required VM Sizing Policies from the first step assigned,
+with the `TKG small` being the default one. You can customise it to make any other TKG policy the default one.
 
 You can also leverage changing the storage profiles and other parameters to fit the requirements of your organization. Also,
 if you already have usable [VDCs][vdc], you can change the configuration to fetch them instead.
@@ -180,7 +167,7 @@ Then it will upload the required OVAs to them. The OVAs can be specified in `ter
 - `tkgm_ova_folder`: This will reference the path to the TKGm OVA, as an absolute or relative path. It should **not** end with a trailing `/`.
 - `tkgm_ova_file`: This will reference the file name of the TKGm OVA, like `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova`.
 - `cse_ova_folder`: This will reference the path to the CSE OVA, as an absolute or relative path. It should **not** end with a trailing `/`.
-- `cse_ova_file`: This will reference the file name of the CSE OVA, like `VMware_Cloud_Director_Container_Service_Extension-4.0.1.ova`.
+- `cse_ova_file`: This will reference the file name of the CSE OVA, like `VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova`.
 
 -> To download the required OVAs, please refer to the [CSE documentation][cse_docs].
 
@@ -189,14 +176,6 @@ on upload speed. You can tune the `upload_piece_size` to speed up the upload. An
 In case you're using a pre-uploaded OVA, leverage the [vcd_catalog_vapp_template][catalog_vapp_template_ds] data source (instead of the resource).
 
 If you need to upload more than one OVA, please modify the [proposed configuration][step2].
-
-### "Kubernetes Cluster Author" global role
-
-Apart from the role to manage the CSE Server created in [step 1][step1], we also need a [Global Role][global_role]
-for the [TKGm clusters][tkgm_docs] consumers (it would be similar to the concept of "vApp Author" but for [TKGm clusters][tkgm_docs]).
-
-In order to create this [Global Role][global_role], the [proposed configuration][step2] first
-creates a new [Rights Bundle][rights_bundle] and publishes it to all the tenants, then creates the [Global Role][global_role].
 
 ### Networking
 
@@ -283,21 +262,25 @@ If you wish to have a different networking setup, please modify the [proposed co
 ### CSE Server
 
 There is also a set of resources created by the [proposed configuration][step2] that correspond to the CSE Server vApp.
-The generated VM makes use of the uploaded CSE OVA and some required guest properties.
+The generated VM makes use of the uploaded CSE OVA and some required guest properties:
+
+- `cse_admin_username`: This must be the same CSE Administrator user created in the first step.
+- `cse_admin_password`: This must be the same CSE Administrator user's password created in the first step.
+- `cse_admin_api_token_file`: This specifies the path where the API token is saved and consumed.
 
 ### UI plugin installation
 
+-> If the old CSE 3.x plugin is installed, you will need to remove it before installing the new one.
+
 The final resource created by the [proposed configuration][step2] is the [`vcd_ui_plugin`][ui_plugin] resource.
 
-This resource is optional, it will be only created if the variable `k8s_container_clusters_ui_plugin_path` is not empty,
+This resource is **optional**, it will be only created if the variable `k8s_container_clusters_ui_plugin_path` is not empty,
 so you can leverage whether your tenant users or system administrators will need it or not. It can be useful for troubleshooting,
 or if your tenant users are not familiar with Terraform, they will be still able to create and manage their clusters
 with the UI.
 
 If you decide to install it, `k8s_container_clusters_ui_plugin_path` should point to the
 [Kubernetes Container Clusters UI plug-in v4.1][cse_docs] ZIP file that you can download in the [CSE documentation][cse_docs].
-
--> If the old CSE 3.x plugin is installed, you will need to remove it also.
 
 ### Final considerations
 
@@ -351,9 +334,9 @@ The most common issues are:
 - Cluster creation is failing:
   - Please visit the [CSE documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
 
-## Update from CSE v4.1 to v4.1
+## Update from CSE v4.0 to v4.1
 
-In this section you can find the required steps to update from CSE v4.1 to v4.1.
+In this section you can find the required steps to update from CSE v4.0 to v4.1.
 
 ~> This section assumes that the CSE installation was done with Terraform by following the previous guide steps.
 
