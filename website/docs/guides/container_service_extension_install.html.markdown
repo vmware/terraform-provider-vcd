@@ -338,7 +338,8 @@ The most common issues are:
 
 In this section you can find the required steps to update from CSE v4.0 to v4.1.
 
-~> This section assumes that the CSE installation was done with Terraform by following the previous guide steps.
+~> This section assumes that the old CSE v4.0 installation was done with Terraform by following the v4.0 guide steps.
+Also, you need to meet [the pre-requisites criteria](#pre-requisites).
 
 ### Create the new RDE elements
 
@@ -374,7 +375,7 @@ resource "vcd_rde_type_behavior_acl" "capvcd_behavior_acl" {
 }
 ```
 
-Create a new version of the [RDE Types][rde_type] that were used in v4.1. This will allow them to co-exist with the old ones,
+Create a new version of the [RDE Types][rde_type] that were used in v4.0. This will allow them to co-exist with the old ones,
 so we can perform a smooth upgrade.
 
 ```hcl
@@ -397,18 +398,68 @@ resource "vcd_rde_type" "capvcdcluster_type_v120" {
 }
 ```
 
+### Upgrade the VCDKEConfig RDE (CSE Server configuration)
+
+With the new [RDE Types][rde_type] in place, you need to perform an upgrade of the existing `VCDKEConfig` [RDE][rde], which
+stores the CSE Server configuration. By using the v3.11.0 of the VCD Terraform Provider, you can do this update without forcing
+a replacement:
+
+```hcl
+resource "vcd_rde" "vcdkeconfig_instance" {
+  # Same values as before, except:
+  rde_type_id = vcd_rde_type.vcdkeconfig_type_v110.id # Update to the new RDE Type
+  input_entity = templatefile(var.vcdkeconfig_template_filepath, {
+    # Same values as before, except:
+    node_startup_timeout          = var.node_startup_timeout
+    node_not_ready_timeout        = var.node_not_ready_timeout
+    node_unknown_timeout          = var.node_unknown_timeout
+    max_unhealthy_node_percentage = var.max_unhealthy_node_percentage
+    container_registry_url        = var.container_registry_url
+    k8s_cluster_certificates      = join(",", var.k8s_cluster_certificates)
+    bootstrap_vm_certificates     = join(",", var.bootstrap_vm_certificates)
+  })
+}
+```
+
+You can find the meaning of these values in the section ["RDE (CSE Server configuration / VCDKEConfig)"](#rde-cse-server-configuration--vcdkeconfig).
+Please notice that you need to upgrade the CAPVCD, CPI and CSI versions. The new values are stated in the same section.
+
 ### Update Rights and Roles
 
 There are differences between the rights needed in v4.1 and v4.1. You can check the resources `vcd_rights_bundle.k8s_clusters_rights_bundle` and
 `vcd_global_role.k8s_cluster_author` in the [proposed configuration][step2] to see the new required set of rights.
 
-### Update CSE Server configuration
+### Upload the new CSE v4.1 OVA
 
+You need to upload the new CSE v4.1 OVA to the `cse_catalog` that already hosts the v4.0.
+To download the required OVAs, please refer to the [CSE documentation][cse_docs].
 
+```hcl
+resource "vcd_catalog_vapp_template" "cse_ova_v4_1" {
+  org        = vcd_org.solutions_organization.name # References the Solutions Organization that already exists from v4.0
+  catalog_id = vcd_catalog.cse_catalog.id          # References the CSE Catalog that already exists from v4.0
 
-## Update CSE Server
+  name        = "VMware_Cloud_Director_Container_Service_Extension-4.1.0"
+  description = "VMware_Cloud_Director_Container_Service_Extension-4.1.0"
+  ova_path    = "VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova"
+}
 
-### Update Configuration
+```
+
+### Update CSE Server
+
+To update the CSE Server, just change the referenced OVA:
+
+```hcl
+resource "vcd_vapp_vm" "cse_server_vm" {
+  # All values remain the same, except:
+  vapp_template_id = vcd_catalog_vapp_template.cse_ova_v4_1.id # Reference the v4.1 OVA
+}
+```
+
+This will re-deploy the VM with the new CSE v4.1.
+
+## Update Configuration
 
 To make changes to the existing server configuration, you should be able to locate the [`vcd_rde`][rde] resource named `vcdkeconfig_instance`
 in the [proposed configuration][step2] that was created during the installation process. To update its configuration, you can
