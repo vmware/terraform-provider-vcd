@@ -555,6 +555,10 @@ Each node produces several files:
 * `{BUILD_NUMBER}-tests-processed-in-node-{NODE_NUMBER}-{VCD_VERSION}.txt` The tests that have been processed in this node
 * `{BUILD_NUMBER}-out-{NODE_NUMBER}.txt` A sentinel file signifying that the tests in the current node are finished. It contains the error code of the run (0=success, 1=failure)
 
+NOTE: when running partitioned tests with value for `-tags` other than `functional` or `ALL`, there will be a discrepancy 
+between the tests collected in `{BUILD_NUMBER}-tests-planned-in-node-{NODE_NUMBER}-{VCD_VERSION}.txt` and the ones that
+will be processed. The planned tests are collected without any `tags` consideration. Thus, the count of processed tests
+will likely be much lower than the number of tests "planned".
 
 ## Leftovers removal
 
