@@ -539,7 +539,7 @@ We can run tests in a partitioned way, by splitting the tests across several VCD
 
 To activate this modality, we use the following options:
 
-* `-vcd-partition=N` indicates the number of partitions running the test suite.
+* `-vcd-partitions=N` indicates the number of partitions running the test suite.
 * `-vcd-partition-node=N` indicates which node the current VCD will run.
 * `-vcd-partition-tests-file=FileName` (optional) provides the list of tests to run
 
