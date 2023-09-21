@@ -29,7 +29,7 @@ In order to complete the steps described in this guide, please be aware:
 
 ## Installation process
 
--> To install CSE v4.1, this guide will make use of the ready-to-use Terraform configuration located [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension-4.0/install).
+-> To install CSE v4.1, this guide will make use of the ready-to-use Terraform configuration located [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/install).
 You can check it, customise it to your needs and apply. However, reading this guide first is recommended to understand what it does and how to use it.
 
 The installation process is split in two independent steps that should be run separately:
