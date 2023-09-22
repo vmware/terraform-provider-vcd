@@ -38,7 +38,13 @@ examples/**/.terraform*
 # Test exclusions
 !command/test-fixtures/**/*.tfstate
 !command/test-fixtures/**/.terraform/
+vcd/*-tests-end-in-node-*-*.txt
+vcd/*-tests-planned-in-node-*-*.txt
+vcd/*-tests-processed-in-node-*-*.txt
+vcd/*-tests-retrieved-in-node-*-*.txt
+vcd/*-out-*.txt
 
 # Go workspace
 go.work
+
 
