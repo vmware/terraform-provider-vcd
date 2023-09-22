@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"text/template"
@@ -55,7 +56,9 @@ func init() {
 	setStringFlag(&vcdSkipPattern, "vcd-skip-pattern", "VCD_SKIP_PATTERN", "Skip tests that match the pattern (implies vcd-pre-post-checks")
 	setBoolFlag(&skipLeftoversRemoval, "vcd-skip-leftovers-removal", "VCD_SKIP_LEFTOVERS_REMOVAL", "Do not attempt removal of leftovers at the end of the test suite")
 	setBoolFlag(&silentLeftoversRemoval, "vcd-silent-leftovers-removal", "VCD_SILENT_LEFTOVERS_REMOVAL", "Omit details during removal of leftovers")
-
+	setStringFlag(&testListFileName, "vcd-partition-tests-file", "VCD_PARTITION_TESTS_FILE", "Name of the file containing the tests to run in the current partition node")
+	setIntFlag(&numberOfPartitions, "vcd-partitions", "VCD_PARTITIONS", "")
+	setIntFlag(&partitionNode, "vcd-partition-node", "VCD_PARTITION_NODE", "")
 }
 
 // Structure to get info from a config json file that the user specifies
@@ -389,7 +392,17 @@ func GetVarsFromTemplate(tmpl string) []string {
 // configuration.
 // Returns the text of a ready-to-use Terraform directive. It also saves the filled
 // template to a file, for further troubleshooting.
-func templateFill(tmpl string, data StringMap) string {
+func templateFill(tmpl string, inputData StringMap) string {
+
+	// Copying the input data, to prevent side effects in the original string map:
+	// When we use the option -vcd-add-provider, the data will also contain the fields
+	// needed to populate the provider. Some of those fields are empty (e.g. "Token")
+	// If the data is evaluated (testParamsNotEmpty) after filling the template, the
+	// test gets skipped for what happen to be mysterious reasons.
+	data := make(StringMap)
+	for k, v := range inputData {
+		data[k] = v
+	}
 
 	// Gets the name of the function containing the template
 	caller := callFuncName()
@@ -887,6 +900,13 @@ func TestMain(m *testing.M) {
 	// Runs all test functions
 	exitCode := m.Run()
 
+	if numberOfPartitions != 0 {
+		entTestFileName := getTestFileName("end", testConfig.Provider.VcdVersion)
+		err := os.WriteFile(entTestFileName, []byte(fmt.Sprintf("%d", exitCode)), 0600)
+		if err != nil {
+			fmt.Printf("error writing to file '%s': %s\n", entTestFileName, err)
+		}
+	}
 	if vcdShowCount {
 		fmt.Printf("Pass: %5d - Skip: %5d - Fail: %5d\n", vcdPassCount, vcdSkipCount, vcdFailCount)
 	}
@@ -1125,6 +1145,18 @@ func setStringFlag(varPointer *string, name, envVar, help string) {
 		*varPointer = os.Getenv(envVar)
 	}
 	flag.StringVar(varPointer, name, *varPointer, help)
+}
+
+func setIntFlag(varPointer *int, name, envVar, help string) {
+	if envVar != "" && os.Getenv(envVar) != "" {
+		var err error
+		value := os.Getenv(envVar)
+		*varPointer, err = strconv.Atoi(value)
+		if err != nil {
+			panic(fmt.Sprintf("error converting value '%s' to integer: %s", value, err))
+		}
+	}
+	flag.IntVar(varPointer, name, *varPointer, help)
 }
 
 type envHelper struct {
@@ -1408,6 +1440,7 @@ func timeStamp() string {
 //     contains a pattern that matches the test name.
 //  6. If the flag -vcd-re-run-failed is true, it will only run the tests that failed in the previous run
 func preTestChecks(t *testing.T) {
+	handlePartitioning(testConfig.Provider.VcdVersion, testConfig.Provider.Url, t)
 	// if the test runs without -vcd-pre-post-checks, all post-checks will be skipped
 	if !vcdPrePostChecks {
 		return

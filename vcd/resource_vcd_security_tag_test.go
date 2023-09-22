@@ -12,6 +12,7 @@ import (
 )
 
 func TestAccVcdSecurityTag(t *testing.T) {
+	preTestChecks(t)
 	tag1 := strings.ToLower(t.Name() + "-tag1") // security tags are always lowercase in serverside
 	tag2 := strings.ToLower(t.Name() + "-tag2")
 	vAppName := t.Name() + "-vapp"
@@ -178,6 +179,7 @@ resource "vcd_security_tag" "{{.SecurityTag2}}" {
 // the tag in VCD as security_tags field only creates and doesn't remove the
 // tag itself if it is removed from a VM to not break other VMs.
 func TestAccVcdVappVmWithSecurityTags(t *testing.T) {
+	preTestChecks(t)
 	tag1 := strings.ToLower(t.Name() + "-tag1") // security tags are always lowercase in serverside
 	tag2 := strings.ToLower(t.Name() + "-tag2")
 	vAppName := t.Name() + "-vapp"
