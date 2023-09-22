@@ -13,11 +13,10 @@ import (
 )
 
 func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
+	preTestChecks(t)
 	vAppTemplateName := t.Name()
 	vAppTemplateDescription := vAppTemplateName + "Description"
 	vAppTemplateFromUrlName := t.Name() + "FromUrl"
-
-	preTestChecks(t)
 
 	if testConfig.Ova.OvfUrl == "" {
 		t.Skip("Variable Ova.OvfUrl must be set in test configuration")

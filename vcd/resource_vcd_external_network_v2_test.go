@@ -1057,6 +1057,7 @@ data "vcd_network_direct" "net" {
 `
 
 func TestAccVcdExternalNetworkV2NsxtIpSpace(t *testing.T) {
+	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	if checkVersion(testConfig.Provider.ApiVersion, "< 37.1") {
@@ -1144,6 +1145,7 @@ func TestAccVcdExternalNetworkV2NsxtIpSpace(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccVcdExternalNetworkV2NsxtIpSpaceStep1 = testAccCheckVcdExternalNetworkV2NsxtDS + `

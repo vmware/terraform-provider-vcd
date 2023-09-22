@@ -287,7 +287,8 @@ func TestAccVcdStandaloneVmCustomizationSettings(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.test-vm", "customization.#", "1"),
 					resource.TestCheckResourceAttr("vcd_vm.test-vm", "customization.0.enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_vm.test-vm", "customization.0.change_sid", "true"),
-					resource.TestCheckResourceAttr("vcd_vm.test-vm", "customization.0.allow_local_admin_password", "false"),
+					resource.TestCheckResourceAttr("vcd_vm.test-vm", "customization.0.allow_local_admin_password", "true"),
+					resource.TestCheckResourceAttr("vcd_vm.test-vm", "customization.0.auto_generate_password", "true"),
 					resource.TestCheckResourceAttr("vcd_vm.test-vm", "customization.0.must_change_password_on_first_login", "true"),
 					resource.TestCheckResourceAttr("vcd_vm.test-vm", "customization.0.number_of_auto_logons", "4"),
 				),
@@ -353,7 +354,7 @@ resource "vcd_vm" "test-vm" {
   customization {
 	enabled                             = true
 	change_sid                          = true
-	allow_local_admin_password          = false
+	allow_local_admin_password          = true
 	must_change_password_on_first_login = true
 	auto_generate_password              = true
 	number_of_auto_logons               = 4
@@ -375,11 +376,12 @@ resource "vcd_vm" "test-vm-step2" {
   cpu_cores     = 1
 
   customization {
-	enabled         = false
-	admin_password  = "some password"
-	auto_generate_password = false
-	join_domain     = true
-	join_org_domain = true
+	enabled                    = false
+	allow_local_admin_password = true
+	admin_password             = "some password"
+	auto_generate_password     = false
+	join_domain                = true
+	join_org_domain            = true
   }
 }
 `
