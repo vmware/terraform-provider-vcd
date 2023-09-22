@@ -43,8 +43,8 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 			acl en req.fhdr(accept-language),language(es;fr;en) -m str en
 			use_backend english if en
 		EOT`),
-		"Tags":     "lb lbAppRule",
-		"SkipTest": "",
+		"Tags":           "lb lbAppRule",
+		"SkipBinaryTest": " ", // it should contain at least one space, or the whole test will be skipped
 	}
 	testParamsNotEmpty(t, params)
 
@@ -58,7 +58,7 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 
 	params["FuncName"] = t.Name() + "-step3"
 	// This test must fail with invalid rule script so we avoid running it in `make test-binary`
-	params["SkipTest"] = "# skip-binary-test: it will fail on purpose"
+	params["SkipBinaryTest"] = "# skip-binary-test: it will fail on purpose"
 	configText3 := templateFill(testAccVcdLBAppRule_FailMultiLine, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
@@ -180,7 +180,7 @@ data "vcd_lb_app_rule" "test" {
 `
 
 const testAccVcdLBAppRule_FailMultiLine = `
-{{.SkipTest}}
+{{.SkipBinaryTest}}
 
 resource "vcd_lb_app_rule" "test" {
   org          = "{{.Org}}"
