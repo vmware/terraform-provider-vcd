@@ -296,3 +296,5 @@ vcd.TestAccVcdVmPlacementPolicy.tf v3.9.0 "Changed 'description' to Computed in 
 vcd.ResourceSchema-vcd_vdc_group.tf v3.10.0 "Added new field 'force_delete'"
 vcd.ResourceSchema-vcd_nsxt_alb_pool.tf v3.10.0 "added field 'ssl_enabled'"
 vcd.ResourceSchema-vcd_nsxt_edgegateway.tf v3.10.0 "Added support for Segment backed external networks"
+vcd.ResourceSchema-vcd_vapp_vm.tf v3.11.0 "added fields 'firmware' and 'boot_options'"
+vcd.ResourceSchema-vcd_vm.tf v3.11.0 "added fields 'firmware' and 'boot_options'"

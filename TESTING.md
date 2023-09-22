@@ -13,6 +13,7 @@
 - [Custom terraform scripts](#custom-terraform-scripts)
 - [Conditional running of tests](#conditional-running-of-tests)
 - [Tests with multiple providers](#tests-with-multiple-providers)
+- [Partitioned tests](#partitioned-tests)
 - [Leftovers removal](#leftovers-removal)
 - [Environment variables and corresponding flags](#environment-variables-and-corresponding-flags)
 - [Troubleshooting code issues](#troubleshooting-code-issues)
@@ -532,6 +533,37 @@ Look at `TestResourceInfoProviders` to see a full example of how to use the meth
 once in the HCL script. If it is not, the variable `testAccProvider` may not get initialised, and if that happens,
 test checks that use the expression `conn := testAccProvider.Meta().(*VCDClient)` will panic.
 
+## Partitioned tests
+
+We can run tests in a partitioned way, by splitting the tests across several VCDs (nodes) each of which will run a given portion of the tests.
+
+To activate this modality, we use the following options:
+
+* `-vcd-partitions=N` indicates the number of partitions running the test suite.
+* `-vcd-partition-node=N` indicates which node the current VCD will run.
+* `-vcd-partition-tests-file=FileName` (optional) provides the list of tests to run
+
+When partition mode is enabled, the current node will skip all the tests that are not assigned to it.
+
+The test assignment, by default, happens by getting the list of all tests, sorting them alphabetically, and then assigning them to each node in sequence. 
+If a tests file name was provided, the node will just use such file as its assignment.
+
+Each node produces several files:
+
+* `{BUILD_NUMBER}-tests-retrieved-in-node-{NODE_NUMBER}-{VCD_VERSION}.txt` All the tests found in the current node
+* `{BUILD_NUMBER}-tests-planned-in-node-{NODE_NUMBER}-{VCD_VERSION}.txt` The tests that will run in the current node
+* `{BUILD_NUMBER}-tests-processed-in-node-{NODE_NUMBER}-{VCD_VERSION}.txt` The tests that have been processed in this node
+* `{BUILD_NUMBER}-out-{NODE_NUMBER}.txt` A sentinel file signifying that the tests in the current node are finished. It contains the error code of the run (0=success, 1=failure)
+
+`{BUILD_NUMBER}` is the number of the build available as environment variable in Jenkins jobs. If we run the test outside
+that environment, the test software will replace the build number with `LOCAL`. 
+For compatibility with other tools, it is recommended to set a dummy `BUILD_NUMBER` when running tests locally.
+
+NOTE: when running partitioned tests with value for `-tags` other than `functional` or `ALL`, there will be a discrepancy 
+between the tests collected in `{BUILD_NUMBER}-tests-planned-in-node-{NODE_NUMBER}-{VCD_VERSION}.txt` and the ones that
+will be processed. The planned tests are collected without any `tags` consideration. Thus, the count of processed tests
+will likely be much lower than the number of tests "planned".
+
 ## Leftovers removal
 
 After the test stuite runs, an automated process will scan the VCD and remove any resources that may have been
@@ -584,6 +616,9 @@ used in the documentation index.
 * `VCD_SKIP_PATTERN` (`-vcd-skip-pattern`) Skip tests that match the pattern (implies vcd-pre-post-checks ()
 * `VCD_SKIP_LEFTOVERS_REMOVAL` (`-vcd-skip-leftover-removal`) Do not run the leftovers removal at the end of the suite
 * `VCD_SILENT_LEFTOVERS_REMOVAL` (`-vcd-silent-leftover-removal`) Omit details during leftovers removal.
+* `VCD_PARTITIONS` (`-vcd-partitions`) Number of partitions used to run the tests
+* `VCD_PARTITION_NODE` (`vcd-partition-node`) Number of current node running one of the partitions
+* `VCD_PARTITION_TESTS_FILE` (`-vcd-partition-tests-file`) File containing the list of tests that this node will run
 
 
 When both the environment variable and the command line option are possible, the environment variable gets evaluated first.
