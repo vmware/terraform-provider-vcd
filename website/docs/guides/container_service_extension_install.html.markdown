@@ -32,9 +32,9 @@ In order to complete the steps described in this guide, please be aware:
 -> To install CSE v4.1, this guide will make use of the ready-to-use Terraform configuration located [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/install).
 You can check it, customise it to your needs and apply. However, reading this guide first is recommended to understand what it does and how to use it.
 
-The installation process is split in two independent steps that should be run separately:
+The installation process is split in two independent steps that must be run separately:
 
-- The first step creates the same elements as the _"Configure Settings for CSE Server"_ section in UI wizard, that is, installs the
+- The first step installs the same elements as the _"Configure Settings for CSE Server"_ section in UI wizard, that is, creates the
   [RDE Interfaces][rde_interface], [RDE Types][rde_type], [RDE Interface Behaviors][rde_interface_behavior] and the [RDE][rde] that
   are required for the CSE Server to work, in addition to a new [Role][role], new [VM Sizing Policies][sizing] and a CSE Administrator [User][user] that will be
   referenced later on in the second step.
@@ -42,7 +42,7 @@ The installation process is split in two independent steps that should be run se
 
 The reason for such as split is that the CSE Administrator created during the first step is used to configure a new `provider` block in
 the second one, so it can provision a valid [API token][api_token]. This operation must be done separately as a `provider` block
-can't log in as a user created in the same run.
+can't log in with a user created in the same run.
 
 ### Step 1: Configure Settings for CSE Server
 
@@ -55,7 +55,7 @@ In this [configuration][step1] there is also a file named `terraform.tfvars.exam
 and its values to be set to the correct ones. In general, for this specific step, the proposed HCL files (`.tf`) should not be
 modified and be applied as they are.
 
-### RDE Interfaces, Types and Behaviors
+#### RDE Interfaces, Types and Behaviors
 
 CSE v4.1 requires a set of Runtime Defined Entity items, such as [Interfaces][rde_interface], [Types][rde_type] and [Behaviors][rde_interface_behavior].
 In the [proposed configuration][step1] you can find the following:
@@ -69,7 +69,7 @@ In the [proposed configuration][step1] you can find the following:
 - The required [RDE Interface Behaviors][rde_interface_behavior] used to retrieve critical information from the [TKGm clusters][tkgm_docs],
   for example, the resulting **Kubeconfig**.
 
-### RDE (CSE Server configuration / VCDKEConfig)
+#### RDE (CSE Server configuration / VCDKEConfig)
 
 The CSE Server configuration lives in a [Runtime Defined Entity][rde] that uses the `VCDKEConfig` [RDE Type][rde_type].
 To customise it, the [sample configuration][step1] asks for the following variables that you can set in `terraform.tfvars`:
@@ -101,7 +101,7 @@ To customise it, the [sample configuration][step1] asks for the following variab
 - `k8s_cluster_certificates` (Optional): Certificate(s) to allow clusters to authenticate with.
   For example, when pulling images from a container registry.
 
-### Rights, Roles and VM Sizing Policies
+#### Rights, Roles and VM Sizing Policies
 
 CSE v4.1 requires a set of new [Rights Bundles][rights_bundle], [Roles][role] and [VM Sizing Policies][sizing] that are also created
 in this step of the [proposed configuration][step1]. Nothing should be customised here, except for the "CSE Administrator"
@@ -177,7 +177,7 @@ In case you're using a pre-uploaded OVA, leverage the [vcd_catalog_vapp_template
 
 If you need to upload more than one OVA, please modify the [proposed configuration][step2].
 
-### Networking
+#### Networking
 
 The [proposed configuration][step2] prepares a basic networking layout that will make CSE v4.1 work. However, it is
 recommended that you review the code and adapt the different parts to your needs, specially for the resources like `vcd_nsxt_firewall`.
@@ -259,7 +259,7 @@ In order to create all the items listed above, the [proposed configuration][step
 
 If you wish to have a different networking setup, please modify the [proposed configuration][step2].
 
-### CSE Server
+#### CSE Server
 
 There is also a set of resources created by the [proposed configuration][step2] that correspond to the CSE Server vApp.
 The generated VM makes use of the uploaded CSE OVA and some required guest properties:
@@ -268,7 +268,7 @@ The generated VM makes use of the uploaded CSE OVA and some required guest prope
 - `cse_admin_password`: This must be the same CSE Administrator user's password created in the first step.
 - `cse_admin_api_token_file`: This specifies the path where the API token is saved and consumed.
 
-### UI plugin installation
+#### UI plugin installation
 
 -> If the old CSE 3.x plugin is installed, you will need to remove it before installing the new one.
 
@@ -311,7 +311,7 @@ resource "vcd_nsxt_nat_rule" "solutions_nat" {
 Once you gain access to the CSE Server, you can check the `cse.log` file, the configuration file or check Internet connectivity.
 If something does not work, please check the **Troubleshooting** section below.
 
-#### Troubleshooting
+## Troubleshooting
 
 To evaluate the correctness of the setup, you can check the _"Verifying that the setup works"_ section above.
 
@@ -334,7 +334,7 @@ The most common issues are:
 - Cluster creation is failing:
   - Please visit the [CSE documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
 
-## Update from CSE v4.0 to v4.1
+## Upgrade from CSE v4.0 to v4.1
 
 In this section you can find the required steps to update from CSE v4.0 to v4.1.
 
@@ -459,7 +459,7 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 
 This will re-deploy the VM with the new CSE v4.1.
 
-## Update Configuration
+## Update CSE Server Configuration
 
 To make changes to the existing server configuration, you should be able to locate the [`vcd_rde`][rde] resource named `vcdkeconfig_instance`
 in the [proposed configuration][step2] that was created during the installation process. To update its configuration, you can
