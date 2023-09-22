@@ -2,8 +2,9 @@ package vcd
 
 import (
 	"context"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"log"
+
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
@@ -225,6 +226,16 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				Computed:    true,
 				Description: "ID of NSX-T Edge Cluster (provider vApp networking services and DHCP capability for Isolated networks)",
 			},
+			"vdc_networks_default_segment_profile_template_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Default NSX-T Segment Profile for Org VDC networks",
+			},
+			"vapp_networks_default_segment_profile_template_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Default NSX-T Segment Profile for vApp networks",
+			},
 			"enable_nsxv_distributed_firewall": {
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -256,7 +267,7 @@ func datasourceVcdOrgVdcRead(_ context.Context, d *schema.ResourceData, meta int
 		return diagErr
 	}
 
-	err = setEdgeClusterData(d, adminVdc, "data.vcd_org_vdc")
+	err = setVdcNetworkProfileData(d, adminVdc, "data.vcd_org_vdc")
 	if err != nil {
 		return diag.FromErr(err)
 	}

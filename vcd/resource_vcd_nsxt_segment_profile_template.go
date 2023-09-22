@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
@@ -17,9 +18,9 @@ func resourceVcdSegmentProfileTemplate() *schema.Resource {
 		ReadContext:   resourceVcdSegmentProfileTemplateRead,
 		UpdateContext: resourceVcdSegmentProfileTemplateUpdate,
 		DeleteContext: resourceVcdSegmentProfileTemplateDelete,
-		// Importer: &schema.ResourceImporter{
-		// 	StateContext: resourceVcdSegmentProfileTemplateImport,
-		// },
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceVcdSegmentProfileTemplateImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"nsxt_manager_id": {
@@ -34,7 +35,7 @@ func resourceVcdSegmentProfileTemplate() *schema.Resource {
 			},
 			"description": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "NSX-T Segment Profile Template name",
 			},
 
@@ -72,10 +73,6 @@ func resourceVcdSegmentProfileTemplateCreate(ctx context.Context, d *schema.Reso
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("this resource is only supported for Providers")
 	}
-
-	// nsxtManager, err := vcd.client.GetNsxtManagerByName(vcd.config.VCD.Nsxt.Manager)
-	// check.Assert(err, IsNil)
-	// check.Assert(nsxtManager, NotNil)
 
 	segmentProfileTemplateCfg := getNsxtSegmentProfileTemplateType(d)
 	createdSegmentProfileTemplate, err := vcdClient.CreateSegmentProfileTemplate(segmentProfileTemplateCfg)
@@ -149,21 +146,21 @@ func resourceVcdSegmentProfileTemplateDelete(_ context.Context, d *schema.Resour
 	return nil
 }
 
-// func resourceVcdSegmentProfileTemplateImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-// 	vcdClient := meta.(*VCDClient)
-// 	if !vcdClient.Client.IsSysAdmin {
-// 		return nil, fmt.Errorf("this resource is only supported for Providers")
-// 	}
+func resourceVcdSegmentProfileTemplateImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	vcdClient := meta.(*VCDClient)
+	if !vcdClient.Client.IsSysAdmin {
+		return nil, fmt.Errorf("this resource is only supported for Providers")
+	}
 
-// 	resourceURI := d.Id()
-// 	albController, err := vcdClient.GetSegmentProfileTemplateByName(resourceURI)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("error finding NSX-T Segment Profile Template with Name '%s': %s", d.Id(), err)
-// 	}
+	resourceURI := d.Id()
+	spt, err := vcdClient.GetSegmentProfileTemplateByName(resourceURI)
+	if err != nil {
+		return nil, fmt.Errorf("error finding NSX-T Segment Profile Template with Name '%s': %s", d.Id(), err)
+	}
 
-// 	d.SetId(albController.NsxtSegmentProfileTemplate.ID)
-// 	return []*schema.ResourceData{d}, nil
-// }
+	d.SetId(spt.NsxtSegmentProfileTemplate.ID)
+	return []*schema.ResourceData{d}, nil
+}
 
 func getNsxtSegmentProfileTemplateType(d *schema.ResourceData) *types.NsxtSegmentProfileTemplate {
 
@@ -184,8 +181,35 @@ func getNsxtSegmentProfileTemplateType(d *schema.ResourceData) *types.NsxtSegmen
 func setNsxtSegmentProfileTemplateData(d *schema.ResourceData, config *types.NsxtSegmentProfileTemplate) {
 	dSet(d, "name", config.Name)
 	dSet(d, "description", config.Description)
-	// dSet(d, "url", albController.Url)
-	// dSet(d, "username", albController.Username)
-	// dSet(d, "license_type", albController.LicenseType)
-	// dSet(d, "version", albController.Version)
+
+	dSet(d, "nsxt_manager_id", "")
+	if config.SourceNsxTManagerRef != nil {
+		dSet(d, "nsxt_manager_id", config.SourceNsxTManagerRef.ID)
+	}
+
+	dSet(d, "ip_discovery_profile_id", "")
+	if config.IPDiscoveryProfile != nil {
+		dSet(d, "ip_discovery_profile_id", config.IPDiscoveryProfile.ID)
+	}
+
+	dSet(d, "mac_discovery_profile_id", "")
+	if config.MacDiscoveryProfile != nil {
+		dSet(d, "mac_discovery_profile_id", config.MacDiscoveryProfile.ID)
+	}
+
+	dSet(d, "qos_profile_id", "")
+	if config.QosProfile != nil {
+		dSet(d, "qos_profile_id", config.QosProfile.ID)
+	}
+
+	dSet(d, "segment_security_profile_id", "")
+	if config.SegmentSecurityProfile != nil {
+		dSet(d, "segment_security_profile_id", config.SegmentSecurityProfile.ID)
+	}
+
+	dSet(d, "spoof_guard_profile_id", "")
+	if config.SpoofGuardProfile != nil {
+		dSet(d, "spoof_guard_profile_id", config.SpoofGuardProfile.ID)
+	}
+
 }

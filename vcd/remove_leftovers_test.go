@@ -435,6 +435,10 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		}
 	}
 
+	// --------------------------------------------------------------
+	// Segment Profile Templates
+	// --------------------------------------------------------------
+
 	return nil
 }
 
