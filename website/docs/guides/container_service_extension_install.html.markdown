@@ -430,12 +430,12 @@ Please notice that you need to upgrade the CAPVCD, CPI and CSI versions. The new
 
 ### Update Rights and Roles
 
-There are differences between the rights needed in v4.1 and v4.1. You can check the resources `vcd_rights_bundle.k8s_clusters_rights_bundle` and
-`vcd_global_role.k8s_cluster_author` in the [proposed configuration][step2] to see the new required set of rights.
+There are differences between the rights needed in v4.0 and v4.1. You can check the resources `vcd_rights_bundle.k8s_clusters_rights_bundle` and
+`vcd_global_role.k8s_cluster_author` in the [proposed configuration][step1] to see the new required set of rights.
 
 ### Upload the new CSE v4.1 OVA
 
-You need to upload the new CSE v4.1 OVA to the `cse_catalog` that already hosts the v4.0.
+You need to upload the new CSE v4.1 OVA to the `cse_catalog` that already hosts the CSE v4.0 one.
 To download the required OVAs, please refer to the [CSE documentation][cse_docs].
 
 ```hcl
@@ -461,7 +461,7 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 }
 ```
 
-This will re-deploy the VM with the new CSE v4.1.
+This will re-deploy the VM with the new CSE v4.1 Server.
 
 ## Update CSE Server Configuration
 
