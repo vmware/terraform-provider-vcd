@@ -61,7 +61,7 @@ CSE v4.1 requires a set of Runtime Defined Entity items, such as [Interfaces][rd
 In the [proposed configuration][step1] you can find the following:
 
 - The required `VCDKEConfig` [RDE Interface][rde_interface] and [RDE Type][rde_type]. These two resources specify the schema of the **CSE Server
-  configuration** (called "VCDKEConfig") that will be instantiated with a [RDE][rde].
+  configuration** that will be instantiated with a [RDE][rde].
 
 - The required `capvcd` [RDE Interface][rde_interface] and `capvcdCluster` [RDE Type][rde_type].
   These two resources specify the schema of the [TKGm clusters][tkgm_docs].
@@ -74,32 +74,35 @@ In the [proposed configuration][step1] you can find the following:
 The CSE Server configuration lives in a [Runtime Defined Entity][rde] that uses the `VCDKEConfig` [RDE Type][rde_type].
 To customise it, the [sample configuration][step1] asks for the following variables that you can set in `terraform.tfvars`:
 
-- `vcdkeconfig_template_filepath` references a local file that defines the `VCDKEConfig` [RDE][rde] contents. It should be a JSON template, like
-  [the one used in the configuration](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/entities/vcdkeconfig.json.template).
-  (Note: In `terraform.tfvars.example` the correct path is already provided).
-- `capvcd_version`: The version for CAPVCD. By default, is "1.1.0" for CSE v4.1. Do not confuse with the version of the `capvcdCluster` [RDE Type][rde_type],
-  which **must be "1.2.0"** for CSE v4.1 and cannot be changed through a variable.
-- `cpi_version`: The version for CPI (Cloud Provider Interface). By default, is "1.4.0" for CSE v4.1.
-- `csi_version`: The version for CSI (Cloud Storage Interface). By default, is "1.4.0" for CSE v4.1.
+- `vcdkeconfig_template_filepath` references a local file that defines the `VCDKEConfig` [RDE][rde] contents.
+  It should be a JSON with template variables that Terraform can interpret, like
+  [the RDE template file for CSE v4.1](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/entities/vcdkeconfig.json.template)
+  used in the sample configuration, that can be rendered correctly with the Terraform built-in function `templatefile`.
+  (Note: In `terraform.tfvars.example` the path for the CSE v4.1 RDE contents is already provided).
+- `capvcd_version`: The version for CAPVCD. By default, is **"1.1.0"** for CSE v4.1.
+  (Note: Do not confuse with the version of the `capvcdCluster` [RDE Type][rde_type],
+  which **must be "1.2.0"** for CSE v4.1 and cannot be changed through a variable).
+- `cpi_version`: The version for CPI (Cloud Provider Interface). By default, is **"1.4.0"** for CSE v4.1.
+- `csi_version`: The version for CSI (Cloud Storage Interface). By default, is **"1.4.0"** for CSE v4.1.
 - `github_personal_access_token`: Create this one [here](https://github.com/settings/tokens),
   this will avoid installation errors caused by GitHub rate limiting, as the TKGm cluster creation process requires downloading
   some Kubernetes components from GitHub.
   The token should have the `public_repo` scope for classic tokens and `Public Repositories` for fine-grained tokens.
-- `http_proxy` (Optional): Address of your HTTP proxy server.
-- `https_proxy` (Optional): Address of your HTTPS proxy server.
-- `no_proxy` (Optional): A list of comma-separated domains without spaces that indicate the targets that must **not** go through the configured proxy.
-- `syslog_host` (Optional): Domain where to send the system logs.
-- `syslog_port` (Optional): Port where to send the system logs.
-- `node_startup_timeout`: A node will be considered unhealthy and remediated if joining the cluster takes longer than this timeout (seconds, defaults to 900).
-- `node_not_ready_timeout`: A newly joined node will be considered unhealthy and remediated if it cannot host workloads for longer than this timeout (seconds, defaults to 300).
-- `node_unknown_timeout`: A healthy node will be considered unhealthy and remediated if it is unreachable for longer than this timeout (seconds, defaults to 300).
+- `http_proxy`: Address of your HTTP proxy server. Optional in the sample configuration.
+- `https_proxy`: Address of your HTTPS proxy server. Optional in the sample configuration.
+- `no_proxy`: A list of comma-separated domains without spaces that indicate the targets that must **not** go through the configured proxy. Optional in the sample configuration.
+- `syslog_host`: Domain where to send the system logs. Optional in the sample configuration.
+- `syslog_port`: Port where to send the system logs. Optional in the sample configuration.
+- `node_startup_timeout`: A node will be considered unhealthy and remediated if joining the cluster takes longer than this timeout (seconds, defaults to 900 in the sample configuration).
+- `node_not_ready_timeout`: A newly joined node will be considered unhealthy and remediated if it cannot host workloads for longer than this timeout (seconds, defaults to 300 in the sample configuration).
+- `node_unknown_timeout`: A healthy node will be considered unhealthy and remediated if it is unreachable for longer than this timeout (seconds, defaults to 300 in the sample configuration).
 - `max_unhealthy_node_percentage`: Remediation will be suspended when the number of unhealthy nodes exceeds this percentage.
-  (100% means that unhealthy nodes will always be remediated, while 0% means that unhealthy nodes will never be remediated)
-- `container_registry_url` (Optional): URL from where TKG clusters will fetch container images, useful for VCD appliances that are completely isolated from Internet.
-- `bootstrap_vm_certificates` (Optional): Certificate(s) to allow the ephemeral VM (created during cluster creation) to authenticate with.
-  For example, when pulling images from a container registry.
-- `k8s_cluster_certificates` (Optional): Certificate(s) to allow clusters to authenticate with.
-  For example, when pulling images from a container registry.
+  (100% means that unhealthy nodes will always be remediated, while 0% means that unhealthy nodes will never be remediated). Defaults to 100 in the sample configuration.
+- `container_registry_url`: URL from where TKG clusters will fetch container images, useful for VCD appliances that are completely isolated from Internet. Defaults to "projects.registry.vmware.com" in the sample configuration.
+- `bootstrap_vm_certificates`: Certificate(s) to allow the ephemeral VM (created during cluster creation) to authenticate with.
+  For example, when pulling images from a container registry. Optional in the sample configuration.
+- `k8s_cluster_certificates`: Certificate(s) to allow clusters to authenticate with.
+  For example, when pulling images from a container registry. Optional in the sample configuration.
 
 #### Rights, Roles and VM Sizing Policies
 
@@ -107,8 +110,9 @@ CSE v4.1 requires a set of new [Rights Bundles][rights_bundle], [Roles][role] an
 in this step of the [proposed configuration][step1]. Nothing should be customised here, except for the "CSE Administrator"
 account to be created, where you can provide a username of your choice (`cse_admin_username`) and its password (`cse_admin_password`).
 
-This account will be used to provision an [API Token][api_token] to deploy the CSE Server, in the next step. Once all variables are reviewed and set,
-you can start the installation with `terraform apply`. When it finishes successfully, you can continue with the **step 2**.
+This account will be used to provision an [API Token][api_token] to deploy the CSE Server, in the next step.
+
+Once all variables are reviewed and set, you can start the installation with `terraform apply`. When it finishes successfully, you can continue with the **step 2**.
 
 ### Step 2: Create the infrastructure and deploy the CSE Server
 
