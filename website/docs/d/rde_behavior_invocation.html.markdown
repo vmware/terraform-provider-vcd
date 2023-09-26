@@ -77,6 +77,12 @@ output "rde_behavior_invocation_output" {
 }
 ```
 
+## Known caveats
+
+* Executing a `terraform destroy` will cause a refresh that will invoke the Behavior. To avoid this situation, you can
+  remove the `vcd_rde_behavior_invocation` data source from the HCL configuration before running the destroy operation,
+  or use the `-refresh=false` flag (this will skip the refresh for all resources).
+
 ## Argument Reference
 
 The following arguments are supported:
