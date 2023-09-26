@@ -52,11 +52,12 @@ func resourceVcdRdeTypeBehaviorAccessLevelCreate(ctx context.Context, d *schema.
 func resourceVcdRdeTypeBehaviorAccessLevelCreateOrUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
 	// A mutex is required as we use the method SetBehaviorAccessControls which sets and overrides all Access Levels given in the
 	// input. If two or more resources are created/updated at the same time, they would clash with each other.
-	key := "vcd_rde_type_behavior_acl"
+	rdeTypeId := d.Get("rde_type_id").(string)
+	key := "vcd_rde_type_behavior_acl." + rdeTypeId
 	vcdMutexKV.kvLock(key)
+	defer vcdMutexKV.kvUnlock(key)
 
 	vcdClient := meta.(*VCDClient)
-	rdeTypeId := d.Get("rde_type_id").(string)
 	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
 	if err != nil {
 		return diag.Errorf("[RDE Type Behavior Access Level %s] could not retrieve the RDE Type with ID '%s': %s", operation, rdeTypeId, err)
@@ -96,7 +97,6 @@ func resourceVcdRdeTypeBehaviorAccessLevelCreateOrUpdate(ctx context.Context, d 
 	if err != nil {
 		return diag.Errorf("[RDE Type Behavior Access Level %s] could not set the Behavior '%s' Access Levels: %s", operation, behavior.ID, err)
 	}
-	vcdMutexKV.kvUnlock(key)
 	return genericVcdRdeTypeBehaviorAccessLevelRead(ctx, d, meta)
 }
 
@@ -146,11 +146,12 @@ func resourceVcdRdeTypeBehaviorAccessLevelUpdate(ctx context.Context, d *schema.
 func resourceVcdRdeTypeBehaviorAccessLevelDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// A mutex is required as we use the method SetBehaviorAccessControls which sets and overrides all Access Levels given in the
 	// input. If two or more resources are deleted at the same time, they would clash with each other.
-	key := "vcd_rde_type_behavior_acl"
+	rdeTypeId := d.Get("rde_type_id").(string)
+	key := "vcd_rde_type_behavior_acl." + rdeTypeId
 	vcdMutexKV.kvLock(key)
+	defer vcdMutexKV.kvUnlock(key)
 
 	vcdClient := meta.(*VCDClient)
-	rdeTypeId := d.Get("rde_type_id").(string)
 	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
 	if err != nil {
 		return diag.Errorf("[RDE Type Behavior Access Level delete] could not retrieve the RDE Type with ID '%s': %s", rdeTypeId, err)
@@ -172,7 +173,6 @@ func resourceVcdRdeTypeBehaviorAccessLevelDelete(_ context.Context, d *schema.Re
 		return diag.Errorf("[RDE Type Behavior Access Level delete] could not delete the Access Levels of RDE Type with ID '%s': %s", rdeTypeId, err)
 	}
 
-	vcdMutexKV.kvUnlock(key)
 	return nil
 }
 
