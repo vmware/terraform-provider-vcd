@@ -87,8 +87,8 @@ The following arguments are supported:
   the [RDE Interface Behavior](/providers/vmware/vcd/latest/docs/resources/rde_type_behavior) to invoke
 * `arguments` - (Optional) A map with the arguments of the invocation
 * `metadata` - (Optional) A map with the metadata of the invocation
-* `invoke_on_refresh` - (Optional) Defaults to `true`, indicates whether the Behavior should be invoked on every refresh. It can be useful
-  to suppress the invocation on the refresh step of `terraform destroy` operations, or to stop invoking a given Behavior temporarily, for example.
+* `invoke_on_refresh` - (Optional) Defaults to `true`, indicates whether the Behavior should be invoked on every refresh.
+  E.g. to suppress the invocation on the refresh step of `terraform destroy` operations, or to stop invoking a given Behavior temporarily.
 
 ## Attribute Reference
 
