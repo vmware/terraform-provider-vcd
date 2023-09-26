@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -19,7 +20,7 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnel() *schema.Resource {
 		UpdateContext: resourceVcdNsxtEdgegatewayL2VpnTunnelUpdate,
 		DeleteContext: resourceVcdNsxtEdgegatewayL2VpnTunnelDestroy,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdNsxtEdgegatewayDhcpForwardingImport,
+			StateContext: resourceVcdNsxtEdgegatewayL2VpnTunnelImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -55,8 +56,9 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnel() *schema.Resource {
 			},
 			"enabled": {
 				Type:        schema.TypeBool,
-				Required:    true,
-				Description: "Status of the L2 VPN Tunnel session",
+				Optional:    true,
+				Default:     true,
+				Description: "Status of the L2 VPN Tunnel session. Always set to `true` for CLIENT sessions",
 			},
 			"local_endpoint_ip": {
 				Type:         schema.TypeString,
@@ -272,10 +274,11 @@ func readL2VpnTunnelFromSchema(d *schema.ResourceData) (*types.NsxtL2VpnTunnel, 
 			},
 		}
 		// SERVER sessions auto-assign tunnel IDs
-		if sessionMode == "CLIENT" && networkDefinition["tunnel_id"].(int) != 0 {
+		if sessionMode == "CLIENT" {
+			if networkDefinition["tunnel_id"].(int) == 0 {
+				return nil, fmt.Errorf("tunnel ID must be set for CLIENT sessions")
+			}
 			oneNetwork.TunnelID = networkDefinition["tunnel_id"].(int)
-		}
-		{
 		}
 		stretchedNetworks[rangeIndex] = oneNetwork
 	}
@@ -284,7 +287,6 @@ func readL2VpnTunnelFromSchema(d *schema.ResourceData) (*types.NsxtL2VpnTunnel, 
 		Name:              name,
 		Description:       description,
 		SessionMode:       sessionMode,
-		Enabled:           enabled,
 		LocalEndpointIp:   localEndpointIp,
 		RemoteEndpointIp:  remoteEndpointIp,
 		StretchedNetworks: stretchedNetworks,
@@ -293,6 +295,7 @@ func readL2VpnTunnelFromSchema(d *schema.ResourceData) (*types.NsxtL2VpnTunnel, 
 	// Server and Client tunnel sessions require and provide different parameters
 	if sessionMode == "SERVER" {
 		tunnel.TunnelInterface = tunnelInterface
+		tunnel.Enabled = enabled
 		if connectorInitiationMode == "" {
 			return nil, fmt.Errorf("connector initiation mode must be set for `SERVER` sessions")
 		}
@@ -304,6 +307,11 @@ func readL2VpnTunnelFromSchema(d *schema.ResourceData) (*types.NsxtL2VpnTunnel, 
 	}
 
 	if sessionMode == "CLIENT" {
+		// There is a known bug with CLIENT mode sessions up to 10.5.0, they are always active and can't be disabled.
+		if !enabled {
+			return nil, fmt.Errorf("`enabled` must always be set to `true` for `CLIENT` sessions")
+		}
+		tunnel.Enabled = true
 		if peerCode == "" {
 			return nil, fmt.Errorf("peer code must be set for `CLIENT` sessions")
 		}
@@ -348,4 +356,44 @@ func readL2VpnTunnelToSchema(tunnel *types.NsxtL2VpnTunnel, d *schema.ResourceDa
 	}
 
 	return nil
+}
+
+func resourceVcdNsxtEdgegatewayL2VpnTunnelImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[TRACE] NSX-T Edge Gateway L2 VPN Tunnel import initiated")
+
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 4 {
+		return nil, fmt.Errorf("resource name must be specified as " +
+			"org-name.vdc-name.nsxt-edge-gw-name.l2-vpn-tunnel-name or " +
+			"org-name.vdc-group-name.nsxt-edge-gw-name.l2-vpn-tunnel-name")
+	}
+	orgName, vdcOrVdcGroupName, edgeName, tunnelName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+
+	vcdClient := meta.(*VCDClient)
+	vdcOrVdcGroup, err := lookupVdcOrVdcGroup(vcdClient, orgName, vdcOrVdcGroupName)
+	if err != nil {
+		return nil, err
+	}
+
+	if !vdcOrVdcGroup.IsNsxt() {
+		return nil, fmt.Errorf("edge gateway not backed by NSX-T")
+	}
+
+	edge, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeName)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve NSX-T Edge Gateway with ID '%s': %s", d.Id(), err)
+	}
+
+	tunnel, err := edge.GetL2VpnTunnelByName(tunnelName)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve L2 VPN Tunnel name with ID '%s': %s", d.Id(), err)
+	}
+
+	dSet(d, "org", orgName)
+	dSet(d, "edge_gateway_id", edge.EdgeGateway.ID)
+
+	// Storing Edge Gateway ID and Read will retrieve all other data
+	d.SetId(tunnel.NsxtL2VpnTunnel.ID)
+
+	return []*schema.ResourceData{d}, nil
 }
