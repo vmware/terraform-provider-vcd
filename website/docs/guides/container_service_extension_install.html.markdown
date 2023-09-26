@@ -21,7 +21,7 @@ To know more about CSE v4.1, you can visit [the documentation][cse_docs].
 
 In order to complete the steps described in this guide, please be aware:
 
-* CSE v4.1 is supported from VCD v10.4.2 or above, as specified in the [Product Interoperability Matrix](https://interopmatrix.vmware.com/Interoperability?col=659,&row=0).
+* CSE v4.1 is supported from VCD v10.4.2 or above, as specified in the [Product Interoperability Matrix][product_matrix].
   Please check that the target VCD appliance matches the criteria.
 * Terraform provider needs to be v3.11.0 or above.
 * Both CSE Server and the Bootstrap clusters require outbound Internet connectivity.
@@ -173,7 +173,8 @@ Then it will upload the required OVAs to them. The OVAs can be specified in `ter
 - `cse_ova_folder`: This will reference the path to the CSE OVA, as an absolute or relative path. It should **not** end with a trailing `/`.
 - `cse_ova_file`: This will reference the file name of the CSE OVA, like `VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova`.
 
--> To download the required OVAs, please refer to the [CSE documentation][cse_docs].
+-> To download the required OVAs, please refer to the [CSE documentation][cse_docs]. 
+You can also check the [Product Interoperability Matrix][product_matrix] to confirm the appropriate version of TKGm.
 
 ~> Both CSE Server and TKGm OVAs are heavy. Please take into account that the upload process could take more than 30 minutes, depending
 on upload speed. You can tune the `upload_piece_size` to speed up the upload. Another option would be uploading them manually in the UI.
@@ -503,14 +504,14 @@ In the [proposed configuration][step2], you can find the `cse_ova` [vApp Templat
 Then you can create a new `vcd_catalog_vapp_template` and modify `cse_server_vm` to reference it:
 
 ```hcl
-# Uploads a new CSE Server OVA. In the example below, we upload version 4.0.2
+# Uploads a new CSE Server OVA. In the example below, we upload version 4.1.0
 resource "vcd_catalog_vapp_template" "new_cse_ova" {
   org        = vcd_org.solutions_organization.name # References the Solutions Organization
   catalog_id = vcd_catalog.cse_catalog.id          # References the CSE Catalog
 
-  name        = "VMware_Cloud_Director_Container_Service_Extension-4.0.2"
-  description = "VMware_Cloud_Director_Container_Service_Extension-4.0.2"
-  ova_path    = "/home/bob/cse/VMware_Cloud_Director_Container_Service_Extension-4.0.2.ova"
+  name        = "VMware_Cloud_Director_Container_Service_Extension-4.1.0"
+  description = "VMware_Cloud_Director_Container_Service_Extension-4.1.0"
+  ova_path    = "/home/bob/cse/VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova"
 }
 
 # ...
@@ -546,6 +547,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [nsxt_tier0_router]: /providers/vmware/vcd/latest/docs/data-sources/nsxt_tier0_router
 [org]: /providers/vmware/vcd/latest/docs/resources/org
 [org_d]: /providers/vmware/vcd/latest/docs/data-sources/org
+[product_matrix]: https://interopmatrix.vmware.com/Interoperability?col=659,&row=0
 [provider_gateway]: /providers/vmware/vcd/latest/docs/resources/external_network_v2
 [provider_vdc]: /providers/vmware/vcd/latest/docs/data-sources/provider_vdc
 [rights_bundle]: /providers/vmware/vcd/latest/docs/resources/rights_bundle
