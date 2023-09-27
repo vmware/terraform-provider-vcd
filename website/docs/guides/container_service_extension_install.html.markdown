@@ -169,7 +169,7 @@ The [proposed configuration][step2] will create two catalogs:
 Then it will upload the required OVAs to them. The OVAs can be specified in `terraform.tfvars`:
 
 - `tkgm_ova_folder`: This will reference the path to the TKGm OVA, as an absolute or relative path. It should **not** end with a trailing `/`.
-- `tkgm_ova_file`: This will reference the file name of the TKGm OVA, like `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova`.
+- `tkgm_ova_file`: This will reference the file name of the TKGm OVA, like `ubuntu-2004-kube-v1.24.11+vmware.1-tkg.1-2ccb2a001f8bd8f15f1bfbc811071830.ova`.
 - `cse_ova_folder`: This will reference the path to the CSE OVA, as an absolute or relative path. It should **not** end with a trailing `/`.
 - `cse_ova_file`: This will reference the file name of the CSE OVA, like `VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova`.
 
