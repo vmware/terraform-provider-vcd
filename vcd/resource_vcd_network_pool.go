@@ -247,9 +247,7 @@ func resourceNetworkPoolCreate(ctx context.Context, d *schema.ResourceData, meta
 				dsName = ds.Name
 				break
 			}
-			for _, r := range backing.VlanIdRanges.Values {
-				ranges = append(ranges, r)
-			}
+			ranges = append(ranges, backing.VlanIdRanges.Values...)
 		}
 		networkPool, err = vcdClient.CreateNetworkPoolVlan(
 			networkPoolName,
