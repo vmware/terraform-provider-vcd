@@ -167,11 +167,11 @@ func getNsxtSegmentProfileTemplateType(d *schema.ResourceData) *types.NsxtSegmen
 	config := &types.NsxtSegmentProfileTemplate{
 		Name:                   d.Get("name").(string),
 		Description:            d.Get("description").(string),
-		IPDiscoveryProfile:     &types.NsxtSegmentProfileTemplateReference{ID: d.Get("ip_discovery_profile_id").(string)},
-		MacDiscoveryProfile:    &types.NsxtSegmentProfileTemplateReference{ID: d.Get("mac_discovery_profile_id").(string)},
-		QosProfile:             &types.NsxtSegmentProfileTemplateReference{ID: d.Get("qos_profile_id").(string)},
-		SegmentSecurityProfile: &types.NsxtSegmentProfileTemplateReference{ID: d.Get("segment_security_profile_id").(string)},
-		SpoofGuardProfile:      &types.NsxtSegmentProfileTemplateReference{ID: d.Get("spoof_guard_profile_id").(string)},
+		IPDiscoveryProfile:     &types.OpenApiReferenceWithType{ID: d.Get("ip_discovery_profile_id").(string)},
+		MacDiscoveryProfile:    &types.OpenApiReferenceWithType{ID: d.Get("mac_discovery_profile_id").(string)},
+		QosProfile:             &types.OpenApiReferenceWithType{ID: d.Get("qos_profile_id").(string)},
+		SegmentSecurityProfile: &types.OpenApiReferenceWithType{ID: d.Get("segment_security_profile_id").(string)},
+		SpoofGuardProfile:      &types.OpenApiReferenceWithType{ID: d.Get("spoof_guard_profile_id").(string)},
 		SourceNsxTManagerRef:   &types.OpenApiReference{ID: d.Get("nsxt_manager_id").(string)},
 	}
 

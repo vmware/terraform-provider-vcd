@@ -133,6 +133,13 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 				ConflictsWith: []string{"metadata_entry"},
 			},
 			"metadata_entry": metadataEntryResourceSchema("Network"),
+			// Segment Profile Template cannot be retrieved using `GET` endpoints. Only supports
+			// POST/PUT
+			"segment_profile_template_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Segment Profile Template ID",
+			},
 		},
 	}
 }
@@ -426,6 +433,8 @@ func getOpenApiOrgVdcRoutedNetworkType(d *schema.ResourceData, vcdClient *VCDCli
 	if err != nil {
 		return nil, err
 	}
+
+	getOpenApiOrgVdcNetworkSegmentProfileTemplateSetting(d, orgVdcNetworkConfig)
 
 	return orgVdcNetworkConfig, nil
 }

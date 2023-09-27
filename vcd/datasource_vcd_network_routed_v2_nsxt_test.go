@@ -17,14 +17,22 @@ func TestAccVcdNetworkRoutedV2NsxtDS(t *testing.T) {
 
 	// String map to fill the template
 	var params = StringMap{
-		"Org":                  testConfig.VCD.Org,
-		"EdgeGw":               testConfig.Nsxt.EdgeGateway,
-		"NetworkName":          t.Name(),
-		"Tags":                 "network nsxt",
-		"MetadataKey":          "key1",
-		"MetadataValue":        "value1",
-		"MetadataKeyUpdated":   "key2",
-		"MetadataValueUpdated": "value2",
+		"Org":                        testConfig.VCD.Org,
+		"NsxtVdc":                    testConfig.Nsxt.Vdc,
+		"EdgeGw":                     testConfig.Nsxt.EdgeGateway,
+		"NetworkName":                t.Name(),
+		"Tags":                       "network nsxt",
+		"MetadataKey":                "key1",
+		"MetadataValue":              "value1",
+		"MetadataKeyUpdated":         "key2",
+		"MetadataValueUpdated":       "value2",
+		"TestName":                   t.Name(),
+		"NsxtManager":                testConfig.Nsxt.Manager,
+		"IpDiscoveryProfileName":     testConfig.Nsxt.IpDiscoveryProfile,
+		"MacDiscoveryProfileName":    testConfig.Nsxt.MacDiscoveryProfile,
+		"QosProfileName":             testConfig.Nsxt.QosProfile,
+		"SpoofGuardProfileName":      testConfig.Nsxt.SpoofGuardProfile,
+		"SegmentSecurityProfileName": testConfig.Nsxt.SegmentSecurityProfile,
 	}
 	testParamsNotEmpty(t, params)
 
@@ -58,24 +66,30 @@ func TestAccVcdNetworkRoutedV2NsxtDS(t *testing.T) {
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
-					// Ensure that all fields are the same except field count '%' (because datasource has `filter` field)
-					resourceFieldsEqual("vcd_network_routed_v2.net1", "data.vcd_network_routed_v2.ds", []string{"%"}),
+					// Ensure that all fields are the same except field count '%' (because
+					// datasource has `filter` field) and `segment_profile_template_id` that cannot
+					// be read
+					resourceFieldsEqual("vcd_network_routed_v2.net1", "data.vcd_network_routed_v2.ds", []string{"%", "segment_profile_template_id"}),
 				),
 			},
 			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
-					// Ensure that all fields are the same except field count '%' (because datasource has `filter` field)
-					resourceFieldsEqual("vcd_network_routed_v2.net1", "data.vcd_network_routed_v2.ds", []string{"%"}),
+					// Ensure that all fields are the same except field count '%' (because
+					// datasource has `filter` field) and `segment_profile_template_id` that cannot
+					// be read
+					resourceFieldsEqual("vcd_network_routed_v2.net1", "data.vcd_network_routed_v2.ds", []string{"%", "segment_profile_template_id"}),
 				),
 			},
 			{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
-					// Ensure that all fields are the same except field count '%' (because datasource has `filter` field)
-					resourceFieldsEqual("vcd_network_routed_v2.net1", "data.vcd_network_routed_v2.ds", []string{"%"}),
+					// Ensure that all fields are the same except field count '%' (because
+					// datasource has `filter` field) and `segment_profile_template_id` that cannot
+					// be read
+					resourceFieldsEqual("vcd_network_routed_v2.net1", "data.vcd_network_routed_v2.ds", []string{"%", "segment_profile_template_id"}),
 				),
 			},
 		},

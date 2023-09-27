@@ -126,6 +126,13 @@ func resourceVcdNetworkIsolatedV2() *schema.Resource {
 				ConflictsWith: []string{"metadata_entry"},
 			},
 			"metadata_entry": metadataEntryResourceSchema("Network"),
+			// Segment Profile Template cannot be retrieved using `GET` endpoints. Only supports
+			// POST/PUT
+			"segment_profile_template_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Segment Profile Template ID",
+			},
 		},
 	}
 }
@@ -345,6 +352,8 @@ func setOpenApiOrgVdcIsolatedNetworkData(d *schema.ResourceData, orgVdcNetwork *
 		}
 	}
 
+	// segment_profile_template_id cannot be read from API - it is never returned
+
 	return nil
 }
 
@@ -388,6 +397,8 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 		return nil, err
 	}
 
+	getOpenApiOrgVdcNetworkSegmentProfileTemplateSetting(d, orgVdcNetworkConfig)
+
 	return orgVdcNetworkConfig, nil
 }
 
@@ -400,4 +411,12 @@ func createOrUpdateOpenApiNetworkMetadata(d *schema.ResourceData, network *govcd
 	}
 
 	return createOrUpdateMetadata(d, network, "metadata")
+}
+
+func getOpenApiOrgVdcNetworkSegmentProfileTemplateSetting(d *schema.ResourceData, orgVdcNetworkConfig *types.OpenApiOrgVdcNetwork) {
+	sptId := d.Get("segment_profile_template_id").(string)
+	// Segment Profile Template ID cannot be read from API using GET, it can only be set using POST/PUT calls.
+	if sptId != "" {
+		orgVdcNetworkConfig.SegmentProfileTemplate = &types.OpenApiReference{ID: sptId}
+	}
 }

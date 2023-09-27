@@ -90,7 +90,7 @@ var alsoDelete = entityList{
 var isTest = regexp.MustCompile(`^[Tt]est`)
 
 // alwaysShow lists the resources that will always be shown
-var alwaysShow = []string{"vcd_provider_vdc", "vcd_org", "vcd_catalog", "vcd_org_vdc", "vcd_nsxt_alb_controller"}
+var alwaysShow = []string{"vcd_provider_vdc", "vcd_org", "vcd_catalog", "vcd_org_vdc", "vcd_nsxt_alb_controller", "vcd_nsxt_segment_profile_template"}
 
 func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	if verbose {
@@ -436,8 +436,29 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	}
 
 	// --------------------------------------------------------------
-	// Segment Profile Templates
+	// Segment Profile Templates can be used in:
+	// * Global Default Segment Profiles (Infrastructure resources -> Segment Profile Templates -> Global Defaults)
+	// * VDC defaults (Cloud Resources -> Organization VDCs -> _any NSX-T vdc_ -> Segment Profile Templates)
+	// * Org VDC Networks (Org VDC networks do not show )
+	// It is best to attempt cleanup at the end, when all the other artifacts that can consume them
+	// are already removed
 	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		allSpts, err := govcdClient.GetAllSegmentProfileTemplates(nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving all Segment Profile Templates: %s", err)
+		}
+		for _, spt := range allSpts {
+			// This will delete all UI Plugins that match the `isTest` regex.
+			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, spt.NsxtSegmentProfileTemplate.Name, "vcd_nsxt_segment_profile_template", 0, verbose)
+			if toBeDeleted {
+				err = spt.Delete()
+				if err != nil {
+					return fmt.Errorf("error deleting Segment Profile Template '%s': %s", spt.NsxtSegmentProfileTemplate.Name, err)
+				}
+			}
+		}
+	}
 
 	return nil
 }

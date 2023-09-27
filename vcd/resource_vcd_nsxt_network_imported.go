@@ -134,6 +134,13 @@ func resourceVcdNsxtNetworkImported() *schema.Resource {
 				Optional:    true,
 				Description: "DNS suffix",
 			},
+			// Segment Profile Template cannot be retrieved using `GET` endpoints. Only supports
+			// POST/PUT
+			"segment_profile_template_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Segment Profile Template ID",
+			},
 		},
 	}
 }
@@ -449,6 +456,7 @@ func getOpenApiOrgVdcImportedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 	if err != nil {
 		return nil, err
 	}
+	getOpenApiOrgVdcNetworkSegmentProfileTemplateSetting(d, orgVdcNetworkConfig)
 
 	return orgVdcNetworkConfig, nil
 }
