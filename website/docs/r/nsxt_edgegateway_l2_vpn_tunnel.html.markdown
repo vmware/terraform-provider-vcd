@@ -20,6 +20,9 @@ resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "server-session" {
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.server-testing.id
 
+  name = "server-session"
+  description = "example description"
+
   session_mode             = "SERVER"
   enabled                  = true
   connector_initiator_mode = "ON_DEMAND"
@@ -42,6 +45,9 @@ resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "client-session" {
   # Note that this is different, as one edge gateway can only function
   # in SERVER or CLIENT mode.
   edge_gateway_id = data.vcd_nsxt_edgegateway.client-testing.id
+
+  name = "client-session"
+  description = "example description"
 
   session_mode = "CLIENT"
   enabled      = true
@@ -75,6 +81,8 @@ The following arguments are supported:
   provider level. Useful when connected as sysadmin working across different organisations
 * `edge_gateway_id` - (Required) The ID of the edge gateway (NSX-T only). 
   Can be looked up using `vcd_nsxt_edgegateway` datasource
+* `name` - (Required) The name of the tunnel.
+* `description` - (Optional) The description of the tunnel.
 * `session_mode` - (Required) Mode of the tunnel session (SERVER or CLIENT)
 * `enabled` - (Optional) State of the session (Set to `true` by default)
 * `connector_initiator_mode` - (Required for `SERVER` sessions) Mode in which 
