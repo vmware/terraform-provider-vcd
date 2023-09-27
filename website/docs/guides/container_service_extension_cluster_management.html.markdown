@@ -1,21 +1,21 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: Container Service Extension v4.0 Kubernetes clusters management"
-sidebar_current: "docs-vcd-guides-cse-4-0-cluster-management"
+page_title: "VMware Cloud Director: Container Service Extension v4.1 Kubernetes clusters management"
+sidebar_current: "docs-vcd-guides-cse-cluster-management"
 description: |-
-  Provides guidance on provisioning Kubernetes clusters using Container Service Extension v4.0
+  Provides guidance on provisioning Kubernetes clusters using Container Service Extension v4.1
 ---
 
-# Container Service Extension v4.0 Kubernetes clusters management
+# Container Service Extension v4.1 Kubernetes clusters management
 
 ## About
 
-This guide explains how to create, update and delete TKGm clusters in a VCD appliance with Container Service Extension v4.0
+This guide explains how to create, update and delete TKGm clusters in a VCD appliance with Container Service Extension v4.1
 installed, using Terraform.
 
 We will use the [`vcd_rde`][rde] resource for this purpose.
 
-~> This section assumes that the CSE installation was done following the [CSE v4.0 installation guide][cse_install_guide].
+~> This section assumes that the CSE installation was done following the [CSE v4.1 installation guide][cse_install_guide].
 That is, CSE Server should be up and running and all elements must be working.
 
 ## Pre-requisites
@@ -24,8 +24,8 @@ That is, CSE Server should be up and running and all elements must be working.
 
 In order to complete the steps described in this guide, please be aware:
 
-* CSE v4.0 must be installed. Read the [installation guide][cse_install_guide] for more information.
-* Terraform VMWare Cloud Director provider needs to be v3.9.0 or above.
+* CSE v4.1 must be installed. Read the [installation guide][cse_install_guide] for more information.
+* Terraform VMWare Cloud Director provider needs to be v3.11.0 or above.
 * CSE Server must be up and running.
 
 ## Creating a Kubernetes cluster
@@ -53,6 +53,8 @@ placeholders that can be found in that file:
   "Tenant Organization" during CSE installation phase.
 - `vdc`: The VDC in which the TKGm clusters will be created. In this guide it was created as `tenant_vdc` and named
   "Tenant VDC" during CSE installation phase.
+- `api_token`: The API token that corresponds to the user that will create the cluster. This is set automatically with a reference to
+  a `vcd_api_token` resource. One can customise the path to the JSON file where the API token is stored using `cluster_author_token_file` variable.
 - `capi_yaml`: This must be set with a valid single-lined CAPVCD YAML, that will be explained next.
 - `delete`: This is used to delete a cluster. See ["Deleting a Kubernetes cluster"](#deleting-a-kubernetes-cluster) section for more info.
   During creation it should be always `false`.
@@ -73,8 +75,8 @@ To create a valid input for the `capi_yaml` placeholder, a [CAPVCD][capvcd] YAML
 created. In order to craft it, we need to follow these steps:
 
 - First, we need to download a YAML template from the [CAPVCD repository][capvcd_templates].
-  We should choose the template that matches the TKGm OVA. For example, if we uploaded the `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova`
-  and we want to use it, the template that we need to obtain corresponds to v1.22.9, that is `cluster-template-v1.22.9.yaml`.
+  We should choose the template that matches the TKGm OVA. For example, if we uploaded the `ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc.ova`
+  and we want to use it, the template that we need to obtain corresponds to v1.25.7, that is `cluster-template-v1.25.7.yaml`.
 
 - This template requires some extra elements to be added to the `kind: Cluster` block, inside `metadata`. These elements are `labels` and
   `annotations`, that are required by the CSE Server to be able to provision the cluster correctly. In other words, **cluster creation will fail
@@ -159,7 +161,7 @@ It must be encoded in Base64.
 - `DISK_SIZE`: Specifies the storage size for each node (VM). It uses the [same units as every other Kubernetes resource](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/),
   for example `"1Gi"` to use 1 gibibyte (1024 MiB), or `"1G"` for 1 gigabyte (1000 MB).
 - `VCD_CATALOG`: The catalog where the TKGm OVAs are. For example, in the above CSE installation it was `tkgm_catalog`.
-- `VCD_TEMPLATE_NAME` = The TKGm OVA name, for example `ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933`
+- `VCD_TEMPLATE_NAME` = The TKGm OVA name, for example `ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc`
 - `POD_CIDR`: The CIDR used for Pod networking, for example `"100.96.0.0/11"`.
 - `SERVICE_CIDR`: The CIDR used for Service networking, for example `"100.64.0.0/13"`.
 
@@ -167,24 +169,20 @@ There are three additional variables that we added manually: `TKR_VERSION` and `
 To know their values, one can use [this script](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/docs/WORKLOAD_CLUSTER.md#script-to-get-kubernetes-etcd-coredns-versions-from-tkg-ova),
 or check the following table with some script outputs:
 
-| OVA name                                                 | TKR_VERSION               | TKGVERSION |
-|----------------------------------------------------------|---------------------------|------------|
-| v1.19.16+vmware.1-tkg.2-fba68db15591c15fcd5f26b512663a42 | v1.19.16---vmware.1-tkg.2 | v1.4.3     |
-| v1.20.14+vmware.1-tkg.2-5a5027ce2528a6229acb35b38ff8084e | v1.20.14---vmware.1-tkg.2 | v1.4.3     |
-| v1.20.15+vmware.1-tkg.2-839faf7d1fa7fa356be22b72170ce1a8 | v1.20.15---vmware.1-tkg.2 | v1.5.4     |
-| v1.21.8+vmware.1-tkg.2-ed3c93616a02968be452fe1934a1d37c  | v1.21.8---vmware.1-tkg.2  | v1.4.3     |
-| v1.21.11+vmware.1-tkg.2-d788dbbb335710c0a0d1a28670057896 | v1.21.11---vmware.1-tkg.2 | v1.5.4     |
-| v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933  | v1.22.9---vmware.1-tkg.1  | v1.5.4     |
-| v1.22.13+vmware.1-tkg.2-ea08b304658a6cf17f5e74dc0ab7544f | v1.22.13---vmware.1-tkg.1 | v1.6.1     |
-| v1.21.14+vmware.2-tkg.5-d793afae5aa18e50bd9175e339904496 | v1.21.14---vmware.2-tkg.5 | v1.6.1     |
-| v1.23.10+vmware.1-tkg.2-b53d41690f8742e7388f2c553fd9a181 | v1.23.10---vmware.1-tkg.1 | v1.6.1     |
+| OVA name                                                  | TKR_VERSION               | TKGVERSION |
+|-----------------------------------------------------------|---------------------------|------------|
+| v1.22.13+vmware.1-tkg.2-ea08b304658a6cf17f5e74dc0ab7544f  | v1.22.13---vmware.1-tkg.1 | v1.6.1     |
+| v1.21.14+vmware.2-tkg.5-d793afae5aa18e50bd9175e339904496  | v1.21.14---vmware.2-tkg.5 | v1.6.1     |
+| v1.23.10+vmware.1-tkg.2-b53d41690f8742e7388f2c553fd9a181  | v1.23.10---vmware.1-tkg.2 | v1.6.1     |
+| v1.24.11+vmware.1-tkg.1-2ccb2a001f8bd8f15f1bfbc811071830  | v1.24.11---vmware.1-tkg.1 | v2.2.0     |
+| v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc   | v1.25.7---vmware.1-tkg.2  | v2.2.0     |
 
 In [the TKGm cluster creation example][cluster], the built-in Terraform function `templatefile` is used to substitute every placeholder
 mentioned above with its final value. The returned value is the CAPVCD YAML payload that needs to be set in the `capi_yaml` placeholder in the
 JSON template.
 
-~> Notice that we need to replace `\n` with `\\n` and also `\"` to `\\\"` to avoid breaking the JSON contents when the YAML is set, as
-line breaks and double quotes would not be interpreted correctly otherwise. This is also done in [the mentioned example][cluster].
+~> Notice that we need to use the Terraform built-in function `jsonencode` with the final CAPVCD YAML payload, so all 
+special characters are correctly escaped in the payload. This is also done in [the mentioned example][cluster].
 
 When we have set all the required values, a `terraform apply` should trigger a TKGm cluster creation. The operation is asynchronous, meaning that
 we need to monitor the RDE `computed_entity` value to see the status of the cluster provisioning. Some interesting output examples:
