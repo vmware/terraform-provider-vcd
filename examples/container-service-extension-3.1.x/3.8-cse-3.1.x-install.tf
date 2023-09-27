@@ -1,4 +1,9 @@
 # ------------------------------------------------------------------------------------------------------------
+# WARNING: This CSE installation method is deprecated in favor of CSE v4. Please have a look at
+#          https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_install
+# ------------------------------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------------------------------------
 # CSE 3.1.x installation example HCL:
 #
 # * This HCL depends on 'vcd' and 'cse' CLI. Install and configure these following the instructions on
