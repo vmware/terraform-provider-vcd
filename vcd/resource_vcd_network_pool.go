@@ -5,7 +5,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"strings"
 )
 
 const (
@@ -37,14 +39,13 @@ func resourceNetworkPoolBacking(origin string) *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
-				Required:    origin == "resource",
-				Computed:    origin == "datasource",
+				Optional:    origin == "resource",
+				Computed:    true,
 				Description: "Backing name",
 			},
 			"id": {
 				Type:        schema.TypeString,
-				Required:    origin == "resource",
-				Computed:    origin == "datasource",
+				Computed:    true,
 				Description: "Backing ID",
 			},
 			"type": {
@@ -135,12 +136,14 @@ func resourceVcdNetworkPool() *schema.Resource {
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				Optional:    true,
+				Computed:    true,
 				Description: "The components used by the network pool",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"transport_zone": {
 							Type:        schema.TypeList,
 							Optional:    true,
+							Computed:    true,
 							MaxItems:    1,
 							Description: "Transport Zone Backing",
 							Elem:        resourceNetworkPoolBacking("resource"),
@@ -148,12 +151,16 @@ func resourceVcdNetworkPool() *schema.Resource {
 						"port_groups": {
 							Type:        schema.TypeList,
 							Optional:    true,
+							Computed:    true,
+							MaxItems:    1,
 							Description: "Backing port groups",
 							Elem:        resourceNetworkPoolBacking("resource"),
 						},
 						"distributed_switches": {
 							Type:        schema.TypeList,
 							Optional:    true,
+							Computed:    true,
+							MaxItems:    1,
 							Description: "Backing distributed switches",
 							Elem:        resourceNetworkPoolBacking("resource"),
 						},
@@ -171,7 +178,105 @@ func resourceVcdNetworkPool() *schema.Resource {
 }
 
 func resourceNetworkPoolCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return diag.Errorf("not implemented yet")
+	vcdClient := meta.(*VCDClient)
+	networkPoolName := d.Get("name").(string)
+	networkPoolDescription := d.Get("description").(string)
+
+	networkPoolType := d.Get("type").(string)
+	networkPoolProviderId := d.Get("network_provider_id").(string)
+	networkPoolProviderType := networkProviderVcenter
+	if strings.Contains(networkPoolProviderId, "urn:vcloud:nsxtmanager") {
+		networkPoolProviderType = networkProviderNsxtManager
+	}
+
+	var networkPoolProvider types.OpenApiReference
+
+	if networkPoolProviderType == networkProviderVcenter {
+		vCenter, err := vcdClient.GetVCenterById(networkPoolProviderId)
+		if err != nil {
+			return diag.Errorf("error retrieving vCenter with ID '%s': %s", networkPoolProviderId, err)
+		}
+		networkPoolProvider.Name = vCenter.VSphereVCenter.Name
+		networkPoolProvider.ID = vCenter.VSphereVCenter.VcId
+	} else {
+		managers, err := vcdClient.QueryNsxtManagers()
+		if err != nil {
+			return diag.Errorf("error retrieving list of NSX-T managers: %s", err)
+		}
+		var manager *types.QueryResultNsxtManagerRecordType
+
+		bareId := extractUuid(networkPoolProviderId)
+		for _, m := range managers {
+			if bareId == extractUuid(m.HREF) {
+				manager = m
+				break
+			}
+		}
+		if manager == nil {
+			return diag.Errorf("NSX-T manager with ID '%s' not found", networkPoolProviderId)
+		}
+		networkPoolProvider.Name = manager.Name
+		networkPoolProvider.ID = "urn:vcloud:nsxtmanager:" + extractUuid(manager.HREF)
+	}
+
+	if networkPoolProvider.ID == "" {
+		return diag.Errorf("no suitable network provider (%s) found from ID '%s'", networkPoolProviderType, networkPoolProviderId)
+	}
+	backing, err := getNetworkPoolBacking(d)
+	if err != nil {
+		return diag.Errorf("error fetching network pool backing data: %s", err)
+	}
+	var networkPool *govcd.NetworkPool
+	switch networkPoolType {
+	case types.NetworkPoolGeneveType:
+		//transportZoneName := d.Get("backing.0.transport_zone.0.name").(string)
+		transportZoneName := ""
+		if backing != nil {
+			transportZoneName = backing.TransportZoneRef.Name
+		}
+		networkPool, err = vcdClient.CreateNetworkPoolGeneve(
+			networkPoolName,
+			networkPoolDescription,
+			networkPoolProvider.Name,
+			transportZoneName)
+	case types.NetworkPoolVlanType:
+		var dsName string
+		var ranges []types.VlanIdRange
+		if backing != nil {
+			for _, ds := range backing.VdsRefs {
+				dsName = ds.Name
+				break
+			}
+			for _, r := range backing.VlanIdRanges.Values {
+				ranges = append(ranges, r)
+			}
+		}
+		networkPool, err = vcdClient.CreateNetworkPoolVlan(
+			networkPoolName,
+			networkPoolDescription,
+			networkPoolProvider.Name,
+			dsName,
+			ranges)
+	case types.NetworkPoolPortGroupType:
+		var pgName string
+		if backing != nil {
+			for _, pg := range backing.PortGroupRefs {
+				pgName = pg.Name
+				break
+			}
+		}
+		networkPool, err = vcdClient.CreateNetworkPoolPortGroup(
+			networkPoolName,
+			networkPoolDescription,
+			networkPoolProvider.Name,
+			pgName)
+	}
+
+	if err != nil {
+		return diag.Errorf("error creating network pool '%s': %s", networkPoolName, err)
+	}
+	d.SetId(networkPool.NetworkPool.Id)
+	return resourceNetworkPoolRead(ctx, d, meta)
 }
 
 func resourceNetworkPoolUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -276,6 +381,56 @@ func resourceNetworkPoolDelete(ctx context.Context, d *schema.ResourceData, meta
 		return diag.Errorf("error deleting network pool '%s': %s", networkPoolName, err)
 	}
 	return nil
+}
+
+func getNetworkPoolBacking(d *schema.ResourceData) (*types.NetworkPoolBacking, error) {
+	rawBacking := d.Get("backing")
+	if rawBacking == nil {
+		return nil, nil
+	}
+	var backing types.NetworkPoolBacking
+
+	rawList := rawBacking.([]any)
+	if len(rawList) == 0 || rawList[0] == nil {
+		return nil, nil
+	}
+	backingElement := rawList[0].(map[string]any)
+	for name, value := range backingElement {
+		switch name {
+		case "transport_zone":
+			tzRawList := value.([]any)
+			if len(tzRawList) > 0 {
+				tzMap := tzRawList[0].(map[string]any)
+				backing.TransportZoneRef.Name = tzMap["name"].(string)
+			}
+		case "port_group":
+			pgRawList := value.([]any)
+			//pgMap := value.([]map[string]any)
+			for _, m := range pgRawList {
+				pgMap := m.(map[string]any)
+				backing.PortGroupRefs = append(backing.PortGroupRefs, types.OpenApiReference{Name: pgMap["name"].(string)})
+			}
+		case "distributed_switches":
+			dsRawList := value.([]any)
+			//dsMap := dsRawList.(map[string]any)
+			for _, m := range dsRawList {
+				dsMap := m.(map[string]any)
+				backing.VdsRefs = append(backing.VdsRefs, types.OpenApiReference{Name: dsMap["name"].(string)})
+			}
+		case "range_ids":
+			ridRawList := value.([]any)
+			//ridMap := value.([]map[string]any)
+			for _, m := range ridRawList {
+				ridMap := m.(map[string]any)
+				backing.VlanIdRanges.Values = append(backing.VlanIdRanges.Values, types.VlanIdRange{
+					StartId: ridMap["start_id"].(int),
+					EndId:   ridMap["end_id"].(int),
+				})
+			}
+		}
+	}
+	return &backing, nil
+
 }
 
 // TODO: remove before opening PR
