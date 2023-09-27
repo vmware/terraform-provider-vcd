@@ -1,10 +1,10 @@
 # ------------------------------------------------------------------------------------------------------------
-# CSE 4.0 TKGm cluster creation:
+# CSE 4.1 TKGm cluster creation:
 #
-# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_cluster_management
+# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_cluster_management
 #   before applying this configuration.
 #
-# * Please make sure to have CSE v4.0 installed in your VCD appliance and the CSE Server is correctly running.
+# * Please make sure to have CSE v4.1 installed in your VCD appliance and the CSE Server is correctly running.
 #
 # * Please review this HCL configuration before applying, to change the settings to the ones that fit best with your organization.
 #
@@ -12,12 +12,12 @@
 #   You can check the comments on each resource/data source for more help and context.
 # ------------------------------------------------------------------------------------------------------------
 
-# VCD Provider configuration. It must be at least v3.9.0 and configured with a System administrator account.
+# VCD Provider configuration. It must be at least v3.11.0 and configured with a System administrator account.
 terraform {
   required_providers {
     vcd = {
       source  = "vmware/vcd"
-      version = ">= 3.9"
+      version = ">= 3.11"
     }
   }
 }
@@ -37,12 +37,35 @@ provider "vcd" {
 data "vcd_rde_type" "capvcdcluster_type" {
   vendor  = "vmware"
   nss     = "capvcdCluster"
-  version = var.capvcd_rde_version
+  version = "1.2.0"
+}
+
+# Creates an API Token for the CSE Cluster Author that will be used for cluster management
+resource "vcd_api_token" "cluster_author_token" {
+  name             = "CSE ${var.k8s_cluster_name} API Token"
+  file_name        = var.cluster_author_token_file
+  allow_token_file = true
+}
+
+data "local_file" "cluster_author_token_file" {
+  filename = vcd_api_token.cluster_author_token.file_name
+}
+
+# We need to fetch the CSE Server configuration to retrieve some required values during
+# cluster creation
+data "vcd_rde" "vcdkeconfig_instance" {
+  vendor  = "vmware"
+  nss     = "VCDKEConfig"
+  version = "1.1.0"
+}
+
+locals {
+  machine_health_check = jsondecode(data.vcd_rde.vcdkeconfig_instance.entity)["profiles"][0]["K8Config"]["mhc"]
 }
 
 # This local corresponds to a completely rendered YAML template that can be used inside the RDE resource below.
 locals {
-  capvcd_yaml_rendered = templatefile("./cluster-template-v1.22.9.yaml", {
+  capvcd_yaml_rendered = templatefile("./cluster-template-v1.25.7.yaml", {
     CLUSTER_NAME     = var.k8s_cluster_name
     TARGET_NAMESPACE = "${var.k8s_cluster_name}-ns"
 
@@ -73,11 +96,19 @@ locals {
     POD_CIDR     = var.pod_cidr
     SERVICE_CIDR = var.service_cidr
 
+    VIRTUAL_IP_SUBNET = ""
+
     # Extra required information. Please read the guide at
     # https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_cluster_management
     # to know how to obtain these required parameters.
     TKR_VERSION = var.tkr_version
     TKGVERSION  = var.tkg_version
+
+    MAX_UNHEALTHY_NODE_PERCENTAGE = machine_health_check["maxUnhealthyNodes"]
+    NODE_STARTUP_TIMEOUT          = machine_health_check["nodeStartupTimeout"]
+    NODE_NOT_READY_TIMEOUT        = machine_health_check["nodeNotReadyTimeout"]
+    NODE_UNKNOWN_TIMEOUT          = machine_health_check["nodeUnknownTimeout"]
+
   })
 }
 
@@ -95,6 +126,8 @@ resource "vcd_rde" "k8s_cluster_instance" {
     name    = var.k8s_cluster_name
     org     = var.cluster_organization
     vdc     = var.cluster_vdc
+
+    api_token = jsondecode(data.local_file.cluster_author_token_file.content)["refresh_token"]
 
     # Configures a default Storage class for the TKGm cluster. If you don't want this,
     # you can remove the variables below. Don't forget to delete the 'defaultStorageClassOptions' block from

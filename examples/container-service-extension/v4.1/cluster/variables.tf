@@ -29,13 +29,10 @@ variable "administrator_org" {
   default     = "System"
 }
 
-# ------------------------------------------------
-# CSE configuration
-# ------------------------------------------------
-variable "capvcd_rde_version" {
+variable "cluster_author_token_file" {
+  description = "The file where the API Token for the CSE Cluster author will be stored"
   type        = string
-  description = "Version of the CAPVCD Runtime Defined Entity Type"
-  default     = "1.1.0"
+  default     = "cse_cluster_author_token.json"
 }
 
 # ------------------------------------------------

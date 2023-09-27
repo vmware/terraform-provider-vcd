@@ -1,15 +1,41 @@
-# This file was downloaded from https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/templates/cluster-template-v1.22.9.yaml
+# This file was downloaded from https://raw.githubusercontent.com/vmware/cluster-api-provider-cloud-director/main/templates/cluster-template-v1.25.7.yaml
 # Only the commented lines were added manually.
+---
+# The MachineHealthCheck was added manually. You can add this section if you want automatic health checks in your
+# Kubernetes clusters.
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  name: ${CLUSTER_NAME}
+  namespace: ${TARGET_NAMESPACE}
+  labels:
+    clusterctl.cluster.x-k8s.io: ""
+    clusterctl.cluster.x-k8s.io/move: ""
+spec:
+  clusterName: ${CLUSTER_NAME}
+  maxUnhealthy: ${MAX_UNHEALTHY_NODE_PERCENTAGE}%
+  nodeStartupTimeout: ${NODE_STARTUP_TIMEOUT}s
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: ${CLUSTER_NAME}
+  unhealthyConditions:
+    - type: Ready
+      status: Unknown
+      timeout: ${NODE_UNKNOWN_TIMEOUT}s
+    - type: Ready
+      status: "False"
+      timeout: ${NODE_NOT_READY_TIMEOUT}s
+---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
   name: ${CLUSTER_NAME}
   namespace: ${TARGET_NAMESPACE}
-  labels: # This block was added manually, it was not present in the downloaded template
+  labels: # The labels section was added manually, this is REQUIRED for the cluster to work
     cluster-role.tkg.tanzu.vmware.com/management: ""
     tanzuKubernetesRelease: ${TKR_VERSION}
     tkg.tanzu.vmware.com/cluster-name: ${CLUSTER_NAME}
-  annotations: # This block was added manually, it was not present in the downloaded template
+  annotations: # The annotations section was added manually, this is REQUIRED for the cluster to work
     TKGVERSION: ${TKGVERSION}
 spec:
   clusterNetwork:
@@ -26,7 +52,7 @@ spec:
     name: ${CLUSTER_NAME}-control-plane
     namespace: ${TARGET_NAMESPACE}
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
     kind: VCDCluster
     name: ${CLUSTER_NAME}
     namespace: ${TARGET_NAMESPACE}
@@ -42,7 +68,7 @@ data:
   password: "${VCD_PASSWORD_B64}"
   refreshToken: "${VCD_REFRESH_TOKEN_B64}"
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: VCDCluster
 metadata:
   name: ${CLUSTER_NAME}
@@ -58,9 +84,9 @@ spec:
       name: capi-user-credentials
       namespace: ${TARGET_NAMESPACE}
   loadBalancerConfigSpec:
-    vipSubnet: ""
+    vipSubnet: "${VIRTUAL_IP_SUBNET}" # Just needed if you require a VIP subnet
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: VCDMachineTemplate
 metadata:
   name: ${CLUSTER_NAME}-control-plane
@@ -83,22 +109,25 @@ metadata:
   namespace: ${TARGET_NAMESPACE}
 spec:
   kubeadmConfigSpec:
+    preKubeadmCommands: # preKubeadmCommands was added manually
+      - mv /etc/ssl/certs/custom_certificate_*.crt
+        /usr/local/share/ca-certificates && update-ca-certificates
     clusterConfiguration:
       apiServer:
         certSANs:
           - localhost
           - 127.0.0.1
-      controllerManager:
+      controllerManager: # controllerManager was added manually
         extraArgs:
           enable-hostpath-provisioner: "true"
       dns:
-        imageRepository: projects.registry.vmware.com/tkg
-        imageTag: v1.8.4_vmware.9
+        imageRepository: projects.registry.vmware.com/tkg # TODO: Template ???
+        imageTag: v1.8.6_vmware.17
       etcd:
         local:
-          imageRepository: projects.registry.vmware.com/tkg
-          imageTag: v3.5.4_vmware.2
-      imageRepository: projects.registry.vmware.com/tkg
+          imageRepository: projects.registry.vmware.com/tkg  # TODO: Template ???
+          imageTag: v3.5.6_vmware.6
+      imageRepository: projects.registry.vmware.com/tkg # TODO: Template ???
     users:
       - name: root
         sshAuthorizedKeys:
@@ -117,14 +146,14 @@ spec:
           cloud-provider: external
   machineTemplate:
     infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
       kind: VCDMachineTemplate
       name: ${CLUSTER_NAME}-control-plane
       namespace: ${TARGET_NAMESPACE}
   replicas: ${CONTROL_PLANE_MACHINE_COUNT}
-  version: v1.22.9+vmware.1
+  version: v1.24.10+vmware.1 # TODO: Template ???
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: VCDMachineTemplate
 metadata:
   name: ${CLUSTER_NAME}-md-0
@@ -152,6 +181,10 @@ spec:
         - name: root
           sshAuthorizedKeys:
             - "${SSH_PUBLIC_KEY}"
+      useExperimentalRetryJoin: true # Added manually
+      preKubeadmCommands: # Added manually
+        - mv /etc/ssl/certs/custom_certificate_*.crt
+          /usr/local/share/ca-certificates && update-ca-certificates
       joinConfiguration:
         nodeRegistration:
           criSocket: /run/containerd/containerd.sock
@@ -179,71 +212,8 @@ spec:
           namespace: ${TARGET_NAMESPACE}
       clusterName: ${CLUSTER_NAME}
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
         kind: VCDMachineTemplate
         name: ${CLUSTER_NAME}-md-0
         namespace: ${TARGET_NAMESPACE}
-      version: v1.22.9+vmware.1
----
-# Extra worker node pool. The three blocks below were added manually. The name on each kind of object is different
-# from the original pool.
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: VCDMachineTemplate
-metadata:
-  name: ${CLUSTER_NAME}-md-1
-  namespace: ${TARGET_NAMESPACE}
-spec:
-  template:
-    spec:
-      catalog: ${VCD_CATALOG}
-      template: ${VCD_TEMPLATE_NAME}
-      sizingPolicy: ${VCD_WORKER_SIZING_POLICY}
-      placementPolicy: ${VCD_WORKER_PLACEMENT_POLICY}
-      storageProfile: "${VCD_WORKER_STORAGE_PROFILE}"
-      diskSize: ${DISK_SIZE}
-      enableNvidiaGPU: false
----
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
-kind: KubeadmConfigTemplate
-metadata:
-  name: ${CLUSTER_NAME}-md-1
-  namespace: ${TARGET_NAMESPACE}
-spec:
-  template:
-    spec:
-      users:
-        - name: root
-          sshAuthorizedKeys:
-            - "${SSH_PUBLIC_KEY}"
-      joinConfiguration:
-        nodeRegistration:
-          criSocket: /run/containerd/containerd.sock
-          kubeletExtraArgs:
-            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
-            cloud-provider: external
----
-apiVersion: cluster.x-k8s.io/v1beta1
-kind: MachineDeployment
-metadata:
-  name: ${CLUSTER_NAME}-md-1
-  namespace: ${TARGET_NAMESPACE}
-spec:
-  clusterName: ${CLUSTER_NAME}
-  replicas: ${WORKER_MACHINE_COUNT}
-  selector:
-    matchLabels: null
-  template:
-    spec:
-      bootstrap:
-        configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
-          kind: KubeadmConfigTemplate
-          name: ${CLUSTER_NAME}-md-1
-          namespace: ${TARGET_NAMESPACE}
-      clusterName: ${CLUSTER_NAME}
-      infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-        kind: VCDMachineTemplate
-        name: ${CLUSTER_NAME}-md-1
-        namespace: ${TARGET_NAMESPACE}
-      version: v1.22.9+vmware.1
+      version: v1.24.10+vmware.1 # TODO: Template ???
