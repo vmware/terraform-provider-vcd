@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_nsxt\_edgegateway\_l2\_vpn\_tunnel
 
-Supported in provider *v3.11+* and VCD 10.3.1+ with NSX-T
+Supported in provider *v3.11+* and VCD *10.3.1+* with NSX-T
 
 Provides a resource to manage NSX-T Edge Gateway L2 VPN Tunnel sessions and their configurations.
 
@@ -84,14 +84,15 @@ The following arguments are supported:
 * `name` - (Required) The name of the tunnel.
 * `description` - (Optional) The description of the tunnel.
 * `session_mode` - (Required) Mode of the tunnel session (SERVER or CLIENT)
-* `enabled` - (Optional) State of the session (Set to `true` by default)
+* `enabled` - (Optional) State of the `SERVER` session, always set to `true` for `CLIENT` 
+  sessions.
 * `connector_initiator_mode` - (Required for `SERVER` sessions) Mode in which 
   the connection is formed. Only relevant to `SERVER` sessions. One of:
-	* INITIATOR - Local endpoint initiates tunnel setup and will also respond to 
+	* `INITIATOR` - Local endpoint initiates tunnel setup and will also respond to 
   incoming tunnel setup requests from the peer gateway.
-	* RESPOND_ONLY - Local endpoint shall only respond to incoming tunnel setup 
+	* `RESPOND_ONLY` - Local endpoint shall only respond to incoming tunnel setup 
   requests, it shall not initiate the tunnel setup.
-	* ON_DEMAND - In this mode local endpoint will initiate tunnel creation once 
+	* `ON_DEMAND` - In this mode local endpoint will initiate tunnel creation once 
   first packet matching the policy rule is received, and will also respond to 
   incoming initiation requests.
 * `local_endpoint_ip` - (Required) The IP address corresponding to the Edge 
@@ -102,11 +103,22 @@ corresponds to the device on the remote site terminating the VPN tunnel.
 * `tunnel_interface` - (Optional) The network CIDR block over which the session 
   interfaces. Relevant only for SERVER session modes. If not provided, Cloud 
   Director will attempt to automatically allocate a tunnel interface.
-* pre_shared_key - (Required for `SERVER` sessions) The key that is used for 
+* `pre_shared_key` - (Required for `SERVER` sessions) The key that is used for 
   authenticating the connection, only needed for `SERVER` sessions.
-* peer_code - (Optional) Encoded string that contains the whole configuration 
+* `peer_code` - (Optional) Encoded string that contains the whole configuration 
   of a `SERVER` session, including the pre-shared key, so it is user's 
   responsibility to secure it.
+* `stretched_network` - (Optional) One or more stretched networks for the tunnel. 
+  See [`stretched_network`](#stretched-network) for more detail.
+
+## Stretched network
+
+* `network_id` - (Required) Network ID of a routed network on the Edge Gateway. 
+  Can be looked up using [`vcd_routed_network_v2`](/providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway_l2_vpn_tunnel) 
+  datasource.
+* `tunnel_id` - (Optional) Tunnel ID of the network on the tunnel, required for 
+  `CLIENT` sessions, computed for `SERVER` sessions.
+
 
 ## Importing
 
