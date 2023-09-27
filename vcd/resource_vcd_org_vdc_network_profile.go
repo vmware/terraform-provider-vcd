@@ -63,12 +63,18 @@ func resourceVcdNsxtOrgVdcNetworkProfileCreateUpdate(ctx context.Context, d *sch
 		return diag.Errorf("network profile configuration is only supported on NSX-T VDCs")
 	}
 
-	vdcNetworkProfileConfig := &types.VdcNetworkProfile{
-		ServicesEdgeCluster: &types.VdcNetworkProfileServicesEdgeCluster{
-			BackingID: d.Get("edge_cluster_id").(string),
-		},
-		VappNetworkSegmentProfileTemplateRef: &types.OpenApiReference{ID: d.Get("vdc_networks_default_segment_profile_template_id").(string)},
-		VdcNetworkSegmentProfileTemplateRef:  &types.OpenApiReference{ID: d.Get("vapp_networks_default_segment_profile_template_id").(string)},
+	vdcNetworkProfileConfig := &types.VdcNetworkProfile{}
+
+	if d.Get("edge_cluster_id").(string) != "" {
+		vdcNetworkProfileConfig.ServicesEdgeCluster = &types.VdcNetworkProfileServicesEdgeCluster{BackingID: d.Get("edge_cluster_id").(string)}
+	}
+
+	if d.Get("vdc_networks_default_segment_profile_template_id").(string) != "" {
+		vdcNetworkProfileConfig.VdcNetworkSegmentProfileTemplateRef = &types.OpenApiReference{ID: d.Get("vdc_networks_default_segment_profile_template_id").(string)}
+	}
+
+	if d.Get("vapp_networks_default_segment_profile_template_id").(string) != "" {
+		vdcNetworkProfileConfig.VappNetworkSegmentProfileTemplateRef = &types.OpenApiReference{ID: d.Get("vapp_networks_default_segment_profile_template_id").(string)}
 	}
 
 	_, err = vdc.UpdateVdcNetworkProfile(vdcNetworkProfileConfig)

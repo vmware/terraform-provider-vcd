@@ -276,16 +276,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "ID of NSX-T Edge Cluster (provider vApp networking services and DHCP capability for Isolated networks)",
-			},
-			"vdc_networks_default_segment_profile_template_id": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Default NSX-T Segment Profile for Org VDC networks",
-			},
-			"vapp_networks_default_segment_profile_template_id": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Default NSX-T Segment Profile for vApp networks",
+				Deprecated:  "Please use 'vcd_org_vdc_nsxt_network_profile' resource to manage Edge Cluster and more",
 			},
 			"enable_nsxv_distributed_firewall": {
 				Type:        schema.TypeBool,
@@ -355,12 +346,10 @@ func resourceVcdVdcCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	// Edge Cluster ID uses different endpoint (VDC Network Profiles endpoint) and it shouldn't be
 	// set on create if it is not present
 	edgeClusterId := d.Get("edge_cluster_id").(string)
-	orgVdcNetDefaultSegmentProfile := d.Get("vdc_networks_default_segment_profile_template_id").(string)
-	vappNetDefaultSegmentProfile := d.Get("vapp_networks_default_segment_profile_template_id").(string)
-	if edgeClusterId != "" || orgVdcNetDefaultSegmentProfile != "" || vappNetDefaultSegmentProfile != "" {
-		err = setVdcNetworkProfile(d, vdc)
+	if edgeClusterId != "" {
+		err = setVdcEdgeCluster(d, vdc)
 		if err != nil {
-			return diag.Errorf("error setting VDC Network Profile: %s", err)
+			return diag.Errorf("error setting Edge Cluster: %s", err)
 		}
 	}
 	if d.Get("enable_nsxv_distributed_firewall").(bool) {
@@ -404,7 +393,7 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 		return diagErr
 	}
 
-	err = setVdcNetworkProfileData(d, adminVdc, "vdc_org_vdc")
+	err = setEdgeClusterData(d, adminVdc, "vdc_org_vdc")
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -647,14 +636,14 @@ func resourceVcdVdcUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		}
 	}
 
-	if d.HasChanges("edge_cluster_id", "vapp_networks_default_segment_profile_template_id", "vdc_networks_default_segment_profile_template_id") {
+	if d.HasChange("edge_cluster_id") {
 		orgVdc, err := adminOrg.GetVDCByName(updatedAdminVdc.AdminVdc.Name, false)
 		if orgVdc == nil || err != nil {
 			return diag.Errorf("error retrieving Org VDC from Admin VDC '%s': %s", updatedAdminVdc.AdminVdc.Name, err)
 		}
-		err = setVdcNetworkProfile(d, orgVdc)
+		err = setVdcEdgeCluster(d, orgVdc)
 		if err != nil {
-			return diag.Errorf("error updating VDC Network Profile: %s", err)
+			return diag.Errorf("error updating 'edge_cluster_id': %s", err)
 		}
 
 	}
@@ -1405,15 +1394,18 @@ func resourceVcdOrgVdcImport(_ context.Context, d *schema.ResourceData, meta int
 	return []*schema.ResourceData{d}, nil
 }
 
-// setVdcNetworkProfile handles setting of Edge Cluster for NSX-T VDCs
+// setVdcEdgeCluster handles setting of Edge Cluster for NSX-T VDCs
 //
 // Note. VcdNetworkProfile structure contains more fields (it also depends on the VCD version used).
 // The problem is that one must send all other already set fields to avoid reseting them. UI does
 // this as well. To make this work well with Terraform and avoid removing other values, current
 // state of the structure must always be retrieved and only the required value should be changed.
-func setVdcNetworkProfile(d *schema.ResourceData, vdc *govcd.Vdc) error {
+func setVdcEdgeCluster(d *schema.ResourceData, vdc *govcd.Vdc) error {
+	// Set the value even if it is empty as this allows to remove it from configuration
+	edgeClusterId := d.Get("edge_cluster_id").(string)
+
 	if !vdc.IsNsxt() {
-		return fmt.Errorf("'edge_cluster_id', 'vapp_networks_default_segment_profile_template_id' and 'vdc_networks_default_segment_profile_template_id' are only applicable for NSX-T VDCs")
+		return fmt.Errorf("'edge_cluster_id' is only applicable for NSX-T VDCs")
 	}
 
 	currentNetworkProfile, err := vdc.GetVdcNetworkProfile()
@@ -1421,62 +1413,34 @@ func setVdcNetworkProfile(d *schema.ResourceData, vdc *govcd.Vdc) error {
 		return fmt.Errorf("error retrieving current VDC Network Profile: %s", err)
 	}
 
-	currentNetworkProfile.ServicesEdgeCluster = &types.VdcNetworkProfileServicesEdgeCluster{BackingID: d.Get("edge_cluster_id").(string)}
-	if d.Get("vapp_networks_default_segment_profile_template_id").(string) != "" {
-		currentNetworkProfile.VappNetworkSegmentProfileTemplateRef = &types.OpenApiReference{ID: d.Get("vapp_networks_default_segment_profile_template_id").(string)}
-	} else {
-		currentNetworkProfile.VappNetworkSegmentProfileTemplateRef = nil
-	}
-
-	if d.Get("vdc_networks_default_segment_profile_template_id").(string) != "" {
-		currentNetworkProfile.VdcNetworkSegmentProfileTemplateRef = &types.OpenApiReference{ID: d.Get("vdc_networks_default_segment_profile_template_id").(string)}
-	} else {
-		currentNetworkProfile.VdcNetworkSegmentProfileTemplateRef = nil
-	}
+	currentNetworkProfile.ServicesEdgeCluster = &types.VdcNetworkProfileServicesEdgeCluster{BackingID: edgeClusterId}
 
 	_, err = vdc.UpdateVdcNetworkProfile(currentNetworkProfile)
 	if err != nil {
-		return fmt.Errorf("error updating VDC Network Profile for VDC '%s': %s", vdc.Vdc.Name, err)
+		return fmt.Errorf("error setting 'edge_cluster_id' '%s' for VDC '%s': %s", edgeClusterId, vdc.Vdc.Name, err)
 	}
 
 	return nil
 }
 
-// setDataSourceEdgeClusterData is like setVdcNetworkProfileData however it must handle the case where
+// setDataSourceEdgeClusterData is like setEdgeClusterData however it must handle the case where
 // user has insufficient rights to retrieve VDC Network Profile. Resource itself is not affected
 // by this problem because it requires provider user to create VDC.
-func setVdcNetworkProfileData(d *schema.ResourceData, adminVdc *govcd.AdminVdc, source string) error {
+func setEdgeClusterData(d *schema.ResourceData, adminVdc *govcd.AdminVdc, source string) error {
 	vdcNetworkProfile, err := adminVdc.GetVdcNetworkProfile()
 	if err != nil {
 		// Conciously ignoring this error and logging it to output as it will most probably be
 		// insufficient rights that the user has. It will work with System user but might not work
 		// for users that got lower privileges.
-		logForScreen(source, fmt.Sprintf("got error while attempting to retrieve VDC Network Profile: %s", err))
+		logForScreen(source, fmt.Sprintf("got error while attempting to retrieve Edge Cluster ID: %s", err))
 		dSet(d, "edge_cluster_id", "")
-		dSet(d, "vapp_networks_default_segment_profile_template_id", "")
-		dSet(d, "vdc_networks_default_segment_profile_template_id", "")
 		return nil
 	}
 
-	if vdcNetworkProfile != nil {
-		if vdcNetworkProfile.ServicesEdgeCluster != nil {
-			dSet(d, "edge_cluster_id", vdcNetworkProfile.ServicesEdgeCluster.BackingID)
-		} else {
-			dSet(d, "edge_cluster_id", "")
-		}
-
-		if vdcNetworkProfile.VappNetworkSegmentProfileTemplateRef != nil {
-			dSet(d, "vapp_networks_default_segment_profile_template_id", vdcNetworkProfile.VappNetworkSegmentProfileTemplateRef.ID)
-		} else {
-			dSet(d, "vapp_networks_default_segment_profile_template_id", "")
-		}
-
-		if vdcNetworkProfile.VdcNetworkSegmentProfileTemplateRef != nil {
-			dSet(d, "vdc_networks_default_segment_profile_template_id", vdcNetworkProfile.VdcNetworkSegmentProfileTemplateRef.ID)
-		} else {
-			dSet(d, "vdc_networks_default_segment_profile_template_id", "")
-		}
-
+	if vdcNetworkProfile != nil && vdcNetworkProfile.ServicesEdgeCluster != nil {
+		dSet(d, "edge_cluster_id", vdcNetworkProfile.ServicesEdgeCluster.BackingID)
+	} else {
+		dSet(d, "edge_cluster_id", "")
 	}
 	return nil
 }
