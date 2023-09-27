@@ -247,14 +247,13 @@ resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "{{.ClientTunnelName}}" {
   org             = "{{.Org}}"
   edge_gateway_id = vcd_nsxt_edgegateway.{{.NewEdgeGw}}.id
 
-  session_mode              = "CLIENT"
-  enabled                   = true
+  session_mode = "CLIENT"
+  enabled      = true
 
   local_endpoint_ip  = vcd_nsxt_edgegateway.{{.NewEdgeGw}}.primary_ip
   remote_endpoint_ip = "{{.RemoteEndpointIp}}"
 
-  peer_code = vcd_nsxt_edgegateway_l2_vpn_tunnel.{{.ServerTunnelName}}.peer_code
-
+  peer_code  = vcd_nsxt_edgegateway_l2_vpn_tunnel.{{.ServerTunnelName}}.peer_code
   depends_on = [vcd_nsxt_edgegateway_l2_vpn_tunnel.{{.ServerTunnelName}}]
 }
 `
@@ -285,19 +284,18 @@ resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "{{.ClientTunnelName}}" {
   org             = "{{.Org}}"
   edge_gateway_id = vcd_nsxt_edgegateway.{{.NewEdgeGw}}.id
 
-  session_mode              = "CLIENT"
-  enabled                   = true
+  session_mode = "CLIENT"
+  enabled      = true
 
   local_endpoint_ip  = vcd_nsxt_edgegateway.{{.NewEdgeGw}}.primary_ip
   remote_endpoint_ip = "{{.RemoteEndpointIpUpdated}}"
 
-  peer_code = vcd_nsxt_edgegateway_l2_vpn_tunnel.{{.ServerTunnelName}}.peer_code
-
   stretched_network {
     network_id = vcd_network_routed_v2.{{.NewNetworkName}}.id
-    tunnel_id = 1 
+    tunnel_id  = 1 
   }
 
+  peer_code  = vcd_nsxt_edgegateway_l2_vpn_tunnel.{{.ServerTunnelName}}.peer_code
   depends_on = [vcd_nsxt_edgegateway_l2_vpn_tunnel.{{.ServerTunnelName}}]
 }
 `
@@ -328,14 +326,13 @@ resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "{{.ClientTunnelName}}" {
   org             = "{{.Org}}"
   edge_gateway_id = vcd_nsxt_edgegateway.{{.NewEdgeGw}}.id
 
-  session_mode              = "CLIENT"
-  enabled                   = true
+  session_mode = "CLIENT"
+  enabled      = true
 
   local_endpoint_ip  = vcd_nsxt_edgegateway.{{.NewEdgeGw}}.primary_ip
   remote_endpoint_ip = "{{.RemoteEndpointIp}}"
 
-  peer_code = vcd_nsxt_edgegateway_l2_vpn_tunnel.{{.ServerTunnelName}}.peer_code
-
+  peer_code  = vcd_nsxt_edgegateway_l2_vpn_tunnel.{{.ServerTunnelName}}.peer_code
   depends_on = [vcd_nsxt_edgegateway_l2_vpn_tunnel.{{.ServerTunnelName}}]
 }
 `
