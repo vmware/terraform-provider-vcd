@@ -239,6 +239,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_rde_interface_behavior":                    resourceVcdRdeInterfaceBehavior(),             // 3.10
 	"vcd_rde_type_behavior":                         resourceVcdRdeTypeBehavior(),                  // 3.10
 	"vcd_rde_type_behavior_acl":                     resourceVcdRdeTypeBehaviorAccessLevel(),       // 3.10
+	"vcd_network_pool":                              resourceVcdNetworkPool(),                      // 3.11
 }
 
 // Provider returns a terraform.ResourceProvider.
