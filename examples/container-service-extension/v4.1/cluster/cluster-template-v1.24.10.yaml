@@ -78,6 +78,9 @@ spec:
   org: ${VCD_ORGANIZATION}
   ovdc: ${VCD_ORGANIZATION_VDC}
   ovdcNetwork: ${VCD_ORGANIZATION_VDC_NETWORK}
+  controlPlaneEndpoint: # Added manually
+    host: ${CONTROL_PLANE_IP}
+    port: 6443
   useAsManagementCluster: false
   userContext:
     secretRef:
@@ -121,13 +124,13 @@ spec:
         extraArgs:
           enable-hostpath-provisioner: "true"
       dns:
-        imageRepository: projects.registry.vmware.com/tkg # TODO: Template ???
+        imageRepository: ${CONTAINER_REGISTRY_URL}/tkg # TODO: Template ???
         imageTag: v1.8.6_vmware.17
       etcd:
         local:
-          imageRepository: projects.registry.vmware.com/tkg  # TODO: Template ???
+          imageRepository: ${CONTAINER_REGISTRY_URL}/tkg  # TODO: Template ???
           imageTag: v3.5.6_vmware.6
-      imageRepository: projects.registry.vmware.com/tkg # TODO: Template ???
+      imageRepository: ${CONTAINER_REGISTRY_URL}/tkg # TODO: Template ???
     users:
       - name: root
         sshAuthorizedKeys:

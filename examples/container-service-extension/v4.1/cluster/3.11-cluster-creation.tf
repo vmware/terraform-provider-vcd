@@ -60,7 +60,8 @@ data "vcd_rde" "vcdkeconfig_instance" {
 }
 
 locals {
-  machine_health_check = jsondecode(data.vcd_rde.vcdkeconfig_instance.entity)["profiles"][0]["K8Config"]["mhc"]
+  machine_health_check   = jsondecode(data.vcd_rde.vcdkeconfig_instance.entity)["profiles"][0]["K8Config"]["mhc"]
+  container_registry_url = jsondecode(data.vcd_rde.vcdkeconfig_instance.entity)["profiles"][0]["containerRegistryUrl"]
 }
 
 # This local corresponds to a completely rendered YAML template that can be used inside the RDE resource below.
@@ -96,6 +97,7 @@ locals {
     POD_CIDR     = var.pod_cidr
     SERVICE_CIDR = var.service_cidr
 
+    CONTROL_PLANE_IP  = ""
     VIRTUAL_IP_SUBNET = ""
 
     # Extra required information. Please read the guide at
@@ -104,11 +106,12 @@ locals {
     TKR_VERSION = var.tkr_version
     TKGVERSION  = var.tkg_version
 
-    MAX_UNHEALTHY_NODE_PERCENTAGE = machine_health_check["maxUnhealthyNodes"]
-    NODE_STARTUP_TIMEOUT          = machine_health_check["nodeStartupTimeout"]
-    NODE_NOT_READY_TIMEOUT        = machine_health_check["nodeNotReadyTimeout"]
-    NODE_UNKNOWN_TIMEOUT          = machine_health_check["nodeUnknownTimeout"]
-
+    # These are picked from the VCDKEConfig RDE, so they should not be changed
+    MAX_UNHEALTHY_NODE_PERCENTAGE = local.machine_health_check["maxUnhealthyNodes"]
+    NODE_STARTUP_TIMEOUT          = local.machine_health_check["nodeStartupTimeout"]
+    NODE_NOT_READY_TIMEOUT        = local.machine_health_check["nodeNotReadyTimeout"]
+    NODE_UNKNOWN_TIMEOUT          = local.machine_health_check["nodeUnknownTimeout"]
+    CONTAINER_REGISTRY_URL        = local.container_registry_url
   })
 }
 
