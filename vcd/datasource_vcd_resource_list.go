@@ -674,6 +674,9 @@ func transportZoneList(d *schema.ResourceData, meta interface{}) (list []string,
 
 	var items []resourceRef
 	for _, tz := range transportZones {
+		if tz.AlreadyImported {
+			continue
+		}
 		items = append(items, resourceRef{
 			name: tz.Name,
 			id:   tz.Id,
