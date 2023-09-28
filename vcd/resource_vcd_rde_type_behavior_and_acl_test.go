@@ -228,7 +228,7 @@ resource "vcd_rde_type" "type_with_hooks" {
   description   = "{{.Description}}Hooks"
   interface_ids = [vcd_rde_interface.interface.id]
   schema        = file("{{.SchemaPath}}")
-  hooks {
+  hook {
     event       = "{{.HookEvent}}"
     behavior_id = vcd_rde_interface_behavior.behavior1.id
   }
