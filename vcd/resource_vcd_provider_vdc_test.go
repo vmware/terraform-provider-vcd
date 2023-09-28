@@ -306,6 +306,7 @@ func checkProviderVdcExists(providerVdcName string, wantExisting bool) resource.
 		return nil
 	}
 }
+
 func checkNetworkPoolExists(networkPoolName string, wantExisting bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		conn := testAccProvider.Meta().(*VCDClient)

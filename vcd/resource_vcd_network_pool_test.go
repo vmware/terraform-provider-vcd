@@ -1,4 +1,4 @@
-//go:build ALL || network || functional
+//go:build ALL || functional
 
 package vcd
 
