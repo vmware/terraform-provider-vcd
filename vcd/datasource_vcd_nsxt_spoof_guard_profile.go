@@ -24,11 +24,15 @@ func datasourceVcdNsxtSpoofGuardProfile() *schema.Resource {
 				Required:    true,
 				Description: "ID of VDC, VDC Group, or NSX-T Manager. Required if the VCD instance has more than one NSX-T manager",
 			},
-
 			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Description of Segment Spoof Guard Profile",
+			},
+			"is_address_binding_whitelist_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Indicates whether Spoof Guard is enabled",
 			},
 		},
 	}
@@ -51,6 +55,9 @@ func datasourceNsxtSpoofGuardProfileRead(_ context.Context, d *schema.ResourceDa
 	if err != nil {
 		return diag.Errorf("could not find Spoof Guard Profile by name '%s': %s", profileName, err)
 	}
+
+	dSet(d, "description", spoofGuardProfile.Description)
+	dSet(d, "is_address_binding_whitelist_enabled", spoofGuardProfile.IsAddressBindingWhitelistEnabled)
 
 	d.SetId(spoofGuardProfile.ID)
 
