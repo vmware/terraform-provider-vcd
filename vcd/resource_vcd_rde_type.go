@@ -16,19 +16,23 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
-var rdeTypeHook = &schema.Resource{
-	Schema: map[string]*schema.Schema{
-		"event": {
-			Type:        schema.TypeString,
-			Required:    true,
-			Description: "Event that will invoke the Behavior, one of PostCreate, PostUpdate, PreDelete, PostDelete",
+func getRdeTypeHookSchema(computed bool) *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"event": {
+				Type:        schema.TypeString,
+				Required:    !computed,
+				Computed:    computed,
+				Description: "Event that will invoke the Behavior, one of PostCreate, PostUpdate, PreDelete, PostDelete",
+			},
+			"behavior_id": {
+				Type:        schema.TypeString,
+				Required:    !computed,
+				Computed:    computed,
+				Description: "Existing Behavior that will be automatically invoked when the RDE of this RDE Type triggers the event",
+			},
 		},
-		"behavior_id": {
-			Type:        schema.TypeString,
-			Required:    true,
-			Description: "Existing Behavior that will be automatically invoked when the RDE of this RDE Type triggers the event",
-		},
-	},
+	}
 }
 
 func resourceVcdRdeType() *schema.Resource {
@@ -104,7 +108,7 @@ func resourceVcdRdeType() *schema.Resource {
 				Optional: true,
 				Description: "Optional blocks that map RDE lifecycle events to existing Behaviors, that will be " +
 					"automatically invoked when the corresponding event is triggered",
-				Elem: rdeTypeHook,
+				Elem: getRdeTypeHookSchema(false),
 			},
 			"inherited_version": {
 				Type:     schema.TypeString,
@@ -286,7 +290,7 @@ func genericVcdRdeTypeRead(_ context.Context, d *schema.ResourceData, meta inter
 		hook["behavior_id"] = behaviorId
 		hooks = append(hooks, hook)
 	}
-	hookSet := schema.NewSet(schema.HashResource(rdeTypeHook), hooks)
+	hookSet := schema.NewSet(schema.HashResource(getRdeTypeHookSchema(false)), hooks)
 	err = d.Set("hook", hookSet)
 	if err != nil {
 		return diag.Errorf("error setting RDE Type Hooks: %s", err)
