@@ -169,11 +169,11 @@ func resourceVcdRdeTypeCreate(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func getRdeTypeHooksFromSchema(d *schema.ResourceData) map[string]string {
-	if _, ok := d.GetOk("hooks"); !ok {
+	if _, ok := d.GetOk("hook"); !ok {
 		return nil
 	}
 	hooks := map[string]string{}
-	rawHooks := d.Get("hooks").(*schema.Set).List()
+	rawHooks := d.Get("hook").(*schema.Set).List()
 	for _, h := range rawHooks {
 		hookBlock := h.(map[string]interface{})
 		hooks[hookBlock["event"].(string)] = hookBlock["behavior_id"].(string)
