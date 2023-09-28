@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -78,6 +79,9 @@ func resourceVcdNetworkPool() *schema.Resource {
 		ReadContext:   resourceNetworkPoolRead,
 		UpdateContext: resourceNetworkPoolUpdate,
 		DeleteContext: resourceNetworkPoolDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceNetworkPoolImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
@@ -133,10 +137,10 @@ func resourceVcdNetworkPool() *schema.Resource {
 				Description: "Type of network provider",
 			},
 			"backing": {
-				Type:        schema.TypeList,
-				MaxItems:    1,
-				Optional:    true,
-				Computed:    true,
+				Type:     schema.TypeList,
+				MaxItems: 1,
+				Optional: true,
+				//Computed:    true,
 				Description: "The components used by the network pool",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -226,6 +230,9 @@ func resourceNetworkPoolCreate(ctx context.Context, d *schema.ResourceData, meta
 	if err != nil {
 		return diag.Errorf("error fetching network pool backing data: %s", err)
 	}
+	if networkPoolType != types.NetworkPoolVlanType && len(backing.VlanIdRanges.Values) > 0 {
+		return diag.Errorf("only network pools of type '%s' need range IDs", types.NetworkPoolVlanType)
+	}
 	var networkPool *govcd.NetworkPool
 	switch networkPoolType {
 	case types.NetworkPoolGeneveType:
@@ -277,8 +284,44 @@ func resourceNetworkPoolCreate(ctx context.Context, d *schema.ResourceData, meta
 	return resourceNetworkPoolRead(ctx, d, meta)
 }
 
+// resourceNetworkPoolUpdate updates the network pool
+// The only fields that can be updated are name, description, and range IDs (for VLAN type)
+// everything else is either read-only or ForceNew.
+// The backing components (transport_zone, port_groups, distributed_switches) cannot be set as ForceNew,
+// but cannot be updated either, so an error is issued when trying to change them
 func resourceNetworkPoolUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return diag.Errorf("not implemented yet")
+	vcdClient := meta.(*VCDClient)
+	networkPoolName := d.Get("name").(string)
+	networkPoolDescription := d.Get("description").(string)
+
+	for _, elem := range []string{"transport_zone", "port_groups", "distributed_switches"} {
+		if d.HasChanges("backing.0." + elem) {
+			return diag.Errorf("no changes allowed in backing.%s - To change this element the network pool must be destroyed and created anew ", elem)
+		}
+	}
+
+	networkPool, err := vcdClient.GetNetworkPoolById(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	if d.HasChanges("backing.0.range_ids") {
+		backing, err := getNetworkPoolBacking(d)
+		if err != nil {
+			return diag.Errorf("error getting backing info: %s", err)
+		}
+		if networkPool.NetworkPool.PoolType != types.NetworkPoolVlanType && len(backing.VlanIdRanges.Values) > 0 {
+			return diag.Errorf("only network pools of type '%s' need range IDs", types.NetworkPoolVlanType)
+		}
+		networkPool.NetworkPool.Backing.VlanIdRanges = backing.VlanIdRanges
+	}
+
+	networkPool.NetworkPool.Name = networkPoolName
+	networkPool.NetworkPool.Description = networkPoolDescription
+	err = networkPool.Update()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return resourceNetworkPoolRead(ctx, d, meta)
 }
 
 func resourceNetworkPoolRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -287,9 +330,7 @@ func resourceNetworkPoolRead(ctx context.Context, d *schema.ResourceData, meta i
 
 func genericNetworkPoolRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	networkPoolName := d.Get("name").(string)
-
-	networkPool, err := vcdClient.GetNetworkPoolByName(networkPoolName)
+	networkPool, err := vcdClient.GetNetworkPoolById(d.Id())
 	if err != nil {
 		if origin == "datasource" {
 			return diag.FromErr(err)
@@ -370,7 +411,7 @@ func resourceNetworkPoolDelete(ctx context.Context, d *schema.ResourceData, meta
 	vcdClient := meta.(*VCDClient)
 	networkPoolName := d.Get("name").(string)
 
-	networkPool, err := vcdClient.GetNetworkPoolByName(networkPoolName)
+	networkPool, err := vcdClient.GetNetworkPoolById(d.Id())
 	if err != nil {
 		return diag.Errorf("network pool '%s' not found: %s", networkPoolName, err)
 	}
@@ -401,23 +442,20 @@ func getNetworkPoolBacking(d *schema.ResourceData) (*types.NetworkPoolBacking, e
 				tzMap := tzRawList[0].(map[string]any)
 				backing.TransportZoneRef.Name = tzMap["name"].(string)
 			}
-		case "port_group":
+		case "port_groups":
 			pgRawList := value.([]any)
-			//pgMap := value.([]map[string]any)
 			for _, m := range pgRawList {
 				pgMap := m.(map[string]any)
 				backing.PortGroupRefs = append(backing.PortGroupRefs, types.OpenApiReference{Name: pgMap["name"].(string)})
 			}
 		case "distributed_switches":
 			dsRawList := value.([]any)
-			//dsMap := dsRawList.(map[string]any)
 			for _, m := range dsRawList {
 				dsMap := m.(map[string]any)
 				backing.VdsRefs = append(backing.VdsRefs, types.OpenApiReference{Name: dsMap["name"].(string)})
 			}
 		case "range_ids":
 			ridRawList := value.([]any)
-			//ridMap := value.([]map[string]any)
 			for _, m := range ridRawList {
 				ridMap := m.(map[string]any)
 				backing.VlanIdRanges.Values = append(backing.VlanIdRanges.Values, types.VlanIdRange{
@@ -427,94 +465,44 @@ func getNetworkPoolBacking(d *schema.ResourceData) (*types.NetworkPoolBacking, e
 			}
 		}
 	}
+	// Checking that only one type of backing was used
+	if len(backing.VdsRefs) > 0 {
+		if backing.TransportZoneRef.Name != "" {
+			return nil, fmt.Errorf("both transport zone and distributed switches were defined for a single network pool")
+		}
+		if len(backing.PortGroupRefs) > 0 {
+			return nil, fmt.Errorf("both port groups and distributed switches were defined for a single network pool")
+		}
+		if len(backing.VlanIdRanges.Values) == 0 {
+			return nil, fmt.Errorf("distributed_switches selected but no range IDs were indicated")
+		}
+	}
+	if len(backing.PortGroupRefs) > 0 && backing.TransportZoneRef.Name != "" {
+		return nil, fmt.Errorf("both transport zone and port groups were defined for a single network pool")
+	}
+	// Note: an empty backing block is acceptable, as the system will try to fetch the first available backing
 	return &backing, nil
-
 }
 
-// TODO: remove before opening PR
-/*
-{
-  "name": "TestVCD.Test_CreateNetworkPoolGeneve",
-  "description": "test network pool geneve",
-  "poolType": "GENEVE",
-  "managingOwnerRef": {
-    "name": "nsxManager1",
-    "id": "urn:vcloud:nsxtmanager:74f10a3e-0fb3-4631-b35e-e548848c64a4"
-  },
-  "backing": {
-    "vlanIdRanges": {
-      "values": null
-    },
-    "transportZoneRef": {
-      "name": "nsx-overlay-transportzone",
-      "id": "/infra/sites/default/enforcement-points/default/transport-zones/1b3a2f36-bfd1-443e-a0f6-4de01abc963e"
-    },
-    "providerRef": {
-      "name": "nsxManager1",
-      "id": "urn:vcloud:nsxtmanager:74f10a3e-0fb3-4631-b35e-e548848c64a4"
-    }
-  }
-}
+func resourceNetworkPoolImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	vcdClient := meta.(*VCDClient)
+	identifier := d.Id()
+	if identifier == "" {
+		return nil, fmt.Errorf("[network pool import] no identifier given. The name or the ID of the network pool should be given")
+	}
 
-{
-  "name": "TestVCD.Test_CreateNetworkPoolPortgroup",
-  "description": "test network pool port group",
-  "poolType": "PORTGROUP_BACKED",
-  "managingOwnerRef": {
-    "name": "vc1",
-    "id": "urn:vcloud:vimserver:1ed6e7c0-5761-4850-9b6b-c49fb5e0bd89"
-  },
-  "backing": {
-    "vlanIdRanges": {
-      "values": null
-    },
-    "portGroupRefs": [
-      {
-        "name": "TestbedPG",
-        "id": "dvportgroup-29"
-      }
-    ],
-    "transportZoneRef": {},
-    "providerRef": {
-      "name": "vc1",
-      "id": "urn:vcloud:vimserver:1ed6e7c0-5761-4850-9b6b-c49fb5e0bd89"
-    }
-  }
-}
+	var nPool *govcd.NetworkPool
+	var err error
+	if extractUuid(identifier) != "" {
+		nPool, err = vcdClient.GetNetworkPoolById(identifier)
+	} else {
+		nPool, err = vcdClient.GetNetworkPoolByName(identifier)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("[network pool import] error retrieving network pool '%s'", identifier)
+	}
+	d.SetId(nPool.NetworkPool.Id)
+	dSet(d, "name", nPool.NetworkPool.Name)
 
-{
-  "name": "TestVCD.Test_CreateNetworkPoolVlan",
-  "description": "test network pool VLAN",
-  "poolType": "VLAN",
-  "managingOwnerRef": {
-    "name": "vc1",
-    "id": "urn:vcloud:vimserver:1ed6e7c0-5761-4850-9b6b-c49fb5e0bd89"
-  },
-  "backing": {
-    "vlanIdRanges": {
-      "values": [
-        {
-          "startId": 1,
-          "endId": 100
-        },
-        {
-          "startId": 201,
-          "endId": 300
-        }
-      ]
-    },
-    "vdsRefs": [
-      {
-        "name": "TestbedDVS",
-        "id": "dvs-27"
-      }
-    ],
-    "transportZoneRef": {},
-    "providerRef": {
-      "name": "vc1",
-      "id": "urn:vcloud:vimserver:1ed6e7c0-5761-4850-9b6b-c49fb5e0bd89"
-    }
-  }
+	return []*schema.ResourceData{d}, nil
 }
-
-*/
