@@ -24,6 +24,7 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 		"ExecutionType":         "noop",
 		"TypeAccessLevels":      "\"urn:vcloud:accessLevel:FullControl\"",
 		"InterfaceAccessLevels": "\"urn:vcloud:accessLevel:ReadOnly\", \"urn:vcloud:accessLevel:FullControl\"",
+		"HookEvent":             "PostCreate",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -35,6 +36,7 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 	params["ExecutionId"] = "MyActivityUpdated"
 	params["TypeAccessLevels"] = "\"urn:vcloud:accessLevel:ReadOnly\""
 	params["InterfaceAccessLevels"] = "\"urn:vcloud:accessLevel:FullControl\""
+	params["HookEvent"] = "PreDelete"
 	configText2 := templateFill(testAccVcdRdeTypeBehavior, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 2: %s\n", configText2)
 
@@ -57,13 +59,17 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 	rdeTypeBehaviorAcl := "vcd_rde_type_behavior_acl.type_acl"
 	rdeTypeBehaviorAclDS := "data.vcd_rde_type_behavior_acl.type_acl_ds"
 	rdeType := "vcd_rde_type.type"
+	rdeTypeWithHooks := "vcd_rde_type.type_with_hooks"
+
+	cachedId := &testCachedFieldValue{}
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckRdeTypesDestroy(rdeType), // If the RDE Type is destroyed, the Behavior is also destroyed.
+		CheckDestroy:      testAccCheckRdeTypesDestroy(rdeType, rdeTypeWithHooks), // If the RDE Type is destroyed, the Behavior is also destroyed.
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
+					cachedId.cacheTestResourceFieldValue(interfaceBehavior1, "id"),
 					// RDE Type Behavior
 					resource.TestCheckResourceAttrPair(rdeTypeBehavior, "ref", interfaceBehavior1, "id"),
 					resource.TestCheckResourceAttr(rdeTypeBehavior, "name", t.Name()+"1"),
@@ -83,6 +89,12 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeTypeBehaviorAcl, "behavior_id", rdeTypeBehaviorAcl, "id"),
 					resource.TestCheckResourceAttr(rdeTypeBehaviorAcl, "access_level_ids.#", "1"),
 					resource.TestCheckTypeSetElemAttr(rdeTypeBehaviorAcl, "access_level_ids.*", "urn:vcloud:accessLevel:FullControl"),
+
+					// RDE Type with Hooks
+					resource.TestCheckTypeSetElemNestedAttrs(rdeTypeWithHooks, "hook.*", map[string]string{
+						"event":       "PostCreate",
+						"behavior_id": cachedId.fieldValue,
+					}),
 				),
 			},
 			{
@@ -105,6 +117,12 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeTypeBehaviorAcl, "behavior_id", rdeTypeBehaviorAcl, "id"),
 					resource.TestCheckResourceAttr(rdeTypeBehaviorAcl, "access_level_ids.#", "1"),
 					resource.TestCheckTypeSetElemAttr(rdeTypeBehaviorAcl, "access_level_ids.*", "urn:vcloud:accessLevel:ReadOnly"),
+
+					// RDE Type with Hooks
+					resource.TestCheckTypeSetElemNestedAttrs(rdeTypeWithHooks, "hook.*", map[string]string{
+						"event":       "PreDelete",
+						"behavior_id": cachedId.fieldValue,
+					}),
 				),
 			},
 			{
@@ -200,6 +218,20 @@ resource "vcd_rde_type" "type" {
   # Behaviors can't be created after the RDE Interface is used by a RDE Type
   # so we need to depend on the Behaviors to wait for them to be created first.
   depends_on = [vcd_rde_interface_behavior.behavior1, vcd_rde_interface_behavior.behavior2]
+}
+
+resource "vcd_rde_type" "type_with_hooks" {
+  nss           = "{{.Nss}}Hooks"
+  version       = "{{.Version}}"
+  vendor        = "{{.Vendor}}Hooks"
+  name          = "{{.Name}}Hooks"
+  description   = "{{.Description}}Hooks"
+  interface_ids = [vcd_rde_interface.interface.id]
+  schema        = file("{{.SchemaPath}}")
+  hooks {
+    event       = "{{.HookEvent}}"
+    behavior_id = vcd_rde_interface_behavior.behavior1.id
+  }
 }
 
 resource "vcd_rde_type_behavior" "behavior_override" {
