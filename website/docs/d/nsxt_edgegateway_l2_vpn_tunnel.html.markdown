@@ -26,7 +26,7 @@ data "vcd_nsxt_edgegateway" "testing" {
 }
 
 data "vcd_nsxt_edgegateway_l2_vpn_tunnel" "server-session" {
-  org = "datacloud"
+  org             = "datacloud"
   edge_gateway_id = data.vcd_nsxt_edgegateway.server-testing.id
 
   name = "server-session"

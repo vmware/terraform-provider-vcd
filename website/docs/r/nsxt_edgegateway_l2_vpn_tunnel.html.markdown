@@ -20,7 +20,7 @@ resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "server-session" {
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.server-testing.id
 
-  name = "server-session"
+  name        = "server-session"
   description = "example description"
 
   session_mode             = "SERVER"
@@ -46,7 +46,7 @@ resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "client-session" {
   # in SERVER or CLIENT mode.
   edge_gateway_id = data.vcd_nsxt_edgegateway.client-testing.id
 
-  name = "client-session"
+  name        = "client-session"
   description = "example description"
 
   session_mode = "CLIENT"
@@ -59,7 +59,7 @@ resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "client-session" {
   stretched_network {
     network_id = data.vcd_routed_network_v2.test_network_client.id
     # CLIENT sessions need to define a tunnel ID for every stretched network
-    tunnel_id  = 1
+    tunnel_id = 1
   }
 
   stretched_network {
