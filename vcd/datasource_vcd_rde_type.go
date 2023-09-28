@@ -54,6 +54,26 @@ func datasourceVcdRdeType() *schema.Resource {
 				Computed:    true,
 				Description: "An external entity's ID that this definition may apply to",
 			},
+			"hook": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Description: "Blocks that map RDE lifecycle events to existing Behaviors, that are" +
+					"automatically invoked when the corresponding event is triggered",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"event": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Event that will invoke the Behavior, one of PostCreate, PostUpdate, PreDelete, PostDelete",
+						},
+						"behavior_id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Existing Behavior that will be automatically invoked when the RDE of this RDE Type triggers the event",
+						},
+					},
+				},
+			},
 			"inherited_version": {
 				Type:     schema.TypeString,
 				Computed: true,

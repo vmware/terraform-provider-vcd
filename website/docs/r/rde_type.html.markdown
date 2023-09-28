@@ -85,6 +85,40 @@ resource "vcd_rde_type" "my_rde_type" {
 }
 ```
 
+## Example Usage with Interface Behaviors and Hooks
+
+```hcl
+data "vcd_rde_interface" "my_interface" {
+  vendor  = "bigcorp"
+  ns      = "tech1"
+  version = "1.2.3"
+}
+
+resource "vcd_rde_interface_behavior" "my_behavior" {
+  interface_id = vcd_rde_interface.my_interface.id
+  name         = "MyBehavior"
+  description  = "Adds a node to the cluster.\nParameters:\n  clusterId: the ID of the cluster\n  node: The node address\n"
+  execution = {
+    "id" : "MyExecution"
+    "type" : "Activity"
+  }
+}
+
+resource "vcd_rde_type" "my_rde_type" {
+  vendor        = "vmware"
+  nss           = "vcd"
+  version       = "4.5.6"
+  name          = "My VMware RDE Type"
+  interface_ids = [data.vcd_rde_interface.my_interface.id]
+  schema_url    = "https://just.an-example.com/schemas/my-type-schema.json"
+  hook {
+    event = "PostCreate" # Every RDE of this Type that is created will invoke the Behavior automatically
+    behavior_id = vcd_rde_interface_behavior.my_behavior.id
+  }
+  # depends_on is not needed in this specific case, because the hook already forces the dependency on the Interface Behavior
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -103,6 +137,11 @@ The following arguments are supported:
   The referenced JSON schema will be downloaded on every read operation, and it will break Terraform operations if these contents are no longer present on the remote site.
   If you can't guarantee this, it is safer to use `schema`.
 * `external_id` - (Optional) An external entity's ID that this Runtime Defined Entity Type may apply to.
+* `hook` - (Optional; *v3.11+*) Optional blocks that map [RDE](/providers/vmware/vcd/latest/docs/resources/rde) lifecycle events
+  to existing [Behaviors](/providers/vmware/vcd/latest/docs/resources/rde_interface_behavior), that will be
+  automatically invoked when the corresponding event is triggered. These blocks have the following properties:
+  * `event`: Event that will invoke the Behavior, one of `PostCreate`, `PostUpdate`, `PreDelete`, `PostDelete`.
+  * `behavior_id`: Existing Behavior that will be automatically invoked when the RDE of this RDE Type triggers the event.
 * `inherited_version` - (Optional) To be used when creating a new version of a Runtime Defined Entity Type.
   Specifies the version of the type that will be the template for the authorization configuration of the new version.
   The Type ACLs and the access requirements of the Type Behaviors of the new version will be copied from those of the inherited version.
