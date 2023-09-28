@@ -152,27 +152,27 @@ resource "vcd_nsxt_segment_profile_template" "half-complete" {
 
 data "vcd_nsxt_segment_ip_discovery_profile" "first" {
   name       = "{{.IpDiscoveryProfileName}}"
-  context_id = data.vcd_nsxt_manager.nsxt.id
+  nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 
 data "vcd_nsxt_segment_mac_discovery_profile" "first" {
   name       = "{{.MacDiscoveryProfileName}}"
-  context_id = data.vcd_nsxt_manager.nsxt.id
+  nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 
 data "vcd_nsxt_segment_spoof_guard_profile" "first" {
   name       = "{{.SpoofGuardProfileName}}"
-  context_id = data.vcd_nsxt_manager.nsxt.id
+  nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 
 data "vcd_nsxt_segment_qos_profile" "first" {
   name       = "{{.QosProfileName}}"
-  context_id = data.vcd_nsxt_manager.nsxt.id
+  nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 
 data "vcd_nsxt_segment_security_profile" "first" {
   name       = "{{.SegmentSecurityProfileName}}"
-  context_id = data.vcd_nsxt_manager.nsxt.id
+  nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 `
 

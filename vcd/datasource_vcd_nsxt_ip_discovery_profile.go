@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
@@ -20,10 +19,23 @@ func datasourceVcdNsxtIpDiscoveryProfile() *schema.Resource {
 				Required:    true,
 				Description: "Description of Segment IP Discovery Profile",
 			},
-			"context_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "ID of VDC, VDC Group, or NSX-T Manager. Required if the VCD instance has more than one NSX-T manager",
+			"nsxt_manager_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"nsxt_manager_id", "vdc_id", "vdc_group_id"},
+				Description:  "ID of NSX-T Manager",
+			},
+			"vdc_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"nsxt_manager_id", "vdc_id", "vdc_group_id"},
+				Description:  "ID of VDC",
+			},
+			"vdc_group_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"nsxt_manager_id", "vdc_id", "vdc_group_id"},
+				Description:  "ID of VDC Group",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -92,9 +104,8 @@ func datasourceVcdNsxtIpDiscoveryProfile() *schema.Resource {
 func datasourceNsxtIpDiscoveryProfileRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	profileName := d.Get("name").(string)
-	contextUrn := d.Get("context_id").(string)
 
-	contextFilterField, err := getContextFilterField(contextUrn)
+	contextFilterField, contextUrn, err := getContextFilterField(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -118,7 +129,7 @@ func datasourceNsxtIpDiscoveryProfileRead(_ context.Context, d *schema.ResourceD
 	dSet(d, "is_tofu_enabled", ipDiscoveryProfile.IsTofuEnabled)
 	dSet(d, "is_vmtools_v4_enabled", ipDiscoveryProfile.IsVMToolsV4Enabled)
 	dSet(d, "is_vmtools_v6_enabled", ipDiscoveryProfile.IsVMToolsV6Enabled)
-	dSet(d, "nd_snooping_limit", ipDiscoveryProfile.IsNdSnoopingEnabled)
+	dSet(d, "nd_snooping_limit", ipDiscoveryProfile.NdSnoopingLimit)
 
 	d.SetId(ipDiscoveryProfile.ID)
 
@@ -126,19 +137,16 @@ func datasourceNsxtIpDiscoveryProfileRead(_ context.Context, d *schema.ResourceD
 }
 
 // getContextFilterField determines which field should be used for filtering
-func getContextFilterField(urn string) (string, error) {
-	contextFilterField := ""
+func getContextFilterField(d *schema.ResourceData) (string, string, error) {
 	switch {
-	case strings.Contains(urn, "urn:vcloud:nsxtmanager:"):
-		contextFilterField = "nsxTManagerRef.id"
-	case strings.Contains(urn, "urn:vcloud:vdcGroup:"):
-		contextFilterField = "vdcGroupId"
-	case strings.Contains(urn, "urn:vcloud:vdc:"):
-		contextFilterField = "orgVdcId"
-	default:
-		return "", fmt.Errorf("unrecognized 'context_id', was expecting to get NSX-T Manager, VDC or VDC Group, got '%s'", urn)
+	case d.Get("nsxt_manager_id").(string) != "":
+		return "nsxTManagerRef.id", d.Get("nsxt_manager_id").(string), nil
+	case d.Get("vdc_id").(string) != "":
+		return "orgVdcId", d.Get("vdc_id").(string), nil
+	case d.Get("vdc_group_id").(string) != "":
+		return "vdcGroupId", d.Get("vdc_group_id").(string), nil
+
 	}
 
-	return contextFilterField, nil
-
+	return "", "", fmt.Errorf("unknown filtering field")
 }

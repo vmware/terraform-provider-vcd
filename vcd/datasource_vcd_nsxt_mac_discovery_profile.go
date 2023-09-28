@@ -19,10 +19,23 @@ func datasourceVcdNsxtMacDiscoveryProfile() *schema.Resource {
 				Required:    true,
 				Description: "Description of Segment MAC Discovery Profile",
 			},
-			"context_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "ID of VDC, VDC Group, or NSX-T Manager. Required if the VCD instance has more than one NSX-T manager",
+			"nsxt_manager_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"nsxt_manager_id", "vdc_id", "vdc_group_id"},
+				Description:  "ID of NSX-T Manager",
+			},
+			"vdc_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"nsxt_manager_id", "vdc_id", "vdc_group_id"},
+				Description:  "ID of VDC",
+			},
+			"vdc_group_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"nsxt_manager_id", "vdc_id", "vdc_group_id"},
+				Description:  "ID of VDC Group",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -66,9 +79,8 @@ func datasourceVcdNsxtMacDiscoveryProfile() *schema.Resource {
 func datasourceNsxtMacDiscoveryProfileRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	profileName := d.Get("name").(string)
-	contextUrn := d.Get("context_id").(string)
 
-	contextFilterField, err := getContextFilterField(contextUrn)
+	contextFilterField, contextUrn, err := getContextFilterField(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
