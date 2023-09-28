@@ -111,8 +111,9 @@ resource "vcd_rde_type" "my_rde_type" {
   name          = "My VMware RDE Type"
   interface_ids = [data.vcd_rde_interface.my_interface.id]
   schema_url    = "https://just.an-example.com/schemas/my-type-schema.json"
+  
   hook {
-    event = "PostCreate" # Every RDE of this Type that is created will invoke the Behavior automatically
+    event       = "PostCreate" # Every RDE of this Type that is created will invoke the Behavior automatically
     behavior_id = vcd_rde_interface_behavior.my_behavior.id
   }
   # depends_on is not needed in this specific case, because the hook already forces the dependency on the Interface Behavior
