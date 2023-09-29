@@ -119,15 +119,13 @@ corresponds to the device on the remote site terminating the VPN tunnel.
 * `tunnel_id` - (Optional) Tunnel ID of the network on the tunnel, required for 
   `CLIENT` sessions, computed for `SERVER` sessions.
 
-
 ## Importing
 
 ~> The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
 An existing L2 VPN Tunnel configuration can be [imported][docs-import] into this resource
-via supplying path for it. An example is
-below:
+via supplying path for it. An example is below:
 
 [docs-import]: https://www.terraform.io/docs/import/
 
