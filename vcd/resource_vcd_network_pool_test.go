@@ -156,7 +156,7 @@ func runNetworkPoolTest(t *testing.T, npData networkPoolData) {
 	data["FuncName"] = data["FuncName"].(string) + "-update"
 	data["NetworkPoolName"] = updatedName
 	data["NetworkPoolDescription"] = updatedDescription
-
+	data["SkipMessage"] = "# skip-binary-test: only for update"
 	updatedText := templateFill(tmpl, data)
 	debugPrintf("#[DEBUG] Update: %s", updatedText)
 
