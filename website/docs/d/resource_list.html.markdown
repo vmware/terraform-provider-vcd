@@ -391,6 +391,12 @@ The following arguments are supported:
     * `vcd_nsxt_network_imported`
     * `vcd_library_certificate`
     * `vcd_provider_vdc`
+    * `vcd_network_pool`
+    * `vcd_vcenter`
+    * `vcd_nsxt_manager`
+    * `vcd_nsxt_transport_zone`
+    * `vcd_distributed_switch`
+    * `vcd_importable_port_group`
 * `list_mode` (Optional) How the list should be built. One of:
     * `name` (default): Only the resource name
     * `id`: Only the resource ID
