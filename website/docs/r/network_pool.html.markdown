@@ -18,11 +18,10 @@ Supported in provider *v3.11+*
 ## Example Usage 1 - Type "GENEVE"
 
 ```hcl
-
 data "vcd_nsxt_manager" "mgr" {
   name = "mymanager"
 }
- 
+
 resource "vcd_network_pool" "npool" {
   name                = "new-network-pool"
   description         = "New network pool"
@@ -168,7 +167,7 @@ output "pool" {
 * `backing` - (Optional) The components used by the network pool. See [Backing](#backing) below for details
 
 ## Attribute Reference
-	
+
 * `status` Status of the network pool
 * `promiscuous_mode` Whether the network pool is in promiscuous mode
 * `total_backings_count` Total number of backings
