@@ -90,7 +90,7 @@ var alsoDelete = entityList{
 var isTest = regexp.MustCompile(`^[Tt]est`)
 
 // alwaysShow lists the resources that will always be shown
-var alwaysShow = []string{"vcd_provider_vdc", "vcd_org", "vcd_catalog", "vcd_org_vdc", "vcd_nsxt_alb_controller"}
+var alwaysShow = []string{"vcd_provider_vdc", "vcd_network_pool", "vcd_org", "vcd_catalog", "vcd_org_vdc", "vcd_nsxt_alb_controller"}
 
 func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	if verbose {
@@ -134,6 +134,29 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 				err = task.WaitTaskCompletion()
 				if err != nil {
 					return fmt.Errorf("error finishing deletion of provider VDC '%s': %s", pvdcRec.Name, err)
+				}
+			}
+		}
+	}
+	// --------------------------------------------------------------
+	// Network Pool
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		networkPools, err := govcdClient.QueryNetworkPools()
+		if err != nil {
+			return fmt.Errorf("error retrieving network pools: %s", err)
+		}
+		for _, np := range networkPools {
+			networkPool, err := govcdClient.GetNetworkPoolByName(np.Name)
+			if err != nil {
+				return fmt.Errorf("error retrieving network pool '%s': %s", np.Name, err)
+			}
+			tobeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, np.Name, "vcd_network_pool", 0, verbose)
+			if tobeDeleted {
+				fmt.Printf("\t REMOVING network pool %s\n", np.Name)
+				err := networkPool.Delete()
+				if err != nil {
+					return fmt.Errorf("error deleting network pool '%s': %s", np.Name, err)
 				}
 			}
 		}
