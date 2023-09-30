@@ -1,4 +1,4 @@
-//go:build vdc || ALL || functional
+//go:build vdc || nsxt || ALL || functional
 
 package vcd
 
@@ -31,15 +31,11 @@ func TestAccVcdOrgVdcNsxtNetworkProfile(t *testing.T) {
 	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdOrgVdcNsxtNetworkProfile, params)
-	// params["FuncName"] = t.Name() + "-step2DS"
-	// configText2 := templateFill(testAccVcdOrgVdcNsxtNetworkProfileDataSource, params)
-
-	// params["FuncName"] = t.Name() + "-Update"
-	// configText3 := templateFill(testAccVcdOrgVdcNsxtNetworkProfile_update, params)
+	params["FuncName"] = t.Name() + "-step2DS"
+	configText2 := templateFill(testAccVcdOrgVdcNsxtNetworkProfileDS, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION - Step1: %s", configText1)
-	// debugPrintf("#[DEBUG] CONFIGURATION - Step2: %s", configText2)
-	// debugPrintf("#[DEBUG] CONFIGURATION - Step3: %s", configText3)
+	debugPrintf("#[DEBUG] CONFIGURATION - Step2: %s", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -56,20 +52,18 @@ func TestAccVcdOrgVdcNsxtNetworkProfile(t *testing.T) {
 				Config: configText1,
 				Check:  resource.ComposeTestCheckFunc(),
 			},
-			// {
-			// 	Config: configText2,
-			// 	Check: resource.ComposeTestCheckFunc(
-			// 		resourceFieldsEqual("vcd_org_vdc.with-spt", "data.vcd_org_vdc.ds", []string{"delete_recursive", "delete_force", "%"}),
-			// 	),
-			// },
-			// {
-			// 	Config: configText3,
-			// 	Check: resource.ComposeTestCheckFunc(
-			// 		resource.TestCheckResourceAttr("vcd_org_vdc.with-spt", "edge_cluster_id", ""),
-			// 		resource.TestCheckResourceAttr("vcd_org_vdc.with-spt", "vdc_networks_default_segment_profile_template_id", ""),
-			// 		resource.TestCheckResourceAttr("vcd_org_vdc.with-spt", "vapp_networks_default_segment_profile_template_id", ""),
-			// 	),
-			// },
+			{
+				Config: configText2,
+				Check: resource.ComposeTestCheckFunc(
+					resourceFieldsEqual("vcd_org_vdc_nsxt_network_profile.nsxt", "vcd_org_vdc_nsxt_network_profile.nsxt", nil),
+				),
+			},
+			{
+				ResourceName:      "vcd_org_vdc_nsxt_network_profile",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     testConfig.VCD.Org + "." + testConfig.Nsxt.Vdc,
+			},
 		},
 	})
 	postTestChecks(t)
@@ -138,5 +132,12 @@ resource "vcd_org_vdc_nsxt_network_profile" "nsxt" {
   edge_cluster_id                                   = data.vcd_nsxt_edge_cluster.first.id
   vdc_networks_default_segment_profile_template_id  = vcd_nsxt_segment_profile_template.complete.id
   vapp_networks_default_segment_profile_template_id = vcd_nsxt_segment_profile_template.complete.id
+}
+`
+
+const testAccVcdOrgVdcNsxtNetworkProfileDS = testAccVcdOrgVdcNsxtNetworkProfile + `
+data "vcd_org_vdc_nsxt_network_profile" "nsxt" {
+  org = vcd_org_vdc_nsxt_network_profile.nsxt.org
+  vdc = vcd_org_vdc_nsxt_network_profile.nsxt.vdc
 }
 `

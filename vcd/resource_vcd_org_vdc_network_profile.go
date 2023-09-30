@@ -97,25 +97,21 @@ func resourceDataSourceVcdNsxtOrgVdcNetworkProfileRead(ctx context.Context, d *s
 	netProfile, err := vdc.GetVdcNetworkProfile()
 	if err != nil {
 		return diag.Errorf("error getting VDC Network Profile: %s", err)
-
 	}
 
+	dSet(d, "edge_cluster_id", "")
 	if netProfile.ServicesEdgeCluster != nil && netProfile.ServicesEdgeCluster.BackingID != "" {
 		dSet(d, "edge_cluster_id", netProfile.ServicesEdgeCluster.BackingID)
-	} else {
-		dSet(d, "edge_cluster_id", "")
 	}
 
+	dSet(d, "vapp_networks_default_segment_profile_template_id", "")
 	if netProfile.VappNetworkSegmentProfileTemplateRef != nil {
 		dSet(d, "vapp_networks_default_segment_profile_template_id", netProfile.VappNetworkSegmentProfileTemplateRef.ID)
-	} else {
-		dSet(d, "vapp_networks_default_segment_profile_template_id", "")
 	}
 
+	dSet(d, "vdc_networks_default_segment_profile_template_id", "")
 	if netProfile.VdcNetworkSegmentProfileTemplateRef != nil {
 		dSet(d, "vdc_networks_default_segment_profile_template_id", netProfile.VdcNetworkSegmentProfileTemplateRef.ID)
-	} else {
-		dSet(d, "vdc_networks_default_segment_profile_template_id", "")
 	}
 
 	d.SetId(vdc.Vdc.ID)
