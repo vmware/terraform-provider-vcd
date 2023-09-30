@@ -337,6 +337,12 @@ func resourceVcdCatalogAccessControlImport(_ context.Context, d *schema.Resource
 // * operation is the main operation we are running
 func runWithRetry(operationDescription, errorMessage string, timeout time.Duration, preRun func() error, operation func() (any, error)) (any, error) {
 	if os.Getenv("VCD_SKIP_RETRY") != "" {
+		if preRun != nil {
+			err := preRun()
+			if err != nil {
+				return nil, err
+			}
+		}
 		return operation()
 	}
 	if operation == nil {

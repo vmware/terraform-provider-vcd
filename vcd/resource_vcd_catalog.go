@@ -209,7 +209,15 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	log.Printf("[TRACE] adding metadata for catalog")
-	err = createOrUpdateMetadata(d, catalog, "metadata")
+	_, err = runWithRetry("catalog metadata",
+		"error adding catalog metadata",
+		10*time.Second,
+		nil,
+		func() (any, error) {
+			err := createOrUpdateMetadata(d, catalog, "metadata")
+			return nil, err
+		})
+	//err = createOrUpdateMetadata(d, catalog, "metadata")
 	if err != nil {
 		return diag.Errorf("error adding catalog metadata: %s", err)
 	}
