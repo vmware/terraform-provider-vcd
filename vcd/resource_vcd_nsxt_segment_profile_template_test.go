@@ -86,7 +86,6 @@ func TestAccVcdNsxtSegmentProfileTemplate(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "segment_security_profile_id", ""),
 				),
 			},
-
 			{
 				ResourceName:      "vcd_nsxt_segment_profile_template.complete",
 				ImportState:       true,
@@ -112,6 +111,12 @@ func TestAccVcdNsxtSegmentProfileTemplate(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual("data.vcd_nsxt_global_default_segment_profile_template.singleton", "vcd_nsxt_global_default_segment_profile_template.singleton", nil),
 				),
+			},
+			{
+				ResourceName:      "vcd_nsxt_global_default_segment_profile_template.singleton",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     "",
 			},
 		},
 	})

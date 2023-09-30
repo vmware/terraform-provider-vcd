@@ -37,9 +37,6 @@ func resourceVcdGlobalDefaultSegmentProfileTemplate() *schema.Resource {
 
 func resourceVcdGlobalDefaultSegmentProfileTemplateCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	if !vcdClient.Client.IsSysAdmin {
-		return diag.Errorf("this resource is only supported for Providers")
-	}
 
 	globalDefaultSegmentProfileConfig := &types.NsxtSegmentProfileTemplateDefaultDefinition{
 		VappNetworkSegmentProfileTemplateRef: &types.OpenApiReference{ID: d.Get("vapp_networks_default_segment_profile_template_id").(string)},
@@ -58,10 +55,6 @@ func resourceVcdGlobalDefaultSegmentProfileTemplateCreateUpdate(ctx context.Cont
 
 func resourceDataSourceVcdGlobalDefaultSegmentProfileTemplateRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-
-	if !vcdClient.Client.IsSysAdmin {
-		return diag.Errorf("this resource is only supported for Providers")
-	}
 
 	defaults, err := vcdClient.GetGlobalDefaultSegmentProfileTemplates()
 	if err != nil {
@@ -85,9 +78,6 @@ func resourceDataSourceVcdGlobalDefaultSegmentProfileTemplateRead(_ context.Cont
 
 func resourceVcdGlobalDefaultSegmentProfileTemplateDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	if !vcdClient.Client.IsSysAdmin {
-		return diag.Errorf("this resource is only supported for Providers")
-	}
 
 	_, err := vcdClient.UpdateGlobalDefaultSegmentProfileTemplates(&types.NsxtSegmentProfileTemplateDefaultDefinition{})
 	if err != nil {
@@ -99,9 +89,6 @@ func resourceVcdGlobalDefaultSegmentProfileTemplateDelete(_ context.Context, d *
 
 func resourceVcdGlobalDefaultSegmentProfileTemplateImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
-	if !vcdClient.Client.IsSysAdmin {
-		return nil, fmt.Errorf("this resource is only supported for Providers")
-	}
 
 	_, err := vcdClient.GetGlobalDefaultSegmentProfileTemplates()
 	if err != nil {
