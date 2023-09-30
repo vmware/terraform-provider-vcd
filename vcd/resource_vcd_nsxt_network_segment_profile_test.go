@@ -95,26 +95,6 @@ func TestAccVcdNsxtNetworkSegmentProfileCustom(t *testing.T) {
 					resourceFieldsEqual("data.vcd_nsxt_network_segment_profile.custom-prof", "vcd_nsxt_network_segment_profile.custom-prof", nil),
 				),
 			},
-			// {
-			// 	Config: configText2DS,
-			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		resourceFieldsEqual("data.vcd_nsxt_segment_profile_template.empty", "vcd_nsxt_segment_profile_template.empty", nil),
-			// 		resourceFieldsEqual("data.vcd_nsxt_segment_profile_template.half-complete", "vcd_nsxt_segment_profile_template.half-complete", nil),
-			// 		resourceFieldsEqual("data.vcd_nsxt_segment_profile_template.complete", "vcd_nsxt_segment_profile_template.complete", nil),
-			// 	),
-			// },
-			// {
-			// 	Config: configText3,
-			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_global_default_segment_profile_template.singleton", "id", "no-real-id"),
-			// 	),
-			// },
-			// {
-			// 	Config: configText4DS,
-			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		resourceFieldsEqual("data.vcd_nsxt_global_default_segment_profile_template.singleton", "vcd_nsxt_global_default_segment_profile_template.singleton", nil),
-			// 	),
-			// },
 		},
 	})
 	postTestChecks(t)
@@ -278,18 +258,6 @@ func TestAccVcdNsxtNetworkSegmentProfileTemplate(t *testing.T) {
 					resourceFieldsEqual("data.vcd_nsxt_network_segment_profile.custom-prof", "vcd_nsxt_network_segment_profile.custom-prof", nil),
 				),
 			},
-			// {
-			// 	Config: configText3,
-			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_global_default_segment_profile_template.singleton", "id", "no-real-id"),
-			// 	),
-			// },
-			// {
-			// 	Config: configText4DS,
-			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		resourceFieldsEqual("data.vcd_nsxt_global_default_segment_profile_template.singleton", "vcd_nsxt_global_default_segment_profile_template.singleton", nil),
-			// 	),
-			// },
 		},
 	})
 	postTestChecks(t)
