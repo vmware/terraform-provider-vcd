@@ -20,7 +20,7 @@ data "vcd_nsxt_manager" "nsxt" {
 }
 
 data "vcd_nsxt_segment_mac_discovery_profile" "first" {
-  name       = "mac-discovery-profile-0"
+  name            = "mac-discovery-profile-0"
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 ```

@@ -20,7 +20,7 @@ data "vcd_nsxt_manager" "nsxt" {
 }
 
 data "vcd_nsxt_segment_qos_profile" "first" {
-  name       = "qos-profile-0"
+  name            = "qos-profile-0"
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 ```

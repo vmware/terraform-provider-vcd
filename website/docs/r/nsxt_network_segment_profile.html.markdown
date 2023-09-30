@@ -35,7 +35,7 @@ resource "vcd_network_routed_v2" "net1" {
 
   static_ip_pool {
     start_address = "1.1.1.10"
-    end_address = "1.1.1.20"
+    end_address   = "1.1.1.20"
   }
 }
 

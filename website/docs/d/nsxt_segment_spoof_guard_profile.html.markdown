@@ -20,7 +20,7 @@ data "vcd_nsxt_manager" "nsxt" {
 }
 
 data "vcd_nsxt_segment_spoof_guard_profile" "first" {
-  name       = "spoof-guard-profile-0"
+  name            = "spoof-guard-profile-0"
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 ```
