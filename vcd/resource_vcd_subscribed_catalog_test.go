@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	checkTimeout = 10 * time.Second
+	checkTimeout = 30 * time.Second
 	checkDelay   = 200 * time.Millisecond
 )
 
