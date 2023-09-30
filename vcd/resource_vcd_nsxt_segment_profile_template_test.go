@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 func TestAccVcdNsxtSegmentProfileTemplate(t *testing.T) {
@@ -27,9 +27,7 @@ func TestAccVcdNsxtSegmentProfileTemplate(t *testing.T) {
 		"QosProfileName":             testConfig.Nsxt.QosProfile,
 		"SpoofGuardProfileName":      testConfig.Nsxt.SpoofGuardProfile,
 		"SegmentSecurityProfileName": testConfig.Nsxt.SegmentSecurityProfile,
-		// "ControllerUrl":      testConfig.Nsxt.NsxtSegmentProfileTemplateUrl,
-		// "ControllerUsername": testConfig.Nsxt.NsxtSegmentProfileTemplateUser,
-		// "ControllerPassword": testConfig.Nsxt.NsxtSegmentProfileTemplatePassword,
+
 		"Tags": "nsxt ",
 	}
 
@@ -55,12 +53,15 @@ func TestAccVcdNsxtSegmentProfileTemplate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		// CheckDestroy:      testAccCheckVcdSegmentProfileTemplateDestroy("vcd_nsxt_alb_controller.first"),
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdSegmentProfileTemplateDestroy("vcd_nsxt_segment_profile_template.empty"),
+			testAccCheckVcdSegmentProfileTemplateDestroy("vcd_nsxt_segment_profile_template.complete"),
+			testAccCheckVcdSegmentProfileTemplateDestroy("vcd_nsxt_segment_profile_template.half-complete"),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.first", "id", regexp.MustCompile(`\d*`)),
 					resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "name", t.Name()+"-empty"),
 					resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "description", "description"),
 					resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "ip_discovery_profile_id", ""),
@@ -142,36 +143,36 @@ resource "vcd_nsxt_segment_profile_template" "complete" {
 }
 
 resource "vcd_nsxt_segment_profile_template" "half-complete" {
-	name        = "{{.TestName}}-half-complete"
-  
-	nsxt_manager_id             = data.vcd_nsxt_manager.nsxt.id
-	ip_discovery_profile_id     = data.vcd_nsxt_segment_ip_discovery_profile.first.id
-	mac_discovery_profile_id    = data.vcd_nsxt_segment_mac_discovery_profile.first.id
-	spoof_guard_profile_id      = data.vcd_nsxt_segment_spoof_guard_profile.first.id
-  }
+  name = "{{.TestName}}-half-complete"
+
+  nsxt_manager_id          = data.vcd_nsxt_manager.nsxt.id
+  ip_discovery_profile_id  = data.vcd_nsxt_segment_ip_discovery_profile.first.id
+  mac_discovery_profile_id = data.vcd_nsxt_segment_mac_discovery_profile.first.id
+  spoof_guard_profile_id   = data.vcd_nsxt_segment_spoof_guard_profile.first.id
+}
 
 data "vcd_nsxt_segment_ip_discovery_profile" "first" {
-  name       = "{{.IpDiscoveryProfileName}}"
+  name            = "{{.IpDiscoveryProfileName}}"
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 
 data "vcd_nsxt_segment_mac_discovery_profile" "first" {
-  name       = "{{.MacDiscoveryProfileName}}"
+  name            = "{{.MacDiscoveryProfileName}}"
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 
 data "vcd_nsxt_segment_spoof_guard_profile" "first" {
-  name       = "{{.SpoofGuardProfileName}}"
+  name            = "{{.SpoofGuardProfileName}}"
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 
 data "vcd_nsxt_segment_qos_profile" "first" {
-  name       = "{{.QosProfileName}}"
+  name            = "{{.QosProfileName}}"
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 
 data "vcd_nsxt_segment_security_profile" "first" {
-  name       = "{{.SegmentSecurityProfileName}}"
+  name            = "{{.SegmentSecurityProfileName}}"
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 `
@@ -198,8 +199,8 @@ data "vcd_nsxt_segment_profile_template" "complete" {
 
 const testAccVcdNsxtSegmentProfileTemplateGlobalDefault = testAccVcdNsxtSegmentProfileTemplate + `
 resource "vcd_nsxt_global_default_segment_profile_template" "singleton" {
-  vdc_networks_default_segment_profile_template_id = vcd_nsxt_segment_profile_template.complete.id
-  vapp_networks_default_segment_profile_template_id    = vcd_nsxt_segment_profile_template.empty.id
+  vdc_networks_default_segment_profile_template_id  = vcd_nsxt_segment_profile_template.complete.id
+  vapp_networks_default_segment_profile_template_id = vcd_nsxt_segment_profile_template.empty.id
 }
 `
 
@@ -210,11 +211,25 @@ data "vcd_nsxt_global_default_segment_profile_template" "singleton" {
 }
 `
 
-func sleepTester(d time.Duration) resource.TestCheckFunc {
+func testAccCheckVcdSegmentProfileTemplateDestroy(identifier string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		fmt.Printf("sleeping %s\n", d.String())
-		time.Sleep(d)
-		fmt.Println("finished sleeping")
+		rs, ok := s.RootModule().Resources[identifier]
+		if !ok {
+			return fmt.Errorf("not found: %s", identifier)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("no Segment Profile Template ID is set")
+		}
+
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		_, err := conn.GetSegmentProfileTemplateById(rs.Primary.ID)
+
+		if err == nil || !govcd.ContainsNotFound(err) {
+			return fmt.Errorf("%s not deleted yet", identifier)
+		}
 		return nil
+
 	}
 }

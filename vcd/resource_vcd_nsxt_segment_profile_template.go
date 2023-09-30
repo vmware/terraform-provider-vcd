@@ -26,43 +26,43 @@ func resourceVcdSegmentProfileTemplate() *schema.Resource {
 			"nsxt_manager_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "NSX-T Segment Profile Template name",
+				Description: "NSX-T Manager ID",
 			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "NSX-T Segment Profile Template name",
+				Description: "Name of Segment Profile Template",
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "NSX-T Segment Profile Template name",
+				Description: "Description of Segment Profile Template",
 			},
 
 			"ip_discovery_profile_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "NSX-T Segment Profile Template name",
+				Description: "Segment IP Discovery Profile ID",
 			},
 			"mac_discovery_profile_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "NSX-T Segment Profile Template name",
+				Description: "Segment MAC Discovery Profile ID",
 			},
 			"spoof_guard_profile_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "NSX-T Segment Profile Template name",
+				Description: "Segment Spoof Guard Profile ID",
 			},
 			"qos_profile_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "NSX-T Segment Profile Template name",
+				Description: "Segment QoS Profile ID",
 			},
 			"segment_security_profile_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "NSX-T Segment Profile Template name",
+				Description: "Segment Security Profile ID",
 			},
 		},
 	}
@@ -70,9 +70,6 @@ func resourceVcdSegmentProfileTemplate() *schema.Resource {
 
 func resourceVcdSegmentProfileTemplateCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	if !vcdClient.Client.IsSysAdmin {
-		return diag.Errorf("this resource is only supported for Providers")
-	}
 
 	segmentProfileTemplateCfg := getNsxtSegmentProfileTemplateType(d)
 	createdSegmentProfileTemplate, err := vcdClient.CreateSegmentProfileTemplate(segmentProfileTemplateCfg)
@@ -87,9 +84,6 @@ func resourceVcdSegmentProfileTemplateCreate(ctx context.Context, d *schema.Reso
 
 func resourceVcdSegmentProfileTemplateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	if !vcdClient.Client.IsSysAdmin {
-		return diag.Errorf("this resource is only supported for Providers")
-	}
 
 	albController, err := vcdClient.GetSegmentProfileTemplateById(d.Id())
 	if err != nil {
@@ -109,10 +103,6 @@ func resourceVcdSegmentProfileTemplateUpdate(ctx context.Context, d *schema.Reso
 func resourceVcdSegmentProfileTemplateRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	if !vcdClient.Client.IsSysAdmin {
-		return diag.Errorf("this resource is only supported for Providers")
-	}
-
 	albController, err := vcdClient.GetSegmentProfileTemplateById(d.Id())
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
@@ -129,9 +119,6 @@ func resourceVcdSegmentProfileTemplateRead(_ context.Context, d *schema.Resource
 
 func resourceVcdSegmentProfileTemplateDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	if !vcdClient.Client.IsSysAdmin {
-		return diag.Errorf("this resource is only supported for Providers")
-	}
 
 	albController, err := vcdClient.GetSegmentProfileTemplateById(d.Id())
 	if err != nil {
@@ -148,9 +135,6 @@ func resourceVcdSegmentProfileTemplateDelete(_ context.Context, d *schema.Resour
 
 func resourceVcdSegmentProfileTemplateImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
-	if !vcdClient.Client.IsSysAdmin {
-		return nil, fmt.Errorf("this resource is only supported for Providers")
-	}
 
 	resourceURI := d.Id()
 	spt, err := vcdClient.GetSegmentProfileTemplateByName(resourceURI)

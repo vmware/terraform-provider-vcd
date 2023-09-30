@@ -16,42 +16,42 @@ func datasourceVcdSegmentProfileTemplate() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "NSX-T Segment Profile Template name",
+				Description: "Name of Segment Profile Template",
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "NSX-T Segment Profile Template name",
+				Description: "Description of Segment Profile Template",
 			},
 			"nsxt_manager_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "NSX-T Segment Profile Template name",
+				Description: "NSX-T Manager ID",
 			},
 			"ip_discovery_profile_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "NSX-T Segment Profile Template name",
+				Description: "Segment IP Discovery Profile ID",
 			},
 			"mac_discovery_profile_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "NSX-T Segment Profile Template name",
+				Description: "Segment MAC Discovery Profile ID",
 			},
 			"spoof_guard_profile_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "NSX-T Segment Profile Template name",
+				Description: "Segment Spoof Guard Profile ID",
 			},
 			"qos_profile_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "NSX-T Segment Profile Template name",
+				Description: "Segment QoS Profile ID",
 			},
 			"segment_security_profile_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "NSX-T Segment Profile Template name",
+				Description: "Segment Security Profile ID",
 			},
 		},
 	}
@@ -59,18 +59,12 @@ func datasourceVcdSegmentProfileTemplate() *schema.Resource {
 
 func datasourceVcdSegmentProfileTemplateRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-
-	if !vcdClient.Client.IsSysAdmin {
-		return diag.Errorf("this resource is only supported for Providers")
-	}
-
 	segmentProfileTemplate, err := vcdClient.GetSegmentProfileTemplateByName(d.Get("name").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	setNsxtSegmentProfileTemplateData(d, segmentProfileTemplate.NsxtSegmentProfileTemplate)
-
 	d.SetId(segmentProfileTemplate.NsxtSegmentProfileTemplate.ID)
 
 	return nil
