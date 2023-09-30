@@ -407,7 +407,7 @@ func resourceVcdCatalogDelete(_ context.Context, d *schema.ResourceData, meta in
 
 	sessionText := fmt.Sprintf("[catalog delete - org: %s - user: %s]", sessionInfo.Org.Name, sessionInfo.User.Name)
 
-	result, err := retry(sessionText,
+	result, err := runWithRetry(sessionText,
 		fmt.Sprintf("%s error fetching org '%s'", sessionText, d.Get("org").(string)),
 		time.Second*30,
 		nil,

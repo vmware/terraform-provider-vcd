@@ -149,7 +149,7 @@ func resourceVcdCatalogAccessControlCreateUpdate(ctx context.Context, d *schema.
 		EveryoneAccessLevel: everyoneAccessLevel,
 		AccessSettings:      accessSettingsList,
 	}
-	_, err = retry(sessionText,
+	_, err = runWithRetry(sessionText,
 		"error when setting Catalog control access parameters",
 		time.Second*30,
 		nil, //func() error { return catalog.Refresh() },
@@ -201,7 +201,7 @@ func resourceVcdCatalogAccessControlRead(_ context.Context, d *schema.ResourceDa
 	sessionText = fmt.Sprintf("[ vcd_catalog_access_control read - org: %s - user: %s - catalog: %s]",
 		sessionInfo.Org.Name, sessionInfo.User.Name, catalog.Catalog.Name)
 
-	sharedReadOnly, err := retry(sessionText,
+	sharedReadOnly, err := runWithRetry(sessionText,
 		fmt.Sprintf("%s error checking catalog read-only sharing status", sessionText),
 		time.Second*30,
 		nil, //func() error { return catalog.Refresh() },
@@ -215,7 +215,7 @@ func resourceVcdCatalogAccessControlRead(_ context.Context, d *schema.ResourceDa
 
 	dSet(d, "read_only_shared_with_other_orgs", sharedReadOnly.(bool))
 
-	result, err := retry(
+	result, err := runWithRetry(
 		fmt.Sprintf("%s getting control access parameters", sessionText),
 		fmt.Sprintf("%s error getting control access parameters", sessionText),
 		time.Second*30,
@@ -272,7 +272,7 @@ func resourceVcdCatalogAccessControlDelete(_ context.Context, d *schema.Resource
 	}
 
 	if sharedReadOnly {
-		_, err = retry(fmt.Sprintf("removing catalog '%s' shared read-only ", catalog.AdminCatalog.Name),
+		_, err = runWithRetry(fmt.Sprintf("removing catalog '%s' shared read-only ", catalog.AdminCatalog.Name),
 			"error removing catalog read-only access control",
 			30*time.Second,
 			nil,
@@ -287,7 +287,7 @@ func resourceVcdCatalogAccessControlDelete(_ context.Context, d *schema.Resource
 		d.SetId("")
 		return nil
 	}
-	_, err = retry(fmt.Sprintf("deleting catalog %s access control", catalog.AdminCatalog.Name),
+	_, err = runWithRetry(fmt.Sprintf("deleting catalog %s access control", catalog.AdminCatalog.Name),
 		fmt.Sprintf("error when deleting catalog '%s' access control", catalog.AdminCatalog.Name),
 		time.Second*30,
 		nil,
@@ -329,35 +329,42 @@ func resourceVcdCatalogAccessControlImport(_ context.Context, d *schema.Resource
 	return []*schema.ResourceData{d}, nil
 }
 
-func retry(label, message string, timeout time.Duration, refresh func() error, operation func() (any, error)) (any, error) {
-	if os.Getenv("VCD_RETRY") == "" {
+// runWithRetry allows to run a given operation and retry it in case of error until the timeout is reached
+// * operationDescription is a human understandable description of the operation
+// * errorMessage is what to say in case of final error
+// * timeout is for how long we retry in case of failure
+// * preRun is an (optional) operation to run before attempting the operation
+// * operation is the main operation we are running
+func runWithRetry(operationDescription, errorMessage string, timeout time.Duration, preRun func() error, operation func() (any, error)) (any, error) {
+	if os.Getenv("VCD_SKIP_RETRY") != "" {
 		return operation()
 	}
 	if operation == nil {
 		return nil, fmt.Errorf("argument 'operation' cannot be null")
 	}
 	start := time.Now()
-	elapsed := time.Since(start)
+	var elapsed time.Duration
 	attempts := 0
 	var err error
 	var result any
-	for elapsed < timeout {
-		if refresh != nil {
-			err = refresh()
+	// Testing for equal or lower makes sure that the loop runs at least once
+	// (Equality would happen if the timeout is 0)
+	for elapsed <= timeout {
+		if preRun != nil {
+			err = preRun()
 			if err != nil {
 				return nil, err
 			}
 		}
 		result, err = operation()
 		if err == nil {
-			fmt.Printf("%s attempts: %d - elapsed: %s\n", label, attempts, elapsed)
+			if os.Getenv("VCD_RETRY_VERBOSE") != "" {
+				fmt.Printf("%s attempts: %d - elapsed: %s\n", operationDescription, attempts, elapsed)
+			}
 			return result, nil
 		}
 		elapsed = time.Since(start)
 		attempts++
-		if elapsed < timeout {
-			continue
-		}
 	}
-	return nil, fmt.Errorf(message+" :%s", err)
+	return nil, fmt.Errorf(errorMessage+" :%s", err)
 }

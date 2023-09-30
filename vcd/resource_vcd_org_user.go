@@ -238,7 +238,7 @@ func resourceToOrgUser(d *schema.ResourceData, meta interface{}) (*govcd.OrgUser
 	if err != nil {
 		return nil, nil, fmt.Errorf("error retrieving session info: %s", err)
 	}
-	result, err := retry("[resourceToOrgUser]",
+	result, err := runWithRetry("[resourceToOrgUser]",
 		fmt.Sprintf("error retrieving org %s", d.Get("org").(string)),
 		time.Second*30,
 		nil,
