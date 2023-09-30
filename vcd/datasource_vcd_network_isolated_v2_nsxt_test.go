@@ -17,21 +17,14 @@ func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 
 	// String map to fill the template
 	var params = StringMap{
-		"Org":                        testConfig.VCD.Org,
-		"NsxtVdc":                    testConfig.Nsxt.Vdc,
-		"NetworkName":                t.Name(),
-		"Tags":                       "network nsxt",
-		"MetadataKey":                "key1",
-		"MetadataValue":              "value1",
-		"MetadataKeyUpdated":         "key2",
-		"MetadataValueUpdated":       "value2",
-		"TestName":                   t.Name(),
-		"NsxtManager":                testConfig.Nsxt.Manager,
-		"IpDiscoveryProfileName":     testConfig.Nsxt.IpDiscoveryProfile,
-		"MacDiscoveryProfileName":    testConfig.Nsxt.MacDiscoveryProfile,
-		"QosProfileName":             testConfig.Nsxt.QosProfile,
-		"SpoofGuardProfileName":      testConfig.Nsxt.SpoofGuardProfile,
-		"SegmentSecurityProfileName": testConfig.Nsxt.SegmentSecurityProfile,
+		"Org":                  testConfig.VCD.Org,
+		"NsxtVdc":              testConfig.Nsxt.Vdc,
+		"NetworkName":          t.Name(),
+		"Tags":                 "network nsxt",
+		"MetadataKey":          "key1",
+		"MetadataValue":        "value1",
+		"MetadataKeyUpdated":   "key2",
+		"MetadataValueUpdated": "value2",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -66,7 +59,7 @@ func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					// Ensure that all fields are the same except field count '%' (because datasource has `filter` field)
-					resourceFieldsEqual("vcd_network_isolated_v2.net1", "data.vcd_network_isolated_v2.ds", []string{"%", "segment_profile_template_id"}),
+					resourceFieldsEqual("vcd_network_isolated_v2.net1", "data.vcd_network_isolated_v2.ds", []string{"%"}),
 				),
 			},
 			{
@@ -82,7 +75,7 @@ func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					// Ensure that all fields are the same except field count '%' (because datasource has `filter` field)
-					resourceFieldsEqual("vcd_network_isolated_v2.net1", "data.vcd_network_isolated_v2.ds", []string{"%", "segment_profile_template_id"}),
+					resourceFieldsEqual("vcd_network_isolated_v2.net1", "data.vcd_network_isolated_v2.ds", []string{"%"}),
 				),
 			},
 		},

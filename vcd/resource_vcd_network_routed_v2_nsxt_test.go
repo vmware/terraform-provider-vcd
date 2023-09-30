@@ -16,22 +16,15 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 
 	// String map to fill the template
 	var params = StringMap{
-		"Org":                        testConfig.VCD.Org,
-		"NsxtVdc":                    testConfig.Nsxt.Vdc,
-		"EdgeGw":                     testConfig.Nsxt.EdgeGateway,
-		"NetworkName":                t.Name(),
-		"Tags":                       "network",
-		"MetadataKey":                "key1",
-		"MetadataValue":              "value1",
-		"MetadataKeyUpdated":         "key2",
-		"MetadataValueUpdated":       "value2",
-		"TestName":                   t.Name(),
-		"NsxtManager":                testConfig.Nsxt.Manager,
-		"IpDiscoveryProfileName":     testConfig.Nsxt.IpDiscoveryProfile,
-		"MacDiscoveryProfileName":    testConfig.Nsxt.MacDiscoveryProfile,
-		"QosProfileName":             testConfig.Nsxt.QosProfile,
-		"SpoofGuardProfileName":      testConfig.Nsxt.SpoofGuardProfile,
-		"SegmentSecurityProfileName": testConfig.Nsxt.SegmentSecurityProfile,
+		"Org":                  testConfig.VCD.Org,
+		"NsxtVdc":              testConfig.Nsxt.Vdc,
+		"EdgeGw":               testConfig.Nsxt.EdgeGateway,
+		"NetworkName":          t.Name(),
+		"Tags":                 "network",
+		"MetadataKey":          "key1",
+		"MetadataValue":        "value1",
+		"MetadataKeyUpdated":   "key2",
+		"MetadataValueUpdated": "value2",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -110,11 +103,10 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 
 			// Check that import works
 			{ // step 3
-				ResourceName:            "vcd_network_routed_v2.net1",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(t.Name()),
-				ImportStateVerifyIgnore: []string{"segment_profile_template_id"},
+				ResourceName:      "vcd_network_routed_v2.net1",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(t.Name()),
 			},
 
 			{ // step 4
@@ -136,7 +128,7 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 	postTestChecks(t)
 }
 
-const TestAccVcdNetworkRoutedV2NsxtStep1 = testAccVcdNsxtSegmentProfileTemplate + `
+const TestAccVcdNetworkRoutedV2NsxtStep1 = `
 data "vcd_nsxt_edgegateway" "existing" {
   org  = "{{.Org}}"
   name = "{{.EdgeGw}}"
@@ -160,12 +152,10 @@ resource "vcd_network_routed_v2" "net1" {
   metadata = {
     {{.MetadataKey}} = "{{.MetadataValue}}"
   }
-
-  segment_profile_template_id = vcd_nsxt_segment_profile_template.complete.id
 }
 `
 
-const TestAccVcdNetworkRoutedV2NsxtStep2 = testAccVcdNsxtSegmentProfileTemplate + `
+const TestAccVcdNetworkRoutedV2NsxtStep2 = `
 data "vcd_nsxt_edgegateway" "existing" {
   org  = "{{.Org}}"
   name = "{{.EdgeGw}}"
@@ -202,7 +192,7 @@ resource "vcd_network_routed_v2" "net1" {
 }
 `
 
-const TestAccVcdNetworkRoutedV2NsxtStep3 = testAccVcdNsxtSegmentProfileTemplate + `
+const TestAccVcdNetworkRoutedV2NsxtStep3 = `
 data "vcd_nsxt_edgegateway" "existing" {
   org  = "{{.Org}}"
   name = "{{.EdgeGw}}"
@@ -217,8 +207,6 @@ resource "vcd_network_routed_v2" "net1" {
 
   gateway = "1.1.1.1"
   prefix_length = 24
-
-  segment_profile_template_id = vcd_nsxt_segment_profile_template.complete.id
 }
 `
 

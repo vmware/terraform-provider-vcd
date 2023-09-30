@@ -103,7 +103,7 @@ func TestAccVcdNsxtSegmentProfileTemplate(t *testing.T) {
 			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("vcd_nsxt_global_default_segment_profile_template.singleton", "id", "no-real-id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_global_default_segment_profile_template.singleton", "id", "global-default-segment-profile"),
 				),
 			},
 			{

@@ -37,14 +37,6 @@ func TestAccVcdNsxtNetworkSegmentProfileCustom(t *testing.T) {
 	configText2DS := templateFill(testAccVcdNsxtNetworkSegmentProfileCustomDS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2DS)
 
-	// params["FuncName"] = t.Name() + "step3"
-	// configText3 := templateFill(testAccVcdNsxtNetworkSegmentProfileGlobalDefault, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
-
-	// params["FuncName"] = t.Name() + "step4"
-	// configText4DS := templateFill(testAccVcdNsxtNetworkSegmentProfileGlobalDefaultDS, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4DS)
-
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -52,35 +44,10 @@ func TestAccVcdNsxtNetworkSegmentProfileCustom(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		// CheckDestroy:      testAccCheckVcdSegmentProfileTemplateDestroy("vcd_nsxt_alb_controller.first"),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
-				Check:  resource.ComposeAggregateTestCheckFunc(
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.first", "id", regexp.MustCompile(`\d*`)),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "name", t.Name()+"-empty"),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "description", "description"),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "ip_discovery_profile_id", ""),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "mac_discovery_profile_id", ""),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "spoof_guard_profile_id", ""),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "qos_profile_id", ""),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "segment_security_profile_id", ""),
-
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.complete", "name", t.Name()+"-complete"),
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "ip_discovery_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "mac_discovery_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "spoof_guard_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "qos_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "segment_security_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "name", t.Name()+"-half-complete"),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "description", ""),
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "ip_discovery_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "mac_discovery_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "spoof_guard_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "qos_profile_id", ""),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "segment_security_profile_id", ""),
-				),
+				Check:  resource.ComposeAggregateTestCheckFunc(),
 			},
 
 			{
@@ -200,14 +167,6 @@ func TestAccVcdNsxtNetworkSegmentProfileTemplate(t *testing.T) {
 	configText2DS := templateFill(testAccVcdNsxtNetworkSegmentProfileTemplateDS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2DS)
 
-	// params["FuncName"] = t.Name() + "step3"
-	// configText3 := templateFill(testAccVcdNsxtNetworkSegmentProfileGlobalDefault, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
-
-	// params["FuncName"] = t.Name() + "step4"
-	// configText4DS := templateFill(testAccVcdNsxtNetworkSegmentProfileGlobalDefaultDS, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4DS)
-
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -219,31 +178,7 @@ func TestAccVcdNsxtNetworkSegmentProfileTemplate(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
-				Check:  resource.ComposeAggregateTestCheckFunc(
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.first", "id", regexp.MustCompile(`\d*`)),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "name", t.Name()+"-empty"),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "description", "description"),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "ip_discovery_profile_id", ""),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "mac_discovery_profile_id", ""),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "spoof_guard_profile_id", ""),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "qos_profile_id", ""),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "segment_security_profile_id", ""),
-
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.complete", "name", t.Name()+"-complete"),
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "ip_discovery_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "mac_discovery_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "spoof_guard_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "qos_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "segment_security_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "name", t.Name()+"-half-complete"),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "description", ""),
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "ip_discovery_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "mac_discovery_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-				// resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "spoof_guard_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "qos_profile_id", ""),
-				// resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "segment_security_profile_id", ""),
-				),
+				Check:  resource.ComposeAggregateTestCheckFunc(),
 			},
 
 			{

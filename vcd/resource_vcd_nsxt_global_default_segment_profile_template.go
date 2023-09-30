@@ -48,7 +48,7 @@ func resourceVcdGlobalDefaultSegmentProfileTemplateCreateUpdate(ctx context.Cont
 		return diag.Errorf("error updating Global Default Segment Profile Template configuration: %s", err)
 	}
 
-	d.SetId("no-real-id")
+	d.SetId("global-default-segment-profile")
 
 	return resourceDataSourceVcdGlobalDefaultSegmentProfileTemplateRead(ctx, d, meta)
 }
@@ -71,7 +71,7 @@ func resourceDataSourceVcdGlobalDefaultSegmentProfileTemplateRead(_ context.Cont
 		dSet(d, "vapp_networks_default_segment_profile_template_id", defaults.VappNetworkSegmentProfileTemplateRef.ID)
 	}
 
-	d.SetId("no-real-id")
+	d.SetId("global-default-segment-profile")
 
 	return nil
 }
@@ -95,6 +95,6 @@ func resourceVcdGlobalDefaultSegmentProfileTemplateImport(_ context.Context, d *
 		return nil, fmt.Errorf("error finding NSX-T Segment Profile Template with Name '%s': %s", d.Id(), err)
 	}
 
-	d.SetId("no-real-id")
+	d.SetId("global-default-segment-profile")
 	return []*schema.ResourceData{d}, nil
 }

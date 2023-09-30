@@ -59,7 +59,6 @@ func TestAccVcdNsxtNetworkImportedNsxtLogicalSwitch(t *testing.T) {
 						"end_address":   "1.1.1.20",
 					}),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "owner_id"),
-					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "segment_profile_template_id"),
 				),
 			},
 			{ // step 2
@@ -99,7 +98,7 @@ func TestAccVcdNsxtNetworkImportedNsxtLogicalSwitch(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdNetworkImportedV2NsxtStep1 = testAccVcdNsxtSegmentProfileTemplate + `
+const testAccVcdNetworkImportedV2NsxtStep1 = `
 resource "vcd_nsxt_network_imported" "net1" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
@@ -115,12 +114,10 @@ resource "vcd_nsxt_network_imported" "net1" {
 	start_address = "1.1.1.10"
 	end_address   = "1.1.1.20"
   }
-
-  segment_profile_template_id = vcd_nsxt_segment_profile_template.complete.id
 }
 `
 
-const TestAccVcdNetworkImportedV2NsxtStep2 = testAccVcdNsxtSegmentProfileTemplate + `
+const TestAccVcdNetworkImportedV2NsxtStep2 = `
 resource "vcd_nsxt_network_imported" "net1" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
