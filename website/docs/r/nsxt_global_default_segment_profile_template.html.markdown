@@ -16,8 +16,8 @@ Supported in provider *v3.11+* and VCD 10.4.0+ with NSX-T. Requires System Admin
 
 ```hcl
 resource "vcd_nsxt_global_default_segment_profile_template" "singleton" {
-  vdc_networks_default_segment_profile_template_id = vcd_nsxt_segment_profile_template.complete.id
-  vapp_networks_default_segment_profile_template_id    = vcd_nsxt_segment_profile_template.empty.id
+  vdc_networks_default_segment_profile_template_id  = vcd_nsxt_segment_profile_template.complete.id
+  vapp_networks_default_segment_profile_template_id = vcd_nsxt_segment_profile_template.empty.id
 }
 ```
 
