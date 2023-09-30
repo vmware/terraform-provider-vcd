@@ -6,7 +6,7 @@ description: |-
   Provides a VMware Cloud Director NSX-T Spoof Guard Profile data source. This can be used to read NSX-T Segment Profile definitions.
 ---
 
-# vcd\_nsxt\_segment\spoof\_guard\_profile
+# vcd\_nsxt\_segment\_spoof\_guard\_profile
 
 Provides a VMware Cloud Director Spoof Guard Profile data source. This can be used to read NSX-T Segment Profile definitions.
 
@@ -38,4 +38,6 @@ The following arguments are supported:
 
 ## Attribute reference
 
-* `` 
+* `description` - Description of Spoof Guard profile
+* `is_address_binding_whitelist_enabled` - Whether Spoof Guard is enabled. If true, it only allows
+  VM sending traffic with the IPs in the whitelist

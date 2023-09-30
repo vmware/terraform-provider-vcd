@@ -38,4 +38,17 @@ The following arguments are supported:
 
 ## Attribute reference
 
-* `` 
+* `description` - Description of Segment Security Profile
+* `bpdu_filter_allow_list` - Pre-defined list of allowed MAC addresses to be excluded from BPDU filtering.
+* `is_bpdu_filter_enabled` - Defines whether BPDU filter is enabled.
+* `is_dhcp_v4_client_block_enabled` - Defines whether DHCP Client block IPv4 is enabled. This filters DHCP Client IPv4 traffic.
+* `is_dhcp_v6_client_block_enabled` - Defines whether DHCP Client block IPv6 is enabled. This filters DHCP Client IPv6 traffic.
+* `is_dhcp_v4_server_block_enabled` - Defines whether DHCP Server block IPv4 is enabled. This filters DHCP Server IPv4 traffic.
+* `is_dhcp_v6_server_block_enabled` - Defines whether DHCP Server block IPv6 is enabled. This filters DHCP Server IPv6 traffic.
+* `is_non_ip_traffic_block_enabled` - Defines whether non IP traffic block is enabled. If true, it blocks all traffic except IP/(G)ARP/BPDU.
+* `is_ra_guard_enabled` - Defines whether Router Advertisement Guard is enabled. This filters DHCP Server IPv6 traffic.
+* `is_rate_limitting_enabled` - Defines whether Rate Limiting is enabled.
+* `rx_broadcast_limit` - Incoming broadcast traffic limit in packets per second.
+* `rx_multicast_limit` - Incoming multicast traffic limit in packets per second.
+* `tx_broadcast_limit` - Outgoing broadcast traffic limit in packets per second.
+* `tx_multicast_limit` - Outgoing multicast traffic limit in packets per second.

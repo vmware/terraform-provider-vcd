@@ -38,4 +38,23 @@ The following arguments are supported:
 
 ## Attribute reference
 
-* `` 
+* `description` - Description of QoS Profile
+* `class_of_service` - Class of service groups similar types of traffic in the network and each type
+  of traffic is treated as a class with its own level of service priority. The lower priority
+  traffic is slowed down or in some cases dropped to provide better throughput for higher priority
+  traffic.
+* `dscp_priority` - A Differentiated Services Code Point (DSCP) priority
+  Profile. 
+* `dscp_trust_mode` - A Differentiated Services Code Point (DSCP) trust mode. Values are below:
+  * `TRUSTED` - With Trusted mode the inner header DSCP value is applied to the outer IP header for
+    IP/IPv6 traffic. For non IP/IPv6 traffic, the outer IP header takes the default value.
+  * `UNTRUSTED` - Untrusted mode is supported on overlay-based and VLAN-based logical port. 
+* `egress_rate_limiter_avg_bandwidth` - Average egress bandwidth in Mb/s.
+* `egress_rate_limiter_burst_size` - Egress burst size in bytes.
+* `egress_rate_limiter_peak_bandwidth` - Peak egress bandwidth in Mb/s.
+* `ingress_broadcast_rate_limiter_avg_bandwidth` - Average ingress broadcast bandwidth in Mb/s.
+* `ingress_broadcast_rate_limiter_burst_size` - Ingress broadcast burst size in bytes.
+* `ingress_broadcast_rate_limiter_peak_bandwidth` - Peak ingress broadcast bandwidth in Mb/s.
+* `ingress_rate_limiter_avg_bandwidth` - Average ingress bandwidth in Mb/s.
+* `ingress_rate_limiter_burst_size` - Iingress burst size in bytes.
+* `ingress_rate_limiter_peak_bandwidth` - Peak ingress broadcast bandwidth in Mb/s.

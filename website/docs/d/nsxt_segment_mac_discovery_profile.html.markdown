@@ -38,4 +38,12 @@ The following arguments are supported:
 
 ## Attribute reference
 
-* `` 
+* `description` - Description of MAC Discovery Profile
+* `is_mac_change_enabled` - Defines whether source MAC address change is enabled
+* `is_mac_learning_enabled` - Defines whether source MAC address learning is enabled
+* `is_unknown_unicast_flooding_enabled` - Defines whether unknown unicast flooding rule is enabled.
+  This allows flooding for unlearned MAC for ingress traffic
+* `mac_learning_aging_time` - Aging time in seconds for learned MAC address. Indicates how long
+  learned MAC address remain
+* `mac_limit` - The maximum number of MAC addresses that can be learned on this port
+* `mac_policy` - The policy after MAC Limit is exceeded. It can be either `ALLOW` or `DROP`
