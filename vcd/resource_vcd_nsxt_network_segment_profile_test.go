@@ -1,4 +1,4 @@
-//go:build nsxt || alb || ALL || functional
+//go:build nsxt || ALL || functional
 
 package vcd
 
