@@ -162,13 +162,7 @@ func resourceVcdCatalogAccessControlCreateUpdate(ctx context.Context, d *schema.
 			}
 			return nil, err
 		})
-	//if readOnlySharedwithOtherOrgs {
-	//	err = catalog.SetReadOnlyAccessControl(true)
-	//} else {
-	//	err = catalog.SetAccessControl(&accessControlParams, true)
-	//}
 	if err != nil {
-		//fmt.Printf("%# v\n", pretty.Formatter(accessControlParams))
 		return diag.Errorf("%s error when setting Catalog control access parameters - %s", sessionText, err)
 	}
 
@@ -224,7 +218,6 @@ func resourceVcdCatalogAccessControlRead(_ context.Context, d *schema.ResourceDa
 			return catalog.GetAccessControl(true)
 		},
 	)
-	//controlAccessParams, err := catalog.GetAccessControl(true)
 	if err != nil {
 		return diag.Errorf("%s error getting control access parameters - %s", sessionText, err)
 	}
@@ -280,7 +273,6 @@ func resourceVcdCatalogAccessControlDelete(_ context.Context, d *schema.Resource
 				err := catalog.SetReadOnlyAccessControl(false)
 				return nil, err
 			})
-		//err = catalog.SetReadOnlyAccessControl(false)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -294,7 +286,6 @@ func resourceVcdCatalogAccessControlDelete(_ context.Context, d *schema.Resource
 		func() (any, error) {
 			return nil, catalog.RemoveAccessControl(true)
 		})
-	//err = catalog.RemoveAccessControl(true)
 	if err != nil {
 		return diag.Errorf("error when deleting Catalog access control - %s", err)
 	}
@@ -336,6 +327,10 @@ func resourceVcdCatalogAccessControlImport(_ context.Context, d *schema.Resource
 // * preRun is an (optional) operation to run before attempting the operation
 // * operation is the main operation we are running
 func runWithRetry(operationDescription, errorMessage string, timeout time.Duration, preRun func() error, operation func() (any, error)) (any, error) {
+	// ---------------------------------------------------------
+	// TODO: remove this check after PR review
+	// Note to reviewers: setting the environment variable VCD_SKIP_RETRY will make some catalog tests fail
+	// ---------------------------------------------------------
 	if os.Getenv("VCD_SKIP_RETRY") != "" {
 		if preRun != nil {
 			err := preRun()
@@ -364,6 +359,12 @@ func runWithRetry(operationDescription, errorMessage string, timeout time.Durati
 		}
 		result, err = operation()
 		if err == nil {
+			// ---------------------------------------------------------
+			// TODO: convert printing on screen to logging after PR review
+			// Note to reviewers: setting the environment variable VCD_RETRY_VERBOSE
+			// will show on screen the result of the operation. An 'attempts' value greater than 0 indicates
+			// a case where we would have a failure without the retry
+			// ---------------------------------------------------------
 			if os.Getenv("VCD_RETRY_VERBOSE") != "" {
 				fmt.Printf("%s attempts: %d - elapsed: %s\n", operationDescription, attempts, elapsed)
 			}
