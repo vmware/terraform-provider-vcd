@@ -217,7 +217,6 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 			err := createOrUpdateMetadata(d, catalog, "metadata")
 			return nil, err
 		})
-	//err = createOrUpdateMetadata(d, catalog, "metadata")
 	if err != nil {
 		return diag.Errorf("error adding catalog metadata: %s", err)
 	}
@@ -424,7 +423,6 @@ func resourceVcdCatalogDelete(_ context.Context, d *schema.ResourceData, meta in
 		},
 	)
 
-	//adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return diag.Errorf("%s "+errorRetrievingOrg, sessionText, err)
 	}
