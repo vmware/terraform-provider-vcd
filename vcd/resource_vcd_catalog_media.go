@@ -66,6 +66,12 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				ForceNew:    true,
 				Description: "absolute or relative path to Media file",
 			},
+			"upload_any_file": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "If true, will allow uploading any file type, not only .ISO",
+			},
 			"upload_piece_size": {
 				Type:        schema.TypeInt,
 				Optional:    true,
@@ -157,7 +163,14 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 
 	uploadPieceSize := d.Get("upload_piece_size").(int)
 	mediaName := d.Get("name").(string)
-	task, err := catalog.UploadMediaImage(mediaName, d.Get("description").(string), mediaPath, int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes)
+	var task govcd.UploadTask
+	uploadAnyFile := d.Get("upload_any_file").(bool)
+
+	if uploadAnyFile {
+		task, err = catalog.UploadMediaFile(mediaName, d.Get("description").(string), mediaPath, int64(uploadPieceSize)*1024*1024, false) // Convert from megabytes to bytes)
+	} else {
+		task, err = catalog.UploadMediaImage(mediaName, d.Get("description").(string), mediaPath, int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes)
+	}
 	if err != nil {
 		log.Printf("Error uploading new catalog media: %s", err)
 		return diag.Errorf("error uploading new catalog media: %s", err)
