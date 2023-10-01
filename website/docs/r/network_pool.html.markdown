@@ -142,8 +142,8 @@ data "vcd_nsxt_manager" "mgr" {
 }
 
 resource "vcd_network_pool" "npool" {
-  name                = "TestAccVcdResourceNetworkPool-geneve-none"
-  description         = "TestAccVcdResourceNetworkPool-geneve-none description"
+  name                = "new-network-pool"
+  description         = "network pool without explicit transport zone"
   network_provider_id = data.vcd_nsxt_manager.mgr.id
   type                = "GENEVE"
 }
