@@ -18,7 +18,7 @@ in every request it uses headers items that define the tenant context as restric
 
 Supported in provider *v3.8+*
 
-## Example Usage
+## Example Usage 1
 
 ```hcl
 data "vcd_org" "another-org" {
@@ -80,6 +80,18 @@ resource "vcd_catalog_access_control" "AC-users-and-orgs" {
 }
 ```
 
+## Example Usage 2
+
+```hcl
+resource "vcd_catalog_access_control" "ac-other-orgs" {
+  org        = "datacloud"
+  catalog_id = vcd_catalog.Test-Catalog-AC-5.id
+
+  shared_with_everyone             = false
+  read_only_shared_with_other_orgs = true
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -90,6 +102,7 @@ The following arguments are supported:
   this property must be set to `false`.
 * `everyone_access_level` - (Optional) Access level when the Catalog is shared with everyone (it can only be set to
   `ReadOnly`). Required if `shared_with_everyone` is set.
+* `read_only_shared_with_other_orgs` - (Optional; *v3.11+*) If true, the catalog is shared as read-only with all organizations
 * `shared_with` - (Optional) one or more blocks defining a subject (one of Organization, User, or Group) to which we are sharing. 
    See [shared_with](#shared_with) below for detail. It cannot be used if `shared_with_everyone` is true.
 
