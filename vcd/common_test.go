@@ -31,23 +31,22 @@ func updateEdgeGatewayTier0Dedication(t *testing.T, dedicatedTier0 bool) {
 	}
 }
 
-// TODO investigate the need for delay on Org removal
 func testAccCheckOrgDestroy(orgName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		conn := testAccProvider.Meta().(*VCDClient)
-		var org *govcd.AdminOrg
-		var err error
-		for N := 0; N < 30; N++ {
-			org, err = conn.GetAdminOrgByName(orgName)
-			if err != nil && org == nil {
-				break
-			}
-			time.Sleep(time.Second)
-		}
-		if err != govcd.ErrorEntityNotFound {
+		adminOrg, err := runWithRetry(
+			"[testAccCheckOrgDestroy] organization retrieval",
+			"[testAccCheckOrgDestroy] error retrieving org",
+			10*time.Second,
+			nil,
+			func() (any, error) {
+				return conn.GetAdminOrgByName(orgName)
+			},
+		)
+		if govcd.IsNotFound(err) {
 			return fmt.Errorf("org %s was not destroyed", orgName)
 		}
-		if org != nil {
+		if adminOrg != nil {
 			return fmt.Errorf("org %s was found", orgName)
 		}
 		return nil
