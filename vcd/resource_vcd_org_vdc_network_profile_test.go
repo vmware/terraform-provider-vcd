@@ -34,8 +34,12 @@ func TestAccVcdOrgVdcNsxtNetworkProfile(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step2DS"
 	configText2 := templateFill(testAccVcdOrgVdcNsxtNetworkProfileDS, params)
 
+	params["FuncName"] = t.Name() + "-step4"
+	configText4 := templateFill(testAccVcdOrgVdcNsxtNetworkProfileRemove, params)
+
 	debugPrintf("#[DEBUG] CONFIGURATION - Step1: %s", configText1)
 	debugPrintf("#[DEBUG] CONFIGURATION - Step2: %s", configText2)
+	debugPrintf("#[DEBUG] CONFIGURATION - Step4: %s", configText4)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -50,7 +54,12 @@ func TestAccVcdOrgVdcNsxtNetworkProfile(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
-				Check:  resource.ComposeTestCheckFunc(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_org_vdc_nsxt_network_profile.nsxt", "vdc_networks_default_segment_profile_template_id"),
+					resource.TestCheckResourceAttrSet("vcd_org_vdc_nsxt_network_profile.nsxt", "vapp_networks_default_segment_profile_template_id"),
+					resource.TestCheckResourceAttrSet("vcd_org_vdc_nsxt_network_profile.nsxt", "edge_cluster_id"),
+					resource.TestCheckResourceAttrPair("vcd_org_vdc_nsxt_network_profile.nsxt", "edge_cluster_id", "data.vcd_org_vdc.nsxt2", "edge_cluster_id"),
+				),
 			},
 			{
 				Config: configText2,
@@ -59,10 +68,19 @@ func TestAccVcdOrgVdcNsxtNetworkProfile(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "vcd_org_vdc_nsxt_network_profile",
+				ResourceName:      "vcd_org_vdc_nsxt_network_profile.nsxt",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateId:     testConfig.VCD.Org + "." + testConfig.Nsxt.Vdc,
+			},
+			{
+				Config: configText4,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_org_vdc_nsxt_network_profile.nsxt", "vdc_networks_default_segment_profile_template_id", ""),
+					resource.TestCheckResourceAttr("vcd_org_vdc_nsxt_network_profile.nsxt", "vapp_networks_default_segment_profile_template_id", ""),
+					resource.TestCheckResourceAttr("vcd_org_vdc_nsxt_network_profile.nsxt", "edge_cluster_id", ""),
+					resource.TestCheckResourceAttrPair("vcd_org_vdc_nsxt_network_profile.nsxt", "edge_cluster_id", "data.vcd_org_vdc.nsxt2", "edge_cluster_id"),
+				),
 			},
 		},
 	})
@@ -133,11 +151,43 @@ resource "vcd_org_vdc_nsxt_network_profile" "nsxt" {
   vdc_networks_default_segment_profile_template_id  = vcd_nsxt_segment_profile_template.complete.id
   vapp_networks_default_segment_profile_template_id = vcd_nsxt_segment_profile_template.complete.id
 }
+
+data "vcd_org_vdc" "nsxt2" {
+  org  = "{{.OrgName}}"
+  name = "{{.VdcName}}"
+
+  depends_on = [vcd_org_vdc_nsxt_network_profile.nsxt]
+}
 `
 
 const testAccVcdOrgVdcNsxtNetworkProfileDS = testAccVcdOrgVdcNsxtNetworkProfile + `
 data "vcd_org_vdc_nsxt_network_profile" "nsxt" {
   org = vcd_org_vdc_nsxt_network_profile.nsxt.org
   vdc = vcd_org_vdc_nsxt_network_profile.nsxt.vdc
+}
+`
+
+const testAccVcdOrgVdcNsxtNetworkProfileRemove = testAccVcdOrgVdcNsxtNetworkProfileCommon + `
+data "vcd_org_vdc" "nsxt" {
+  org  = "{{.OrgName}}"
+  name = "{{.VdcName}}"
+}
+
+data "vcd_nsxt_edge_cluster" "first" {
+  org    = "{{.OrgName}}"
+  vdc_id = data.vcd_org_vdc.nsxt.id
+  name   = "{{.EdgeCluster}}"
+}
+
+resource "vcd_org_vdc_nsxt_network_profile" "nsxt" {
+  org = "{{.OrgName}}"
+  vdc = "{{.VdcName}}"
+}
+
+data "vcd_org_vdc" "nsxt2" {
+  org  = "{{.OrgName}}"
+  name = "{{.VdcName}}"
+
+  depends_on = [vcd_org_vdc_nsxt_network_profile.nsxt]
 }
 `

@@ -275,6 +275,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 			"edge_cluster_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "ID of NSX-T Edge Cluster (provider vApp networking services and DHCP capability for Isolated networks)",
 				Deprecated:  "Please use 'vcd_org_vdc_nsxt_network_profile' resource to manage Edge Cluster and Segment Profile Templates",
 			},
