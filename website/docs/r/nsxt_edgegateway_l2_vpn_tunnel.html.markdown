@@ -121,7 +121,7 @@ corresponds to the device on the remote site terminating the VPN tunnel.
   authenticating the connection, only needed for `SERVER` sessions.
 * `peer_code` - (Optional) Encoded string that contains the whole configuration 
   of a `SERVER` session including the pre-shared key so it is user's 
-  responsibility to secure it. Needs to be provided for creation of
+  responsibility to secure it. Computed for `SERVER` sessions, required for 
   `CLIENT` sessions. See [example](#example-usage-both-server-and-client-tunnel-sessions-connecting-two-edge-gateways) 
   for a solution implemented fully in Terraform.
 * `stretched_network` - (Optional) One or more stretched networks for the tunnel. 
