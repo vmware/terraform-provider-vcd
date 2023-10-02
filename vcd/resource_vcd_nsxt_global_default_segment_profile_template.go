@@ -38,7 +38,7 @@ func resourceVcdGlobalDefaultSegmentProfileTemplate() *schema.Resource {
 func resourceVcdGlobalDefaultSegmentProfileTemplateCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	globalDefaultSegmentProfileConfig := &types.NsxtSegmentProfileTemplateDefaultDefinition{
+	globalDefaultSegmentProfileConfig := &types.NsxtGlobalDefaultSegmentProfileTemplate{
 		VappNetworkSegmentProfileTemplateRef: &types.OpenApiReference{ID: d.Get("vapp_networks_default_segment_profile_template_id").(string)},
 		VdcNetworkSegmentProfileTemplateRef:  &types.OpenApiReference{ID: d.Get("vdc_networks_default_segment_profile_template_id").(string)},
 	}
@@ -79,7 +79,7 @@ func resourceDataSourceVcdGlobalDefaultSegmentProfileTemplateRead(_ context.Cont
 func resourceVcdGlobalDefaultSegmentProfileTemplateDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	_, err := vcdClient.UpdateGlobalDefaultSegmentProfileTemplates(&types.NsxtSegmentProfileTemplateDefaultDefinition{})
+	_, err := vcdClient.UpdateGlobalDefaultSegmentProfileTemplates(&types.NsxtGlobalDefaultSegmentProfileTemplate{})
 	if err != nil {
 		return diag.Errorf("error deleting Global Default Segment Profile Template configuration: %s", err)
 	}
