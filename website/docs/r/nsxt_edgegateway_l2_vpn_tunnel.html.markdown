@@ -119,8 +119,9 @@ corresponds to the device on the remote site terminating the VPN tunnel.
 * `pre_shared_key` - (Required for `SERVER` sessions) The key that is used for 
   authenticating the connection, only needed for `SERVER` sessions.
 * `peer_code` - (Optional) Encoded string that contains the whole configuration 
-  of a `SERVER` session, including the pre-shared key, so it is user's 
-  responsibility to secure it.
+  of a `SERVER` session including the pre-shared key so it is user's 
+  responsibility to secure it. Needs to be provided for creation of
+  `CLIENT` sessions.
 * `stretched_network` - (Optional) One or more stretched networks for the tunnel. 
   See [`stretched_network`](#stretched-network) for more detail.
 
