@@ -38,7 +38,6 @@ func resourceVcdSegmentProfileTemplate() *schema.Resource {
 				Optional:    true,
 				Description: "Description of Segment Profile Template",
 			},
-
 			"ip_discovery_profile_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -85,14 +84,14 @@ func resourceVcdSegmentProfileTemplateCreate(ctx context.Context, d *schema.Reso
 func resourceVcdSegmentProfileTemplateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	albController, err := vcdClient.GetSegmentProfileTemplateById(d.Id())
+	spt, err := vcdClient.GetSegmentProfileTemplateById(d.Id())
 	if err != nil {
 		return diag.Errorf("unable to find NSX-T Segment Profile Template: %s", err)
 	}
 
 	updateSegmentProfileTemplateConfig := getNsxtSegmentProfileTemplateType(d)
 	updateSegmentProfileTemplateConfig.ID = d.Id()
-	_, err = albController.Update(updateSegmentProfileTemplateConfig)
+	_, err = spt.Update(updateSegmentProfileTemplateConfig)
 	if err != nil {
 		return diag.Errorf("error updating NSX-T Segment Profile Template: %s", err)
 	}
@@ -103,7 +102,7 @@ func resourceVcdSegmentProfileTemplateUpdate(ctx context.Context, d *schema.Reso
 func resourceVcdSegmentProfileTemplateRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	albController, err := vcdClient.GetSegmentProfileTemplateById(d.Id())
+	spt, err := vcdClient.GetSegmentProfileTemplateById(d.Id())
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
 			d.SetId("")
@@ -112,7 +111,7 @@ func resourceVcdSegmentProfileTemplateRead(_ context.Context, d *schema.Resource
 		return diag.Errorf("unable to find NSX-T Segment Profile Template: %s", err)
 	}
 
-	setNsxtSegmentProfileTemplateData(d, albController.NsxtSegmentProfileTemplate)
+	setNsxtSegmentProfileTemplateData(d, spt.NsxtSegmentProfileTemplate)
 
 	return nil
 }
@@ -120,12 +119,12 @@ func resourceVcdSegmentProfileTemplateRead(_ context.Context, d *schema.Resource
 func resourceVcdSegmentProfileTemplateDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	albController, err := vcdClient.GetSegmentProfileTemplateById(d.Id())
+	spt, err := vcdClient.GetSegmentProfileTemplateById(d.Id())
 	if err != nil {
 		return diag.Errorf("unable to find NSX-T Segment Profile Template: %s", err)
 	}
 
-	err = albController.Delete()
+	err = spt.Delete()
 	if err != nil {
 		return diag.Errorf("error deleting NSX-T Segment Profile Template: %s", err)
 	}

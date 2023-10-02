@@ -242,27 +242,27 @@ data "vcd_nsxt_manager" "nsxt" {
 }
 
 data "vcd_nsxt_segment_ip_discovery_profile" "first" {
-  name       = "{{.IpDiscoveryProfileName}}"
+  name            = "{{.IpDiscoveryProfileName}}"
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 
 data "vcd_nsxt_segment_mac_discovery_profile" "first" {
-  name       = "{{.MacDiscoveryProfileName}}"
+  name            = "{{.MacDiscoveryProfileName}}"
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 
 data "vcd_nsxt_segment_spoof_guard_profile" "first" {
-  name       = "{{.SpoofGuardProfileName}}"
+  name            = "{{.SpoofGuardProfileName}}"
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 
 data "vcd_nsxt_segment_qos_profile" "first" {
-  name       = "{{.QosProfileName}}"
+  name            = "{{.QosProfileName}}"
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 
 data "vcd_nsxt_segment_security_profile" "first" {
-  name       = "{{.SegmentSecurityProfileName}}"
+  name            = "{{.SegmentSecurityProfileName}}"
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 }
 `

@@ -90,9 +90,13 @@ func resourceVcdGlobalDefaultSegmentProfileTemplateDelete(_ context.Context, d *
 func resourceVcdGlobalDefaultSegmentProfileTemplateImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
+	if d.Id() != "" {
+		return nil, fmt.Errorf("global VCD resource does not require path")
+	}
+
 	_, err := vcdClient.GetGlobalDefaultSegmentProfileTemplates()
 	if err != nil {
-		return nil, fmt.Errorf("error finding NSX-T Segment Profile Template with Name '%s': %s", d.Id(), err)
+		return nil, fmt.Errorf("error finding Global Segment Profile Template: %s", err)
 	}
 
 	d.SetId("global-default-segment-profile")

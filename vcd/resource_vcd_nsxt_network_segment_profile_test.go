@@ -3,9 +3,12 @@
 package vcd
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 func TestAccVcdNsxtNetworkSegmentProfileCustom(t *testing.T) {
@@ -174,7 +177,7 @@ func TestAccVcdNsxtNetworkSegmentProfileTemplate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		// CheckDestroy:      testAccCheckVcdSegmentProfileTemplateDestroy("vcd_nsxt_alb_controller.first"),
+		CheckDestroy:      testAccCheckVcdNetworkSegmentProfileDestroy("vcd_network_routed_v2.net1"),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
@@ -256,7 +259,7 @@ resource "vcd_network_routed_v2" "net1" {
 
   static_ip_pool {
 	start_address = "1.1.1.10"
-    end_address = "1.1.1.20"
+    end_address   = "1.1.1.20"
   }
 }
 
@@ -276,3 +279,26 @@ data "vcd_nsxt_network_segment_profile" "custom-prof" {
   depends_on = [vcd_nsxt_network_segment_profile.custom-prof]
 }
 `
+
+func testAccCheckVcdNetworkSegmentProfileDestroy(identifier string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[identifier]
+		if !ok {
+			return fmt.Errorf("not found: %s", identifier)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("no Segment Profile Template ID is set")
+		}
+
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		_, err := conn.GetSegmentProfileTemplateById(rs.Primary.ID)
+
+		if err == nil || !govcd.ContainsNotFound(err) {
+			return fmt.Errorf("%s not deleted yet", identifier)
+		}
+		return nil
+
+	}
+}

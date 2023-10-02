@@ -33,6 +33,7 @@ func resourceVcdNsxtOrgVdcNetworkSegmentProfileTemplate() *schema.Resource {
 				Required:    true,
 				Description: "Segment Profile Template ID",
 			},
+			// One can set either Segment Profile Template (which is composed of multiple Segment Profiles), or individual Segment Profiles
 			"segment_profile_template_id": {
 				Type:          schema.TypeString,
 				Optional:      true,
@@ -44,7 +45,6 @@ func resourceVcdNsxtOrgVdcNetworkSegmentProfileTemplate() *schema.Resource {
 				Computed:    true,
 				Description: "Segment Profile Template Name",
 			},
-
 			"ip_discovery_profile_id": {
 				Type:          schema.TypeString,
 				Optional:      true,
@@ -114,7 +114,7 @@ func resourceVcdNsxtOrgVdcNetworkSegmentProfileCreateUpdate(ctx context.Context,
 
 	switch {
 	// Setting `segment_profile_template_id` requires modifying Org VDC Network structure.
-	// It can only be set (PUT/POST) using Org VDC network structure, but cannot be read.
+	// It can only be set (PUT/POST) using Org VDC network structure, but cannot be read (GET).
 	// To read the value of it one must use orgVdcNet.GetSegmentProfile() function.
 	case segmentProfileTemplateId != "":
 		orgVdcNet.OpenApiOrgVdcNetwork.SegmentProfileTemplate = &types.OpenApiReference{ID: segmentProfileTemplateId}
@@ -135,6 +135,8 @@ func resourceVcdNsxtOrgVdcNetworkSegmentProfileCreateUpdate(ctx context.Context,
 		if err != nil {
 			return diag.Errorf("error configuring Segment Profile for Org VDC Network: %s", err)
 		}
+	default:
+		return diag.Errorf("invalid configuration provided")
 	}
 
 	d.SetId(orgVdcNet.OpenApiOrgVdcNetwork.ID)
@@ -160,42 +162,36 @@ func resourceDataSourceVcdNsxtOrgVdcNetworkSegmentProfileRead(ctx context.Contex
 		return diag.Errorf("error retrieving Segment Profile configuration for Org VDC Network: %s", err)
 	}
 
+	dSet(d, "segment_profile_template_name", "")
+	dSet(d, "segment_profile_template_id", "")
 	if segmentProfileConfig.SegmentProfileTemplate != nil && segmentProfileConfig.SegmentProfileTemplate.TemplateRef != nil {
 		dSet(d, "segment_profile_template_id", segmentProfileConfig.SegmentProfileTemplate.TemplateRef.ID)
 		dSet(d, "segment_profile_template_name", segmentProfileConfig.SegmentProfileTemplate.TemplateRef.Name)
-	} else {
-
-		dSet(d, "segment_profile_template_name", "")
 	}
 
+	dSet(d, "ip_discovery_profile_id", "")
 	if segmentProfileConfig.IPDiscoveryProfile != nil {
 		dSet(d, "ip_discovery_profile_id", segmentProfileConfig.IPDiscoveryProfile.ID)
-	} else {
-		dSet(d, "ip_discovery_profile_id", "")
 	}
 
+	dSet(d, "mac_discovery_profile_id", "")
 	if segmentProfileConfig.MacDiscoveryProfile != nil {
 		dSet(d, "mac_discovery_profile_id", segmentProfileConfig.MacDiscoveryProfile.ID)
-	} else {
-		dSet(d, "mac_discovery_profile_id", "")
 	}
 
+	dSet(d, "spoof_guard_profile_id", "")
 	if segmentProfileConfig.SpoofGuardProfile != nil {
 		dSet(d, "spoof_guard_profile_id", segmentProfileConfig.SpoofGuardProfile.ID)
-	} else {
-		dSet(d, "spoof_guard_profile_id", "")
 	}
 
+	dSet(d, "qos_profile_id", "")
 	if segmentProfileConfig.QosProfile != nil {
 		dSet(d, "qos_profile_id", segmentProfileConfig.QosProfile.ID)
-	} else {
-		dSet(d, "qos_profile_id", "")
 	}
 
+	dSet(d, "segment_security_profile_id", "")
 	if segmentProfileConfig.SegmentSecurityProfile != nil {
 		dSet(d, "segment_security_profile_id", segmentProfileConfig.SegmentSecurityProfile.ID)
-	} else {
-		dSet(d, "segment_security_profile_id", "")
 	}
 
 	d.SetId(orgVdcNet.OpenApiOrgVdcNetwork.ID)
@@ -210,14 +206,14 @@ func resourceVcdNsxtOrgVdcNetworkSegmentProfileDelete(ctx context.Context, d *sc
 
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("[NSX-T DHCP binding delete] error retrieving Org: %s", err)
+		return diag.Errorf("[Org VDC Network Segment Profile configuration delete] error retrieving Org: %s", err)
 	}
 
 	orgNetworkId := d.Get("org_network_id").(string)
-	// Perform validations to only allow DHCP configuration on NSX-T backed Routed Org VDC networks
+
 	orgVdcNet, err := org.GetOpenApiOrgVdcNetworkById(orgNetworkId)
 	if err != nil {
-		return diag.Errorf("[NSX-T DHCP binding delete] error retrieving Org VDC network with ID '%s': %s", orgNetworkId, err)
+		return diag.Errorf("[Org VDC Network Segment Profile configuration delete] error retrieving Org VDC network with ID '%s': %s", orgNetworkId, err)
 	}
 
 	// Attempt to remove Segment Profile Template using main network structure (it is the only way, if it is set)
@@ -255,7 +251,6 @@ func resourceVcdNsxtOrgVdcNetworkSegmentProfileImport(ctx context.Context, d *sc
 		return nil, fmt.Errorf("[Org VDC Network Segment Profile configuration import] Segment Profile configuration is only supported for NSX-T networks: %s", err)
 	}
 
-	// Perform validations to only allow DHCP configuration on NSX-T backed Routed Org VDC networks
 	orgVdcNet, err := vdcOrVdcGroup.GetOpenApiOrgVdcNetworkByName(orgVdcNetworkName)
 	if err != nil {
 		return nil, fmt.Errorf("[Org VDC Network Segment Profile configuration import] error retrieving Org VDC network with name '%s': %s", orgVdcNetworkName, err)
