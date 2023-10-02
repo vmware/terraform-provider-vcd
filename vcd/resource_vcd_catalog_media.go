@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -303,6 +305,20 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	dSet(d, "status", mediaRecord.MediaRecord.Status)
 	dSet(d, "storage_profile_name", mediaRecord.MediaRecord.StorageProfileName)
 
+	if origin == "datasource" {
+		downloadToFile := d.Get("download_to_file").(string)
+		if downloadToFile != "" {
+			contents, err := media.Download()
+			if err != nil {
+				return diag.Errorf("error downloading media contents")
+			}
+			downloadToFile = path.Clean(downloadToFile)
+			err = os.WriteFile(downloadToFile, contents, 0600)
+			if err != nil {
+				return diag.Errorf("error writing media contents to file '%s'", downloadToFile)
+			}
+		}
+	}
 	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog_media", media)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to update media item metadata: %s", err)
