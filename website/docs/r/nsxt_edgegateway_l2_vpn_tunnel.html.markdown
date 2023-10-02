@@ -8,16 +8,29 @@ description: |-
 
 # vcd\_nsxt\_edgegateway\_l2\_vpn\_tunnel
 
-Supported in provider *v3.11+* and VCD *10.2+* with NSX-T
+Supported in provider *v3.11+* and VCD *10.4+* with NSX-T
 
 Provides a resource to manage NSX-T Edge Gateway L2 VPN Tunnel sessions and their configurations.
 
 ## Example Usage (Both server and client tunnel sessions connecting both Edge Gateways)
 
 ```hcl
-resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "server-session" {
-  org = "datacloud"
+data "vcd_org_vdc" "existing" {
+  name = "existing-vdc"
+}
 
+data "vcd_nsxt_edgegateway" "server-testing" {
+  owner_id = data.vcd_org_vdc.existing.id
+  name     = "server-testing"
+}
+
+data "vcd_nsxt_edgegateway" "client-testing" {
+  owner_id = data.vcd_org_vdc.existing.id
+  name     = "client-testing"
+}
+
+resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "server-session" {
+  org             = "datacloud"
   edge_gateway_id = data.vcd_nsxt_edgegateway.server-testing.id
 
   name        = "server-session"
@@ -42,8 +55,8 @@ resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "server-session" {
 resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "client-session" {
   org = "datacloud"
 
-  # Note that this is different, as one edge gateway can only function
-  # in SERVER or CLIENT mode.
+  # Note that this is a different edge gateway, as one edge gateway
+  # can function only in SERVER or CLIENT mode
   edge_gateway_id = data.vcd_nsxt_edgegateway.client-testing.id
 
   name        = "client-session"
@@ -67,8 +80,8 @@ resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "client-session" {
     tunnel_id  = 2
   }
 
-  # Be aware, that if there are changes in the `server-session`, the peer_code
-  # will be updated aswell, so `terraform apply` needs to be run twice
+  # Be aware that if there are changes in the `server-session`, the peer_code
+  # will be updated as well, so `terraform apply` needs to run twice
   peer_code = vcd_nsxt_edgegateway_l2_vpn_tunnel.server-session.peer_code
 }
 ```

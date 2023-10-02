@@ -8,21 +8,25 @@ description: |-
 
 # vcd\_nsxt\_edgegateway\_l2\_vpn\_tunnel
 
-Supported in provider *v3.11+* and VCD *10.2+* with NSX-T
+Supported in provider *v3.11+* and VCD *10.4+* with NSX-T
 
 Provides a datasource to read NSX-T Edge Gateway L2 VPN Tunnel sessions and their configurations.
 
 ## Example Usage (Reading a tunnel's server session to get the peer code for the client session)
 
 ```hcl
-data "vcd_org_vdc" "vdc1" {
+data "vcd_org_vdc" "existing" {
   name = "existing-vdc"
 }
 
-data "vcd_nsxt_edgegateway" "testing" {
-  org      = "myorg"
-  owner_id = data.vcd_org_vdc.vdc1.id
-  name     = "nsxt-edge-gateway"
+data "vcd_nsxt_edgegateway" "server-testing" {
+  owner_id = data.vcd_org_vdc.existing.id
+  name     = "server-testing"
+}
+
+data "vcd_nsxt_edgegateway" "client-testing" {
+  owner_id = data.vcd_org_vdc.existing.id
+  name     = "client-testing"
 }
 
 data "vcd_nsxt_edgegateway_l2_vpn_tunnel" "server-session" {
@@ -35,8 +39,8 @@ data "vcd_nsxt_edgegateway_l2_vpn_tunnel" "server-session" {
 resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "client-session" {
   org = "datacloud"
 
-  # Note that this is different, as one edge gateway can only function
-  # in SERVER or CLIENT mode.
+  # Note that this is a different edge gateway, as one edge gateway
+  # can function only in SERVER or CLIENT mode
   edge_gateway_id = data.vcd_nsxt_edgegateway.client-testing.id
 
   session_mode = "CLIENT"

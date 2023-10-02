@@ -20,8 +20,6 @@ import (
 func TestAccVcdNsxtEdgeL2VpnTunnel(t *testing.T) {
 	preTestChecks(t)
 
-	skipIfNotSysAdmin(t)
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                     testConfig.VCD.Org,
