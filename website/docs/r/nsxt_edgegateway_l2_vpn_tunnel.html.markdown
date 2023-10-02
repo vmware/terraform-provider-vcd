@@ -12,7 +12,8 @@ Supported in provider *v3.11+* and VCD *10.4+* with NSX-T
 
 Provides a resource to manage NSX-T Edge Gateway L2 VPN Tunnel sessions and their configurations.
 
-## Example Usage (Both server and client tunnel sessions connecting both Edge Gateways)
+<a id="example-usage"></a>
+## Example Usage (Both server and client tunnel sessions connecting two Edge Gateways)
 
 ```hcl
 data "vcd_org_vdc" "existing" {
@@ -121,7 +122,8 @@ corresponds to the device on the remote site terminating the VPN tunnel.
 * `peer_code` - (Optional) Encoded string that contains the whole configuration 
   of a `SERVER` session including the pre-shared key so it is user's 
   responsibility to secure it. Needs to be provided for creation of
-  `CLIENT` sessions.
+  `CLIENT` sessions. See [example](#example-usage-both-server-and-client-tunnel-sessions-connecting-two-edge-gateways) 
+  for a solution implemented fully in Terraform.
 * `stretched_network` - (Optional) One or more stretched networks for the tunnel. 
   See [`stretched_network`](#stretched-network) for more detail.
 
