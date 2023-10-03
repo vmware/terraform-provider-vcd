@@ -78,16 +78,11 @@ spec:
   org: ${VCD_ORGANIZATION}
   ovdc: ${VCD_ORGANIZATION_VDC}
   ovdcNetwork: ${VCD_ORGANIZATION_VDC_NETWORK}
-  controlPlaneEndpoint: # Added manually
-    host: ${CONTROL_PLANE_IP}
-    port: 6443
   useAsManagementCluster: false
   userContext:
     secretRef:
       name: capi-user-credentials
       namespace: ${TARGET_NAMESPACE}
-  loadBalancerConfigSpec:
-    vipSubnet: "${VIRTUAL_IP_SUBNET}" # Just needed if you require a VIP subnet
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: VCDMachineTemplate

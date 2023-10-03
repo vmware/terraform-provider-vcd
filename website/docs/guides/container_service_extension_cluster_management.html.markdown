@@ -127,6 +127,19 @@ spec:
 ---
 ```
 
+- To use a Control Plane IP and/or a Virtual IP Subnet, you must add the following snippets to the kind `VCDCluster` spec section. The [proposed example][cluster]
+  is not using this feature, so you must add a correct value for the `CONTROL_PLANE_IP` and/or `VIRTUAL_IP_SUBNET` placeholders:
+
+```yaml
+  controlPlaneEndpoint:
+    host: ${CONTROL_PLANE_IP}
+    port: 6443
+```
+```yaml
+  loadBalancerConfigSpec:
+    vipSubnet: ${VIRTUAL_IP_SUBNET}
+```
+
 - The downloaded template has a single worker pool (to see an example with **two** worker pools, please check the [proposed example][cluster]).
   If we need to have **more than one worker pool**, we have to add more objects of kind `VCDMachineTemplate`, `KubeadmConfigTemplate` and
   `MachineDeployment`. In the downloaded template, they look like this:

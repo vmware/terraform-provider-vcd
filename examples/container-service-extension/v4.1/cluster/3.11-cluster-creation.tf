@@ -97,9 +97,6 @@ locals {
     POD_CIDR     = var.pod_cidr
     SERVICE_CIDR = var.service_cidr
 
-    CONTROL_PLANE_IP  = ""
-    VIRTUAL_IP_SUBNET = ""
-
     # Extra required information. Please read the guide at
     # https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_cluster_management
     # to know how to obtain these required parameters.
