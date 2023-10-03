@@ -97,7 +97,7 @@ data "vcd_rde_interface" "my_interface" {
 resource "vcd_rde_interface_behavior" "my_behavior" {
   interface_id = vcd_rde_interface.my_interface.id
   name         = "MyBehavior"
-  description  = "Adds a node to the cluster.\nParameters:\n  clusterId: the ID of the cluster\n  node: The node address\n"
+  description  = "Calls an example Behavior.\nParameters:\n  parameter1: the first param\n  parameter2: the second param\n"
   execution = {
     "id" : "MyExecution"
     "type" : "Activity"
