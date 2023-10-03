@@ -1,4 +1,4 @@
-//go:build ALL || functional
+//go:build ALL || vdc || functional
 
 package vcd
 
@@ -307,31 +307,6 @@ func checkProviderVdcExists(providerVdcName string, wantExisting bool) resource.
 	}
 }
 
-func checkNetworkPoolExists(networkPoolName string, wantExisting bool) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		conn := testAccProvider.Meta().(*VCDClient)
-
-		for _, rs := range s.RootModule().Resources {
-			if rs.Type != "vcd_network_pool" {
-				continue
-			}
-			_, err := conn.GetNetworkPoolByName(networkPoolName)
-			if wantExisting {
-				if err != nil {
-					return fmt.Errorf("netwrek pool %s not found: %s ", networkPoolName, err)
-				}
-			} else {
-				if err == nil {
-					return fmt.Errorf("network pool %s not deleted yet", networkPoolName)
-				} else {
-					return nil
-				}
-			}
-		}
-		return nil
-	}
-}
-
 const testAccVcdResourceProviderVdcPrerequisites = `
 data "vcd_vcenter" "vcenter1" {
   name = "{{.Vcenter}}"
@@ -355,6 +330,8 @@ resource "vcd_network_pool" "np1" {
   name                = "{{.NewNsxtNetworkPool}}"
   network_provider_id = data.vcd_nsxt_manager.mgr1.id
   type                = "GENEVE" # provider VDC needs either a GENEVE (NSX-T) or a VXLAN (NSX-V) network pool
+  backing {
+  }
 }
 `
 
