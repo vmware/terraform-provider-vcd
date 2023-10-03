@@ -13,9 +13,6 @@ description: |-
 Provides the capability of invoking an existing [RDE Interface Behavior](/providers/vmware/vcd/latest/docs/resources/rde_interface_behavior)
 or [RDE Type Behavior](/providers/vmware/vcd/latest/docs/resources/rde_type_behavior) in VMware Cloud Director.
 
-The RDE Behavior is invoked on every refresh operation. To stop invoking it, one can simply remove this data source
-from the HCL code.
-
 Supported in provider *v3.11+*
 
 ## Example Usage
