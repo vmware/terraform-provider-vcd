@@ -97,6 +97,36 @@ metadata:
 # ...
 ```
 
+- The downloaded template does not have any node health checks, which is a feature introduced in v4.1. You must add the following 
+  block of kind `MachineHealthCheck` to be able to use it. The placeholders are already being populated in the [proposed example][cluster] with
+  the CSE Server configuration parameters set during the installation process:
+
+```yaml
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  name: ${CLUSTER_NAME}
+  namespace: ${TARGET_NAMESPACE}
+  labels:
+    clusterctl.cluster.x-k8s.io: ""
+    clusterctl.cluster.x-k8s.io/move: ""
+spec:
+  clusterName: ${CLUSTER_NAME}
+  maxUnhealthy: ${MAX_UNHEALTHY_NODE_PERCENTAGE}%
+  nodeStartupTimeout: ${NODE_STARTUP_TIMEOUT}s
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: ${CLUSTER_NAME}
+  unhealthyConditions:
+    - type: Ready
+      status: Unknown
+      timeout: ${NODE_UNKNOWN_TIMEOUT}s
+    - type: Ready
+      status: "False"
+      timeout: ${NODE_NOT_READY_TIMEOUT}s
+---
+```
+
 - The downloaded template has a single worker pool (to see an example with **two** worker pools, please check the [proposed example][cluster]).
   If we need to have **more than one worker pool**, we have to add more objects of kind `VCDMachineTemplate`, `KubeadmConfigTemplate` and
   `MachineDeployment`. In the downloaded template, they look like this:
