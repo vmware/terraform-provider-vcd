@@ -137,10 +137,9 @@ func resourceVcdNetworkPool() *schema.Resource {
 				Description: "Type of network provider",
 			},
 			"backing": {
-				Type:     schema.TypeList,
-				MaxItems: 1,
-				Optional: true,
-				//Computed:    true,
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Optional:    true,
 				Description: "The components used by the network pool",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
