@@ -124,7 +124,8 @@ output "ds" {
   value = data.vcd_resource_list.ds.list
 }
 ```
-Note: the lists provided as `vcd_resource_list` output are volatile: they only exist for items that have not been used
+
+-> Note: the lists provided as `vcd_resource_list` output are volatile: they only exist for items that have not been used
 in a network pool. Once they have been assigned, they cease to be shown. As such, it is not a good idea to use
 `vcd_resource_list` as direct source for one or more network pools: at the first `plan`, terraform would propose
 to remove the network pool, as the element is not shown in the list anymore.
