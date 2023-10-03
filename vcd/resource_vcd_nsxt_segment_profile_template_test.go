@@ -16,8 +16,6 @@ func TestAccVcdNsxtSegmentProfileTemplate(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
-	skipNoNsxtAlbConfiguration(t)
-
 	// String map to fill the template
 	var params = StringMap{
 		"TestName":                   t.Name(),
