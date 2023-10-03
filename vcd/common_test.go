@@ -40,7 +40,7 @@ func checkNetworkPoolExists(networkPoolName string, wantExisting bool) resource.
 			_, err := conn.GetNetworkPoolByName(networkPoolName)
 			if wantExisting {
 				if err != nil {
-					return fmt.Errorf("netwrek pool %s not found: %s ", networkPoolName, err)
+					return fmt.Errorf("network pool %s not found: %s ", networkPoolName, err)
 				}
 			} else {
 				if err == nil {
