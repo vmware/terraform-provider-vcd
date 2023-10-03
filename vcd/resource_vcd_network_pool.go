@@ -198,14 +198,14 @@ func resourceNetworkPoolCreate(ctx context.Context, d *schema.ResourceData, meta
 	if networkPoolProviderType == networkProviderVcenter {
 		vCenter, err := vcdClient.GetVCenterById(networkPoolProviderId)
 		if err != nil {
-			return diag.Errorf("error retrieving vCenter with ID '%s': %s", networkPoolProviderId, err)
+			return diag.Errorf("[network pool create] error retrieving vCenter with ID '%s': %s", networkPoolProviderId, err)
 		}
 		networkPoolProvider.Name = vCenter.VSphereVCenter.Name
 		networkPoolProvider.ID = vCenter.VSphereVCenter.VcId
 	} else {
 		managers, err := vcdClient.QueryNsxtManagers()
 		if err != nil {
-			return diag.Errorf("error retrieving list of NSX-T managers: %s", err)
+			return diag.Errorf("[network pool create] error retrieving list of NSX-T managers: %s", err)
 		}
 		var manager *types.QueryResultNsxtManagerRecordType
 
@@ -217,26 +217,25 @@ func resourceNetworkPoolCreate(ctx context.Context, d *schema.ResourceData, meta
 			}
 		}
 		if manager == nil {
-			return diag.Errorf("NSX-T manager with ID '%s' not found", networkPoolProviderId)
+			return diag.Errorf("[network pool create] NSX-T manager with ID '%s' not found", networkPoolProviderId)
 		}
 		networkPoolProvider.Name = manager.Name
 		networkPoolProvider.ID = "urn:vcloud:nsxtmanager:" + extractUuid(manager.HREF)
 	}
 
 	if networkPoolProvider.ID == "" {
-		return diag.Errorf("no suitable network provider (%s) found from ID '%s'", networkPoolProviderType, networkPoolProviderId)
+		return diag.Errorf("[network pool create] no suitable network provider (%s) found from ID '%s'", networkPoolProviderType, networkPoolProviderId)
 	}
 	backing, err := getNetworkPoolBacking(d)
 	if err != nil {
-		return diag.Errorf("error fetching network pool backing data: %s", err)
+		return diag.Errorf("[network pool create] error fetching network pool backing data: %s", err)
 	}
-	if networkPoolType != types.NetworkPoolVlanType && len(backing.VlanIdRanges.Values) > 0 {
-		return diag.Errorf("only network pools of type '%s' need range IDs", types.NetworkPoolVlanType)
+	if networkPoolType != types.NetworkPoolVlanType && backing != nil && len(backing.VlanIdRanges.Values) > 0 {
+		return diag.Errorf("[network pool create] only network pools of type '%s' need range IDs", types.NetworkPoolVlanType)
 	}
 	var networkPool *govcd.NetworkPool
 	switch networkPoolType {
 	case types.NetworkPoolGeneveType:
-		//transportZoneName := d.Get("backing.0.transport_zone.0.name").(string)
 		transportZoneName := ""
 		if backing != nil {
 			transportZoneName = backing.TransportZoneRef.Name
@@ -278,7 +277,7 @@ func resourceNetworkPoolCreate(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	if err != nil {
-		return diag.Errorf("error creating network pool '%s': %s", networkPoolName, err)
+		return diag.Errorf("[network pool create] error creating network pool '%s': %s", networkPoolName, err)
 	}
 	d.SetId(networkPool.NetworkPool.Id)
 	return resourceNetworkPoolRead(ctx, d, meta)
@@ -296,7 +295,7 @@ func resourceNetworkPoolUpdate(ctx context.Context, d *schema.ResourceData, meta
 
 	for _, elem := range []string{"transport_zone", "port_groups", "distributed_switches"} {
 		if d.HasChanges("backing.0." + elem) {
-			return diag.Errorf("no changes allowed in backing.%s - To change this element the network pool must be destroyed and created anew ", elem)
+			return diag.Errorf("[network pool update] no changes allowed in backing.%s - To change this element the network pool must be destroyed and created anew ", elem)
 		}
 	}
 
@@ -310,7 +309,7 @@ func resourceNetworkPoolUpdate(ctx context.Context, d *schema.ResourceData, meta
 			return diag.Errorf("error getting backing info: %s", err)
 		}
 		if networkPool.NetworkPool.PoolType != types.NetworkPoolVlanType && len(backing.VlanIdRanges.Values) > 0 {
-			return diag.Errorf("only network pools of type '%s' need range IDs", types.NetworkPoolVlanType)
+			return diag.Errorf("[network pool update] only network pools of type '%s' need range IDs", types.NetworkPoolVlanType)
 		}
 		networkPool.NetworkPool.Backing.VlanIdRanges = backing.VlanIdRanges
 	}
@@ -340,7 +339,7 @@ func genericNetworkPoolRead(_ context.Context, d *schema.ResourceData, meta inte
 	}
 
 	if networkPool.NetworkPool.Name == "" {
-		return diag.Errorf("found empty network pool")
+		return diag.Errorf("[network pool read] found empty network pool")
 	}
 	dSet(d, "name", networkPool.NetworkPool.Name)
 	dSet(d, "type", networkPool.NetworkPool.PoolType)
@@ -352,7 +351,7 @@ func genericNetworkPoolRead(_ context.Context, d *schema.ResourceData, meta inte
 
 	networkProviderType, ok := networkProviders[networkPool.NetworkPool.PoolType]
 	if !ok {
-		return diag.Errorf("no provider type found for pool type '%s'", networkPool.NetworkPool.PoolType)
+		return diag.Errorf("[network pool read] no provider type found for pool type '%s'", networkPool.NetworkPool.PoolType)
 	}
 	dSet(d, "network_provider_type", networkProviderType)
 	dSet(d, "network_provider_id", networkPool.NetworkPool.ManagingOwnerRef.ID)
@@ -399,7 +398,7 @@ func genericNetworkPoolRead(_ context.Context, d *schema.ResourceData, meta inte
 	}
 	err = d.Set("backing", []any{backing})
 	if err != nil {
-		return diag.Errorf("error setting backing : %s", err)
+		return diag.Errorf("[network pool read] error setting backing : %s", err)
 	}
 
 	d.SetId(networkPool.NetworkPool.Id)
@@ -413,11 +412,11 @@ func resourceNetworkPoolDelete(ctx context.Context, d *schema.ResourceData, meta
 
 	networkPool, err := vcdClient.GetNetworkPoolById(d.Id())
 	if err != nil {
-		return diag.Errorf("network pool '%s' not found: %s", networkPoolName, err)
+		return diag.Errorf("[network pool delete] network pool '%s' not found: %s", networkPoolName, err)
 	}
 	err = networkPool.Delete()
 	if err != nil {
-		return diag.Errorf("error deleting network pool '%s': %s", networkPoolName, err)
+		return diag.Errorf("[network pool delete] error deleting network pool '%s': %s", networkPoolName, err)
 	}
 	return nil
 }
@@ -468,17 +467,17 @@ func getNetworkPoolBacking(d *schema.ResourceData) (*types.NetworkPoolBacking, e
 	// Checking that only one type of backing was used
 	if len(backing.VdsRefs) > 0 {
 		if backing.TransportZoneRef.Name != "" {
-			return nil, fmt.Errorf("both transport zone and distributed switches were defined for a single network pool")
+			return nil, fmt.Errorf("[getNetworkPoolBacking] both transport zone and distributed switches were defined for a single network pool")
 		}
 		if len(backing.PortGroupRefs) > 0 {
-			return nil, fmt.Errorf("both port groups and distributed switches were defined for a single network pool")
+			return nil, fmt.Errorf("[getNetworkPoolBacking] both port groups and distributed switches were defined for a single network pool")
 		}
 		if len(backing.VlanIdRanges.Values) == 0 {
-			return nil, fmt.Errorf("distributed_switches selected but no range IDs were indicated")
+			return nil, fmt.Errorf("[getNetworkPoolBacking] distributed_switches selected but no range IDs were indicated")
 		}
 	}
 	if len(backing.PortGroupRefs) > 0 && backing.TransportZoneRef.Name != "" {
-		return nil, fmt.Errorf("both transport zone and port groups were defined for a single network pool")
+		return nil, fmt.Errorf("[getNetworkPoolBacking] both transport zone and port groups were defined for a single network pool")
 	}
 	// Note: an empty backing block is acceptable, as the system will try to fetch the first available backing
 	return &backing, nil
