@@ -146,6 +146,8 @@ resource "vcd_network_pool" "npool" {
   description         = "network pool without explicit transport zone"
   network_provider_id = data.vcd_nsxt_manager.mgr.id
   type                = "GENEVE"
+  backing {
+  }
 }
 ```
 
