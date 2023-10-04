@@ -57,17 +57,36 @@ locals {
 }
 
 # We need to fetch the CSE Server configuration to retrieve some required values during
-# cluster creation
-data "vcd_rde" "vcdkeconfig_instance" {
+# cluster creation, so we read the RDE Type and the RDE.
+data "vcd_rde_type" "vcdkeconfig_type" {
   vendor  = "vmware"
   nss     = "VCDKEConfig"
   version = "1.1.0"
 }
 
+provider "vcd" {
+  alias                = "admin"
+  url                  = "${var.vcd_url}/api"
+  user                 = var.administrator_user
+  password             = var.administrator_password
+  auth_type            = "integrated"
+  org                  = var.administrator_org
+  allow_unverified_ssl = var.insecure_login
+  logging              = true
+  logging_file         = "cse_cluster_creation_admin.log"
+}
+
+data "vcd_rde" "vcdkeconfig_instance" {
+  provider    = vcd.admin
+  org         = "System"
+  rde_type_id = data.vcd_rde_type.vcdkeconfig_type.id
+  name        = "vcdKeConfig"
+}
+
 # Some auxiliary locals to improve readability
 locals {
-  machine_health_check   = jsondecode(data.vcd_rde.vcdkeconfig_instance.computed_entity)["profiles"][0]["K8Config"]["mhc"]
-  container_registry_url = jsondecode(data.vcd_rde.vcdkeconfig_instance.computed_entity)["profiles"][0]["containerRegistryUrl"]
+  machine_health_check   = jsondecode(data.vcd_rde.vcdkeconfig_instance.entity)["profiles"][0]["K8Config"]["mhc"]
+  container_registry_url = jsondecode(data.vcd_rde.vcdkeconfig_instance.entity)["profiles"][0]["containerRegistryUrl"]
 }
 
 # This local corresponds to a completely rendered YAML template that can be used inside the RDE resource below.
@@ -121,13 +140,14 @@ locals {
 
 # This is the RDE that manages the TKGm cluster.
 resource "vcd_rde" "k8s_cluster_instance" {
+  org                = "tenant_org" # This is not required
   name               = var.k8s_cluster_name
   rde_type_id        = data.vcd_rde_type.capvcdcluster_type.id # This must reference the CAPVCD RDE Type
   resolve            = false                                   # MUST be false as it is resolved by CSE Server
   resolve_on_removal = true                                    # MUST be true as it won't be resolved by Terraform
 
   # Read the RDE template present in this repository
-  input_entity = templatefile("../entities/tkgmcluster-template.json", {
+  input_entity = templatefile("../entities/tkgmcluster.json.template", {
     vcd_url = var.vcd_url
     name    = var.k8s_cluster_name
     org     = var.cluster_organization

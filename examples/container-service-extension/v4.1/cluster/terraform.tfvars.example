@@ -4,9 +4,14 @@
 # Provider config
 # ------------------------------------------------
 vcd_url                 = "https://vcd.my-awesome-corp.com"
+insecure_login          = "true"
+
+administrator_user      = "administrator"
+administrator_password  = "change-me"
+administrator_org       = "solutions_org"
+
 cluster_author_user     = "cluster_author"
 cluster_author_password = "change-me"
-insecure_login          = "false"
 
 # ------------------------------------------------
 # Cluster author config
@@ -22,10 +27,10 @@ k8s_cluster_name = "example1"
 
 # These specify the place where the cluster will be created. They were created
 # during the CSE installation phase, so they should exist already.
-cluster_organization     = "tenant_org"        # An existing Organization, created during CSE installation
-cluster_vdc              = "tenant_vdc"        # An existing VDC, created during CSE installation
-cluster_routed_network   = "tenant_net_routed" # An existing routed network, created during CSE installation
-ssh_public_key           = ""                  # This SSH public Key allows to login into the control plane nodes, for troubleshooting purposes.
+cluster_organization   = "tenant_org"        # An existing Organization, created during CSE installation
+cluster_vdc            = "tenant_vdc"        # An existing VDC, created during CSE installation
+cluster_routed_network = "tenant_net_routed" # An existing routed network, created during CSE installation
+ssh_public_key         = ""                  # This SSH public Key allows to login into the control plane nodes, for troubleshooting purposes.
 
 # Specifies the number of VMs that the TKGm cluster will have.
 control_plane_machine_count = "3" # MUST be an odd number and higher than 0
@@ -33,13 +38,13 @@ worker_machine_count        = "1" # MUST higher than 0
 
 # Control plane dimensioning
 control_plane_sizing_policy    = "TKG small" # An existing VM Sizing Policy, created during CSE installation, for control plane nodes
-control_plane_placement_policy = ""      # An existing VM Placement Policy for control plane nodes
+control_plane_placement_policy = ""          # An existing VM Placement Policy for control plane nodes
 control_plane_storage_profile  = "*"         # An existing Storage Profile for control plane nodes
 
 # Worker dimensioning
-worker_sizing_policy    = "TKG small"   # An existing VM Sizing Policy, created during CSE installation, for worker nodes
-worker_placement_policy = ""        # An existing VM Placement Policy for worker nodes
-worker_storage_profile  = "*"           # An existing Storage Profile for worker nodes
+worker_sizing_policy    = "TKG small" # An existing VM Sizing Policy, created during CSE installation, for worker nodes
+worker_placement_policy = ""          # An existing VM Placement Policy for worker nodes
+worker_storage_profile  = "*"         # An existing Storage Profile for worker nodes
 
 # Storage and TKGm OVA
 disk_size    = "20Gi"                                                                     # Specifies the disk size for every node in the cluster

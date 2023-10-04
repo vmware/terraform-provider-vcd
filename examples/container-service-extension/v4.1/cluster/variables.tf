@@ -23,6 +23,16 @@ variable "cluster_author_password" {
   sensitive   = true
 }
 
+variable "administrator_user" {
+  description = "Username of the System administrator"
+}
+
+variable "administrator_password" {
+  description = "Password of the System administrator"
+  type        = string
+  sensitive   = true
+}
+
 variable "administrator_org" {
   description = "The VCD administrator organization (Example: 'System')"
   type        = string
