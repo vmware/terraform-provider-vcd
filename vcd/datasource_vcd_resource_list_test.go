@@ -77,12 +77,12 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 	} else {
 		fmt.Print("`Networking.ExternalNetwork` value isn't configured, datasource test using this will be skipped\n")
 	}
-	if testConfig.VCD.ProviderVdc.Name != "" {
+	if testConfig.VCD.ProviderVdc.Name != "" && usingSysAdmin() {
 		lists = append(lists, listDef{name: "provider-vdc", resourceType: "vcd_provider_vdc", knownItem: testConfig.VCD.ProviderVdc.Name})
 	} else {
 		fmt.Print("`VCD.ProviderVdc` value isn't configured, datasource test using this will be skipped\n")
 	}
-	if testConfig.VCD.NsxtProviderVdc.Name != "" {
+	if testConfig.VCD.NsxtProviderVdc.Name != "" && usingSysAdmin() {
 		lists = append(lists, listDef{name: "nsxt-provider-vdc", resourceType: "vcd_provider_vdc", knownItem: testConfig.VCD.NsxtProviderVdc.Name})
 	} else {
 		fmt.Print("`VCD.NsxtProviderVdc` value isn't configured, datasource test using this will be skipped\n")
