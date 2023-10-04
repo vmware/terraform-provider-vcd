@@ -59,11 +59,6 @@ variable "cluster_routed_network" {
   description = "The routed network used for the Kubernetes cluster"
 }
 
-variable "cluster_author_api_token" {
-  description = "API token of the Kubernetes cluster author"
-  sensitive   = true
-}
-
 variable "ssh_public_key" {
   description = "SSH public key to be able to login to the cluster control plane nodes"
   default     = ""

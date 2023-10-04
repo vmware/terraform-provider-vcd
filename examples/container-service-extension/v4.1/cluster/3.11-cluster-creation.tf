@@ -51,6 +51,11 @@ data "local_file" "cluster_author_token_file" {
   filename = vcd_api_token.cluster_author_token.file_name
 }
 
+# Some auxiliary locals to improve readability
+locals {
+  cluster_author_api_token = jsondecode(data.local_file.cluster_author_token_file.content)["refresh_token"]
+}
+
 # We need to fetch the CSE Server configuration to retrieve some required values during
 # cluster creation
 data "vcd_rde" "vcdkeconfig_instance" {
@@ -59,9 +64,10 @@ data "vcd_rde" "vcdkeconfig_instance" {
   version = "1.1.0"
 }
 
+# Some auxiliary locals to improve readability
 locals {
-  machine_health_check   = jsondecode(data.vcd_rde.vcdkeconfig_instance.entity)["profiles"][0]["K8Config"]["mhc"]
-  container_registry_url = jsondecode(data.vcd_rde.vcdkeconfig_instance.entity)["profiles"][0]["containerRegistryUrl"]
+  machine_health_check   = jsondecode(data.vcd_rde.vcdkeconfig_instance.computed_entity)["profiles"][0]["K8Config"]["mhc"]
+  container_registry_url = jsondecode(data.vcd_rde.vcdkeconfig_instance.computed_entity)["profiles"][0]["containerRegistryUrl"]
 }
 
 # This local corresponds to a completely rendered YAML template that can be used inside the RDE resource below.
@@ -77,7 +83,7 @@ locals {
 
     VCD_USERNAME_B64      = base64encode(var.cluster_author_user)
     VCD_PASSWORD_B64      = "" # We use an API token instead, which is highly recommended
-    VCD_REFRESH_TOKEN_B64 = base64encode(var.cluster_author_api_token)
+    VCD_REFRESH_TOKEN_B64 = base64encode(local.cluster_author_api_token)
     SSH_PUBLIC_KEY        = var.ssh_public_key
 
     CONTROL_PLANE_MACHINE_COUNT        = var.control_plane_machine_count
@@ -98,7 +104,7 @@ locals {
     SERVICE_CIDR = var.service_cidr
 
     # Extra required information. Please read the guide at
-    # https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_0_cluster_management
+    # https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_cluster_management
     # to know how to obtain these required parameters.
     TKR_VERSION = var.tkr_version
     TKGVERSION  = var.tkg_version
@@ -127,7 +133,7 @@ resource "vcd_rde" "k8s_cluster_instance" {
     org     = var.cluster_organization
     vdc     = var.cluster_vdc
 
-    api_token = jsondecode(data.local_file.cluster_author_token_file.content)["refresh_token"]
+    api_token = local.cluster_author_api_token
 
     # Configures a default Storage class for the TKGm cluster. If you don't want this,
     # you can remove the variables below. Don't forget to delete the 'defaultStorageClassOptions' block from

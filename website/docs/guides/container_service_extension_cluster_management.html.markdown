@@ -212,13 +212,14 @@ There are three additional variables that we added manually: `TKR_VERSION` and `
 To know their values, one can use [this script](https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/docs/WORKLOAD_CLUSTER.md#script-to-get-kubernetes-etcd-coredns-versions-from-tkg-ova),
 or check the following table with some script outputs:
 
-| OVA name                                                  | TKR_VERSION               | TKGVERSION |
-|-----------------------------------------------------------|---------------------------|------------|
-| v1.22.13+vmware.1-tkg.2-ea08b304658a6cf17f5e74dc0ab7544f  | v1.22.13---vmware.1-tkg.1 | v1.6.1     |
-| v1.21.14+vmware.2-tkg.5-d793afae5aa18e50bd9175e339904496  | v1.21.14---vmware.2-tkg.5 | v1.6.1     |
-| v1.23.10+vmware.1-tkg.2-b53d41690f8742e7388f2c553fd9a181  | v1.23.10---vmware.1-tkg.2 | v1.6.1     |
-| v1.24.11+vmware.1-tkg.1-2ccb2a001f8bd8f15f1bfbc811071830  | v1.24.11---vmware.1-tkg.1 | v2.2.0     |
-| v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc   | v1.25.7---vmware.1-tkg.2  | v2.2.0     |
+| OVA name                                                 | TKR_VERSION               | TKGVERSION |
+|----------------------------------------------------------|---------------------------|------------|
+| v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc  | v1.25.7---vmware.2-tkg.1  | v2.2.0     |
+| v1.24.11+vmware.1-tkg.1-2ccb2a001f8bd8f15f1bfbc811071830 | v1.24.11---vmware.1-tkg.1 | v2.2.0     |
+| v1.24.10+vmware.1-tkg.1-765d418b72c247c2310384e640ee075e | v1.24.10---vmware.1-tkg.2 | v2.1.1     |
+| v1.23.17+vmware.1-tkg.1-ee4d95d5d08cd7f31da47d1480571754 | v1.23.17---vmware.1-tkg.1 | v2.2.0     |
+| v1.23.16+vmware.1-tkg.1-eb0de9755338b944ea9652e6f758b3ce | v1.23.16---vmware.1-tkg.1 | v2.1.1     |
+| v1.22.17+vmware.1-tkg.1-df08b304658a6cf17f5e74dc0ab7543c | v1.22.17---vmware.1-tkg.1 | v2.1.1     |
 
 In [the TKGm cluster creation example][cluster], the built-in Terraform function `templatefile` is used to substitute every placeholder
 mentioned above with its final value. The returned value is the CAPVCD YAML payload that needs to be set in the `capi_yaml` placeholder in the
