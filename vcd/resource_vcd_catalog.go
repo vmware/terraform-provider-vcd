@@ -3,14 +3,13 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"github.com/kr/pretty"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
 	"sort"
 	"strings"
 	"time"
-
-	"github.com/kr/pretty"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"github.com/vmware/go-vcloud-director/v2/util"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
@@ -209,14 +208,7 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 	}
 
 	log.Printf("[TRACE] adding metadata for catalog")
-	_, err = runWithRetry("catalog metadata",
-		"error adding catalog metadata",
-		10*time.Second,
-		nil,
-		func() (any, error) {
-			err := createOrUpdateMetadata(d, catalog, "metadata")
-			return nil, err
-		})
+	err = createOrUpdateMetadata(d, catalog, "metadata")
 	if err != nil {
 		return diag.Errorf("error adding catalog metadata: %s", err)
 	}
