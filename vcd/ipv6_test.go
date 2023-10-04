@@ -500,9 +500,9 @@ resource "vcd_external_network_v2" "segment-backed" {
 }
 
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
-  org         = "{{.Org}}"
-  owner_id    = vcd_org_vdc.with-edge-cluster.id
-  name        = "{{.TestName}}-edge-gateway"
+  org      = "{{.Org}}"
+  owner_id = vcd_org_vdc.with-edge-cluster.id
+  name     = "{{.TestName}}-edge-gateway"
 
   external_network_id = vcd_external_network_v2.ext-net-nsxt.id
 
