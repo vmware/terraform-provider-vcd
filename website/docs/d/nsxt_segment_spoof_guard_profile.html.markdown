@@ -25,7 +25,6 @@ data "vcd_nsxt_segment_spoof_guard_profile" "first" {
 }
 ```
 
-
 ## Argument Reference
 
 The following arguments are supported:
@@ -34,7 +33,6 @@ The following arguments are supported:
 * `nsxt_manager_id` - (Optional) Segment Profile search context. One of `nsxt_manager_id`, `vdc_id`, `vdc_group_id` is required
 * `vdc_id` - (Optional) Segment Profile search context. One of `nsxt_manager_id`, `vdc_id`, `vdc_group_id` is required
 * `vdc_group_id` - (Optional) Segment Profile search context. One of `nsxt_manager_id`, `vdc_id`, `vdc_group_id` is required
-
 
 ## Attribute reference
 

@@ -21,7 +21,6 @@ data "vcd_nsxt_network_segment_profile" "custom-prof" {
 }
 ```
 
-
 ## Argument Reference
 
 The following arguments are supported:

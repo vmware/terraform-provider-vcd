@@ -39,5 +39,6 @@ The following arguments are supported:
   networks withing this VDC
 
 All other attributes are defined in [organization VDC network profile
-resource](/providers/vmware/vcd/latest/docs/resources/org_vdc#attribute-reference) are supported.
+resource](/providers/vmware/vcd/latest/docs/resources/org_vdc_nsxt_network_profile.html#attribute-reference)
+are supported.
 

@@ -47,7 +47,7 @@ data "vcd_nsxt_segment_security_profile" "first" {
 resource "vcd_nsxt_segment_profile_template" "complete" {
   nsxt_manager_id = data.vcd_nsxt_manager.nsxt.id
 
-  name        = "TestAccVcdNsxtSegmentProfileTemplate-complete"
+  name        = "my-first-segment-profile-template"
   description = "my description"
 
   ip_discovery_profile_id     = data.vcd_nsxt_segment_ip_discovery_profile.first.id

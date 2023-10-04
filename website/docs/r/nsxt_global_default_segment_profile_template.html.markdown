@@ -36,13 +36,13 @@ The following arguments are supported:
 ~> The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
-An existing NSX-T Segment Profile Template configuration can be [imported][docs-import] into this
+An existing  global default Segment Profile Template configuration can be [imported][docs-import] into this
 resource via supplying path for it. An example is below:
 
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_segment_profile_template.imported segment-profile-name
+terraform import vcd_nsxt_global_default_segment_profile_template.imported 
 ```
 
-The above would import the `segment-profile-name` NSX-T Segment Profile Template.
+The above would import the global default Segment Profile Template configuration.
