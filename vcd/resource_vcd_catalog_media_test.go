@@ -170,7 +170,6 @@ func testAccCheckCatalogMediaDestroy(mediaName string) resource.TestCheckFunc {
 				return fmt.Errorf("catalog query %s ended with error: %#v", rs.Primary.ID, err)
 			}
 
-			//mediaName := rs.Primary.Attributes["name"]
 			_, err = catalog.GetMediaByName(mediaName, false)
 
 			if err == nil {
