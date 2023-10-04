@@ -8,7 +8,7 @@ insecure_login          = "true"
 
 administrator_user      = "administrator"
 administrator_password  = "change-me"
-administrator_org       = "solutions_org"
+administrator_org       = "System"
 
 cluster_author_user     = "cluster_author"
 cluster_author_password = "change-me"
