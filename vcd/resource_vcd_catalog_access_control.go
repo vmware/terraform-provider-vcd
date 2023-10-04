@@ -47,7 +47,7 @@ func resourceVcdCatalogAccessControl() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{types.ControlAccessReadOnly}, true),
 				Description:  "Access level when the catalog is shared with everyone (only ReadOnly is available). Required when shared_with_everyone is set",
 			},
-			"read_only_shared_with_other_orgs": {
+			"read_only_shared_with_all_orgs": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
@@ -101,7 +101,7 @@ func resourceVcdCatalogAccessControlCreateUpdate(ctx context.Context, d *schema.
 	}
 	sessionText := fmt.Sprintf("[ vcd_catalog_access_control set - org: %s - user: %s]", sessionInfo.Org.Name, sessionInfo.User.Name)
 	var accessSettings []*types.AccessSetting
-	readOnlySharedwithOtherOrgs := d.Get("read_only_shared_with_other_orgs").(bool)
+	readOnlySharedwithOtherOrgs := d.Get("read_only_shared_with_all_orgs").(bool)
 	isSharedWithEveryone := d.Get("shared_with_everyone").(bool)
 	everyoneAccessLevel := getStringAttributeAsPointer(d, "everyone_access_level")
 	isEveryoneAccessLevelSet := everyoneAccessLevel != nil
@@ -207,7 +207,7 @@ func resourceVcdCatalogAccessControlRead(_ context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	dSet(d, "read_only_shared_with_other_orgs", sharedReadOnly.(bool))
+	dSet(d, "read_only_shared_with_all_orgs", sharedReadOnly.(bool))
 
 	result, err := runWithRetry(
 		fmt.Sprintf("%s getting control access parameters", sessionText),

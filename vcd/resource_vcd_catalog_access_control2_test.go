@@ -430,7 +430,7 @@ resource "vcd_catalog_access_control" "{{.AccessControlIdentifier5}}" {
   catalog_id  = vcd_catalog.{{.CatalogName5}}.id
 
   shared_with_everyone             = false
-  read_only_shared_with_other_orgs = true
+  read_only_shared_with_all_orgs = true
 
   shared_with {
     user_id       = vcd_org_user.{{.UserName3}}.id
@@ -447,8 +447,8 @@ resource "vcd_catalog_access_control" "{{.AccessControlIdentifier6}}" {
   org         = "{{.Org1}}"
   catalog_id  = vcd_catalog.{{.CatalogName6}}.id
 
-  shared_with_everyone             = false
-  read_only_shared_with_other_orgs = true
+  shared_with_everyone           = false
+  read_only_shared_with_all_orgs = true
 }
 `
 
