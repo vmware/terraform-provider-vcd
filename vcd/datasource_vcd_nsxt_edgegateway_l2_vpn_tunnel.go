@@ -35,7 +35,7 @@ func datasourceVcdNsxtEdgegatewayL2VpnTunnel() *schema.Resource {
 			"session_mode": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Mode of the tunnel session, must be CLIENT or SERVER",
+				Description: "Mode of the tunnel session, either CLIENT or SERVER",
 			},
 			"enabled": {
 				Type:        schema.TypeBool,
@@ -45,7 +45,7 @@ func datasourceVcdNsxtEdgegatewayL2VpnTunnel() *schema.Resource {
 			"local_endpoint_ip": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Local endpoint IP of the tunnel session, the IP must be sub-allocated to the Edge Gateway",
+				Description: "Local endpoint IP of the tunnel session, the IP is sub-allocated to the Edge Gateway",
 			},
 			"remote_endpoint_ip": {
 				Type:     schema.TypeString,
@@ -56,14 +56,14 @@ func datasourceVcdNsxtEdgegatewayL2VpnTunnel() *schema.Resource {
 			"tunnel_interface": {
 				Type:     schema.TypeString,
 				Computed: true,
-				Description: "Network CIDR block over which the session interfaces. Only relevant if " +
-					"`session_mode` is set to `SERVER`",
+				Description: "Network CIDR block over which the session interfaces. Only populated for " +
+					"`SERVER` sessions",
 			},
 			"connector_initiation_mode": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 				Description: "Connector initation mode of the session describing how a connection is made. " +
-					"Needs to be set only if `session_mode` is set to `SERVER`",
+					"Only populated for `SERVER` sessions",
 			},
 			"pre_shared_key": {
 				Type:     schema.TypeString,
@@ -89,32 +89,5 @@ func datasourceVcdNsxtEdgegatewayL2VpnTunnel() *schema.Resource {
 }
 
 func datasourceVcdNsxtEdgegatewayL2VpnTunnelRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	vcdClient := meta.(*VCDClient)
-
-	orgName := d.Get("org").(string)
-	edgeGatewayId := d.Get("edge_gateway_id").(string)
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
-	if err != nil {
-		return diag.Errorf("[L2 VPN Tunnel DS read] error retrieving edge gateway: %s", err)
-	}
-
-	// Getting tunnel by name doesn't provide all the information (peer_code, pre_shared_key) so we need to get it by ID after
-	// for all the data
-	tunnelName := d.Get("name").(string)
-	tunnelConfig, err := nsxtEdge.GetL2VpnTunnelByName(tunnelName)
-	if err != nil {
-		return diag.Errorf("[L2 VPN Tunnel DS read] error retrieving tunnel by name: %s", err)
-	}
-
-	tunnel, err := nsxtEdge.GetL2VpnTunnelById(tunnelConfig.NsxtL2VpnTunnel.ID)
-	if err != nil {
-		return diag.Errorf("[L2 VPN Tunnel DS read] error retrieving tunnel by ID: %s", err)
-	}
-
-	err = readL2VpnTunnelToSchema(tunnel.NsxtL2VpnTunnel, d)
-	if err != nil {
-		return diag.Errorf("[L2 VPN Tunnel DS read] error reading retrieved tunnel into schema: %s", err)
-	}
-
-	return nil
+	return genericNsxtEdgegatewayL2VpnTunnelRead(ctx, d, meta, "datasource")
 }

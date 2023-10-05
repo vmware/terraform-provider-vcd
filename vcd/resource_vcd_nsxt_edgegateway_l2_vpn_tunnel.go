@@ -160,7 +160,11 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelCreate(ctx context.Context, d *schema.
 	return resourceVcdNsxtEdgegatewayL2VpnTunnelRead(ctx, d, meta)
 }
 
-func resourceVcdNsxtEdgegatewayL2VpnTunnelRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtEdgegatewayL2VpnTunnelRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericNsxtEdgegatewayL2VpnTunnelRead(ctx, d, meta, "resource")
+}
+
+func genericNsxtEdgegatewayL2VpnTunnelRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
@@ -170,7 +174,19 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelRead(_ context.Context, d *schema.Reso
 		return diag.Errorf("[L2 VPN Tunnel read] error retrieving edge gateway: %s", err)
 	}
 
-	tunnelConfig, err := nsxtEdge.GetL2VpnTunnelById(d.Id())
+	tunnelName := d.Get("name").(string)
+	tunnelId := d.Id()
+	if origin == "datasource" {
+		tunnel, err := nsxtEdge.GetL2VpnTunnelByName(tunnelName)
+		if err != nil {
+			return diag.Errorf("[L2 VPN Tunnel DS read] error retrieving L2 VPN Tunnel: %s", err)
+		}
+		// We need to first read by name then by ID for data sources, as GET by name doesn't return all the information
+		// (peer_code, pre_shared_key)
+		tunnelId = tunnel.NsxtL2VpnTunnel.ID
+	}
+
+	tunnelConfig, err := nsxtEdge.GetL2VpnTunnelById(tunnelId)
 	if govcd.ContainsNotFound(err) {
 		d.SetId("")
 		log.Printf("[DEBUG] L2 VPN Tunnel no longer exists. Removing from tfstate")
@@ -180,7 +196,6 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelRead(_ context.Context, d *schema.Reso
 	if err != nil {
 		return diag.Errorf("[L2 VPN Tunnel read] error reading retrieved tunnel into schema: %s", err)
 	}
-
 	return nil
 }
 
@@ -387,7 +402,7 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelImport(ctx context.Context, d *schema.
 	dSet(d, "org", orgName)
 	dSet(d, "edge_gateway_id", edge.EdgeGateway.ID)
 
-	// Storing Edge Gateway ID and Read will retrieve all other data
+	// Storing VPN Tunnel ID and Read will retrieve all other data
 	d.SetId(tunnel.NsxtL2VpnTunnel.ID)
 
 	return []*schema.ResourceData{d}, nil
