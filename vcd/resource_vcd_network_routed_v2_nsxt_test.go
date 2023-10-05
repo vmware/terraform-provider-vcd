@@ -923,7 +923,7 @@ func TestAccVcdRoutedNetworkV2Metadata(t *testing.T) {
 		testAccCheckVcdRoutedNetworkV2MetadataDatasource, "data.vcd_network_routed_v2.test-network-routed-v2-ds",
 		StringMap{
 			"EdgeGateway": testConfig.Nsxt.EdgeGateway,
-		})
+		}, true)
 }
 
 const testAccCheckVcdRoutedNetworkV2Metadata = `

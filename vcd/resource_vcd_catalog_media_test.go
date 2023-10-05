@@ -247,7 +247,7 @@ func TestAccVcdCatalogMediaMetadata(t *testing.T) {
 		StringMap{
 			"Catalog":   testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"MediaPath": testConfig.Media.MediaPath,
-		})
+		}, true)
 }
 
 const testAccCheckVcdCatalogMediaMetadata = `

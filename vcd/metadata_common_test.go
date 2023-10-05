@@ -36,7 +36,7 @@ import (
 // - Step 10:  Check a malformed metadata entry
 // - Step 11: (Org user only) Check that specifying an is_system metadata entry with a tenant user gives an error
 // - Step 12+: Some extra tests for deprecated `metadata` attribute
-func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, extraParams StringMap) {
+func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, extraParams StringMap, testOldMetadata bool) {
 	preTestChecks(t)
 	var params = StringMap{
 		"Org":  testConfig.VCD.Org,
@@ -240,6 +240,9 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 			},
 			{
 				Config: deprecatedCreateHcl,
+				SkipFunc: func() (bool, error) {
+					return !testOldMetadata, nil
+				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceAddress, "metadata.foo", "bar"),
@@ -247,6 +250,9 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 			},
 			{
 				Config: deprecatedUpdateHcl,
+				SkipFunc: func() (bool, error) {
+					return !testOldMetadata, nil
+				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceAddress, "metadata.foo", "bar2"),
@@ -254,6 +260,9 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 			},
 			{
 				Config: deprecatedDeleteHcl,
+				SkipFunc: func() (bool, error) {
+					return !testOldMetadata, nil
+				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceAddress, "metadata.%", "0"),
