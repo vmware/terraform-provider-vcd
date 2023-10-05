@@ -175,8 +175,55 @@ func metadataEntryDatasourceSchema(resourceType string) *schema.Schema {
 }
 
 // metadataEntryResourceSchema returns the schema associated to metadata_entry for a given resource.
+// The schema is for those resources which do NOT have old "metadata" attribute.
 // The description will refer to the resource type given as input.
 func metadataEntryResourceSchema(resourceType string) *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeSet,
+		Optional:    true,
+		Description: fmt.Sprintf("Metadata entries for the given %s", resourceType),
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"key": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "Key of this metadata entry. Required if the metadata entry is not empty",
+				},
+				"value": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "Value of this metadata entry. Required if the metadata entry is not empty",
+				},
+				"type": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Default:      types.MetadataStringValue,
+					Description:  fmt.Sprintf("Type of this metadata entry. One of: '%s', '%s', '%s', '%s'", types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue),
+					ValidateFunc: validation.StringInSlice([]string{types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue}, false),
+				},
+				"user_access": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Default:      types.MetadataReadWriteVisibility,
+					Description:  fmt.Sprintf("User access level for this metadata entry. One of: '%s', '%s', '%s'", types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility),
+					ValidateFunc: validation.StringInSlice([]string{types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility}, false),
+				},
+				"is_system": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Default:     false,
+					Description: "Domain for this metadata entry. true if it belongs to SYSTEM, false if it belongs to GENERAL",
+				},
+			},
+		},
+	}
+}
+
+// metadataEntryResourceSchemaWithDeprecatedSupport returns the schema associated to metadata_entry for a given resource.
+// The schema is for those resources which have old "metadata" attribute, as it contains several constraints and optional-compute
+// combinations for that matter.
+// The description will refer to the resource type given as input.
+func metadataEntryResourceSchemaWithDeprecatedSupport(resourceType string) *schema.Schema {
 	return &schema.Schema{
 		Type:          schema.TypeSet,
 		Optional:      true,
@@ -321,9 +368,9 @@ func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient,
 	return nil
 }
 
-// updateMetadataInState updates metadata and metadata_entry in the Terraform state for the given receiver object.
+// updateMetadataInStateWithDeprecatedMetadataSupport updates metadata and metadata_entry in the Terraform state for the given receiver object.
 // This can be done as both are Computed, for compatibility reasons.
-func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject metadataCompatible) diag.Diagnostics {
+func updateMetadataInStateWithDeprecatedMetadataSupport(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject metadataCompatible) diag.Diagnostics {
 
 	// We temporarily remove the ignored metadata filter to retrieve the deprecated metadata contents,
 	// which should not be affected by it.
@@ -351,6 +398,16 @@ func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourc
 	}
 
 	// We get metadata again with the original metadata ignore filtering
+	diagErr := updateMetadataInState(d, vcdClient, resourceType, receiverObject)
+	if diagErr != nil {
+		return diagErr
+	}
+
+	return nil
+}
+
+// updateMetadataInState updates ONLY metadata_entry in the Terraform state for the given receiver object.
+func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject metadataCompatible) diag.Diagnostics {
 	diagErr := checkIgnoredMetadataConflicts(d, vcdClient, resourceType)
 	if diagErr != nil {
 		return diagErr
@@ -365,7 +422,6 @@ func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourc
 	if err != nil {
 		return diag.Errorf("error setting metadata entry in state: %s", err)
 	}
-
 	return nil
 }
 
