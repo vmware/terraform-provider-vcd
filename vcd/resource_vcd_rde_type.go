@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"io"
 	"log"
 	"net/http"
@@ -17,13 +18,18 @@ import (
 )
 
 func getRdeTypeHookSchema(computed bool) *schema.Resource {
+	validateFunc := validation.StringInSlice([]string{"PostCreate", "PostUpdate", "PreDelete", "PostDelete"}, false)
+	if computed {
+		validateFunc = nil
+	}
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"event": {
-				Type:        schema.TypeString,
-				Required:    !computed,
-				Computed:    computed,
-				Description: "Event that will invoke the Behavior, one of PostCreate, PostUpdate, PreDelete, PostDelete",
+				Type:         schema.TypeString,
+				Required:     !computed,
+				Computed:     computed,
+				Description:  "Event that will invoke the Behavior, one of PostCreate, PostUpdate, PreDelete, PostDelete",
+				ValidateFunc: validateFunc,
 			},
 			"behavior_id": {
 				Type:        schema.TypeString,
