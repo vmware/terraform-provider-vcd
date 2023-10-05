@@ -119,13 +119,13 @@ spec:
         extraArgs:
           enable-hostpath-provisioner: "true"
       dns:
-        imageRepository: ${CONTAINER_REGISTRY_URL}/tkg # TODO: Template ???
-        imageTag: v1.8.6_vmware.17
+        imageRepository: ${CONTAINER_REGISTRY_URL}/tkg
+        imageTag: v1.9.3_vmware.8
       etcd:
         local:
-          imageRepository: ${CONTAINER_REGISTRY_URL}/tkg  # TODO: Template ???
-          imageTag: v3.5.6_vmware.6
-      imageRepository: ${CONTAINER_REGISTRY_URL}/tkg # TODO: Template ???
+          imageRepository: ${CONTAINER_REGISTRY_URL}/tkg
+          imageTag: v3.5.6_vmware.9
+      imageRepository: ${CONTAINER_REGISTRY_URL}/tkg
     users:
       - name: root
         sshAuthorizedKeys:
@@ -149,7 +149,7 @@ spec:
       name: ${CLUSTER_NAME}-control-plane
       namespace: ${TARGET_NAMESPACE}
   replicas: ${CONTROL_PLANE_MACHINE_COUNT}
-  version: v1.24.10+vmware.1 # TODO: Template ???
+  version: v1.25.7+vmware.2
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: VCDMachineTemplate
@@ -214,4 +214,4 @@ spec:
         kind: VCDMachineTemplate
         name: ${CLUSTER_NAME}-md-0
         namespace: ${TARGET_NAMESPACE}
-      version: v1.24.10+vmware.1 # TODO: Template ???
+      version: v1.25.7+vmware.2

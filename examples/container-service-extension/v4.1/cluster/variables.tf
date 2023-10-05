@@ -25,6 +25,7 @@ variable "cluster_author_password" {
 
 variable "administrator_user" {
   description = "Username of the System administrator"
+  default     = "administrator"
 }
 
 variable "administrator_password" {
