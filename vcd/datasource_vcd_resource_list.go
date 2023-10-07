@@ -590,7 +590,18 @@ func orgNetworkListV2(d *schema.ResourceData, meta interface{}) (list []string, 
 func getEdgeGatewayList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
 
-	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
+	vdcName := d.Get("parent").(string)
+	if vdcName == "" {
+		vdcName = d.Get("vdc").(string)
+	}
+	if vdcName == "" {
+		vdcName = client.Vdc
+	}
+
+	if vdcName == "" {
+		return nil, fmt.Errorf("VDC name not given either as 'vdc' or 'parent' field")
+	}
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), vdcName)
 	if err != nil {
 		return list, err
 	}
@@ -616,16 +627,59 @@ func getEdgeGatewayList(d *schema.ResourceData, meta interface{}, resType string
 	return genericResourceList(d, resType, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
-func nsxtEdgeGatewayList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+func getNsxtEdgeGatewayList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
-	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
+	// A NSX-T edge gateway could belong to either a VDC or a VDC group
+	// The "parent" field could refer to either of them
+	parentName := d.Get("parent").(string)
+	vdcName := d.Get("vdc").(string)
+	var nsxtEdgeGatewayList []*govcd.NsxtEdgeGateway
+	var vdcGroup *govcd.VdcGroup
+	var vdc *govcd.Vdc
+	var items []resourceRef
+
+	adminOrg, err := client.GetAdminOrgFromResource(d)
 	if err != nil {
 		return list, err
 	}
 
-	var items []resourceRef
-	nsxtEdgeGatewayList, err := vdc.GetAllNsxtEdgeGateways(nil)
+	var ancestors = []string{adminOrg.AdminOrg.Name}
+	if parentName != "" {
+		// we first try to get a group VDC using the parent name
+		vdcGroup, err = adminOrg.GetVdcGroupByName(parentName)
+		if err != nil {
+			if govcd.ContainsNotFound(err) {
+				// if we haven't found a group VDC, we try a VDC using the parent name
+				vdc, err = adminOrg.GetVDCByName(parentName, false)
+				if err != nil {
+					return nil, fmt.Errorf("neither a VDC or a VDC group found with name '%s'", parentName)
+				}
+			} else {
+				return nil, fmt.Errorf(" error retrieving VDC group '%s': %s", parentName, err)
+			}
+		}
+	}
+	if vdcGroup != nil {
+		ancestors = append(ancestors, parentName)
+		nsxtEdgeGatewayList, err = vdcGroup.GetAllNsxtEdgeGateways(nil)
+	} else {
+		if vdc == nil {
+			if vdcName == "" {
+				vdcName = client.Vdc
+			}
+			if vdcName == "" {
+				return nil, fmt.Errorf("no VDC name provided")
+			}
+			vdc, err = adminOrg.GetVDCByName(vdcName, false)
+			if err != nil {
+				return list, fmt.Errorf("error retrieving VDC")
+			}
+		}
+		parentName = vdcName
+		ancestors = append(ancestors, vdcName)
+		nsxtEdgeGatewayList, err = vdc.GetAllNsxtEdgeGateways(nil)
+	}
 	if err != nil {
 		return list, err
 	}
@@ -635,10 +689,10 @@ func nsxtEdgeGatewayList(d *schema.ResourceData, meta interface{}) (list []strin
 			name:   nsxtEdgeGateway.EdgeGateway.Name,
 			id:     nsxtEdgeGateway.EdgeGateway.ID,
 			href:   "",
-			parent: vdc.Vdc.Name,
+			parent: parentName,
 		})
 	}
-	return genericResourceList(d, "vcd_nsxt_edgegateway", []string{org.Org.Name, vdc.Vdc.Name}, items)
+	return genericResourceList(d, "vcd_nsxt_edgegateway", ancestors, items)
 }
 
 func vappList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
@@ -1059,7 +1113,7 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 	case "vcd_edgegateway_settings":
 		list, err = getEdgeGatewayList(d, meta, "vcd_edgegateway_settings")
 	case "vcd_nsxt_edgegateway", "nsxt_edge_gateway", "nsxt_edge", "nsxt_edgegateway":
-		list, err = nsxtEdgeGatewayList(d, meta)
+		list, err = getNsxtEdgeGatewayList(d, meta)
 	case "vcd_lb_server_pool", "lb_server_pool":
 		list, err = lbServerPoolList(d, meta)
 	case "vcd_lb_service_monitor", "lb_service_monitor":
