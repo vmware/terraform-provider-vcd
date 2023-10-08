@@ -99,7 +99,7 @@ The following arguments are supported:
 * `description` - (Optional) The description of the tunnel.
 * `session_mode` - (Required) Mode of the tunnel session (SERVER or CLIENT)
 * `enabled` - (Optional) State of the `SERVER` session, always set to `true` for `CLIENT` 
-  sessions.
+  sessions. Default is `true`.
 * `connector_initiator_mode` - (Required for `SERVER` sessions) Mode in which 
   the connection is formed. Only relevant to `SERVER` sessions. One of:
 	* `INITIATOR` - Local endpoint initiates tunnel setup and will also respond to 
@@ -130,7 +130,7 @@ corresponds to the device on the remote site terminating the VPN tunnel.
 ## Stretched network
 
 * `network_id` - (Required) Network ID of a routed network on the Edge Gateway. 
-  Can be looked up using [`vcd_routed_network_v2`](/providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway_l2_vpn_tunnel) 
+  Can be looked up using [`vcd_routed_network_v2`](/providers/vmware/vcd/latest/docs/data-sources/network_routed_v2) 
   datasource.
 * `tunnel_id` - (Optional) Tunnel ID of the network on the tunnel, required for 
   `CLIENT` sessions, computed for `SERVER` sessions.

@@ -58,7 +58,7 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnel() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "Status of the L2 VPN Tunnel session. Always set to `true` for CLIENT sessions",
+				Description: "Status of the L2 VPN Tunnel session. Always set to `true` for CLIENT sessions. Defaults to true.",
 			},
 			"local_endpoint_ip": {
 				Type:         schema.TypeString,
@@ -264,6 +264,7 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelDestroy(ctx context.Context, d *schema
 }
 
 func readL2VpnTunnelFromSchema(d *schema.ResourceData) (*types.NsxtL2VpnTunnel, error) {
+	id := d.Id()
 	name := d.Get("name").(string)
 	description := d.Get("description").(string)
 	sessionMode := d.Get("session_mode").(string)
@@ -294,6 +295,7 @@ func readL2VpnTunnelFromSchema(d *schema.ResourceData) (*types.NsxtL2VpnTunnel, 
 	}
 
 	tunnel := &types.NsxtL2VpnTunnel{
+		ID:                id,
 		Name:              name,
 		Description:       description,
 		SessionMode:       sessionMode,
