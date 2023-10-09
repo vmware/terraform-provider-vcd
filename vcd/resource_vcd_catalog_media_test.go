@@ -171,7 +171,6 @@ func testAccCheckCatalogMediaDestroy(mediaName string) resource.TestCheckFunc {
 			}
 
 			_, err = catalog.GetMediaByName(mediaName, false)
-
 			if err == nil {
 				return fmt.Errorf("catalog media %s still exists", mediaName)
 			}
