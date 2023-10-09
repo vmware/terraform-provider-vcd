@@ -118,6 +118,11 @@ The following arguments are supported:
 * `metadata` - (Deprecated) Use `metadata_entry` instead. Key/value map of metadata for the associated vApp template.
 * `metadata_entry` - A set of metadata entries assigned to this vApp Template. See [Metadata](/providers/vmware/vcd/latest/docs/resources/catalog_vapp_template#metadata) section for details.
 
+* `lease` - (*v3.11+*) - The information about the vApp Template lease. It includes the following field:
+  * `storage_lease_in_sec` - How long the vApp Template is available before being automatically deleted or marked as expired. 0 means never expires (or maximum allowed by parent Org allows).
+
+
+
 ## Filter arguments
 
 * `name_regex` - (Optional) matches the name using a regular expression.
