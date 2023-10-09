@@ -43,6 +43,7 @@ func datasourceVcdResourceList() *schema.Resource {
 			// * vapp_vm (parent: vApp)
 			// * catalogItem (catalog)
 			// * mediaItem (catalog)
+			// * NSX-T edge gateway (when belonging to a VDC group)
 			// * all edge gateway objects (NAT, firewall, lb)
 			// When the parent is org or vdc, they are taken from the regular fields above
 			"parent": {
@@ -488,8 +489,12 @@ func orgUserList(d *schema.ResourceData, meta interface{}) (list []string, err e
 func networkList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
+	vdcName, err := getVdcName(client, d)
+	if err != nil {
+		return list, err
+	}
 	wantedType := d.Get("resource_type").(string)
-	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), vdcName)
 	if err != nil {
 		return list, err
 	}
@@ -528,7 +533,7 @@ func networkList(d *schema.ResourceData, meta interface{}) (list []string, err e
 			name:         network.OrgVDCNetwork.Name,
 			id:           network.OrgVDCNetwork.ID,
 			href:         network.OrgVDCNetwork.HREF,
-			parent:       vdc.Vdc.Name,
+			parent:       vdcName,
 			resourceType: trueResourceType,
 			importId:     false,
 		})
@@ -540,9 +545,12 @@ func networkList(d *schema.ResourceData, meta interface{}) (list []string, err e
 // orgNetworkListV2 uses OpenAPI endpoint to query Org VDC networks and return their list
 func orgNetworkListV2(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
-
+	vdcName, err := getVdcName(client, d)
+	if err != nil {
+		return list, err
+	}
 	wantedType := d.Get("resource_type").(string)
-	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), vdcName)
 	if err != nil {
 		return list, err
 	}
@@ -578,7 +586,7 @@ func orgNetworkListV2(d *schema.ResourceData, meta interface{}) (list []string, 
 			name:         net.OpenApiOrgVdcNetwork.Name,
 			id:           net.OpenApiOrgVdcNetwork.ID,
 			href:         href.Path,
-			parent:       vdc.Vdc.Name,
+			parent:       vdcName,
 			importId:     false,
 			resourceType: trueResourceType,
 		})
@@ -587,9 +595,7 @@ func orgNetworkListV2(d *schema.ResourceData, meta interface{}) (list []string, 
 	return genericResourceList(d, resourceType, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
-func getEdgeGatewayList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
-	client := meta.(*VCDClient)
-
+func getVdcName(client *VCDClient, d *schema.ResourceData) (string, error) {
 	vdcName := d.Get("parent").(string)
 	if vdcName == "" {
 		vdcName = d.Get("vdc").(string)
@@ -597,8 +603,17 @@ func getEdgeGatewayList(d *schema.ResourceData, meta interface{}, resType string
 	if vdcName == "" {
 		vdcName = client.Vdc
 	}
-
 	if vdcName == "" {
+		return "", fmt.Errorf("VDC name not given either as 'vdc' or 'parent' field")
+	}
+	return vdcName, nil
+}
+
+func getEdgeGatewayList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	vdcName, err := getVdcName(client, d)
+	if err != nil {
 		return nil, fmt.Errorf("VDC name not given either as 'vdc' or 'parent' field")
 	}
 	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), vdcName)
@@ -697,8 +712,11 @@ func getNsxtEdgeGatewayList(d *schema.ResourceData, meta interface{}) (list []st
 
 func vappList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
-
-	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
+	vdcName, err := getVdcName(client, d)
+	if err != nil {
+		return list, err
+	}
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), vdcName)
 	if err != nil {
 		return list, err
 	}
