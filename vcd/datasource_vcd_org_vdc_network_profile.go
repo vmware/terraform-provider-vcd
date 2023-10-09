@@ -6,7 +6,7 @@ import (
 
 func datasourceVcdNsxtOrgVdcNetworkProfile() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: resourceDataSourceVcdNsxtOrgVdcNetworkProfileRead,
+		ReadContext: dataSourceVcdNsxtOrgVdcNetworkProfileRead,
 
 		Schema: map[string]*schema.Schema{
 			"org": {

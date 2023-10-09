@@ -7,13 +7,14 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 func resourceVcdNsxtOrgVdcNetworkSegmentProfileTemplate() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdNsxtOrgVdcNetworkSegmentProfileCreateUpdate,
-		ReadContext:   resourceDataSourceVcdNsxtOrgVdcNetworkSegmentProfileRead,
+		ReadContext:   resourceVcdNsxtOrgVdcNetworkSegmentProfileRead,
 		UpdateContext: resourceVcdNsxtOrgVdcNetworkSegmentProfileCreateUpdate,
 		DeleteContext: resourceVcdNsxtOrgVdcNetworkSegmentProfileDelete,
 		Importer: &schema.ResourceImporter{
@@ -141,10 +142,18 @@ func resourceVcdNsxtOrgVdcNetworkSegmentProfileCreateUpdate(ctx context.Context,
 
 	d.SetId(orgVdcNet.OpenApiOrgVdcNetwork.ID)
 
-	return resourceDataSourceVcdNsxtOrgVdcNetworkSegmentProfileRead(ctx, d, meta)
+	return resourceVcdNsxtOrgVdcNetworkSegmentProfileRead(ctx, d, meta)
 }
 
-func resourceDataSourceVcdNsxtOrgVdcNetworkSegmentProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtOrgVdcNetworkSegmentProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceDataSourceVcdNsxtOrgVdcNetworkSegmentProfileRead(ctx, d, meta, "resource")
+}
+
+func dataSourceVcdNsxtOrgVdcNetworkSegmentProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceDataSourceVcdNsxtOrgVdcNetworkSegmentProfileRead(ctx, d, meta, "datasource")
+}
+
+func resourceDataSourceVcdNsxtOrgVdcNetworkSegmentProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
@@ -154,6 +163,10 @@ func resourceDataSourceVcdNsxtOrgVdcNetworkSegmentProfileRead(ctx context.Contex
 	orgNetworkId := d.Get("org_network_id").(string)
 	orgVdcNet, err := org.GetOpenApiOrgVdcNetworkById(orgNetworkId)
 	if err != nil {
+		if origin == "resource" && govcd.ContainsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("[Org VDC Network Segment Profile configuration read] error retrieving Org VDC network with ID '%s': %s", orgNetworkId, err)
 	}
 

@@ -5,13 +5,14 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 func resourceVcdNsxtOrgVdcNetworkProfile() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdNsxtOrgVdcNetworkProfileCreateUpdate,
-		ReadContext:   resourceDataSourceVcdNsxtOrgVdcNetworkProfileRead,
+		ReadContext:   resourceVcdNsxtOrgVdcNetworkProfileRead,
 		UpdateContext: resourceVcdNsxtOrgVdcNetworkProfileCreateUpdate,
 		DeleteContext: resourceVcdNsxtOrgVdcNetworkProfileDelete,
 		Importer: &schema.ResourceImporter{
@@ -83,14 +84,26 @@ func resourceVcdNsxtOrgVdcNetworkProfileCreateUpdate(ctx context.Context, d *sch
 	}
 
 	d.SetId(vdc.Vdc.ID)
-	return resourceDataSourceVcdNsxtOrgVdcNetworkProfileRead(ctx, d, meta)
+	return resourceVcdNsxtOrgVdcNetworkProfileRead(ctx, d, meta)
 }
 
-func resourceDataSourceVcdNsxtOrgVdcNetworkProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtOrgVdcNetworkProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceDataSourceVcdNsxtOrgVdcNetworkProfileRead(ctx, d, meta, "resource")
+}
+
+func dataSourceVcdNsxtOrgVdcNetworkProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceDataSourceVcdNsxtOrgVdcNetworkProfileRead(ctx, d, meta, "datasource")
+}
+
+func resourceDataSourceVcdNsxtOrgVdcNetworkProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
+		if origin == "resource" && govcd.ContainsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.Errorf("error when retrieving VDC: %s", err)
 	}
 
