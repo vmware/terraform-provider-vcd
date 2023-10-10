@@ -10,14 +10,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func datasourceVcdNsxtQosProfile() *schema.Resource {
+func datasourceVcdNsxtSegmentQosProfile() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceNsxtQosProfileRead,
+		ReadContext: datasourceNsxtSegmentQosProfileRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Description of Segment QoS Profile",
+				Description: "Name of Segment QoS Profile",
 			},
 			"nsxt_manager_id": {
 				Type:         schema.TypeString,
@@ -106,7 +106,7 @@ func datasourceVcdNsxtQosProfile() *schema.Resource {
 	}
 }
 
-func datasourceNsxtQosProfileRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceNsxtSegmentQosProfileRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	profileName := d.Get("name").(string)
 

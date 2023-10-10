@@ -17,7 +17,7 @@ func datasourceVcdNsxtSegmentSecurityProfile() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Description of Segment Security Profile",
+				Description: "Name of Segment Security Profile",
 			},
 			"nsxt_manager_id": {
 				Type:         schema.TypeString,

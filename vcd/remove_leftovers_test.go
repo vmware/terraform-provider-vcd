@@ -449,7 +449,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			return fmt.Errorf("error retrieving all Segment Profile Templates: %s", err)
 		}
 		for _, spt := range allSpts {
-			// This will delete all UI Plugins that match the `isTest` regex.
+			// This will delete all Segment Profile Templates that match the `isTest` regex.
 			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, spt.NsxtSegmentProfileTemplate.Name, "vcd_nsxt_segment_profile_template", 0, verbose)
 			if toBeDeleted {
 				err = spt.Delete()

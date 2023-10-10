@@ -91,10 +91,6 @@ func resourceVcdNsxtOrgVdcNetworkProfileRead(ctx context.Context, d *schema.Reso
 	return resourceDataSourceVcdNsxtOrgVdcNetworkProfileRead(ctx, d, meta, "resource")
 }
 
-func dataSourceVcdNsxtOrgVdcNetworkProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceDataSourceVcdNsxtOrgVdcNetworkProfileRead(ctx, d, meta, "datasource")
-}
-
 func resourceDataSourceVcdNsxtOrgVdcNetworkProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 

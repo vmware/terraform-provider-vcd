@@ -10,14 +10,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func datasourceVcdNsxtMacDiscoveryProfile() *schema.Resource {
+func datasourceVcdNsxtSegmentMacDiscoveryProfile() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceNsxtMacDiscoveryProfileRead,
+		ReadContext: datasourceNsxtSegmentMacDiscoveryProfileRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Description of Segment MAC Discovery Profile",
+				Description: "Name of Segment MAC Discovery Profile",
 			},
 			"nsxt_manager_id": {
 				Type:         schema.TypeString,
@@ -76,7 +76,7 @@ func datasourceVcdNsxtMacDiscoveryProfile() *schema.Resource {
 	}
 }
 
-func datasourceNsxtMacDiscoveryProfileRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceNsxtSegmentMacDiscoveryProfileRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	profileName := d.Get("name").(string)
 

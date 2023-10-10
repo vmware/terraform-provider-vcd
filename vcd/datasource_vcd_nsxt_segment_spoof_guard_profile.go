@@ -10,14 +10,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func datasourceVcdNsxtSpoofGuardProfile() *schema.Resource {
+func datasourceVcdNsxtSegmentSpoofGuardProfile() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceNsxtSpoofGuardProfileRead,
+		ReadContext: datasourceNsxtSegmentSpoofGuardProfileRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Description of Segment Spoof Guard Profile",
+				Description: "Name of Segment Spoof Guard Profile",
 			},
 			"nsxt_manager_id": {
 				Type:         schema.TypeString,
@@ -51,7 +51,7 @@ func datasourceVcdNsxtSpoofGuardProfile() *schema.Resource {
 	}
 }
 
-func datasourceNsxtSpoofGuardProfileRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceNsxtSegmentSpoofGuardProfileRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	profileName := d.Get("name").(string)
 

@@ -116,7 +116,7 @@ func resourceVcdNsxtOrgVdcNetworkSegmentProfileCreateUpdate(ctx context.Context,
 	switch {
 	// Setting `segment_profile_template_id` requires modifying Org VDC Network structure.
 	// It can only be set (PUT/POST) using Org VDC network structure, but cannot be read (GET).
-	// To read the value of it one must use orgVdcNet.GetSegmentProfile() function.
+	// To read its value one must use orgVdcNet.GetSegmentProfile() function.
 	case segmentProfileTemplateId != "":
 		orgVdcNet.OpenApiOrgVdcNetwork.SegmentProfileTemplate = &types.OpenApiReference{ID: segmentProfileTemplateId}
 		_, err = orgVdcNet.Update(orgVdcNet.OpenApiOrgVdcNetwork)
@@ -147,10 +147,6 @@ func resourceVcdNsxtOrgVdcNetworkSegmentProfileCreateUpdate(ctx context.Context,
 
 func resourceVcdNsxtOrgVdcNetworkSegmentProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return resourceDataSourceVcdNsxtOrgVdcNetworkSegmentProfileRead(ctx, d, meta, "resource")
-}
-
-func dataSourceVcdNsxtOrgVdcNetworkSegmentProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceDataSourceVcdNsxtOrgVdcNetworkSegmentProfileRead(ctx, d, meta, "datasource")
 }
 
 func resourceDataSourceVcdNsxtOrgVdcNetworkSegmentProfileRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
