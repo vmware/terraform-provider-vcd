@@ -393,12 +393,12 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelImport(ctx context.Context, d *schema.
 
 	edge, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeName)
 	if err != nil {
-		return nil, fmt.Errorf("could not retrieve NSX-T Edge Gateway with ID '%s': %s", d.Id(), err)
+		return nil, fmt.Errorf("could not retrieve NSX-T Edge Gateway with ID '%s': %s", edgeName, err)
 	}
 
 	tunnel, err := edge.GetL2VpnTunnelByName(tunnelName)
 	if err != nil {
-		return nil, fmt.Errorf("could not retrieve L2 VPN Tunnel name with ID '%s': %s", d.Id(), err)
+		return nil, fmt.Errorf("could not retrieve L2 VPN Tunnel name with ID '%s': %s", tunnelName, err)
 	}
 
 	dSet(d, "org", orgName)

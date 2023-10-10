@@ -75,8 +75,8 @@ func TestAccVcdNsxtEdgeL2VpnTunnel(t *testing.T) {
 			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(serverTunnelName, "name", t.Name()+"-server"),
-					resource.TestCheckResourceAttr(serverTunnelName, "description", t.Name()+"-server"),
+					resource.TestCheckResourceAttr(serverTunnelName, "name", params["ServerTunnelName"].(string)),
+					resource.TestCheckResourceAttr(serverTunnelName, "description", params["ServerTunnelName"].(string)),
 					resource.TestCheckResourceAttr(serverTunnelName, "enabled", "true"),
 					resource.TestCheckResourceAttr(serverTunnelName, "session_mode", "SERVER"),
 					resource.TestCheckResourceAttr(serverTunnelName, "connector_initiation_mode", "INITIATOR"),
@@ -85,8 +85,8 @@ func TestAccVcdNsxtEdgeL2VpnTunnel(t *testing.T) {
 					resource.TestCheckResourceAttr(serverTunnelName, "pre_shared_key", params["PreSharedKey"].(string)),
 					resource.TestCheckResourceAttr(serverTunnelName, "stretched_network.#", "0"),
 
-					resource.TestCheckResourceAttr(clientTunnelName, "name", t.Name()+"-client"),
-					resource.TestCheckResourceAttr(clientTunnelName, "description", t.Name()+"-client"),
+					resource.TestCheckResourceAttr(clientTunnelName, "name", params["ClientTunnelName"].(string)),
+					resource.TestCheckResourceAttr(clientTunnelName, "description", params["ClientTunnelName"].(string)),
 					resource.TestCheckResourceAttr(clientTunnelName, "enabled", "true"),
 					resource.TestCheckResourceAttr(clientTunnelName, "session_mode", "CLIENT"),
 					resource.TestCheckResourceAttr(clientTunnelName, "remote_endpoint_ip", params["RemoteEndpointIp"].(string)),
@@ -96,8 +96,8 @@ func TestAccVcdNsxtEdgeL2VpnTunnel(t *testing.T) {
 			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(serverTunnelName, "name", t.Name()+"-server"),
-					resource.TestCheckResourceAttr(serverTunnelName, "description", t.Name()+"-server"),
+					resource.TestCheckResourceAttr(serverTunnelName, "name", params["ServerTunnelName"].(string)),
+					resource.TestCheckResourceAttr(serverTunnelName, "description", params["ServerTunnelName"].(string)),
 					resource.TestCheckResourceAttr(serverTunnelName, "enabled", "true"),
 					resource.TestCheckResourceAttr(serverTunnelName, "session_mode", "SERVER"),
 					resource.TestCheckResourceAttr(serverTunnelName, "connector_initiation_mode", "INITIATOR"),
@@ -106,8 +106,8 @@ func TestAccVcdNsxtEdgeL2VpnTunnel(t *testing.T) {
 					resource.TestCheckResourceAttr(serverTunnelName, "pre_shared_key", params["PreSharedKey"].(string)),
 					resource.TestCheckResourceAttr(serverTunnelName, "stretched_network.#", "0"),
 
-					resource.TestCheckResourceAttr(clientTunnelName, "name", t.Name()+"-client"),
-					resource.TestCheckResourceAttr(clientTunnelName, "description", t.Name()+"-client"),
+					resource.TestCheckResourceAttr(clientTunnelName, "name", params["ClientTunnelName"].(string)),
+					resource.TestCheckResourceAttr(clientTunnelName, "description", params["ClientTunnelName"].(string)),
 					resource.TestCheckResourceAttr(clientTunnelName, "enabled", "true"),
 					resource.TestCheckResourceAttr(clientTunnelName, "session_mode", "CLIENT"),
 					resource.TestCheckResourceAttr(clientTunnelName, "remote_endpoint_ip", params["RemoteEndpointIpUpdated"].(string)),
@@ -118,8 +118,8 @@ func TestAccVcdNsxtEdgeL2VpnTunnel(t *testing.T) {
 			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(serverTunnelName, "name", t.Name()+"-server"),
-					resource.TestCheckResourceAttr(serverTunnelName, "description", t.Name()+"-server"),
+					resource.TestCheckResourceAttr(serverTunnelName, "name", params["ServerTunnelName"].(string)),
+					resource.TestCheckResourceAttr(serverTunnelName, "description", params["ServerTunnelName"].(string)),
 					resource.TestCheckResourceAttr(serverTunnelName, "enabled", "true"),
 					resource.TestCheckResourceAttr(serverTunnelName, "session_mode", "SERVER"),
 					resource.TestCheckResourceAttr(serverTunnelName, "connector_initiation_mode", "INITIATOR"),
@@ -128,8 +128,8 @@ func TestAccVcdNsxtEdgeL2VpnTunnel(t *testing.T) {
 					resource.TestCheckResourceAttr(serverTunnelName, "pre_shared_key", params["PreSharedKey"].(string)),
 					resource.TestCheckResourceAttr(serverTunnelName, "stretched_network.#", "0"),
 
-					resource.TestCheckResourceAttr(clientTunnelName, "name", t.Name()+"-client"),
-					resource.TestCheckResourceAttr(clientTunnelName, "description", t.Name()+"-client"),
+					resource.TestCheckResourceAttr(clientTunnelName, "name", params["ClientTunnelName"].(string)),
+					resource.TestCheckResourceAttr(clientTunnelName, "description", params["ClientTunnelName"].(string)),
 					resource.TestCheckResourceAttr(clientTunnelName, "enabled", "true"),
 					resource.TestCheckResourceAttr(clientTunnelName, "session_mode", "CLIENT"),
 					resource.TestCheckResourceAttr(clientTunnelName, "remote_endpoint_ip", params["RemoteEndpointIp"].(string)),
@@ -139,8 +139,8 @@ func TestAccVcdNsxtEdgeL2VpnTunnel(t *testing.T) {
 			{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(serverTunnelName, "name", t.Name()+"-server"),
-					resource.TestCheckResourceAttr(serverTunnelName, "description", t.Name()+"-server"),
+					resource.TestCheckResourceAttr(serverTunnelName, "name", params["ServerTunnelName"].(string)),
+					resource.TestCheckResourceAttr(serverTunnelName, "description", params["ServerTunnelName"].(string)),
 					resource.TestCheckResourceAttr(serverTunnelName, "enabled", "false"),
 					resource.TestCheckResourceAttr(serverTunnelName, "session_mode", "SERVER"),
 					resource.TestCheckResourceAttr(serverTunnelName, "connector_initiation_mode", "ON_DEMAND"),
@@ -153,8 +153,8 @@ func TestAccVcdNsxtEdgeL2VpnTunnel(t *testing.T) {
 			{
 				Config: configText5,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(serverTunnelName, "name", t.Name()+"-server"),
-					resource.TestCheckResourceAttr(serverTunnelName, "description", t.Name()+"-server"),
+					resource.TestCheckResourceAttr(serverTunnelName, "name", params["ServerTunnelName"].(string)),
+					resource.TestCheckResourceAttr(serverTunnelName, "description", params["ServerTunnelName"].(string)),
 					resource.TestCheckResourceAttr(serverTunnelName, "enabled", "true"),
 					resource.TestCheckResourceAttr(serverTunnelName, "session_mode", "SERVER"),
 					resource.TestCheckResourceAttr(serverTunnelName, "connector_initiation_mode", "INITIATOR"),
@@ -168,7 +168,7 @@ func TestAccVcdNsxtEdgeL2VpnTunnel(t *testing.T) {
 				ResourceName:            serverTunnelName,
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(params["EdgeGw"].(string), t.Name()),
+				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(params["EdgeGw"].(string), params["ServerTunnelName"].(string)),
 				ImportStateVerifyIgnore: []string{"org"},
 			},
 		},

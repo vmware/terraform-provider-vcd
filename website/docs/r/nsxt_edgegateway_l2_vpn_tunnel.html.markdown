@@ -11,7 +11,6 @@ description: |-
 Supported in provider *v3.11+* and VCD *10.4+* with NSX-T
 
 Provides a resource to manage NSX-T Edge Gateway L2 VPN Tunnel sessions and their configurations.
-
 <a id="example-usage"></a>
 ## Example Usage (Both server and client tunnel sessions connecting two Edge Gateways)
 
@@ -122,7 +121,7 @@ corresponds to the device on the remote site terminating the VPN tunnel.
 * `peer_code` - (Optional) Encoded string that contains the whole configuration 
   of a `SERVER` session including the pre-shared key so it is user's 
   responsibility to secure it. Computed for `SERVER` sessions, required for 
-  `CLIENT` sessions. See [example](#example-usage-both-server-and-client-tunnel-sessions-connecting-two-edge-gateways) 
+  `CLIENT` sessions. See [example](#example-usage) 
   for a solution implemented fully in Terraform.
 * `stretched_network` - (Optional) One or more stretched networks for the tunnel. 
   See [`stretched_network`](#stretched-network) for more detail.
@@ -143,12 +142,33 @@ It does not generate configuration. [More information.](https://www.terraform.io
 An existing L2 VPN Tunnel configuration can be [imported][docs-import] into this resource
 via supplying path for it. An example is below:
 
-[docs-import]: https://www.terraform.io/docs/import/
+```hcl
+data "vcd_org" "my_org" {
+  name = "my-org"
+}
+
+data "vcd_org_vdc" "my-vdc-or-vdc-group" {
+  name = "my-vdc"
+  org  = "my-org"
+}
+
+data "vcd_nsxt_edgegateway" "my-edge-gateway" {
+  name     = "my-edge-gateway"
+  owner_id = data.vcd_org_vdc.my-vdc-or-vdc-group.id
+}
+
+resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "imported" {
+  org  = "my-org"
+  name = "my-tunnel"
+}
+```
 
 ```
-terraform import vcd_nsxt_edgegateway_l2_vpn_tunnel.imported `my-org.my-vdc-or-vdc-group.my-edge-gateway.l2_vpn_tunnel`
+terraform import vcd_nsxt_edgegateway_l2_vpn_tunnel.imported my-org.my-vdc-or-vdc-group.my-edge-gateway.l2_vpn_tunnel
 ```
 
 The above would import the `l2_vpn_tunnel` L2 VPN Tunnel that is defined in
 `my-edge-gateway` NSX-T Edge Gateway. Edge Gateway should be located in `my-vdc-or-vdc-group` VDC or
 VDC Group in Org `my-org`
+
+[docs-import]: https://www.terraform.io/docs/import/
