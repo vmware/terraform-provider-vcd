@@ -55,12 +55,13 @@ resource "vcd_catalog_access_control" "tkgm_catalog_ac" {
 # where to find the OVAs:
 # https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html
 resource "vcd_catalog_vapp_template" "tkgm_ova" {
+  for_each   = toset(var.tkgm_ova_files)
   org        = vcd_org.solutions_organization.name # References the Solutions Organization created previously
   catalog_id = vcd_catalog.tkgm_catalog.id         # References the TKGm Catalog created previously
 
-  name        = replace(var.tkgm_ova_file, ".ova", "")
-  description = replace(var.tkgm_ova_file, ".ova", "")
-  ova_path    = format("%s/%s", var.tkgm_ova_folder, var.tkgm_ova_file)
+  name        = replace(each.key, ".ova", "")
+  description = replace(each.key, ".ova", "")
+  ova_path    = format("%s/%s", var.tkgm_ova_folder, each.key)
 }
 
 resource "vcd_catalog_vapp_template" "cse_ova" {

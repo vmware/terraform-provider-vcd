@@ -82,10 +82,12 @@ alb_importable_cloud_name = "change-me"                            # Name of the
 
 # These variables are required to upload the necessary OVAs to the Solutions Organization shared catalog.
 # You can find the download links in the guide referenced at the top of this file.
-tkgm_ova_folder = "/home/changeme/tkgm-folder"                                                    # An existing absolute path to a folder containing TKGm OVAs
-tkgm_ova_file   = "ubuntu-2004-kube-v1.24.11+vmware.1-tkg.1-2ccb2a001f8bd8f15f1bfbc811071830.ova" # An existing TKGm OVA
-cse_ova_folder  = "/home/changeme/cse-folder"                                                     # An existing absolute path to a folder containing CSE Server OVAs
-cse_ova_file    = "VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova"                   # An existing CSE Server OVA
+tkgm_ova_folder = "/home/changeme/tkgm-folder" # An existing absolute path to a folder containing TKGm OVAs
+tkgm_ova_files = [                             # Existing TKGm OVAs
+  "ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc.ova"
+]
+cse_ova_folder = "/home/changeme/cse-folder"                                   # An existing absolute path to a folder containing CSE Server OVAs
+cse_ova_file   = "VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova" # An existing CSE Server OVA
 
 # ------------------------------------------------
 # CSE Server initialization
