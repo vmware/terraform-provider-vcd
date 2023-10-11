@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -160,6 +161,100 @@ func Test_areMarshaledJsonEqual(t *testing.T) {
 			}
 			if got != tt.want {
 				t.Errorf("areMarshaledJsonEqual() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_removeItemsMapWithKeyPrefixes(t *testing.T) {
+	type args struct {
+		input    map[string]interface{}
+		prefixes []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want map[string]interface{}
+	}{
+		{
+			name: "empty map",
+			args: args{
+				input:    map[string]interface{}{},
+				prefixes: []string{"_remove_"},
+			},
+			want: map[string]interface{}{},
+		},
+		{
+			name: "map of plain items",
+			args: args{
+				input: map[string]interface{}{
+					"_remove_key1":     "bar",
+					"_alsoremove_key2": 1,
+					"key3":             true,
+					"key4":             "bar",
+				},
+				prefixes: []string{"_remove_", "_alsoremove_"},
+			},
+			want: map[string]interface{}{
+				"key3": true,
+				"key4": "bar",
+			},
+		},
+		{
+			name: "empty prefixes",
+			args: args{
+				input: map[string]interface{}{
+					"_remove_key1":     "bar",
+					"_alsoremove_key2": 1,
+					"key3":             true,
+					"key4":             "bar",
+				},
+				prefixes: []string{},
+			},
+			want: map[string]interface{}{
+				"_remove_key1":     "bar",
+				"_alsoremove_key2": 1,
+				"key3":             true,
+				"key4":             "bar",
+			},
+		},
+		{
+			name: "complex map",
+			args: args{
+				input: map[string]interface{}{
+					"_remove_key1": "bar",
+					"key2": map[string]interface{}{
+						"innerkey1":             1,
+						"_remove_innerkey2":     "innerbar",
+						"_alsoremove_innerkey3": "innerbar",
+						"innerkey3": map[string]interface{}{
+							"moreinnerkey1":         1,
+							"_remove_moreinnerkey2": 2,
+						},
+						"innerkey4": false,
+					},
+					"key3": "bar",
+					"key4": "bar",
+				},
+				prefixes: []string{"_remove_", "_alsoremove_"},
+			},
+			want: map[string]interface{}{
+				"key2": map[string]interface{}{
+					"innerkey1": 1,
+					"innerkey3": map[string]interface{}{
+						"moreinnerkey1": 1,
+					},
+					"innerkey4": false,
+				},
+				"key3": "bar",
+				"key4": "bar",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := removeItemsMapWithKeyPrefixes(tt.args.input, tt.args.prefixes); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("removeItemsMapWithKeyPrefixes() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -116,6 +116,77 @@ resource "vcd_rde_interface_behavior" "behavior2" {
 }
 `
 
+func TestAccVcdRdeInterfaceBehaviorComplexExecution(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	var params = StringMap{
+		"Nss":                 "nss1",
+		"Version":             "1.0.0",
+		"Vendor":              "vendor1",
+		"InterfaceName":       t.Name(),
+		"BehaviorName":        t.Name(),
+		"BehaviorDescription": t.Name(),
+		"ExecutionId":         "MyWebhook",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText1 := templateFill(testAccVcdRdeInterfaceBehaviorComplexExecution, params)
+	debugPrintf("#[DEBUG] CONFIGURATION 1: %s\n", configText1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	interfaceName := "vcd_rde_interface.interface1"
+	behaviorName := "vcd_rde_interface_behavior.behavior"
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckRdeInterfaceDestroy(interfaceName), // If the RDE Interface is destroyed, the Behavior is also destroyed.
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(interfaceName, "id", behaviorName, "rde_interface_id"),
+					resource.TestCheckResourceAttr(behaviorName, "name", params["BehaviorName"].(string)),
+					resource.TestCheckResourceAttr(behaviorName, "description", t.Name()),
+					resource.TestCheckResourceAttrPair(behaviorName, "id", behaviorName, "ref"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdRdeInterfaceBehaviorComplexExecution = `
+resource "vcd_rde_interface" "interface1" {
+  nss     = "{{.Nss}}"
+  version = "{{.Version}}"
+  vendor  = "{{.Vendor}}"
+  name    = "{{.InterfaceName}}"
+}
+
+resource "vcd_rde_interface_behavior" "behavior" {
+  rde_interface_id = vcd_rde_interface.interface1.id
+  name             = "{{.BehaviorName}}"
+  description      = "{{.BehaviorDescription}}"
+  execution_json   = jsonencode({
+    "id": "{{.ExecutionId}}"
+	"type": "WebHook",
+  	"href": "https://hooks.slack.com:443/services/T07UZFN0N/B01EW5NC42D/rfjhHCGIwzuzQFrpPZiuLkIX",
+  	"_internal_key": "secretKey",
+	"execution_properties": {
+	  "template": {
+	    "content": "test"
+       },
+       "_secure_token": "secureToken",
+       "invocation_timeout": 7
+    }
+  })
+}
+`
+
 func importStateIdInterfaceBehavior(vendor, nss, version, name string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
 		return vendor +

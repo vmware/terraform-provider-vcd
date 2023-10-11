@@ -8,7 +8,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
+	"reflect"
 	"strings"
 )
 
@@ -42,17 +44,15 @@ func resourceVcdRdeInterfaceBehavior() *schema.Resource {
 			"execution": {
 				Type:         schema.TypeMap,
 				Optional:     true,
-				Computed:     true,
 				Description:  "Execution map of the Behavior",
 				ExactlyOneOf: []string{"execution", "execution_json"},
 			},
 			"execution_json": {
 				Type:                  schema.TypeString,
 				Optional:              true,
-				Computed:              true,
 				Description:           "Execution of the Behavior in JSON format, that allows to define complex Behavior executions",
 				ExactlyOneOf:          []string{"execution", "execution_json"},
-				DiffSuppressFunc:      hasJsonValueChanged,
+				DiffSuppressFunc:      hasBehaviorExecutionChanged,
 				DiffSuppressOnRefresh: true,
 			},
 			"ref": {
@@ -62,6 +62,36 @@ func resourceVcdRdeInterfaceBehavior() *schema.Resource {
 			},
 		},
 	}
+}
+
+// hasBehaviorExecutionChanged tells Terraform whether the Behavior execution in HCL configuration has changed compared
+// to what it got from VCD, taking into account that VCD does not return fields that were created with "_internal_" or "_secure_"
+// prefix. So we must ignore those.
+func hasBehaviorExecutionChanged(key, oldValue, newValue string, _ *schema.ResourceData) bool {
+	oldJson := []byte(oldValue)
+	newJson := []byte(newValue)
+	if !json.Valid(oldJson) {
+		util.Logger.Printf("[ERROR] Could not compare JSONs for computing difference of %s: %s", key, oldValue)
+		return false
+	}
+	if !json.Valid(newJson) {
+		util.Logger.Printf("[ERROR] Could not compare JSONs for computing difference of %s: %s", key, newValue)
+		return false
+	}
+
+	var unmarshaledOldJson, unmarshaledNewJson map[string]interface{}
+	err := json.Unmarshal(oldJson, &unmarshaledOldJson)
+	if err != nil {
+		util.Logger.Printf("[ERROR] Could not unmarshal old value JSON: %s", oldValue)
+		return false
+	}
+	err = json.Unmarshal(newJson, &unmarshaledNewJson)
+	if err != nil {
+		util.Logger.Printf("[ERROR] Could not unmarshal new value JSON: %s", newValue)
+		return false
+	}
+	filteredOldJson := removeItemsMapWithKeyPrefixes(unmarshaledOldJson, []string{"_internal_", "_secure_"})
+	return reflect.DeepEqual(filteredOldJson, unmarshaledNewJson)
 }
 
 func resourceVcdRdeInterfaceBehaviorCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -76,14 +106,14 @@ func resourceVcdRdeInterfaceBehaviorCreateOrUpdate(ctx context.Context, d *schem
 		return diag.Errorf("[RDE Interface Behavior %s] could not retrieve the RDE Interface with ID '%s': %s", operation, interfaceId, err)
 	}
 	var execution map[string]interface{}
-	if _, ok := d.GetOk("execution"); ok {
-		execution = d.Get("execution").(map[string]interface{})
-	} else {
+	if _, ok := d.GetOk("execution_json"); ok {
 		executionJson := d.Get("execution_json").(string)
 		err = json.Unmarshal([]byte(executionJson), &execution)
 		if err != nil {
 			return diag.Errorf("[RDE Interface Behavior %s] could not read the execution JSON: %s", operation, err)
 		}
+	} else {
+		execution = d.Get("execution").(map[string]interface{})
 	}
 	payload := types.Behavior{
 		ID:        d.Id(),
@@ -136,10 +166,22 @@ func genericVcdRdeInterfaceBehaviorRead(_ context.Context, d *schema.ResourceDat
 	dSet(d, "name", behavior.Name)
 	dSet(d, "ref", behavior.Ref)
 	dSet(d, "description", behavior.Description)
-	err = d.Set("execution", behavior.Execution)
-	if err != nil {
-		return diag.FromErr(err)
+	// Prevents a panic when the execution coming from VCD is a complex JSON
+	// with a map of maps, which Terraform does not support.
+	complexExecution := false
+	for _, v := range behavior.Execution {
+		if _, ok := v.(string); !ok {
+			complexExecution = true
+			break
+		}
 	}
+	if !complexExecution {
+		err = d.Set("execution", behavior.Execution)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	// Sets the execution as JSON string in any case.
 	executionJson, err := json.Marshal(behavior.Execution)
 	if err != nil {
 		return diag.FromErr(err)
