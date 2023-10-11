@@ -22,8 +22,8 @@ data "vcd_rde_interface" "my_interface" {
 }
 
 data "vcd_rde_interface_behavior" "my_behavior" {
-  interface_id = data.vcd_rde_interface.my_interface.id
-  name         = "createKubeConfig"
+  rde_interface_id = data.vcd_rde_interface.my_interface.id
+  name             = "createKubeConfig"
 }
 
 output "execution_id" {
@@ -39,7 +39,7 @@ output "execution_type" {
 
 The following arguments are supported:
 
-* `interface_id` - (Required) The ID of the RDE Interface that owns the Behavior to fetch
+* `rde_interface_id` - (Required) The ID of the RDE Interface that owns the Behavior to fetch
 * `name` - (Required) The name of the RDE Interface Behavior to fetch
 
 ## Attribute Reference
