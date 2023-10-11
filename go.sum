@@ -1,5 +1,5 @@
-github.com/Didainius/go-vcloud-director/v2 v2.17.0-alpha.2.0.20231004045102-c4cf73fc4854 h1:zJKYa0XMw7BSFyMfytytz/3DGEvFY1JuRwps8nVQIXI=
-github.com/Didainius/go-vcloud-director/v2 v2.17.0-alpha.2.0.20231004045102-c4cf73fc4854/go.mod h1:QPxGFgrUcSyzy9IlpwDE4UNT3tsOy2047tJOPEJ4nlw=
+github.com/Didainius/go-vcloud-director/v2 v2.17.0-alpha.2.0.20231011115935-0063a0216785 h1:WI29EEUH3p4vNSB9qzpJ46kX71ykooLvSj6Z7kgGcv8=
+github.com/Didainius/go-vcloud-director/v2 v2.17.0-alpha.2.0.20231011115935-0063a0216785/go.mod h1:QPxGFgrUcSyzy9IlpwDE4UNT3tsOy2047tJOPEJ4nlw=
 github.com/Microsoft/go-winio v0.5.2 h1:a9IhgEQBCUEk6QCdml9CiJGhAws+YwffDHEMp1VMrpA=
 github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 h1:wPbRQzjjwFc0ih8puEVAOFGELsn1zoIIYdxvML7mDxA=
 github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8/go.mod h1:I0gYDMZ6Z5GRU7l58bNFSkPTFN6Yl12dsUlAZ8xy98g=

@@ -126,11 +126,11 @@ func resourceVcdNsxtOrgVdcNetworkSegmentProfileCreateUpdate(ctx context.Context,
 	case ipDiscoveryProfileId != "" || macDiscoveryProfileId != "" || spoofGuardProfileId != "" || qosProfileId != "" || segmentSecurityProfileId != "":
 		// Individual segment profiles should be applied using a dedicated Segment Profile orgVdcNet.UpdateSegmentProfile
 		segmentProfileConfig := &types.OrgVdcNetworkSegmentProfiles{
-			IPDiscoveryProfile:     &types.OpenApiReferenceWithType{ID: ipDiscoveryProfileId},
-			MacDiscoveryProfile:    &types.OpenApiReferenceWithType{ID: macDiscoveryProfileId},
-			SpoofGuardProfile:      &types.OpenApiReferenceWithType{ID: spoofGuardProfileId},
-			QosProfile:             &types.OpenApiReferenceWithType{ID: qosProfileId},
-			SegmentSecurityProfile: &types.OpenApiReferenceWithType{ID: segmentSecurityProfileId},
+			IPDiscoveryProfile:     &types.Reference{ID: ipDiscoveryProfileId},
+			MacDiscoveryProfile:    &types.Reference{ID: macDiscoveryProfileId},
+			SpoofGuardProfile:      &types.Reference{ID: spoofGuardProfileId},
+			QosProfile:             &types.Reference{ID: qosProfileId},
+			SegmentSecurityProfile: &types.Reference{ID: segmentSecurityProfileId},
 		}
 		_, err = orgVdcNet.UpdateSegmentProfile(segmentProfileConfig)
 		if err != nil {

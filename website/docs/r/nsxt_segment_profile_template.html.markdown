@@ -62,19 +62,19 @@ resource "vcd_nsxt_segment_profile_template" "complete" {
 
 The following arguments are supported:
 
-* `nsxt_manager_id` - (Required) NSX-T Manager ID (can be looked up using
+* `nsxt_manager_id` - (Required) NSX-T Manager ID (can be referenced using
   [`vcd_nsxt_manager`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_manager) datasource)
 * `name` - (Required) Name for Segment Profile Template
 * `description` - (Optional) Description of Segment Profile Template
-* `ip_discovery_profile_id` - (Optional) IP Discovery Profile ID. Can be looked up using
+* `ip_discovery_profile_id` - (Optional) IP Discovery Profile ID. can be referenced using
   [`vcd_nsxt_segment_ip_discovery_profile`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_segment_ip_discovery_profile)
-* `mac_discovery_profile_id` - (Optional) IP Discovery Profile ID. Can be looked up using
+* `mac_discovery_profile_id` - (Optional) IP Discovery Profile ID. can be referenced using
   [`vcd_nsxt_segment_mac_discovery_profile`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_segment_mac_discovery_profile)
-* `spoof_guard_profile_id` - (Optional) IP Discovery Profile ID. Can be looked up using
+* `spoof_guard_profile_id` - (Optional) IP Discovery Profile ID. can be referenced using
   [`vcd_nsxt_segment_spoof_guard_profile`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_segment_spoof_guard_profile)
-* `qos_profile_id` - (Optional) IP Discovery Profile ID. Can be looked up using
+* `qos_profile_id` - (Optional) IP Discovery Profile ID. can be referenced using
   [`vcd_nsxt_segment_qos_profile`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_segment_qos_profile)
-* `segment_security_profile_id` - (Optional) IP Discovery Profile ID. Can be looked up using
+* `segment_security_profile_id` - (Optional) IP Discovery Profile ID. can be referenced using
   [`vcd_nsxt_segment_security_profile`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_segment_security_profile)
 
 
