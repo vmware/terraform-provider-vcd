@@ -19,6 +19,7 @@ type listDef struct {
 	parent       string
 	nameRegex    string
 	knownItem    string
+	unwantedItem string
 	vdc          string
 	listMode     string
 	importFile   bool
@@ -101,7 +102,7 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		}
 		if testConfig.Media.MediaName != "" {
 			// tests in this last group always require an explicit parent
-			lists = append(lists, listDef{name: "catalog_media", resourceType: "vcd_catalog_media", parent: testConfig.VCD.Catalog.Name, knownItem: testConfig.Media.MediaName})
+			lists = append(lists, listDef{name: "catalog_media", resourceType: "vcd_catalog_media", parent: testConfig.VCD.Catalog.Name, knownItem: testConfig.Media.MediaName, unwantedItem: testConfig.VCD.Catalog.CatalogItem})
 		} else {
 			fmt.Print("`Media.MediaName` value isn't configured, datasource test using this will be skipped\n")
 		}
@@ -304,7 +305,7 @@ func runResourceInfoTest(def listDef, t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.vcd_resource_list."+def.name, "name", def.name),
-					checkListForKnownItem(def.name, def.knownItem, !def.excludeItem, def.importFile),
+					checkListForKnownItem(def.name, def.knownItem, def.unwantedItem, !def.excludeItem, def.importFile),
 					checkImportFile(importFileName, def.importFile),
 				),
 			},
@@ -325,7 +326,7 @@ func checkImportFile(fileName string, importing bool) resource.TestCheckFunc {
 	}
 }
 
-func checkListForKnownItem(resName, target string, isWanted, importing bool) resource.TestCheckFunc {
+func checkListForKnownItem(resName, target, unwanted string, isWanted, importing bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		if target == "" {
 			return nil
@@ -347,6 +348,9 @@ func checkListForKnownItem(resName, target string, isWanted, importing bool) res
 		}
 
 		for _, item := range list {
+			if unwanted != "" && item == unwanted {
+				return fmt.Errorf("found unwanted item '%s'", unwanted)
+			}
 			found := item == target
 			if importing {
 				found = strings.Contains(item, target)

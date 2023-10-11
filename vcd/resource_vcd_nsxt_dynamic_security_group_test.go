@@ -644,7 +644,7 @@ resource "vcd_nsxt_dynamic_security_group" "group4" {
     rule {
       type     = "VM_TAG"
       operator = "ENDS_WITH"
-      value    = "1"
+      value    = "ag1"
 	}
   }
 }

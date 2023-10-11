@@ -181,8 +181,49 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Boolean value that specifies that the Edge Gateway is using IP Spaces",
 			},
+			"external_network": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Additional NSX-T Segment Backed networks",
+				Elem:        nsxtEdgeExternalNetworksDS,
+			},
+			"external_network_allocated_ip_count": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Total number of IPs allocated for this Gateway from NSX-T Segment backed External Network uplinks",
+			},
 		},
 	}
+}
+
+var nsxtEdgeExternalNetworksDS = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"external_network_id": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "NSX-T Segment backed External Network ID",
+		},
+		"gateway": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Gateway IP Address",
+		},
+		"prefix_length": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Prefix length for a subnet (e.g. 24)",
+		},
+		"primary_ip": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Primary IP address for the Edge Gateway",
+		},
+		"allocated_ip_count": {
+			Type:        schema.TypeInt,
+			Computed:    true,
+			Description: "Number of allocated IPs",
+		},
+	},
 }
 
 func datasourceVcdNsxtEdgeGatewayRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -226,7 +267,7 @@ func datasourceVcdNsxtEdgeGatewayRead(_ context.Context, d *schema.ResourceData,
 		return diag.Errorf("error looking up Edge Gateway - switch did not match any cases")
 	}
 
-	err = setNsxtEdgeGatewayData(edge, d)
+	err = setNsxtEdgeGatewayData(vcdClient, edge, d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error reading NSX-T Edge Gateway data: %s", err))
 	}
