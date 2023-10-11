@@ -252,7 +252,7 @@ func areMarshaledJsonEqual(json1, json2 []byte) (bool, error) {
 // removeKeysFromMap returns a new map that doesn't have the items from the original one that match with the given
 // prefixes. This function uses recursion to remove prefixes in nested maps, so the stopping condition is not having
 // more nested maps to scan.
-func removeItemsMapWithKeyPrefixes(input map[string]interface{}, prefixes []string) map[string]interface{} {
+func removeItemsFromMapWithKeyPrefixes(input map[string]interface{}, prefixes []string) map[string]interface{} {
 	result := map[string]interface{}{}
 	for k := range input {
 		removeItem := false
@@ -269,7 +269,7 @@ func removeItemsMapWithKeyPrefixes(input map[string]interface{}, prefixes []stri
 	// Another round to search for nested maps
 	for k, v := range result {
 		if _, ok := v.(map[string]interface{}); ok {
-			result[k] = removeItemsMapWithKeyPrefixes(v.(map[string]interface{}), prefixes)
+			result[k] = removeItemsFromMapWithKeyPrefixes(v.(map[string]interface{}), prefixes)
 		}
 	}
 

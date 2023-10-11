@@ -90,8 +90,9 @@ func hasBehaviorExecutionChanged(key, oldValue, newValue string, _ *schema.Resou
 		util.Logger.Printf("[ERROR] Could not unmarshal new value JSON: %s", newValue)
 		return false
 	}
-	filteredOldJson := removeItemsMapWithKeyPrefixes(unmarshaledOldJson, []string{"_internal_", "_secure_"})
-	return reflect.DeepEqual(filteredOldJson, unmarshaledNewJson)
+	filteredOldJson := removeItemsFromMapWithKeyPrefixes(unmarshaledOldJson, []string{"_internal_", "_secure_"})
+	filteredNewJson := removeItemsFromMapWithKeyPrefixes(unmarshaledNewJson, []string{"_internal_", "_secure_"})
+	return reflect.DeepEqual(filteredOldJson, filteredNewJson)
 }
 
 func resourceVcdRdeInterfaceBehaviorCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

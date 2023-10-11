@@ -253,8 +253,8 @@ func Test_removeItemsMapWithKeyPrefixes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := removeItemsMapWithKeyPrefixes(tt.args.input, tt.args.prefixes); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("removeItemsMapWithKeyPrefixes() = %v, want %v", got, tt.want)
+			if got := removeItemsFromMapWithKeyPrefixes(tt.args.input, tt.args.prefixes); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("removeItemsFromMapWithKeyPrefixes() = %v, want %v", got, tt.want)
 			}
 		})
 	}

@@ -47,7 +47,7 @@ func resourceVcdRdeTypeBehavior() *schema.Resource {
 				Computed:              true,
 				Description:           "Execution of the Behavior in JSON format, that allows to define complex Behavior executions",
 				ExactlyOneOf:          []string{"execution", "execution_json"},
-				DiffSuppressFunc:      hasJsonValueChanged,
+				DiffSuppressFunc:      hasBehaviorExecutionChanged,
 				DiffSuppressOnRefresh: true,
 			},
 			"description": {

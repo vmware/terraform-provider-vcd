@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -128,11 +129,17 @@ func TestAccVcdRdeInterfaceBehaviorComplexExecution(t *testing.T) {
 		"BehaviorName":        t.Name(),
 		"BehaviorDescription": t.Name(),
 		"ExecutionId":         "MyWebhook",
+		"RegularField":        "test",
 	}
 	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdRdeInterfaceBehaviorComplexExecution, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 1: %s\n", configText1)
+
+	params["FuncName"] = t.Name() + "-Step2"
+	params["RegularField"] = "updatedTest"
+	configText2 := templateFill(testAccVcdRdeInterfaceBehaviorComplexExecution, params)
+	debugPrintf("#[DEBUG] CONFIGURATION 2: %s\n", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -152,6 +159,16 @@ func TestAccVcdRdeInterfaceBehaviorComplexExecution(t *testing.T) {
 					resource.TestCheckResourceAttr(behaviorName, "name", params["BehaviorName"].(string)),
 					resource.TestCheckResourceAttr(behaviorName, "description", t.Name()),
 					resource.TestCheckResourceAttrPair(behaviorName, "id", behaviorName, "ref"),
+					resource.TestMatchResourceAttr(behaviorName, "execution_json", regexp.MustCompile("\"test\"")),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(interfaceName, "id", behaviorName, "rde_interface_id"),
+					resource.TestCheckResourceAttr(behaviorName, "name", params["BehaviorName"].(string)),
+					resource.TestCheckResourceAttr(behaviorName, "description", t.Name()),
+					resource.TestMatchResourceAttr(behaviorName, "execution_json", regexp.MustCompile("\"updatedTest\"")),
 				),
 			},
 		},
@@ -178,9 +195,9 @@ resource "vcd_rde_interface_behavior" "behavior" {
   	"_internal_key": "secretKey",
 	"execution_properties": {
 	  "template": {
-	    "content": "test"
+	    "content": "{{.RegularField}}"
        },
-       "_secure_token": "secureToken",
+       "_secure_token": "token",
        "invocation_timeout": 7
     }
   })
