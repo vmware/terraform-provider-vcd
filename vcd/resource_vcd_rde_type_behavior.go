@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -34,9 +35,20 @@ func resourceVcdRdeTypeBehavior() *schema.Resource {
 				Description: "The ID of the original RDE Interface Behavior to override",
 			},
 			"execution": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Execution map of the Behavior that overrides the original",
+				Type:         schema.TypeMap,
+				Optional:     true,
+				Computed:     true,
+				Description:  "Execution map of the Behavior",
+				ExactlyOneOf: []string{"execution", "execution_json"},
+			},
+			"execution_json": {
+				Type:                  schema.TypeString,
+				Optional:              true,
+				Computed:              true,
+				Description:           "Execution of the Behavior in JSON format, that allows to define complex Behavior executions",
+				ExactlyOneOf:          []string{"execution", "execution_json"},
+				DiffSuppressFunc:      hasJsonValueChanged,
+				DiffSuppressOnRefresh: true,
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -68,10 +80,20 @@ func resourceVcdRdeTypeBehaviorCreateOrUpdate(ctx context.Context, d *schema.Res
 	if err != nil {
 		return diag.Errorf("[RDE Type Behavior %s] could not retrieve the RDE Type with ID '%s': %s", operation, rdeTypeId, err)
 	}
+	var execution map[string]interface{}
+	if _, ok := d.GetOk("execution"); ok {
+		execution = d.Get("execution").(map[string]interface{})
+	} else {
+		executionJson := d.Get("execution_json").(string)
+		err = json.Unmarshal([]byte(executionJson), &execution)
+		if err != nil {
+			return diag.Errorf("[RDE Type Behavior %s] could not read the execution JSON: %s", operation, err)
+		}
+	}
 	payload := types.Behavior{
 		ID:        d.Get("rde_interface_behavior_id").(string),
 		Ref:       d.Get("ref").(string),
-		Execution: d.Get("execution").(map[string]interface{}),
+		Execution: execution,
 	}
 	if desc, ok := d.GetOk("description"); ok {
 		payload.Description = desc.(string)
@@ -119,6 +141,11 @@ func genericVcdRdeTypeBehaviorRead(_ context.Context, d *schema.ResourceData, me
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	executionJson, err := json.Marshal(behavior.Execution)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	dSet(d, "execution_json", string(executionJson))
 	d.SetId(behavior.ID)
 
 	return nil

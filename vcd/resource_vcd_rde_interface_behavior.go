@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -39,9 +40,20 @@ func resourceVcdRdeInterfaceBehavior() *schema.Resource {
 				Description: "A description specifying the contract of the Behavior",
 			},
 			"execution": {
-				Type:        schema.TypeMap,
-				Required:    true,
-				Description: "Execution map of the Behavior",
+				Type:         schema.TypeMap,
+				Optional:     true,
+				Computed:     true,
+				Description:  "Execution map of the Behavior",
+				ExactlyOneOf: []string{"execution", "execution_json"},
+			},
+			"execution_json": {
+				Type:                  schema.TypeString,
+				Optional:              true,
+				Computed:              true,
+				Description:           "Execution of the Behavior in JSON format, that allows to define complex Behavior executions",
+				ExactlyOneOf:          []string{"execution", "execution_json"},
+				DiffSuppressFunc:      hasJsonValueChanged,
+				DiffSuppressOnRefresh: true,
 			},
 			"ref": {
 				Type:        schema.TypeString,
@@ -63,10 +75,20 @@ func resourceVcdRdeInterfaceBehaviorCreateOrUpdate(ctx context.Context, d *schem
 	if err != nil {
 		return diag.Errorf("[RDE Interface Behavior %s] could not retrieve the RDE Interface with ID '%s': %s", operation, interfaceId, err)
 	}
+	var execution map[string]interface{}
+	if _, ok := d.GetOk("execution"); ok {
+		execution = d.Get("execution").(map[string]interface{})
+	} else {
+		executionJson := d.Get("execution_json").(string)
+		err = json.Unmarshal([]byte(executionJson), &execution)
+		if err != nil {
+			return diag.Errorf("[RDE Interface Behavior %s] could not read the execution JSON: %s", operation, err)
+		}
+	}
 	payload := types.Behavior{
 		ID:        d.Id(),
 		Name:      d.Get("name").(string),
-		Execution: d.Get("execution").(map[string]interface{}),
+		Execution: execution,
 		Ref:       d.Get("ref").(string),
 	}
 	if desc, ok := d.GetOk("description"); ok {
@@ -118,6 +140,11 @@ func genericVcdRdeInterfaceBehaviorRead(_ context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	executionJson, err := json.Marshal(behavior.Execution)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	dSet(d, "execution_json", string(executionJson))
 	d.SetId(behavior.ID)
 
 	return nil

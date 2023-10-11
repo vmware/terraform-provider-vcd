@@ -200,10 +200,10 @@ resource "vcd_rde_interface_behavior" "behavior2" {
   rde_interface_id = vcd_rde_interface.interface.id
   name             = "{{.Name}}2"
   description      = "{{.Description}}"
-  execution = {
+  execution_json = jsonencode({
     "id" : "{{.ExecutionId}}2"
     "type" : "{{.ExecutionType}}"
-  }
+  })
 }
 
 resource "vcd_rde_type" "type" {

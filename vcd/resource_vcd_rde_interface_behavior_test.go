@@ -18,7 +18,8 @@ func TestAccVcdRdeInterfaceBehavior(t *testing.T) {
 		"Version":             "1.0.0",
 		"Vendor":              "vendor1",
 		"InterfaceName":       t.Name(),
-		"BehaviorName":        t.Name(),
+		"BehaviorName1":       t.Name(),
+		"BehaviorName2":       t.Name() + "json",
 		"BehaviorDescription": t.Name(),
 		"ExecutionId":         "MyActivity",
 		"ExecutionType":       "Activity",
@@ -40,6 +41,7 @@ func TestAccVcdRdeInterfaceBehavior(t *testing.T) {
 
 	interfaceName := "vcd_rde_interface.interface1"
 	behaviorName := "vcd_rde_interface_behavior.behavior1"
+	behaviorName2 := "vcd_rde_interface_behavior.behavior2"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckRdeInterfaceDestroy(interfaceName), // If the RDE Interface is destroyed, the Behavior is also destroyed.
@@ -48,29 +50,37 @@ func TestAccVcdRdeInterfaceBehavior(t *testing.T) {
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(interfaceName, "id", behaviorName, "rde_interface_id"),
-					resource.TestCheckResourceAttr(behaviorName, "name", params["BehaviorName"].(string)),
+					resource.TestCheckResourceAttr(behaviorName, "name", params["BehaviorName1"].(string)),
 					resource.TestCheckResourceAttr(behaviorName, "description", t.Name()),
 					resource.TestCheckResourceAttr(behaviorName, "execution.id", "MyActivity"),
 					resource.TestCheckResourceAttr(behaviorName, "execution.type", "Activity"),
 					resource.TestCheckResourceAttrPair(behaviorName, "id", behaviorName, "ref"),
+					// Compare JSON and map values of executions
+					resource.TestCheckResourceAttrPair(behaviorName, "execution.id", behaviorName2, "execution.id"),
+					resource.TestCheckResourceAttrPair(behaviorName, "execution.type", behaviorName2, "execution.type"),
+					resource.TestCheckResourceAttrPair(behaviorName, "execution_json", behaviorName2, "execution_json"),
 				),
 			},
 			{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(interfaceName, "id", behaviorName, "rde_interface_id"),
-					resource.TestCheckResourceAttr(behaviorName, "name", params["BehaviorName"].(string)),
+					resource.TestCheckResourceAttr(behaviorName, "name", params["BehaviorName1"].(string)),
 					resource.TestCheckResourceAttr(behaviorName, "description", t.Name()+"Updated"),
 					resource.TestCheckResourceAttr(behaviorName, "execution.id", "MyActivityUpdated"),
 					resource.TestCheckResourceAttr(behaviorName, "execution.type", "Activity"),
 					resource.TestCheckResourceAttrPair(behaviorName, "id", behaviorName, "ref"),
+					// Compare JSON and map values of executions
+					resource.TestCheckResourceAttrPair(behaviorName, "execution.id", behaviorName2, "execution.id"),
+					resource.TestCheckResourceAttrPair(behaviorName, "execution.type", behaviorName2, "execution.type"),
+					resource.TestCheckResourceAttrPair(behaviorName, "execution_json", behaviorName2, "execution_json"),
 				),
 			},
 			{
 				ResourceName:      behaviorName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdInterfaceBehavior(params["Vendor"].(string), params["Nss"].(string), params["Version"].(string), params["BehaviorName"].(string)),
+				ImportStateIdFunc: importStateIdInterfaceBehavior(params["Vendor"].(string), params["Nss"].(string), params["Version"].(string), params["BehaviorName1"].(string)),
 			},
 		},
 	})
@@ -87,12 +97,22 @@ resource "vcd_rde_interface" "interface1" {
 
 resource "vcd_rde_interface_behavior" "behavior1" {
   rde_interface_id = vcd_rde_interface.interface1.id
-  name             = "{{.BehaviorName}}"
+  name             = "{{.BehaviorName1}}"
   description      = "{{.BehaviorDescription}}"
   execution = {
     "id":   "{{.ExecutionId}}"
     "type": "{{.ExecutionType}}"
   }
+}
+
+resource "vcd_rde_interface_behavior" "behavior2" {
+  rde_interface_id = vcd_rde_interface.interface1.id
+  name             = "{{.BehaviorName2}}"
+  description      = "{{.BehaviorDescription}}"
+  execution_json   = jsonencode({
+    "id":   "{{.ExecutionId}}"
+    "type": "{{.ExecutionType}}"
+  })
 }
 `
 
