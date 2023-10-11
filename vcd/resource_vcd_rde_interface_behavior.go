@@ -55,6 +55,14 @@ func resourceVcdRdeInterfaceBehavior() *schema.Resource {
 				DiffSuppressFunc:      hasBehaviorExecutionChanged,
 				DiffSuppressOnRefresh: true,
 			},
+			"always_update_secure_execution_properties": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				Description: "Useful to update execution properties marked with _secure_ and _internal_," +
+					"as these are not retrievable from VCD, so they are not saved in state. Setting this to 'true' will make the Provider" +
+					"to ask for updates whenever there is a secure property in the execution of the Behavior",
+			},
 			"ref": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -67,28 +75,21 @@ func resourceVcdRdeInterfaceBehavior() *schema.Resource {
 // hasBehaviorExecutionChanged tells Terraform whether the Behavior execution in HCL configuration has changed compared
 // to what it got from VCD, taking into account that VCD does not return fields that were created with "_internal_" or "_secure_"
 // prefix. So we must ignore those.
-func hasBehaviorExecutionChanged(key, oldValue, newValue string, _ *schema.ResourceData) bool {
-	oldJson := []byte(oldValue)
-	newJson := []byte(newValue)
-	if !json.Valid(oldJson) {
-		util.Logger.Printf("[ERROR] Could not compare JSONs for computing difference of %s: %s", key, oldValue)
-		return false
-	}
-	if !json.Valid(newJson) {
-		util.Logger.Printf("[ERROR] Could not compare JSONs for computing difference of %s: %s", key, newValue)
-		return false
-	}
-
+func hasBehaviorExecutionChanged(_, oldValue, newValue string, d *schema.ResourceData) bool {
 	var unmarshaledOldJson, unmarshaledNewJson map[string]interface{}
-	err := json.Unmarshal(oldJson, &unmarshaledOldJson)
+	err := json.Unmarshal([]byte(oldValue), &unmarshaledOldJson)
 	if err != nil {
 		util.Logger.Printf("[ERROR] Could not unmarshal old value JSON: %s", oldValue)
 		return false
 	}
-	err = json.Unmarshal(newJson, &unmarshaledNewJson)
+	err = json.Unmarshal([]byte(newValue), &unmarshaledNewJson)
 	if err != nil {
 		util.Logger.Printf("[ERROR] Could not unmarshal new value JSON: %s", newValue)
 		return false
+	}
+
+	if d.Get("always_update_secure_execution_properties").(bool) {
+		return reflect.DeepEqual(oldValue, newValue)
 	}
 	filteredOldJson := removeItemsFromMapWithKeyPrefixes(unmarshaledOldJson, []string{"_internal_", "_secure_"})
 	filteredNewJson := removeItemsFromMapWithKeyPrefixes(unmarshaledNewJson, []string{"_internal_", "_secure_"})
