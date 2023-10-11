@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"io"
 	"log"
 	"net/http"
@@ -15,6 +16,30 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
+
+func getRdeTypeHookSchema(computed bool) *schema.Resource {
+	validateFunc := validation.StringInSlice([]string{"PostCreate", "PostUpdate", "PreDelete", "PostDelete"}, false)
+	if computed {
+		validateFunc = nil
+	}
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"event": {
+				Type:         schema.TypeString,
+				Required:     !computed,
+				Computed:     computed,
+				Description:  "Event that will invoke the Behavior, one of PostCreate, PostUpdate, PreDelete, PostDelete",
+				ValidateFunc: validateFunc,
+			},
+			"behavior_id": {
+				Type:        schema.TypeString,
+				Required:    !computed,
+				Computed:    computed,
+				Description: "Existing Behavior that will be automatically invoked when the RDE of this RDE Type triggers the event",
+			},
+		},
+	}
+}
 
 func resourceVcdRdeType() *schema.Resource {
 	return &schema.Resource{
@@ -84,6 +109,13 @@ func resourceVcdRdeType() *schema.Resource {
 				Optional:    true,
 				Description: "An external entity's ID that this definition may apply to",
 			},
+			"hook": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Description: "Optional blocks that map RDE lifecycle events to existing Behaviors, that will be " +
+					"automatically invoked when the corresponding event is triggered",
+				Elem: getRdeTypeHookSchema(false),
+			},
 			"inherited_version": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -127,6 +159,7 @@ func resourceVcdRdeTypeCreate(ctx context.Context, d *schema.ResourceData, meta 
 			Version:          d.Get("version").(string),
 			Description:      d.Get("description").(string),
 			ExternalId:       d.Get("external_id").(string),
+			Hooks:            getRdeTypeHooksFromSchema(d),
 			InheritedVersion: d.Get("inherited_version").(string),
 			Interfaces:       convertSchemaSetToSliceOfStrings(d.Get("interface_ids").(*schema.Set)),
 			IsReadOnly:       d.Get("readonly").(bool),
@@ -139,6 +172,19 @@ func resourceVcdRdeTypeCreate(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("could not create the Runtime Defined Entity Type: %s", err)
 	}
 	return resourceVcdRdeTypeRead(ctx, d, meta)
+}
+
+func getRdeTypeHooksFromSchema(d *schema.ResourceData) map[string]string {
+	if _, ok := d.GetOk("hook"); !ok {
+		return nil
+	}
+	hooks := map[string]string{}
+	rawHooks := d.Get("hook").(*schema.Set).List()
+	for _, h := range rawHooks {
+		hookBlock := h.(map[string]interface{})
+		hooks[hookBlock["event"].(string)] = hookBlock["behavior_id"].(string)
+	}
+	return hooks
 }
 
 // getRdeTypeSchema gets the schema as string from the Terraform configuration
@@ -242,6 +288,20 @@ func genericVcdRdeTypeRead(_ context.Context, d *schema.ResourceData, meta inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	var hooks []interface{}
+	for event, behaviorId := range rdeType.DefinedEntityType.Hooks {
+		hook := make(map[string]interface{})
+		hook["event"] = event
+		hook["behavior_id"] = behaviorId
+		hooks = append(hooks, hook)
+	}
+	hookSet := schema.NewSet(schema.HashResource(getRdeTypeHookSchema(false)), hooks)
+	err = d.Set("hook", hookSet)
+	if err != nil {
+		return diag.Errorf("error setting RDE Type Hooks: %s", err)
+	}
+
 	d.SetId(rdeType.DefinedEntityType.ID)
 
 	return nil
@@ -281,6 +341,7 @@ func resourceVcdRdeTypeUpdate(ctx context.Context, d *schema.ResourceData, meta 
 			Name:        d.Get("name").(string),
 			Description: d.Get("description").(string),
 			ExternalId:  d.Get("external_id").(string),
+			Hooks:       getRdeTypeHooksFromSchema(d),
 			Interfaces:  convertSchemaSetToSliceOfStrings(d.Get("interface_ids").(*schema.Set)),
 			Schema:      jsonSchema,
 		})
