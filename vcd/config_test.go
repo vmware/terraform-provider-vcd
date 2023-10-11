@@ -164,7 +164,7 @@ type TestConfig struct {
 		RoutedNetwork             string `json:"routedNetwork"`
 		IsolatedNetwork           string `json:"isolatedNetwork"`
 		DirectNetwork             string `json:"directNetwork"`
-		IpDiscoveryProfile        string `yaml:"ipDiscoveryProfile"`
+		IpDiscoveryProfile        string `json:"ipDiscoveryProfile"`
 		MacDiscoveryProfile       string `json:"macDiscoveryProfile"`
 		SpoofGuardProfile         string `json:"spoofGuardProfile"`
 		QosProfile                string `json:"qosProfile"`

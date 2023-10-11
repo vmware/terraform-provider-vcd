@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_segment_mac_discovery_profile"
 sidebar_current: "docs-vcd-data-source-nsxt-segment-mac-discovery-profile"
 description: |-
-  Provides a VMware Cloud Director NSX-T MACIP Discovery Profile data source. This can be used to read NSX-T Segment Profile definitions.
+  Provides a VMware Cloud Director NSX-T MAC Discovery Profile data source. This can be used to read NSX-T Segment Profile definitions.
 ---
 
 # vcd\_nsxt\_segment\_mac\_discovery\_profile
@@ -31,10 +31,11 @@ data "vcd_nsxt_segment_mac_discovery_profile" "first" {
 The following arguments are supported:
 
 * `name` - (Required) The name of Segment Profile
-* `nsxt_manager_id` - (Optional) Segment Profile search context. One of `nsxt_manager_id`, `vdc_id`, `vdc_group_id` is required
-* `vdc_id` - (Optional) Segment Profile search context. One of `nsxt_manager_id`, `vdc_id`, `vdc_group_id` is required
-* `vdc_group_id` - (Optional) Segment Profile search context. One of `nsxt_manager_id`, `vdc_id`, `vdc_group_id` is required
+* `nsxt_manager_id` - (Optional) Segment Profile search context. Use when searching by NSX-T manager.
+* `vdc_id` - (Optional) Segment Profile search context. Use when searching by VDC
+* `vdc_group_id` - (Optional) Segment Profile search context. Use when searching by VDC group
 
+-> Note: only one of `nsxt_manager_id`, `vdc_id`, `vdc_group_id` can be used
 
 ## Attribute reference
 

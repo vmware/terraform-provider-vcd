@@ -119,19 +119,19 @@ The following arguments are supported:
 * `org_network_id` - (Required) Org VDC Network ID
 * `segment_profile_template_id` - (Optional) Segment Profile Template ID to be applied for this Org
   VDC Network
-* `ip_discovery_profile_id` - (Optional) IP Discovery Profile ID. Can be looked up using
+* `ip_discovery_profile_id` - (Optional) IP Discovery Profile ID. Can be referenced using
   [`vcd_nsxt_segment_ip_discovery_profile`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_segment_ip_discovery_profile)
   data source.
-* `mac_discovery_profile_id` - (Optional) MAC Discovery Profile ID. Can be looked up using
+* `mac_discovery_profile_id` - (Optional) MAC Discovery Profile ID. Can be referenced using
   [`vcd_nsxt_segment_mac_discovery_profile`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_segment_mac_discovery_profile)
   data source.
-* `spoof_guard_profile_id` - (Optional) Spoof Guard Profile ID. Can be looked up using
+* `spoof_guard_profile_id` - (Optional) Spoof Guard Profile ID. Can be referenced using
   [`vcd_nsxt_segment_spoof_guard_profile`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_segment_spoof_guard_profile)
   data source.
-* `qos_profile_id` - (Optional) QoS Profile ID. Can be looked up using
+* `qos_profile_id` - (Optional) QoS Profile ID. Can be referenced using
   [`vcd_nsxt_segment_qos_profile`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_segment_qos_profile)
   data source.
-* `segment_security_profile_id` - (Optional) Segment Security Profile ID. Can be looked up using
+* `segment_security_profile_id` - (Optional) Segment Security Profile ID. Can be referenced using
   [`vcd_nsxt_segment_security_profile`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_segment_security_profile)
   data source.
 

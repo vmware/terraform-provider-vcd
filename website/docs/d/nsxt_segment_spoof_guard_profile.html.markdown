@@ -30,9 +30,11 @@ data "vcd_nsxt_segment_spoof_guard_profile" "first" {
 The following arguments are supported:
 
 * `name` - (Required) The name of Segment Profile
-* `nsxt_manager_id` - (Optional) Segment Profile search context. One of `nsxt_manager_id`, `vdc_id`, `vdc_group_id` is required
-* `vdc_id` - (Optional) Segment Profile search context. One of `nsxt_manager_id`, `vdc_id`, `vdc_group_id` is required
-* `vdc_group_id` - (Optional) Segment Profile search context. One of `nsxt_manager_id`, `vdc_id`, `vdc_group_id` is required
+* `nsxt_manager_id` - (Optional) Segment Profile search context. Use when searching by NSX-T manager.
+* `vdc_id` - (Optional) Segment Profile search context. Use when searching by VDC
+* `vdc_group_id` - (Optional) Segment Profile search context. Use when searching by VDC group
+
+-> Note: only one of `nsxt_manager_id`, `vdc_id`, `vdc_group_id` can be used
 
 ## Attribute reference
 
