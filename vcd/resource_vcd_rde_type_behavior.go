@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -34,9 +35,26 @@ func resourceVcdRdeTypeBehavior() *schema.Resource {
 				Description: "The ID of the original RDE Interface Behavior to override",
 			},
 			"execution": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Execution map of the Behavior that overrides the original",
+				Type:         schema.TypeMap,
+				Optional:     true,
+				Description:  "Execution map of the Behavior",
+				ExactlyOneOf: []string{"execution", "execution_json"},
+			},
+			"execution_json": {
+				Type:                  schema.TypeString,
+				Optional:              true,
+				Description:           "Execution of the Behavior in JSON format, that allows to define complex Behavior executions",
+				ExactlyOneOf:          []string{"execution", "execution_json"},
+				DiffSuppressFunc:      hasBehaviorExecutionChanged,
+				DiffSuppressOnRefresh: true,
+			},
+			"always_update_secure_execution_properties": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				Description: "Useful to update execution properties marked with _secure_ and _internal_," +
+					"as these are not retrievable from VCD, so they are not saved in state. Setting this to 'true' will make the Provider" +
+					"to ask for updates whenever there is a secure property in the execution of the Behavior",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -68,10 +86,20 @@ func resourceVcdRdeTypeBehaviorCreateOrUpdate(ctx context.Context, d *schema.Res
 	if err != nil {
 		return diag.Errorf("[RDE Type Behavior %s] could not retrieve the RDE Type with ID '%s': %s", operation, rdeTypeId, err)
 	}
+	var execution map[string]interface{}
+	if _, ok := d.GetOk("execution_json"); ok {
+		executionJson := d.Get("execution_json").(string)
+		err = json.Unmarshal([]byte(executionJson), &execution)
+		if err != nil {
+			return diag.Errorf("[RDE Interface Behavior %s] could not read the execution JSON: %s", operation, err)
+		}
+	} else {
+		execution = d.Get("execution").(map[string]interface{})
+	}
 	payload := types.Behavior{
 		ID:        d.Get("rde_interface_behavior_id").(string),
 		Ref:       d.Get("ref").(string),
-		Execution: d.Get("execution").(map[string]interface{}),
+		Execution: execution,
 	}
 	if desc, ok := d.GetOk("description"); ok {
 		payload.Description = desc.(string)
@@ -115,10 +143,27 @@ func genericVcdRdeTypeBehaviorRead(_ context.Context, d *schema.ResourceData, me
 	dSet(d, "name", behavior.Name)
 	dSet(d, "ref", behavior.Ref)
 	dSet(d, "description", behavior.Description)
-	err = d.Set("execution", behavior.Execution)
+	// Prevents a panic when the execution coming from VCD is a complex JSON
+	// with a map of maps, which Terraform does not support.
+	complexExecution := false
+	for _, v := range behavior.Execution {
+		if _, ok := v.(string); !ok {
+			complexExecution = true
+			break
+		}
+	}
+	if !complexExecution {
+		err = d.Set("execution", behavior.Execution)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+	// Sets the execution as JSON string in any case.
+	executionJson, err := json.Marshal(behavior.Execution)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	dSet(d, "execution_json", string(executionJson))
 	d.SetId(behavior.ID)
 
 	return nil
