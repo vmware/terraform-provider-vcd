@@ -13,9 +13,6 @@ description: |-
 Provides the capability of invoking an existing [RDE Interface Behavior](/providers/vmware/vcd/latest/docs/resources/rde_interface_behavior)
 or [RDE Type Behavior](/providers/vmware/vcd/latest/docs/resources/rde_type_behavior) in VMware Cloud Director.
 
-The RDE Behavior is invoked on every refresh operation. To stop invoking it, one can simply remove this data source
-from the HCL code.
-
 Supported in provider *v3.11+*
 
 ## Example Usage
@@ -68,20 +65,15 @@ resource "vcd_rde_type_behavior_acl" "interface_acl" {
 }
 
 data "vcd_rde_behavior_invocation" "invoke" {
-  rde_id      = vcd_rde.rde.id
-  behavior_id = vcd_rde_interface_behavior.behavior.id
+  rde_id            = vcd_rde.rde.id
+  behavior_id       = vcd_rde_interface_behavior.behavior.id
+  invoke_on_refresh = true
 }
 
 output "rde_behavior_invocation_output" {
   value = data.vcd_rde_behavior_invocation.invoke.result
 }
 ```
-
-## Known caveats
-
-* Executing a `terraform destroy` will cause a refresh that will invoke the Behavior. To avoid this situation, you can
-  remove the `vcd_rde_behavior_invocation` data source from the HCL configuration before running the destroy operation,
-  or use the `-refresh=false` flag (this will skip the refresh for all resources).
 
 ## Argument Reference
 
@@ -92,6 +84,8 @@ The following arguments are supported:
   the [RDE Interface Behavior](/providers/vmware/vcd/latest/docs/resources/rde_type_behavior) to invoke
 * `arguments` - (Optional) A map with the arguments of the invocation
 * `metadata` - (Optional) A map with the metadata of the invocation
+* `invoke_on_refresh` - (Optional) Defaults to `true`, indicates whether the Behavior should be invoked on every refresh.
+  E.g. to suppress the invocation on the refresh step of `terraform destroy` operations, or to stop invoking a given Behavior temporarily.
 
 ## Attribute Reference
 

@@ -54,17 +54,17 @@ func TestResourceInfoProviders(t *testing.T) {
 					// are what we expect
 					logState(t.Name()),
 					// Running as system administrator, we find every Org
-					checkListForKnownItem("orgs_system", "System", true, false),
-					checkListForKnownItem("orgs_system", org1, true, false),
-					checkListForKnownItem("orgs_system", org2, true, false),
+					checkListForKnownItem("orgs_system", "System", "", true, false),
+					checkListForKnownItem("orgs_system", org1, "", true, false),
+					checkListForKnownItem("orgs_system", org2, "", true, false),
 					// Running as Org1 user, we only find the current org and fail to find any others
-					checkListForKnownItem("orgs1", org1, true, false),
-					checkListForKnownItem("orgs1", org2, false, false),
-					checkListForKnownItem("orgs1", "System", false, false),
+					checkListForKnownItem("orgs1", org1, "", true, false),
+					checkListForKnownItem("orgs1", org2, "", false, false),
+					checkListForKnownItem("orgs1", "System", "", false, false),
 					// Running as Org2 user, we only find Org2, but not Org1, or System
-					checkListForKnownItem("orgs2", org2, true, false),
-					checkListForKnownItem("orgs2", org1, false, false),
-					checkListForKnownItem("orgs2", "System", false, false),
+					checkListForKnownItem("orgs2", org2, "", true, false),
+					checkListForKnownItem("orgs2", org1, "", false, false),
+					checkListForKnownItem("orgs2", "System", "", false, false),
 				),
 			},
 		},

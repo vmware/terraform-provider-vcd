@@ -208,9 +208,9 @@ variable "tkgm_ova_folder" {
   type        = string
 }
 
-variable "tkgm_ova_file" {
-  description = "TKGm OVA file name, with no path (Example: 'ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova')"
-  type        = string
+variable "tkgm_ova_files" {
+  description = "TKGm OVA file names, with no path (Example: 'ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc.ova')"
+  type        = set(string)
 }
 
 variable "cse_ova_folder" {
