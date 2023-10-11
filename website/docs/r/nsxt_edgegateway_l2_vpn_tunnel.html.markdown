@@ -36,8 +36,8 @@ resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "server-session" {
   name        = "server-session"
   description = "example description"
 
-  session_mode             = "SERVER"
-  enabled                  = true
+  session_mode              = "SERVER"
+  enabled                   = true
   connector_initiation_mode = "ON_DEMAND"
 
   # must be sub-allocated on the Edge Gateway
