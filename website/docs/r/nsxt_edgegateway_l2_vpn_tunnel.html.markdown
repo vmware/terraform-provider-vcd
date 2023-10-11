@@ -38,7 +38,7 @@ resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "server-session" {
 
   session_mode             = "SERVER"
   enabled                  = true
-  connector_initiator_mode = "ON_DEMAND"
+  connector_initiation_mode = "ON_DEMAND"
 
   # must be sub-allocated on the Edge Gateway
   local_endpoint_ip  = "10.10.50.2"
@@ -46,7 +46,7 @@ resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "server-session" {
   remote_endpoint_ip = "1.2.2.3"
 
   stretched_network {
-    network_id = data.vcd_routed_network_v2.test_network_server.id
+    network_id = data.vcd_network_routed_v2.test_network_server.id
   }
 
   pre_shared_key = "secret_passphrase"
@@ -70,13 +70,13 @@ resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "client-session" {
   remote_endpoint_ip = "1.2.2.3"
 
   stretched_network {
-    network_id = data.vcd_routed_network_v2.test_network_client.id
+    network_id = data.vcd_network_routed_v2.test_network_client.id
     # CLIENT sessions need to define a tunnel ID for every stretched network
     tunnel_id = 1
   }
 
   stretched_network {
-    network_id = data.vcd_routed_network_v2.test_network_client_other.id
+    network_id = data.vcd_network_routed_v2.test_network_client_other.id
     tunnel_id  = 2
   }
 
@@ -99,7 +99,7 @@ The following arguments are supported:
 * `session_mode` - (Required) Mode of the tunnel session (SERVER or CLIENT)
 * `enabled` - (Optional) State of the `SERVER` session, always set to `true` for `CLIENT` 
   sessions. Default is `true`.
-* `connector_initiator_mode` - (Required for `SERVER` sessions) Mode in which 
+* `connector_initiation_mode` - (Required for `SERVER` sessions) Mode in which 
   the connection is formed. Only relevant to `SERVER` sessions. One of:
 	* `INITIATOR` - Local endpoint initiates tunnel setup and will also respond to 
   incoming tunnel setup requests from the peer gateway.
@@ -129,7 +129,7 @@ corresponds to the device on the remote site terminating the VPN tunnel.
 ## Stretched network
 
 * `network_id` - (Required) Network ID of a routed network on the Edge Gateway. 
-  Can be looked up using [`vcd_routed_network_v2`](/providers/vmware/vcd/latest/docs/data-sources/network_routed_v2) 
+  Can be looked up using [`vcd_network_routed_v2`](/providers/vmware/vcd/latest/docs/data-sources/network_routed_v2) 
   datasource.
 * `tunnel_id` - (Optional) Tunnel ID of the network on the tunnel, required for 
   `CLIENT` sessions, computed for `SERVER` sessions.

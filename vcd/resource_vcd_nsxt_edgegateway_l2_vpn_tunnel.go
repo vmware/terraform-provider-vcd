@@ -102,9 +102,8 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnel() *schema.Resource {
 					"It is a computed field for SERVER sessions and is a required field for CLIENT sessions.",
 			},
 			"stretched_network": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				// DHCP forwarding supports up to 8 IP addresses
+				Type:        schema.TypeSet,
+				Optional:    true,
 				Description: "Org VDC networks that are attached to the L2 VPN tunnel",
 				Elem:        stretchedNetwork,
 			},
