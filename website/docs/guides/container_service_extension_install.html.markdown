@@ -384,18 +384,18 @@ so we can perform a smooth upgrade.
 ```hcl
 resource "vcd_rde_type" "vcdkeconfig_type_v110" {
   # Same attributes as v4.1, except for:
-  version       = "1.1.0" # New version
+  version = "1.1.0" # New version
   # New schema:
-  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/vcdkeconfig-type-schema-v1.1.0.json"
+  schema_url = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/vcdkeconfig-type-schema-v1.1.0.json"
 }
 
 resource "vcd_rde_type" "capvcdcluster_type_v120" {
   # Same attributes as v4.1, except for:
-  version       = "1.2.0" # New version
+  version = "1.2.0" # New version
   # New schema:
-  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/capvcd-type-schema-v1.2.0.json"
+  schema_url = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/capvcd-type-schema-v1.2.0.json"
   # Notice that the new interface cse:capvcd:1.0.0 is used
-  interface_ids = [data.vcd_rde_interface.kubernetes_interface.id, vcd_rde_interface.cse_interface.id ]
+  interface_ids = [data.vcd_rde_interface.kubernetes_interface.id, vcd_rde_interface.cse_interface.id]
   # Behaviors need to be created before any RDE Type
   depends_on = [vcd_rde_interface_behavior.capvcd_behavior]
 }
