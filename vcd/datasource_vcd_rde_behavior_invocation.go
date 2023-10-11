@@ -7,8 +7,8 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-// This data source is quite special, as it represents an imperative call to a function (aka invoking a behavior)
-// in the declarative world of Terraform. Despite being a data source, whose goal is to perform Read-only operations, invocations
+// This data source is unusual, as it represents an imperative call to a function (aka invoking a behavior)
+// in the declarative world of Terraform. Despite being a data source, whose goal is to perform read-only operations, invocations
 // can mutate RDE contents. The nature of this one is similar to the built-in "http" provider, which has the "http_http" data source
 // that can perform "PUT"/"POST"/"DELETE" operations.
 func datasourceVcdRdeBehaviorInvocation() *schema.Resource {
