@@ -122,6 +122,8 @@
     "edgeGateway": "nsxt-gw",
     "//": "Existing NSX-T segment to test Org VDC Imported network",
     "nsxtImportSegment": "import-segment",
+    "//": "Existing NSX-T segment to test Edge Gateway Uplinks",
+    "nsxtImportSegment2": "import-segment2",
     "//": "Existing NSX-T Edge Cluster",
     "nsxtEdgeCluster": "edgeCluster1"
   },
