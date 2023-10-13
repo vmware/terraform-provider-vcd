@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_nsxt\_edgegateway\_l2\_vpn\_tunnel
 
-Supported in provider *v3.11+* and VCD *10.4+* with NSX-T
+Supported in provider *v3.11+* and VCD *10.4+* with NSX-T.
 
 Provides a resource to manage NSX-T Edge Gateway L2 VPN Tunnel sessions and their configurations.
 <a id="example-usage"></a>
@@ -55,7 +55,7 @@ resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "server-session" {
 resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "client-session" {
   org = "datacloud"
 
-  # Note that this is a different edge gateway, as one edge gateway
+  # Note that this is a different Edge Gateway, as one Edge Gateway
   # can function only in SERVER or CLIENT mode
   edge_gateway_id = data.vcd_nsxt_edgegateway.client-testing.id
 
@@ -71,7 +71,7 @@ resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "client-session" {
 
   stretched_network {
     network_id = data.vcd_network_routed_v2.test_network_client.id
-    # CLIENT sessions need to define a tunnel ID for every stretched network
+    # CLIENT mode sessions need to define a tunnel ID for every stretched network
     tunnel_id = 1
   }
 
@@ -92,15 +92,15 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at 
   provider level. Useful when connected as sysadmin working across different organisations
-* `edge_gateway_id` - (Required) The ID of the edge gateway (NSX-T only). 
+* `edge_gateway_id` - (Required) The ID of the Edge Gateway (NSX-T only). 
   Can be looked up using [`vcd_nsxt_edgegateway`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edgegateway) data source
 * `name` - (Required) The name of the tunnel.
 * `description` - (Optional) The description of the tunnel.
-* `session_mode` - (Required) Mode of the tunnel session (SERVER or CLIENT)
-* `enabled` - (Optional) State of the `SERVER` session, always set to `true` for `CLIENT` 
-  sessions. Default is `true`.
-* `connector_initiation_mode` - (Required for `SERVER` sessions) Mode in which 
-  the connection is formed. Only relevant to `SERVER` sessions. One of:
+* `session_mode` - (Required) Mode of the tunnel session (SERVER or CLIENT).
+* `enabled` - (Optional) State of the `SERVER` mode session, always set to `true` for `CLIENT` 
+  mode sessions. Default is `true`.
+* `connector_initiation_mode` - (Optional) Mode in which the connection is formed. 
+  Required for `SERVER` mode sessions. One of:
 	* `INITIATOR` - Local endpoint initiates tunnel setup and will also respond to 
   incoming tunnel setup requests from the peer gateway.
 	* `RESPOND_ONLY` - Local endpoint shall only respond to incoming tunnel setup 
@@ -114,14 +114,14 @@ The following arguments are supported:
 * `remote_endpoint_ip` - (Required) The IP address of the remote endpoint, which 
 corresponds to the device on the remote site terminating the VPN tunnel.
 * `tunnel_interface` - (Optional) The network CIDR block over which the session 
-  interfaces. Relevant only for SERVER session modes. If not provided, Cloud 
+  interfaces. Relevant only for `SERVER` mode sessions. If not provided, Cloud 
   Director will attempt to automatically allocate a tunnel interface.
-* `pre_shared_key` - (Required for `SERVER` sessions) The key that is used for 
-  authenticating the connection, only needed for `SERVER` sessions.
+* `pre_shared_key` - (Optional) The key that is used for authenticating the 
+  connection. Required for `SERVER` mode sessions.
 * `peer_code` - (Optional) Encoded string that contains the whole configuration 
-  of a `SERVER` session including the pre-shared key so it is user's 
-  responsibility to secure it. Computed for `SERVER` sessions, required for 
-  `CLIENT` sessions. See [example](#example-usage) 
+  of a `SERVER` mode session including the pre-shared key so it is user's 
+  responsibility to secure it. Computed for `SERVER` mode sessions, required for 
+  `CLIENT` mode sessions. See [example](#example-usage) 
   for a solution implemented fully in Terraform.
 * `stretched_network` - (Optional) One or more stretched networks for the tunnel. 
   See [`stretched_network`](#stretched-network) for more detail.
@@ -131,8 +131,8 @@ corresponds to the device on the remote site terminating the VPN tunnel.
 * `network_id` - (Required) Network ID of a routed network on the Edge Gateway. 
   Can be looked up using [`vcd_network_routed_v2`](/providers/vmware/vcd/latest/docs/data-sources/network_routed_v2) 
   datasource.
-* `tunnel_id` - (Optional) Tunnel ID of the network on the tunnel, required for 
-  `CLIENT` sessions, computed for `SERVER` sessions.
+* `tunnel_id` - (Optional) Tunnel ID of the network on the tunnel. Required for 
+  `CLIENT` mode sessions, computed for `SERVER` mode sessions.
 
 ## Importing
 

@@ -20,7 +20,7 @@ func datasourceVcdNsxtEdgegatewayL2VpnTunnel() *schema.Resource {
 			"edge_gateway_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Edge gateway ID for the tunnel",
+				Description: "Edge Gateway ID for the tunnel",
 			},
 			"name": {
 				Type:        schema.TypeString,

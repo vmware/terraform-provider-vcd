@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_nsxt\_edgegateway\_l2\_vpn\_tunnel
 
-Supported in provider *v3.11+* and VCD *10.4+* with NSX-T
+Supported in provider *v3.11+* and VCD *10.4+* with NSX-T.
 
 Provides a data source to read NSX-T Edge Gateway L2 VPN Tunnel sessions and their configurations.
 
@@ -39,7 +39,7 @@ data "vcd_nsxt_edgegateway_l2_vpn_tunnel" "server-session" {
 resource "vcd_nsxt_edgegateway_l2_vpn_tunnel" "client-session" {
   org = "datacloud"
 
-  # Note that this is a different edge gateway, as one edge gateway
+  # Note that this is a different Edge Gateway, as one Edge Gateway
   # can function only in SERVER or CLIENT mode
   edge_gateway_id = data.vcd_nsxt_edgegateway.client-testing.id
 
@@ -60,7 +60,7 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at 
   provider level. Useful when connected as sysadmin working across different organisations
-* `edge_gateway_id` - (Required) The ID of the edge gateway (NSX-T only). 
+* `edge_gateway_id` - (Required) The ID of the Edge Gateway (NSX-T only). 
   Can be looked up using [`vcd_nsxt_edgegateway`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edgegateway) data source
 * `name` - (Required) The name of the tunnel.
 

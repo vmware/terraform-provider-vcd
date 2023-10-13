@@ -35,7 +35,7 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnel() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge gateway ID for the tunnel",
+				Description: "Edge Gateway ID for the tunnel",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -170,7 +170,7 @@ func genericNsxtEdgegatewayL2VpnTunnelRead(_ context.Context, d *schema.Resource
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
-		return diag.Errorf("[L2 VPN Tunnel read] error retrieving edge gateway: %s", err)
+		return diag.Errorf("[L2 VPN Tunnel read] error retrieving Edge Gateway: %s", err)
 	}
 
 	tunnelName := d.Get("name").(string)
@@ -205,7 +205,7 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelUpdate(ctx context.Context, d *schema.
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
-		return diag.Errorf("[L2 VPN Tunnel update] error retrieving edge gateway: %s", err)
+		return diag.Errorf("[L2 VPN Tunnel update] error retrieving Edge Gateway: %s", err)
 	}
 
 	tunnel, err := nsxtEdge.GetL2VpnTunnelById(d.Id())
@@ -233,7 +233,7 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelDestroy(ctx context.Context, d *schema
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
-		return diag.Errorf("[L2 VPN Tunnel destroy] error retrieving edge gateway: %s", err)
+		return diag.Errorf("[L2 VPN Tunnel destroy] error retrieving Edge Gateway: %s", err)
 	}
 
 	tunnel, err := nsxtEdge.GetL2VpnTunnelById(d.Id())
