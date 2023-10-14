@@ -4,10 +4,10 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 type containerInfo struct {
@@ -65,41 +65,47 @@ func getRightsContainerInfo() (map[string]containerInfo, error) {
 	if globalRoles[0].GlobalRole.PublishAll != nil {
 		published = *globalRoles[0].GlobalRole.PublishAll
 	}
-	tenants, err := globalRoles[0].GetTenants(nil)
+	grTenants, err := globalRoles[0].GetTenants(nil)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving global role %s tenants: %s", globalRoles[0].GlobalRole.Name, err)
 	}
+	numGrTenants := len(grTenants)
 	containers["vcd_global_role"] = containerInfo{
 		name:      globalRoles[0].GlobalRole.Name,
 		rights:    len(rights),
-		tenants:   len(tenants),
+		tenants:   numGrTenants,
 		published: published,
 	}
 
-	rightBundles, err := vcdClient.Client.GetAllRightsBundles(nil)
+	rightsBundles, err := vcdClient.Client.GetAllRightsBundles(nil)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving rights bundles : %s", err)
 	}
-	if len(rightBundles) == 0 {
+	if len(rightsBundles) == 0 {
 		return nil, fmt.Errorf("no rights bundles found:  %s", err)
 	}
-	rights, err = rightBundles[0].GetRights(nil)
+	rightsBundle := rightsBundles[0]
+	rights, err = rightsBundle.GetRights(nil)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving rights bundle %s rights: %s", rightBundles[0].RightsBundle.Name, err)
+		return nil, fmt.Errorf("error retrieving rights bundle %s rights: %s", rightsBundle.RightsBundle.Name, err)
 	}
-	tenants, err = rightBundles[0].GetTenants(nil)
+	rbTenants, err := rightsBundle.GetTenants(nil)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving rights bundle %s tenants: %s", globalRoles[0].GlobalRole.Name, err)
+		return nil, fmt.Errorf("error retrieving rights bundle %s tenants: %s", rightsBundle.RightsBundle.Name, err)
 	}
 	published = false
-	if rightBundles[0].RightsBundle.PublishAll != nil {
-		published = *rightBundles[0].RightsBundle.PublishAll
+	if rightsBundle.RightsBundle.PublishAll != nil {
+		published = *rightsBundle.RightsBundle.PublishAll
 	}
 
+	numRbTenants := len(rbTenants)
+	if published {
+		numRbTenants = 0
+	}
 	containers["vcd_rights_bundle"] = containerInfo{
-		name:      rightBundles[0].RightsBundle.Name,
+		name:      rightsBundle.RightsBundle.Name,
 		rights:    len(rights),
-		tenants:   len(tenants),
+		tenants:   numRbTenants,
 		published: published,
 	}
 
@@ -121,7 +127,7 @@ func getRightsContainerInfo() (map[string]containerInfo, error) {
 	return containers, nil
 }
 
-func TestAccVcdRightsContainers(t *testing.T) {
+func TestAccVcdRightsContainers1(t *testing.T) {
 	preTestChecks(t)
 
 	skipIfNotSysAdmin(t)
