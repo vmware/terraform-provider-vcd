@@ -16,7 +16,7 @@ import (
 // with the risk of taking a different element in different takes, and missing some nuances.
 //
 // The new version of the test creates one data source for each element of each type (except vcd_right, for which we only
-// take the first 10)
+// take the ones with 3 or more implied rights)
 
 // getAllRightsContainerInfo retrieves all containers of rights (roles, global roles, rights bundles), and return some
 // information about each of them for further processing.
