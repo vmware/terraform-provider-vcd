@@ -671,7 +671,7 @@ func getNsxtEdgeGatewayList(d *schema.ResourceData, meta interface{}) (list []st
 					return nil, fmt.Errorf("neither a VDC or a VDC group found with name '%s'", parentName)
 				}
 			} else {
-				return nil, fmt.Errorf(" error retrieving VDC group '%s': %s", parentName, err)
+				return nil, fmt.Errorf("error retrieving VDC group '%s': %s", parentName, err)
 			}
 		}
 	}
