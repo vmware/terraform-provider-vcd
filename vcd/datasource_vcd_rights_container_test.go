@@ -28,7 +28,7 @@ type containerInfo struct {
 
 // getAllRightsContainerInfo retrieves all containers of rights (roles, global roles, rights bundles), and return some
 // information about each of them for further processing.
-// Additionally, it returns information about 10 rights (using all of them in a test would be impractical)
+// Additionally, it returns information about rights with > 3 implied rights (using all of them in a test would be impractical)
 func getAllRightsContainerInfo() (map[string][]containerInfo, error) {
 
 	var containers = make(map[string][]containerInfo)
