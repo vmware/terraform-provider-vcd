@@ -18,6 +18,8 @@ then
     exit 1
 fi
 
+source ./scripts/gosec-config.sh
+
 function exists_in_path {
     what=$1
     for dir in $(echo $PATH | tr ':' ' ')
