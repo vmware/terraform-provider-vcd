@@ -243,7 +243,8 @@ func resourceNetworkPoolCreate(ctx context.Context, d *schema.ResourceData, meta
 			networkPoolName,
 			networkPoolDescription,
 			networkPoolProvider.Name,
-			transportZoneName)
+			transportZoneName,
+			types.BackingUseFirstAvailable) // TODO: update to user choice
 	case types.NetworkPoolVlanType:
 		var dsName string
 		var ranges []types.VlanIdRange
@@ -259,7 +260,8 @@ func resourceNetworkPoolCreate(ctx context.Context, d *schema.ResourceData, meta
 			networkPoolDescription,
 			networkPoolProvider.Name,
 			dsName,
-			ranges)
+			ranges,
+			types.BackingUseFirstAvailable) // TODO: update to user choice
 	case types.NetworkPoolPortGroupType:
 		var pgName string
 		if backing != nil {
@@ -272,7 +274,8 @@ func resourceNetworkPoolCreate(ctx context.Context, d *schema.ResourceData, meta
 			networkPoolName,
 			networkPoolDescription,
 			networkPoolProvider.Name,
-			pgName)
+			pgName,
+			types.BackingUseFirstAvailable) // TODO: update to user choice
 	}
 
 	if err != nil {
