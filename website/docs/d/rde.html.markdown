@@ -16,7 +16,7 @@ can only retrieve **unique RDEs**.
 
 Supported in provider *v3.9+*
 
-## Example Usage with a JSON file
+## Example Usage
 
 ```hcl
 data "vcd_rde_type" "my_type" {
