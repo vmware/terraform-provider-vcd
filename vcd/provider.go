@@ -138,6 +138,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_rde_interface_behavior":                    datasourceVcdRdeInterfaceBehavior(),             // 3.10
 	"vcd_rde_type_behavior":                         datasourceVcdRdeTypeBehavior(),                  // 3.10
 	"vcd_rde_type_behavior_acl":                     datasourceVcdRdeTypeBehaviorAccessLevel(),       // 3.10
+	"vcd_rde_behavior_invocation":                   datasourceVcdRdeBehaviorInvocation(),            // 3.11
 }
 
 var globalResourceMap = map[string]*schema.Resource{

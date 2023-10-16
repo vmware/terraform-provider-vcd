@@ -54,6 +54,13 @@ func datasourceVcdRdeType() *schema.Resource {
 				Computed:    true,
 				Description: "An external entity's ID that this definition may apply to",
 			},
+			"hook": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Description: "Blocks that map RDE lifecycle events to existing Behaviors, that are" +
+					"automatically invoked when the corresponding event is triggered",
+				Elem: getRdeTypeHookSchema(true),
+			},
 			"inherited_version": {
 				Type:     schema.TypeString,
 				Computed: true,
