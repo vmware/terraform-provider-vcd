@@ -327,7 +327,7 @@ func vimObjectRefToMoref(input *types.VimObjectRef) string {
 }
 
 // ObjectMap extracts an array of wanted elements from an array of complex objects.
-// The Input type is the complex object
+// The Input type is the complex object.
 // The Output type could be a simple data type, such as a string or a number, but could
 // also be a different object.
 // The conversion is performed by the f function, which takes one complex input object and

@@ -372,8 +372,8 @@ resource "vcd_rde_interface_behavior" "capvcd_behavior" {
 }
 
 resource "vcd_rde_type_behavior_acl" "capvcd_behavior_acl" {
-  rde_type_id = vcd_rde_type.capvcdcluster_type_v120.id # This definition is below
-  behavior_id = vcd_rde_interface_behavior.capvcd_behavior.id
+  rde_type_id      = vcd_rde_type.capvcdcluster_type_v120.id # This definition is below
+  behavior_id      = vcd_rde_interface_behavior.capvcd_behavior.id
   access_level_ids = ["urn:vcloud:accessLevel:FullControl"]
 }
 ```
