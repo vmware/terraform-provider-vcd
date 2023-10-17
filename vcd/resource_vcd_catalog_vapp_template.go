@@ -302,16 +302,6 @@ func vappTemplateLeaseUpdate(vcdClient *VCDClient, vAppTemplate *govcd.VAppTempl
 		rawLeaseSection2 := rawLeaseSection1.([]interface{})
 		leaseSection := rawLeaseSection2[0].(map[string]interface{})
 		storageLease = leaseSection["storage_lease_in_sec"].(int)
-	} else {
-		// No lease block: we read the lease defaults from the Org
-		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
-		if err != nil {
-			return fmt.Errorf("error retrieving admin Org from parent Org in vApp Template %s: %s", vAppTemplate.VAppTemplate.Name, err)
-		}
-		if adminOrg.AdminOrg.OrgSettings == nil || adminOrg.AdminOrg.OrgSettings.OrgVAppTemplateSettings == nil {
-			return fmt.Errorf("error retrieving Org lease settings")
-		}
-		storageLease = *adminOrg.AdminOrg.OrgSettings.OrgVAppTemplateSettings.StorageLeaseSeconds
 	}
 
 	if storageLease != vAppTemplate.VAppTemplate.LeaseSettingsSection.StorageLeaseInSeconds {
