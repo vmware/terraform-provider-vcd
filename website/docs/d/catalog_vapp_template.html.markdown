@@ -121,8 +121,6 @@ The following arguments are supported:
 * `lease` - (*v3.11+*) - The information about the vApp Template lease. It includes the following field:
   * `storage_lease_in_sec` - How long the vApp Template is available before being automatically deleted or marked as expired. 0 means never expires (or maximum allowed by parent Org allows).
 
-
-
 ## Filter arguments
 
 * `name_regex` - (Optional) matches the name using a regular expression.
