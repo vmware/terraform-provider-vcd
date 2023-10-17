@@ -38,12 +38,12 @@ worker_machine_count        = "1" # MUST higher than 0
 
 # Control plane dimensioning
 control_plane_sizing_policy    = "TKG small" # An existing VM Sizing Policy, created during CSE installation, for control plane nodes
-control_plane_placement_policy = ""          # An existing VM Placement Policy for control plane nodes
+control_plane_placement_policy = "\"\""      # An existing VM Placement Policy for control plane nodes
 control_plane_storage_profile  = "*"         # An existing Storage Profile for control plane nodes
 
 # Worker dimensioning
 worker_sizing_policy    = "TKG small" # An existing VM Sizing Policy, created during CSE installation, for worker nodes
-worker_placement_policy = ""          # An existing VM Placement Policy for worker nodes
+worker_placement_policy = "\"\""      # An existing VM Placement Policy for worker nodes
 worker_storage_profile  = "*"         # An existing Storage Profile for worker nodes
 
 # Storage and TKGm OVA
