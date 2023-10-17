@@ -21,6 +21,7 @@ func TestAccVcdRde(t *testing.T) {
 
 	var params = StringMap{
 		"FuncName":       t.Name() + "-Step1-and-2",
+		"Org":            testConfig.VCD.Org,
 		"ProviderSystem": providerVcdSystem,
 		"ProviderOrg1":   providerVcdOrg1,
 		"Nss":            "nss",
@@ -102,7 +103,7 @@ func TestAccVcdRde(t *testing.T) {
 					// This function needs to be called with fresh clients (no cached ones), as it modifies
 					// rights of the tenant user.
 					addRightsToTenantUser(t, vcdClient, params["Vendor"].(string), params["Nss"].(string))
-					// We need to invalidate existing client cache and start a new one as the rights for the tenant user have changed, hece
+					// We need to invalidate existing client cache and start a new one as the rights for the tenant user have changed, hence
 					// we can't reuse existing sessions
 					cachedVCDClients.reset()
 				},
@@ -291,6 +292,7 @@ const testAccVcdRde1 = testAccVcdRdePrerequisites + `
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 
+  org          = "{{.Org}}"
   rde_type_id  = vcd_rde_type.rde_type.id
   name         = "{{.Name}}file"
   resolve      = {{.Resolve}}
@@ -302,6 +304,7 @@ resource "vcd_rde" "rde_file" {
 resource "vcd_rde" "rde_url" {
   provider = {{.ProviderSystem}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}url"
   resolve            = {{.Resolve}}
@@ -313,6 +316,7 @@ resource "vcd_rde" "rde_url" {
 resource "vcd_rde" "rde_naughty" {
   provider = {{.ProviderSystem}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}naughty"
   resolve      		 = {{.Resolve}}
@@ -325,6 +329,7 @@ resource "vcd_rde" "rde_naughty" {
 resource "vcd_rde" "rde_tenant" {
   provider = {{.ProviderOrg1}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}tenant"
   resolve            = {{.Resolve}}
@@ -340,6 +345,7 @@ const testAccVcdRde2 = testAccVcdRdePrerequisites + `
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}file-updated" # Updated name
   resolve            = {{.Resolve}}
@@ -352,6 +358,7 @@ resource "vcd_rde" "rde_file" {
 resource "vcd_rde" "rde_url" {
   provider = {{.ProviderSystem}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}url-updated" # Updated name
   resolve            = {{.Resolve}}
@@ -367,6 +374,7 @@ const testAccVcdRde3 = testAccVcdRdePrerequisites + `
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}file-updated" # Updated name
   resolve            = {{.Resolve}}
@@ -379,6 +387,7 @@ resource "vcd_rde" "rde_file" {
 resource "vcd_rde" "rde_url" {
   provider = {{.ProviderSystem}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}url-updated" # Updated name
   resolve            = {{.Resolve}}
@@ -391,6 +400,7 @@ resource "vcd_rde" "rde_url" {
 resource "vcd_rde" "rde_naughty" {
   provider = {{.ProviderSystem}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}naughty"
   resolve            = {{.Resolve}}
@@ -403,6 +413,7 @@ resource "vcd_rde" "rde_naughty" {
 resource "vcd_rde" "rde_tenant" {
   provider = {{.ProviderOrg1}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}tenant-updated" # Updated name
   resolve            = {{.Resolve}}
@@ -480,21 +491,21 @@ func importStateIdRde(vendor, nss, version, name, position string, list bool) re
 func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, nss string) {
 	role, err := vcdClient.VCDClient.Client.GetGlobalRoleByName("Organization Administrator")
 	if err != nil {
-		t.Errorf("could not get Organization Administrator global role: %s", err)
+		t.Fatalf("could not get Organization Administrator global role: %s", err)
 	}
 	rightsBundleName := fmt.Sprintf("%s:%s Entitlement", vendor, nss)
 	rightsBundle, err := vcdClient.VCDClient.Client.GetRightsBundleByName(rightsBundleName)
 	if err != nil {
-		t.Errorf("could not get '%s' rights bundle: %s", rightsBundleName, err)
+		t.Fatalf("could not get '%s' rights bundle: %s", rightsBundleName, err)
 	}
 	err = rightsBundle.PublishAllTenants()
 	if err != nil {
-		t.Errorf("could not publish '%s' rights bundle to all tenants: %s", rightsBundleName, err)
+		t.Fatalf("could not publish '%s' rights bundle to all tenants: %s", rightsBundleName, err)
 	}
 
 	rights, err := rightsBundle.GetRights(nil)
 	if err != nil {
-		t.Errorf("could not get rights from '%s' rights bundle: %s", rightsBundleName, err)
+		t.Fatalf("could not get rights from '%s' rights bundle: %s", rightsBundleName, err)
 	}
 	var rightsToAdd []types.OpenApiReference
 	for _, right := range rights {
@@ -507,7 +518,7 @@ func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, nss strin
 	}
 	err = role.AddRights(rightsToAdd)
 	if err != nil {
-		t.Errorf("could not add rights '%v' to role '%s'", rightsToAdd, role.GlobalRole.Name)
+		t.Fatalf("could not add rights '%v' to role '%s'", rightsToAdd, role.GlobalRole.Name)
 	}
 }
 
@@ -515,13 +526,13 @@ func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, nss strin
 func manipulateRde(t *testing.T, vcdClient *VCDClient, rdeId string) {
 	rde, err := vcdClient.GetRdeById(rdeId)
 	if err != nil {
-		t.Errorf("could not get RDE with ID '%s': %s", rdeId, err)
+		t.Fatalf("could not get RDE with ID '%s': %s", rdeId, err)
 	}
 
 	rde.DefinedEntity.Entity["bar"] = "stringValueChanged"
 
 	err = rde.Update(*rde.DefinedEntity)
 	if err != nil {
-		t.Errorf("could not update RDE with ID '%s': %s", rdeId, err)
+		t.Fatalf("could not update RDE with ID '%s': %s", rdeId, err)
 	}
 }
