@@ -1,0 +1,1 @@
+* Improve `TestAccVcdIpv6Support` to avoid subnet clashes [GH-1133]

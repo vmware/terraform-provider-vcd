@@ -138,6 +138,8 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_rde_interface_behavior":                    datasourceVcdRdeInterfaceBehavior(),             // 3.10
 	"vcd_rde_type_behavior":                         datasourceVcdRdeTypeBehavior(),                  // 3.10
 	"vcd_rde_type_behavior_acl":                     datasourceVcdRdeTypeBehaviorAccessLevel(),       // 3.10
+	"vcd_nsxt_edgegateway_l2_vpn_tunnel":            datasourceVcdNsxtEdgegatewayL2VpnTunnel(),       // 3.11
+	"vcd_rde_behavior_invocation":                   datasourceVcdRdeBehaviorInvocation(),            // 3.11
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -239,6 +241,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_rde_interface_behavior":                    resourceVcdRdeInterfaceBehavior(),             // 3.10
 	"vcd_rde_type_behavior":                         resourceVcdRdeTypeBehavior(),                  // 3.10
 	"vcd_rde_type_behavior_acl":                     resourceVcdRdeTypeBehaviorAccessLevel(),       // 3.10
+	"vcd_nsxt_edgegateway_l2_vpn_tunnel":            resourceVcdNsxtEdgegatewayL2VpnTunnel(),       // 3.11
 }
 
 // Provider returns a terraform.ResourceProvider.
