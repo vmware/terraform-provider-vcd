@@ -88,6 +88,7 @@ To customise it, the [sample configuration][step1] asks for the following variab
   this will avoid installation errors caused by GitHub rate limiting, as the TKGm cluster creation process requires downloading
   some Kubernetes components from GitHub.
   The token should have the `public_repo` scope for classic tokens and `Public Repositories` for fine-grained tokens.
+- `bootstrap_vm_sizing_policy`: The [VM Sizing Policy][sizing] used by the Bootstrap VM.
 - `http_proxy`: Address of your HTTP proxy server. Optional in the sample configuration.
 - `https_proxy`: Address of your HTTPS proxy server. Optional in the sample configuration.
 - `no_proxy`: A list of comma-separated domains without spaces that indicate the targets that must **not** go through the configured proxy. Optional in the sample configuration.
