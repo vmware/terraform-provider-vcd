@@ -91,11 +91,11 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 func checkFileContentsAreEqual(fileName1, fileName2 string) resource.TestCheckFunc {
 
 	return func(s *terraform.State) error {
-		contents1, err := os.ReadFile(fileName1)
+		contents1, err := os.ReadFile(fileName1) // #nosec G304 -- file name under control used for testing
 		if err != nil {
 			return err
 		}
-		contents2, err := os.ReadFile(fileName2)
+		contents2, err := os.ReadFile(fileName2) // #nosec G304 -- file name under control used for testing
 		if err != nil {
 			return err
 		}
