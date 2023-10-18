@@ -248,7 +248,7 @@ data "vcd_catalog" "{{.Catalog}}" {
 }
 
 resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
-  org  = "{{.Org}}"
+  org        = "{{.Org}}"
   catalog_id = data.vcd_catalog.{{.Catalog}}.id
 
   name                 = "{{.CatalogMediaName}}"
@@ -258,7 +258,7 @@ resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
   show_upload_progress = "{{.UploadProgress}}"
 
   metadata = {
-    mediaItem_metadata = "mediaItem Metadata v2"
+    mediaItem_metadata  = "mediaItem Metadata v2"
     mediaItem_metadata2 = "mediaItem Metadata2 v2"
     mediaItem_metadata3 = "mediaItem Metadata3"
   }
