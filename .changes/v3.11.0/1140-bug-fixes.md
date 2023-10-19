@@ -1,0 +1,1 @@
+* Fix organization retrieval in `vcd_resource_list` when users fill the "parent" field instead of "org" [GH-1140]
