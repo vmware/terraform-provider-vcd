@@ -476,7 +476,7 @@ func genericResourceVcdProviderVdcRead(ctx context.Context, d *schema.ResourceDa
 		dSet(d, "vcenter_id", extendedProviderVdc.VMWProviderVdc.VimServer[0].ID)
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "provider_vdc", providerVdc)
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_provider_vdc", providerVdc)
 	if diagErr != nil {
 		return diagErr
 	}
