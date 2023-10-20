@@ -118,11 +118,6 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 	debugPrintf("#[DEBUG] CONFIGURATION 11-WrongDomain: %s", wrongDomainHcl)
 
 	// This step creates metadata_entry blocks with empty sub-attributes, to test that the defaults work
-	skipBinary := ""
-	if testOldMetadata {
-		// This one should be skipped for resources that have old metadata attribute
-		skipBinary = "# skip-binary-test\n"
-	}
 	params["FuncName"] = t.Name() + "WithDefaults"
 	params["Metadata"] = fmt.Sprintf(`
 	%s
@@ -133,6 +128,11 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 		getMetadataEntryHcl("numberKey1", "1", "MetadataNumberValue", "", ""),
 		getMetadataEntryHcl("boolKey1", "false", "MetadataBooleanValue", "", ""),
 		getMetadataEntryHcl("dateKey1", "2022-10-01T12:00:00.000Z", "MetadataDateTimeValue", "", ""))
+	skipBinary := ""
+	if testOldMetadata {
+		// This one should be skipped for resources that have old metadata attribute
+		skipBinary = "# skip-binary-test\n"
+	}
 	withDefaults := templateFill(skipBinary+resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 12-WithDefaults: %s", withDefaults)
 
