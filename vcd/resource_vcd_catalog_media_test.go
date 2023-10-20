@@ -11,12 +11,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-var TestAccVcdCatalogMedia = "TestAccVcdCatalogMediaBasic"
-var TestAccVcdCatalogMediaDescription = "TestAccVcdCatalogMediaBasicDescription"
-
 func TestAccVcdCatalogMediaBasic(t *testing.T) {
 	preTestChecks(t)
 
+	var TestAccVcdCatalogMedia = "TestAccVcdCatalogMediaBasic"
+	var TestAccVcdCatalogMediaDescription = "TestAccVcdCatalogMediaBasicDescription"
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
 		"Catalog":          testConfig.VCD.Catalog.Name,
@@ -40,16 +39,25 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckCatalogMediaDestroy,
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testAccCheckCatalogMediaDestroy(TestAccVcdCatalogMedia),
+			testAccCheckCatalogMediaDestroy(TestAccVcdCatalogMedia+"2"),
+			testAccCheckCatalogMediaDestroy(TestAccVcdCatalogMedia+"2-update"),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdCatalogMedia),
+					testAccCheckVcdCatalogMediaExists("vcd_catalog_media.text_file"),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "name", TestAccVcdCatalogMedia),
 					resource.TestCheckResourceAttr(
+						"vcd_catalog_media.text_file", "name", TestAccVcdCatalogMedia+"-2"),
+					resource.TestCheckResourceAttr(
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "description", TestAccVcdCatalogMediaDescription),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_media.text_file", "description", TestAccVcdCatalogMediaDescription+" 2"),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "metadata.mediaItem_metadata", "mediaItem Metadata"),
 					resource.TestCheckResourceAttr(
@@ -68,6 +76,8 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "name", TestAccVcdCatalogMedia),
 					resource.TestCheckResourceAttr(
+						"vcd_catalog_media.text_file", "name", TestAccVcdCatalogMedia+"-2-update"),
+					resource.TestCheckResourceAttr(
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "description", TestAccVcdCatalogMediaDescription),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "metadata.mediaItem_metadata", "mediaItem Metadata v2"),
@@ -83,7 +93,7 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgCatalogObject(TestAccVcdCatalogMedia),
 				// These fields can't be retrieved from catalog media data
-				ImportStateVerifyIgnore: []string{"media_path", "upload_piece_size", "show_upload_progress"},
+				ImportStateVerifyIgnore: []string{"media_path", "upload_piece_size", "show_upload_progress", "upload_any_file"},
 			},
 		},
 	})
@@ -142,32 +152,32 @@ func testAccCheckVcdCatalogMediaExists(mediaName string) resource.TestCheckFunc 
 	}
 }
 
-func testAccCheckCatalogMediaDestroy(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*VCDClient)
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "vcd_catalog_media" && rs.Primary.Attributes["name"] != TestAccVcdCatalogMedia {
-			continue
+func testAccCheckCatalogMediaDestroy(mediaName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "vcd_catalog_media" && rs.Primary.Attributes["name"] != mediaName {
+				continue
+			}
+
+			adminOrg, err := conn.GetAdminOrg(testConfig.VCD.Org)
+			if err != nil {
+				return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
+			}
+
+			catalog, err := adminOrg.GetCatalogByName(testConfig.VCD.Catalog.Name, false)
+			if err != nil {
+				return fmt.Errorf("catalog query %s ended with error: %#v", rs.Primary.ID, err)
+			}
+
+			_, err = catalog.GetMediaByName(mediaName, false)
+			if err == nil {
+				return fmt.Errorf("catalog media %s still exists", mediaName)
+			}
 		}
 
-		adminOrg, err := conn.GetAdminOrg(testConfig.VCD.Org)
-		if err != nil {
-			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
-		}
-
-		catalog, err := adminOrg.GetCatalogByName(testConfig.VCD.Catalog.Name, false)
-		if err != nil {
-			return fmt.Errorf("catalog query %s ended with error: %#v", rs.Primary.ID, err)
-		}
-
-		mediaName := rs.Primary.Attributes["name"]
-		_, err = catalog.GetMediaByName(mediaName, false)
-
-		if err == nil {
-			return fmt.Errorf("catalog media %s still exists", mediaName)
-		}
+		return nil
 	}
-
-	return nil
 }
 
 const testAccCheckVcdCatalogMediaBasic = `
@@ -183,12 +193,23 @@ resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
   description          = "{{.Description}}"
   media_path           = "{{.MediaPath}}"
   upload_piece_size    = {{.UploadPieceSize}}
-  show_upload_progress = "{{.UploadProgress}}"
+  show_upload_progress = {{.UploadProgress}}
 
   metadata = {
     mediaItem_metadata = "mediaItem Metadata"
     mediaItem_metadata2 = "mediaItem Metadata2"
   }
+}
+
+resource "vcd_catalog_media"  "text_file" {
+  catalog_id = data.vcd_catalog.{{.Catalog}}.id
+
+  name                 = "{{.CatalogMediaName}}-2"
+  description          = "{{.Description}} 2"
+  media_path           = "resource_vcd_catalog_media.go"
+  upload_any_file      = true
+  upload_piece_size    = {{.UploadPieceSize}}
+  show_upload_progress = {{.UploadProgress}}
 }
 
 output "creation_date" {
@@ -221,9 +242,14 @@ output "storage_profile_name" {
 }`
 
 const testAccCheckVcdCatalogMediaUpdate = `
-  resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
-  org     = "{{.Org}}"
-  catalog = "{{.Catalog}}"
+data "vcd_catalog" "{{.Catalog}}" {
+  org  = "{{.Org}}"
+  name = "{{.Catalog}}"
+}
+
+resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.{{.Catalog}}.id
 
   name                 = "{{.CatalogMediaName}}"
   description          = "{{.Description}}"
@@ -232,10 +258,21 @@ const testAccCheckVcdCatalogMediaUpdate = `
   show_upload_progress = "{{.UploadProgress}}"
 
   metadata = {
-    mediaItem_metadata = "mediaItem Metadata v2"
+    mediaItem_metadata  = "mediaItem Metadata v2"
     mediaItem_metadata2 = "mediaItem Metadata2 v2"
     mediaItem_metadata3 = "mediaItem Metadata3"
   }
+}
+
+resource "vcd_catalog_media"  "text_file" {
+  catalog_id = data.vcd_catalog.{{.Catalog}}.id
+
+  name                 = "{{.CatalogMediaName}}-2-update"
+  description          = "{{.Description}} 2 update"
+  media_path           = "resource_vcd_catalog_media.go"
+  upload_any_file      = true
+  upload_piece_size    = {{.UploadPieceSize}}
+  show_upload_progress = {{.UploadProgress}}
 }
 `
 
