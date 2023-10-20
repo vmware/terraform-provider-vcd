@@ -118,6 +118,11 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 	debugPrintf("#[DEBUG] CONFIGURATION 11-WrongDomain: %s", wrongDomainHcl)
 
 	// This step creates metadata_entry blocks with empty sub-attributes, to test that the defaults work
+	skipBinary := ""
+	if testOldMetadata {
+		// This one should be skipped for resources that have old metadata attribute
+		skipBinary = "# skip-binary-test\n"
+	}
 	params["FuncName"] = t.Name() + "WithDefaults"
 	params["Metadata"] = fmt.Sprintf(`
 	%s
@@ -128,23 +133,29 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 		getMetadataEntryHcl("numberKey1", "1", "MetadataNumberValue", "", ""),
 		getMetadataEntryHcl("boolKey1", "false", "MetadataBooleanValue", "", ""),
 		getMetadataEntryHcl("dateKey1", "2022-10-01T12:00:00.000Z", "MetadataDateTimeValue", "", ""))
-	withDefaults := templateFill(resourceTemplate, params)
+	withDefaults := templateFill(skipBinary+resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 12-WithDefaults: %s", withDefaults)
 
 	// These are for the deprecated `metadata` value, to minimize possible regressions
+	skipBinary = ""
+	if !testOldMetadata {
+		// These should be skipped for resources that don't support old metadata
+		skipBinary = "# skip-binary-test\n"
+	}
+
 	params["FuncName"] = t.Name() + "DeprecatedCreate"
 	params["Metadata"] = "metadata = {\n\tfoo = \"bar\"\n}"
-	deprecatedCreateHcl := templateFill(resourceTemplate, params)
+	deprecatedCreateHcl := templateFill(skipBinary+resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 13-DeprecatedCreate: %s", deprecatedCreateHcl)
 
 	params["FuncName"] = t.Name() + "DeprecatedUpdate"
 	params["Metadata"] = "metadata = {\n\tfoo = \"bar2\"\n}"
-	deprecatedUpdateHcl := templateFill(resourceTemplate, params)
+	deprecatedUpdateHcl := templateFill(skipBinary+resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 14-DeprecatedUpdate: %s", deprecatedCreateHcl)
 
 	params["FuncName"] = t.Name() + "DeprecatedDelete"
 	params["Metadata"] = "metadata = {}"
-	deprecatedDeleteHcl := templateFill(resourceTemplate, params)
+	deprecatedDeleteHcl := templateFill(skipBinary+resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 15-DeprecatedDelete: %s", deprecatedCreateHcl)
 
 	if vcdShortTest {
