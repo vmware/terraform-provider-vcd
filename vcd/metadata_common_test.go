@@ -74,7 +74,13 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateHcl)
 
 	params["FuncName"] = t.Name() + "Delete"
-	params["Metadata"] = "metadata_entry {}"
+	expectedMetadataOnDelete := 0
+	if testOldMetadata {
+		params["Metadata"] = "metadata_entry {}"
+		expectedMetadataOnDelete = 1
+	} else {
+		params["Metadata"] = " "
+	}
 	deleteHcl := templateFill(resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", deleteHcl)
 
@@ -89,7 +95,14 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateWithSystemHcl)
 
 	params["FuncName"] = t.Name() + "DeleteWithSystem"
-	params["Metadata"] = "metadata_entry {}"
+
+	if testOldMetadata {
+		params["Metadata"] = "metadata_entry {}"
+		expectedMetadataOnDelete = 1
+	} else {
+		params["Metadata"] = " "
+		expectedMetadataOnDelete = 0
+	}
 	deleteWithSystemHcl := templateFill(resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", deleteWithSystemHcl)
 
@@ -141,10 +154,10 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "4"),
-					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
-					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "numberKey1", "1", types.MetadataNumberValue, types.MetadataReadWriteVisibility, "false"),
-					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "boolKey1", "false", types.MetadataBooleanValue, types.MetadataReadWriteVisibility, "false"),
-					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "dateKey1", "2022-10-01T12:00:00.000Z", types.MetadataDateTimeValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, resourceAddress, "numberKey1", "1", types.MetadataNumberValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, resourceAddress, "boolKey1", "false", types.MetadataBooleanValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, resourceAddress, "dateKey1", "2022-10-01T12:00:00.000Z", types.MetadataDateTimeValue, types.MetadataReadWriteVisibility, "false"),
 				),
 			},
 			{
@@ -153,10 +166,10 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 					resource.TestCheckResourceAttrPair(datasourceAddress, "id", resourceAddress, "id"),
 					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "4"),
 					resource.TestCheckResourceAttr(datasourceAddress, "metadata_entry.#", "4"),
-					testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
-					testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "numberKey1", "1", types.MetadataNumberValue, types.MetadataReadWriteVisibility, "false"),
-					testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "boolKey1", "false", types.MetadataBooleanValue, types.MetadataReadWriteVisibility, "false"),
-					testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "dateKey1", "2022-10-01T12:00:00.000Z", types.MetadataDateTimeValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, datasourceAddress, "numberKey1", "1", types.MetadataNumberValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, datasourceAddress, "boolKey1", "false", types.MetadataBooleanValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, datasourceAddress, "dateKey1", "2022-10-01T12:00:00.000Z", types.MetadataDateTimeValue, types.MetadataReadWriteVisibility, "false"),
 				),
 			},
 			{
@@ -165,9 +178,9 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "3"),
 					// The bool is deleted
-					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
-					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "numberKey1", "1", types.MetadataNumberValue, types.MetadataReadWriteVisibility, "false"),
-					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "dateKey1", "2022-10-01T12:00:00.000Z", types.MetadataDateTimeValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, resourceAddress, "numberKey1", "1", types.MetadataNumberValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, resourceAddress, "dateKey1", "2022-10-01T12:00:00.000Z", types.MetadataDateTimeValue, types.MetadataReadWriteVisibility, "false"),
 				),
 			},
 			{
@@ -176,10 +189,10 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "3"),
 					// Updated values:
-					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValueUpdated1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
-					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "dateKey1", "2021-10-01T12:00:00.000Z", types.MetadataDateTimeValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, resourceAddress, "stringKey1", "stringValueUpdated1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, resourceAddress, "dateKey1", "2021-10-01T12:00:00.000Z", types.MetadataDateTimeValue, types.MetadataReadWriteVisibility, "false"),
 					// Not updated values:
-					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "numberKey1", "1", types.MetadataNumberValue, types.MetadataReadWriteVisibility, "false"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, resourceAddress, "numberKey1", "1", types.MetadataNumberValue, types.MetadataReadWriteVisibility, "false"),
 				),
 			},
 			{
@@ -187,8 +200,8 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					// This is a side effect of having `metadata_entry` as Computed to be able to delete metadata.
-					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "1"),
-					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "", "", "", "", "false"),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", fmt.Sprintf("%d", expectedMetadataOnDelete)),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, resourceAddress, "", "", "", "", "false"),
 				),
 			},
 			{
@@ -199,8 +212,8 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "2"),
-					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "readOnlyKey1", "readOnlyValue1", types.MetadataStringValue, types.MetadataReadOnlyVisibility, "true"),
-					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "privateKey1", "privateValue1", types.MetadataStringValue, types.MetadataHiddenVisibility, "true"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, resourceAddress, "readOnlyKey1", "readOnlyValue1", types.MetadataStringValue, types.MetadataReadOnlyVisibility, "true"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, resourceAddress, "privateKey1", "privateValue1", types.MetadataStringValue, types.MetadataHiddenVisibility, "true"),
 				),
 			},
 			{
@@ -211,8 +224,8 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "2"),
-					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "readOnlyKey1", "readOnlyValue1", types.MetadataStringValue, types.MetadataReadOnlyVisibility, "true"),
-					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "privateKey1", "privateValueUpdated1", types.MetadataStringValue, types.MetadataHiddenVisibility, "true"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, resourceAddress, "readOnlyKey1", "readOnlyValue1", types.MetadataStringValue, types.MetadataReadOnlyVisibility, "true"),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, resourceAddress, "privateKey1", "privateValueUpdated1", types.MetadataStringValue, types.MetadataHiddenVisibility, "true"),
 				),
 			},
 			{
@@ -223,12 +236,15 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					// This is a side effect of having `metadata_entry` as Computed to be able to delete metadata.
-					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "1"),
-					testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "", "", "", "", "false"),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", fmt.Sprintf("%d", expectedMetadataOnDelete)),
+					testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata, resourceAddress, "", "", "", "", "false"),
 				),
 			},
 			{
-				Config:      wrongMetadataEntryHcl,
+				Config: wrongMetadataEntryHcl,
+				SkipFunc: func() (bool, error) {
+					return !testOldMetadata, nil // This is guaranteed by the schema definition
+				},
 				ExpectError: regexp.MustCompile(".*all fields in a metadata_entry are required, but got some empty.*"),
 			},
 			{
@@ -393,7 +409,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 							return nil
 						},
 						resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "1"),
-						testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
+						testCheckMetadataEntrySetElemNestedAttrs(true, resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
 					),
 				},
 				// Test data source metadata.
@@ -401,8 +417,8 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 					Config: step3,
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr(datasourceAddress, "metadata_entry.#", "1"),
-						testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
-						testCheckMetadataEntrySetElemNestedAttrs(datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
+						testCheckMetadataEntrySetElemNestedAttrs(true, datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
+						testCheckMetadataEntrySetElemNestedAttrs(true, datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
 						resource.TestCheckResourceAttrPair(datasourceAddress, "id", resourceAddress, "id"),
 						resource.TestCheckResourceAttrPair(datasourceAddress, "metadata_entry.#", resourceAddress, "metadata_entry.#"),
 					),
@@ -543,7 +559,10 @@ metadata_entry {
 }
 
 // testCheckMetadataEntrySetElemNestedAttrs asserts that a given metadata_entry has the expected input for the given resourceAddress.
-func testCheckMetadataEntrySetElemNestedAttrs(resourceAddress, expectedKey, expectedValue, expectedType, expectedUserAccess, expectedIsSystem string) resource.TestCheckFunc {
+func testCheckMetadataEntrySetElemNestedAttrs(testOldMetadata bool, resourceAddress, expectedKey, expectedValue, expectedType, expectedUserAccess, expectedIsSystem string) resource.TestCheckFunc {
+	if !testOldMetadata {
+		return resource.TestCheckResourceAttrSet(resourceAddress, "id") // Return a dummy checker that always works
+	}
 	return resource.TestCheckTypeSetElemNestedAttrs(resourceAddress, "metadata_entry.*",
 		map[string]string{
 			"key":         expectedKey,

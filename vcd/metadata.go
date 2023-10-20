@@ -181,7 +181,6 @@ func metadataEntryResourceSchema(resourceType string) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeSet,
 		Optional:    true,
-		Computed:    true, // See ignore_metadata_changes documentation for more context
 		Description: fmt.Sprintf("Metadata entries for the given %s", resourceType),
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{

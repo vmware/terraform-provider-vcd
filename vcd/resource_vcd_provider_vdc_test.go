@@ -466,3 +466,27 @@ data "vcd_provider_vdc" "test-provider-vdc-ds" {
   name = vcd_provider_vdc.test-provider-vdc.name
 }
 `
+
+func TestAccVcdProviderVdcMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		providerVdc, err := vcdClient.GetProviderVdcById(id)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Provider VDC '%s': %s", id, err)
+		}
+
+		return providerVdc, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdProviderVdcMetadata, "vcd_provider_vdc.test-provider-vdc",
+		testAccCheckVcdProviderVdcMetadataDatasource, "data.vcd_provider_vdc.test-provider-vdc-ds",
+		getObjectById, StringMap{
+			"Vcenter":         testConfig.Networking.Vcenter,
+			"ResourcePool":    testConfig.VSphere.ResourcePoolForVcd1,
+			"NsxtManager":     testConfig.Nsxt.Manager,
+			"NsxtNetworkPool": testConfig.VCD.NsxtProviderVdc.NetworkPool,
+			"StorageProfile":  testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		})
+}
