@@ -167,7 +167,7 @@ func metadataEntryDatasourceSchema(resourceType string) *schema.Schema {
 				"is_system": {
 					Type:        schema.TypeBool,
 					Computed:    true,
-					Description: "Domain for this metadata entry. true if it belongs to SYSTEM, false if it belongs to GENERAL",
+					Description: "Domain for this metadata entry. true, if it belongs to SYSTEM. false, if it belongs to GENERAL",
 				},
 			},
 		},
@@ -212,7 +212,7 @@ func metadataEntryResourceSchema(resourceType string) *schema.Schema {
 					Type:        schema.TypeBool,
 					Optional:    true,
 					Default:     false,
-					Description: "Domain for this metadata entry. true if it belongs to SYSTEM, false if it belongs to GENERAL. Defaults to false",
+					Description: "Domain for this metadata entry. true, if it belongs to SYSTEM. false, if it belongs to GENERAL. Defaults to false",
 				},
 			},
 		},
@@ -260,7 +260,7 @@ func metadataEntryResourceSchemaWithDeprecatedSupport(resourceType string) *sche
 					Type:     schema.TypeBool,
 					Optional: true,
 					// Default:     false,  // Can't be set like this as we must allow empty `metadata_entry`, to be able to delete metadata (see above comment)
-					Description: "Domain for this metadata entry. true if it belongs to SYSTEM, false if it belongs to GENERAL",
+					Description: "Domain for this metadata entry. true, if it belongs to SYSTEM. false, if it belongs to GENERAL",
 				},
 			},
 		},
