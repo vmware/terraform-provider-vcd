@@ -22,7 +22,7 @@ func datasourceVcdNsxtOrgVdcNetworkSegmentProfileTemplate() *schema.Resource {
 			"org_network_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Segment Profile Template ID",
+				Description: "ID of the Organization Network that uses the Segment Profile Template",
 			},
 			"segment_profile_template_id": {
 				Type:        schema.TypeString,

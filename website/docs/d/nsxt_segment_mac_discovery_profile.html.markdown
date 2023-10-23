@@ -31,7 +31,7 @@ data "vcd_nsxt_segment_mac_discovery_profile" "first" {
 The following arguments are supported:
 
 * `name` - (Required) The name of Segment Profile
-* `nsxt_manager_id` - (Optional) Segment Profile search context. Use when searching by NSX-T manager.
+* `nsxt_manager_id` - (Optional) Segment Profile search context. Use when searching by NSX-T manager
 * `vdc_id` - (Optional) Segment Profile search context. Use when searching by VDC
 * `vdc_group_id` - (Optional) Segment Profile search context. Use when searching by VDC group
 
@@ -42,7 +42,7 @@ The following arguments are supported:
 * `description` - Description of MAC Discovery Profile
 * `is_mac_change_enabled` - Defines whether source MAC address change is enabled
 * `is_mac_learning_enabled` - Defines whether source MAC address learning is enabled
-* `is_unknown_unicast_flooding_enabled` - Defines whether unknown unicast flooding rule is enabled.
+* `is_unknown_unicast_flooding_enabled` - Defines whether unknown unicast flooding rule is enabled
   This allows flooding for unlearned MAC for ingress traffic
 * `mac_learning_aging_time` - Aging time in seconds for learned MAC address. Indicates how long
   learned MAC address remain

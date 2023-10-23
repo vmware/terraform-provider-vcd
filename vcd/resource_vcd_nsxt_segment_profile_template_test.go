@@ -44,6 +44,10 @@ func TestAccVcdNsxtSegmentProfileTemplate(t *testing.T) {
 	configText4DS := templateFill(testAccVcdNsxtSegmentProfileTemplateGlobalDefaultDS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4DS)
 
+	params["FuncName"] = t.Name() + "step7"
+	configText7 := templateFill(testAccVcdNsxtSegmentProfileTemplateGlobalDefaultNoValues, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 7: %s", configText7)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -114,7 +118,20 @@ func TestAccVcdNsxtSegmentProfileTemplate(t *testing.T) {
 				ResourceName:      "vcd_nsxt_global_default_segment_profile_template.singleton",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateId:     "",
+				ImportStateId:     "", // It does not need a value for ID as it is global VCD configuration
+			},
+			{
+				ResourceName:      "vcd_nsxt_global_default_segment_profile_template.singleton",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     "dummy", // Attempt to perform import with a dummy ID
+			},
+			{
+				Config: configText7,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_nsxt_global_default_segment_profile_template.singleton", "vdc_networks_default_segment_profile_template_id", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_global_default_segment_profile_template.singleton", "vapp_networks_default_segment_profile_template_id", ""),
+				),
 			},
 		},
 	})
@@ -211,6 +228,11 @@ const testAccVcdNsxtSegmentProfileTemplateGlobalDefaultDS = testAccVcdNsxtSegmen
 data "vcd_nsxt_global_default_segment_profile_template" "singleton" {
 
   depends_on = [vcd_nsxt_global_default_segment_profile_template.singleton]
+}
+`
+
+const testAccVcdNsxtSegmentProfileTemplateGlobalDefaultNoValues = testAccVcdNsxtSegmentProfileTemplate + `
+resource "vcd_nsxt_global_default_segment_profile_template" "singleton" {
 }
 `
 

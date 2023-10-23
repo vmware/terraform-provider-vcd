@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_global_default_segment_profile_template"
-sidebar_current: "docs-vcd-datasource-nsxt-segment-profile-template"
+sidebar_current: "docs-vcd-data-source-nsxt-segment-profile-template"
 description: |-
   Provides a data source to read Global Default NSX-T Segment Profile Templates.
 ---
@@ -24,11 +24,11 @@ No arguments are required because this is a global VCD configuration
 
 ## Attribute Reference
 
-The following arguments are supported:
+The following attributes are supported:
 
-* `vdc_networks_default_segment_profile_template_id` -Global Default Segment Profile
+* `vdc_networks_default_segment_profile_template_id` - Global Default Segment Profile
   Template ID for all VDC Networks
-* `vapp_networks_default_segment_profile_template_id` -Global Default Segment Profile
+* `vapp_networks_default_segment_profile_template_id` - Global Default Segment Profile
   Template ID for all vApp Networks
 
 

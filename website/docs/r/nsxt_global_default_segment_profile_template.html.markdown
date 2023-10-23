@@ -12,6 +12,9 @@ Provides a resource to manage Global Default NSX-T Segment Profile Templates.
 
 Supported in provider *v3.11+* and VCD 10.4.0+ with NSX-T. Requires System Administrator privileges.
 
+-> This resource is a singleton - only one configuration exists in entire VCD instance. Having
+multiple resource definitions will override each other.
+
 ## Example Usage
 
 ```hcl
@@ -25,9 +28,9 @@ resource "vcd_nsxt_global_default_segment_profile_template" "singleton" {
 
 The following arguments are supported:
 
-* `vdc_networks_default_segment_profile_template_id` - (Optional) - Global Default Segment Profile
+* `vdc_networks_default_segment_profile_template_id` - (Optional) Global Default Segment Profile
   Template ID for all VDC Networks
-* `vapp_networks_default_segment_profile_template_id` - (Optional) - Global Default Segment Profile
+* `vapp_networks_default_segment_profile_template_id` - (Optional) Global Default Segment Profile
   Template ID for all vApp Networks
 
 
@@ -42,7 +45,8 @@ resource via supplying path for it. An example is below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_global_default_segment_profile_template.imported 
+terraform import vcd_nsxt_global_default_segment_profile_template.imported optional-dummy-id
 ```
 
-The above would import the global default Segment Profile Template configuration.
+The above would import the global default Segment Profile Template configuration. **Note**: the
+`optional-dummy-id` is not mandatory but it may be useful for `import` definitions.

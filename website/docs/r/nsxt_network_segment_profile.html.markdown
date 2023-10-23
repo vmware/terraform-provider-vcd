@@ -115,7 +115,7 @@ resource "vcd_nsxt_network_segment_profile" "custom-prof" {
 
 The following arguments are supported:
 
-* `org` - (Optional, but required if not set at provider level) Org name 
+* `org` - (Optional) The name of organization to use, optional if defined at provider level
 * `org_network_id` - (Required) Org VDC Network ID
 * `segment_profile_template_id` - (Optional) Segment Profile Template ID to be applied for this Org
   VDC Network

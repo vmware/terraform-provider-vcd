@@ -17,7 +17,7 @@ func datasourceVcdNsxtSegmentIpDiscoveryProfile() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "name of Segment IP Discovery Profile",
+				Description: "Name of Segment IP Discovery Profile",
 			},
 			"nsxt_manager_id": {
 				Type:         schema.TypeString,
@@ -45,7 +45,7 @@ func datasourceVcdNsxtSegmentIpDiscoveryProfile() *schema.Resource {
 			"arp_binding_limit": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Indicates the number of arp snooped IP addresses to be remembered per logical port",
+				Description: "Indicates the number of ARP snooped IP addresses to be remembered per logical port",
 			},
 			"arp_binding_timeout": {
 				Type:        schema.TypeInt,
@@ -80,7 +80,7 @@ func datasourceVcdNsxtSegmentIpDiscoveryProfile() *schema.Resource {
 			"is_tofu_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Defines whether 'Trust on First Use(TOFU)' paradigm is enabled",
+				Description: "Defines whether 'Trust on First Use (TOFU)' paradigm is enabled",
 			},
 			"is_vmtools_v4_enabled": {
 				Type:        schema.TypeBool,

@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
 page_title: "VMware Cloud Director: vcd_org_vdc_nsxt_network_profile"
-sidebar_current: "docs-vcd-datasource-nsxt-segment-profile-template"
+sidebar_current: "docs-vcd-data-source-nsxt-segment-profile-template"
 description: |-
   Provides a data source to read Network Profile for NSX-T VDCs.
 ---
@@ -25,8 +25,8 @@ data "vcd_org_vdc_nsxt_network_profile" "nsxt" {
 
 The following arguments are supported:
 
-* `org` - (Optional, but required if not set at provider level) Org name 
-* `vdc` - (Optional, but required if not set at provider level) VDC name 
+* `org` - (Optional) The name of organization to use, optional if defined at provider level
+* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 
 ## Attribute reference
 

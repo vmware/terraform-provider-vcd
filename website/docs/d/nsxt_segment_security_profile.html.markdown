@@ -31,7 +31,7 @@ data "vcd_nsxt_segment_security_profile" "first" {
 The following arguments are supported:
 
 * `name` - (Required) The name of Segment Profile
-* `nsxt_manager_id` - (Optional) Segment Profile search context. Use when searching by NSX-T manager.
+* `nsxt_manager_id` - (Optional) Segment Profile search context. Use when searching by NSX-T manager
 * `vdc_id` - (Optional) Segment Profile search context. Use when searching by VDC
 * `vdc_group_id` - (Optional) Segment Profile search context. Use when searching by VDC group
 

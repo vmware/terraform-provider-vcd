@@ -42,9 +42,14 @@ func resourceVcdGlobalDefaultSegmentProfileTemplate() *schema.Resource {
 func resourceVcdGlobalDefaultSegmentProfileTemplateCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	globalDefaultSegmentProfileConfig := &types.NsxtGlobalDefaultSegmentProfileTemplate{
-		VappNetworkSegmentProfileTemplateRef: &types.OpenApiReference{ID: d.Get("vapp_networks_default_segment_profile_template_id").(string)},
-		VdcNetworkSegmentProfileTemplateRef:  &types.OpenApiReference{ID: d.Get("vdc_networks_default_segment_profile_template_id").(string)},
+	globalDefaultSegmentProfileConfig := &types.NsxtGlobalDefaultSegmentProfileTemplate{}
+
+	if d.Get("vapp_networks_default_segment_profile_template_id").(string) != "" {
+		globalDefaultSegmentProfileConfig.VappNetworkSegmentProfileTemplateRef = &types.OpenApiReference{ID: d.Get("vapp_networks_default_segment_profile_template_id").(string)}
+	}
+
+	if d.Get("vdc_networks_default_segment_profile_template_id").(string) != "" {
+		globalDefaultSegmentProfileConfig.VdcNetworkSegmentProfileTemplateRef = &types.OpenApiReference{ID: d.Get("vdc_networks_default_segment_profile_template_id").(string)}
 	}
 
 	_, err := vcdClient.UpdateGlobalDefaultSegmentProfileTemplates(globalDefaultSegmentProfileConfig)
