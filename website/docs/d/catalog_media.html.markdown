@@ -47,6 +47,12 @@ The following arguments are supported:
 * `catalog_id` - (Optional; *v3.8.2+*) The ID of the catalog to which the media file belongs. It's mandatory if `catalog` field is not used.
 * `name` - (Required) Media name in catalog (optional when `filter` is used)
 * `filter` - (Optional; *2.9+*) Retrieves the data source using one or more filter parameters
+* `download_to_file` - (Optional; *3.11+*) Will download the contents of the media item into the given file
+
+-> NOTE: downloading of media items can take unexpectedly long amounts of time for large items. The ability of
+downloading media items is supplied here to solve a specific problem, i.e. saving small files in the VCD as help
+to other workflows. For example, you could save into a media item an HCL file used to configure the VCD, the file 
+`terraform.tfstate`, planning documents, an image of the deployment topology, and so on.
 
 ## Attribute reference
 

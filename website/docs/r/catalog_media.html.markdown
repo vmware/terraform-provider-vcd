@@ -53,6 +53,7 @@ The following arguments are supported:
 * `media_path` - (Required) - Absolute or relative path to file to upload
 * `upload_piece_size` - (Optional) - size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB.
 * `show_upload_progress` - (Optional) - Default false. Allows to see upload progress. (See note below)
+* `upload_any_file` - (Optional; *v3.11+*) - If `true`, allows uploading any file type. With the default `false`, we can only upload `.ISO` files.
 * `metadata` - (Deprecated; *v2.5+*) Use `metadata_entry` instead. Key value map of metadata to assign
 * `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 
