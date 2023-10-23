@@ -100,7 +100,7 @@ func resourceVcdCatalog() *schema.Resource {
 				ConflictsWith: []string{"metadata_entry"},
 				Description:   "Key and value pairs for catalog metadata.",
 			},
-			"metadata_entry": metadataEntryResourceSchemaWithDeprecatedSupport("Catalog"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("Catalog"),
 			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -317,7 +317,7 @@ func resourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta inte
 	dSet(d, "href", adminCatalog.AdminCatalog.HREF)
 	d.SetId(adminCatalog.AdminCatalog.ID)
 
-	diagErr := updateMetadataInStateWithDeprecatedMetadataSupport(d, vcdClient, "vcd_catalog", adminCatalog)
+	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_catalog", adminCatalog)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to update catalog metadata: %s", err)
 		return diagErr

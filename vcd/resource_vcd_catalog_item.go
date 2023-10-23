@@ -77,7 +77,7 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Optional:    true,
 				Description: "Key and value pairs for the metadata of the vApp template associated to this catalog item",
 			},
-			"metadata_entry": metadataEntryResourceSchemaWithDeprecatedSupport("Catalog Item"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("Catalog Item"),
 			"catalog_item_metadata": {
 				Type:          schema.TypeMap,
 				Optional:      true,
@@ -162,7 +162,7 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 	dSet(d, "description", catalogItem.CatalogItem.Description)
 
 	// Catalog item metadata:
-	// We can't use updateMetadataInStateWithDeprecatedMetadataSupport(d, catalogItem) because the attribute name is different.
+	// We can't use updateMetadataInStateDeprecated(d, catalogItem) because the attribute name is different.
 
 	// We temporarily remove the ignored metadata filter to retrieve the deprecated metadata and vApp Template metadata contents,
 	// which should not be affected by it.

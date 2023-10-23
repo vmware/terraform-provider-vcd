@@ -163,7 +163,7 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": metadataEntryResourceSchemaWithDeprecatedSupport("Network"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("Network"),
 		},
 	}
 }
@@ -343,7 +343,7 @@ func genericVcdNetworkIsolatedRead(_ context.Context, d *schema.ResourceData, me
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 	d.SetId(network.OrgVDCNetwork.ID)
 
-	diagErr := updateMetadataInStateWithDeprecatedMetadataSupport(d, meta.(*VCDClient), "vcd_network_isolated", network)
+	diagErr := updateMetadataInStateDeprecated(d, meta.(*VCDClient), "vcd_network_isolated", network)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set isolated network metadata: %s", err)
 		return diagErr

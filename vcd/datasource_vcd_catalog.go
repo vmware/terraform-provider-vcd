@@ -257,7 +257,7 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		return diag.FromErr(err)
 	}
 
-	diagErr := updateMetadataInStateWithDeprecatedMetadataSupport(d, vcdClient, "vcd_catalog", catalog)
+	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_catalog", catalog)
 	if diagErr != nil {
 		return diagErr
 	}

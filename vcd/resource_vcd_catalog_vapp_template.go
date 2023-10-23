@@ -94,7 +94,7 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": metadataEntryResourceSchemaWithDeprecatedSupport("vApp Template"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("vApp Template"),
 		},
 	}
 }
@@ -193,7 +193,7 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 
 	d.SetId(vAppTemplate.VAppTemplate.ID)
 
-	diagErr := updateMetadataInStateWithDeprecatedMetadataSupport(d, vcdClient, "vcd_catalog_vapp_template", vAppTemplate)
+	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_catalog_vapp_template", vAppTemplate)
 	if diagErr != nil {
 		return diagErr
 	}

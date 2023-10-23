@@ -95,7 +95,7 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": metadataEntryResourceSchemaWithDeprecatedSupport("Catalog Media"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("Catalog Media"),
 			"is_iso": {
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -319,7 +319,7 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 			}
 		}
 	}
-	diagErr := updateMetadataInStateWithDeprecatedMetadataSupport(d, vcdClient, "vcd_catalog_media", media)
+	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_catalog_media", media)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to update media item metadata: %s", err)
 		return diagErr

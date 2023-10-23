@@ -125,7 +125,7 @@ func resourceVcdNetworkIsolatedV2() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": metadataEntryResourceSchemaWithDeprecatedSupport("Network"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("Network"),
 		},
 	}
 }
@@ -243,7 +243,7 @@ func resourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceData,
 	// Hence, we skip the read to preserve its value in state.
 	var diagErr diag.Diagnostics
 	if !govcd.OwnerIsVdcGroup(orgNetwork.OpenApiOrgVdcNetwork.OwnerRef.ID) {
-		diagErr = updateMetadataInStateWithDeprecatedMetadataSupport(d, vcdClient, "vcd_network_isolated_v2", orgNetwork)
+		diagErr = updateMetadataInStateDeprecated(d, vcdClient, "vcd_network_isolated_v2", orgNetwork)
 	} else if _, ok := d.GetOk("metadata"); !ok {
 		// If it's a VDC Group and metadata is not set, we explicitly compute it to empty. Otherwise, its value should
 		// be preserved as it is still present in the entity.

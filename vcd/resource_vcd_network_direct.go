@@ -95,7 +95,7 @@ func resourceVcdNetworkDirect() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": metadataEntryResourceSchemaWithDeprecatedSupport("Network"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("Network"),
 		},
 	}
 }
@@ -206,7 +206,7 @@ func genericVcdNetworkDirectRead(_ context.Context, d *schema.ResourceData, meta
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 	d.SetId(network.OrgVDCNetwork.ID)
 
-	diagErr := updateMetadataInStateWithDeprecatedMetadataSupport(d, vcdClient, "vcd_network_direct", network)
+	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_network_direct", network)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set direct network metadata: %s", err)
 		return diagErr

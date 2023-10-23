@@ -219,11 +219,11 @@ func metadataEntryResourceSchema(resourceType string) *schema.Schema {
 	}
 }
 
-// metadataEntryResourceSchemaWithDeprecatedSupport returns the schema associated to metadata_entry for a given resource.
-// The schema is for those resources which have old "metadata" attribute, as it contains several constraints and optional-compute
+// metadataEntryResourceSchemaDeprecated returns the schema associated to metadata_entry for a given resource.
+// The schema is for those resources which have deprecated "metadata" attribute, as it contains several constraints and optional-compute
 // combinations for that matter.
 // The description will refer to the resource type given as input.
-func metadataEntryResourceSchemaWithDeprecatedSupport(resourceType string) *schema.Schema {
+func metadataEntryResourceSchemaDeprecated(resourceType string) *schema.Schema {
 	return &schema.Schema{
 		Type:          schema.TypeSet,
 		Optional:      true,
@@ -368,9 +368,9 @@ func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient,
 	return nil
 }
 
-// updateMetadataInStateWithDeprecatedMetadataSupport updates metadata and metadata_entry in the Terraform state for the given receiver object.
+// updateMetadataInStateDeprecated updates deprecated metadata and the new metadata_entry in the Terraform state for the given receiver object.
 // This can be done as both are Computed, for compatibility reasons.
-func updateMetadataInStateWithDeprecatedMetadataSupport(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject metadataCompatible) diag.Diagnostics {
+func updateMetadataInStateDeprecated(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject metadataCompatible) diag.Diagnostics {
 
 	// We temporarily remove the ignored metadata filter to retrieve the deprecated metadata contents,
 	// which should not be affected by it.
