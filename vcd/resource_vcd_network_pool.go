@@ -136,6 +136,16 @@ func resourceVcdNetworkPool() *schema.Resource {
 				Computed:    true,
 				Description: "Type of network provider",
 			},
+			"backing_components_use_constraint": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  types.BackingUseExplicit,
+				ValidateFunc: validation.StringInSlice([]string{
+					string(types.BackingUseExplicit),
+					string(types.BackingUseWhenOnlyOne),
+					string(types.BackingUseFirstAvailable)}, false),
+				Description: "Defines how backing components are accepted",
+			},
 			"backing": {
 				Type:        schema.TypeList,
 				MaxItems:    1,
@@ -152,10 +162,9 @@ func resourceVcdNetworkPool() *schema.Resource {
 							Elem:        resourceNetworkPoolBacking("resource"),
 						},
 						"port_groups": {
-							Type:        schema.TypeList,
+							Type:        schema.TypeSet,
 							Optional:    true,
 							Computed:    true,
-							MaxItems:    1,
 							Description: "Backing port groups",
 							Elem:        resourceNetworkPoolBacking("resource"),
 						},
@@ -184,6 +193,7 @@ func resourceNetworkPoolCreate(ctx context.Context, d *schema.ResourceData, meta
 	vcdClient := meta.(*VCDClient)
 	networkPoolName := d.Get("name").(string)
 	networkPoolDescription := d.Get("description").(string)
+	backingComponentsUseConstraint := d.Get("backing_components_use_constraint").(string)
 
 	networkPoolType := d.Get("type").(string)
 	networkPoolProviderId := d.Get("network_provider_id").(string)
@@ -244,7 +254,7 @@ func resourceNetworkPoolCreate(ctx context.Context, d *schema.ResourceData, meta
 			networkPoolDescription,
 			networkPoolProvider.Name,
 			transportZoneName,
-			types.BackingUseFirstAvailable) // TODO: update to user choice
+			types.BackingUseConstraint(backingComponentsUseConstraint))
 	case types.NetworkPoolVlanType:
 		var dsName string
 		var ranges []types.VlanIdRange
@@ -261,21 +271,27 @@ func resourceNetworkPoolCreate(ctx context.Context, d *schema.ResourceData, meta
 			networkPoolProvider.Name,
 			dsName,
 			ranges,
-			types.BackingUseFirstAvailable) // TODO: update to user choice
+			types.BackingUseConstraint(backingComponentsUseConstraint))
 	case types.NetworkPoolPortGroupType:
-		var pgName string
+		var pgNames []string
 		if backing != nil {
 			for _, pg := range backing.PortGroupRefs {
-				pgName = pg.Name
-				break
+				pgNames = append(pgNames, pg.Name)
+			}
+		}
+		if len(pgNames) == 0 {
+			if backingComponentsUseConstraint != string(types.BackingUseExplicit) {
+				pgNames = append(pgNames, "")
+			} else {
+				return diag.Errorf("no port group names detected in 'backing' structure")
 			}
 		}
 		networkPool, err = vcdClient.CreateNetworkPoolPortGroup(
 			networkPoolName,
 			networkPoolDescription,
 			networkPoolProvider.Name,
-			pgName,
-			types.BackingUseFirstAvailable) // TODO: update to user choice
+			pgNames,
+			types.BackingUseConstraint(backingComponentsUseConstraint))
 	}
 
 	if err != nil {
@@ -444,8 +460,8 @@ func getNetworkPoolBacking(d *schema.ResourceData) (*types.NetworkPoolBacking, e
 				backing.TransportZoneRef.Name = tzMap["name"].(string)
 			}
 		case "port_groups":
-			pgRawList := value.([]any)
-			for _, m := range pgRawList {
+			pgRawList := value.(*schema.Set)
+			for _, m := range pgRawList.List() {
 				pgMap := m.(map[string]any)
 				backing.PortGroupRefs = append(backing.PortGroupRefs, types.OpenApiReference{Name: pgMap["name"].(string)})
 			}

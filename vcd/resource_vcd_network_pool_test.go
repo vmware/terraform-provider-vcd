@@ -3,7 +3,9 @@
 package vcd
 
 import (
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"net/url"
 	"testing"
@@ -15,7 +17,8 @@ type networkPoolData struct {
 	poolType          string
 	networkProviderId string
 	backingType       string
-	backingName       string
+	backingNames      []string
+	backingConstraint types.BackingUseConstraint
 }
 
 func TestAccVcdResourceNetworkPool(t *testing.T) {
@@ -57,27 +60,41 @@ func TestAccVcdResourceNetworkPool(t *testing.T) {
 		t.Skipf("error getting port groups: %s", err)
 	}
 
+	var usableTransportZones []string
 	for _, tz := range transportZones {
 		if tz.AlreadyImported {
 			continue
 		}
+		usableTransportZones = append(usableTransportZones, tz.Name)
 		runNetworkPoolTest(t, networkPoolData{
 			name:              t.Name() + "-geneve-name",
 			description:       t.Name() + "-geneve-name description",
 			poolType:          types.NetworkPoolGeneveType,
 			networkProviderId: nsxtManagerId,
 			backingType:       "transport_zone",
-			backingName:       tz.Name,
+			backingNames:      []string{tz.Name},
 		})
 	}
-	if len(transportZones) > 0 {
+	if len(usableTransportZones) > 0 {
 		runNetworkPoolTest(t, networkPoolData{
-			name:              t.Name() + "-geneve-none",
-			description:       t.Name() + "-geneve-none description",
+			name:              t.Name() + "-geneve-none-first",
+			description:       t.Name() + "-geneve-none-first description",
 			poolType:          types.NetworkPoolGeneveType,
 			networkProviderId: nsxtManagerId,
 			backingType:       "none",
-			backingName:       "none",
+			backingNames:      []string{"none"},
+			backingConstraint: types.BackingUseFirstAvailable,
+		})
+	}
+	if len(usableTransportZones) == 1 {
+		runNetworkPoolTest(t, networkPoolData{
+			name:              t.Name() + "-geneve-none-one",
+			description:       t.Name() + "-geneve-none-one description",
+			poolType:          types.NetworkPoolGeneveType,
+			networkProviderId: nsxtManagerId,
+			backingType:       "none",
+			backingNames:      []string{"none"},
+			backingConstraint: types.BackingUseWhenOnlyOne,
 		})
 	}
 	for _, ds := range distributedSwitches {
@@ -87,7 +104,7 @@ func TestAccVcdResourceNetworkPool(t *testing.T) {
 			poolType:          types.NetworkPoolVlanType,
 			networkProviderId: vCenter.VSphereVCenter.VcId,
 			backingType:       "distributed_switches",
-			backingName:       ds.BackingRef.Name,
+			backingNames:      []string{ds.BackingRef.Name},
 		})
 	}
 	if len(distributedSwitches) > 0 {
@@ -97,17 +114,48 @@ func TestAccVcdResourceNetworkPool(t *testing.T) {
 			poolType:          types.NetworkPoolVlanType,
 			networkProviderId: vCenter.VSphereVCenter.VcId,
 			backingType:       "none",
-			backingName:       "none",
+			backingNames:      []string{"none"},
+			backingConstraint: types.BackingUseFirstAvailable,
 		})
 	}
+	var compatiblePgs []string
 	for _, pg := range portGroups {
+
+		compatible := false
+		for _, pg1 := range portGroups {
+			if pg.VcenterImportableDvpg.BackingRef.ID == pg1.VcenterImportableDvpg.BackingRef.ID {
+				continue
+			}
+			if pg.UsableWith(pg1) {
+				if !contains(compatiblePgs, pg.VcenterImportableDvpg.BackingRef.Name) {
+					compatiblePgs = append(compatiblePgs, pg.VcenterImportableDvpg.BackingRef.Name)
+				}
+				if !contains(compatiblePgs, pg1.VcenterImportableDvpg.BackingRef.Name) {
+					compatiblePgs = append(compatiblePgs, pg1.VcenterImportableDvpg.BackingRef.Name)
+				}
+				compatible = true
+			}
+		}
+		if compatible {
+			continue
+		}
 		runNetworkPoolTest(t, networkPoolData{
 			name:              t.Name() + "-pg-name",
 			description:       t.Name() + "-pg-name description",
 			poolType:          types.NetworkPoolPortGroupType,
 			networkProviderId: vCenter.VSphereVCenter.VcId,
 			backingType:       "port_groups",
-			backingName:       pg.VcenterImportableDvpg.BackingRef.Name,
+			backingNames:      []string{pg.VcenterImportableDvpg.BackingRef.Name},
+		})
+	}
+	if len(compatiblePgs) > 0 {
+		runNetworkPoolTest(t, networkPoolData{
+			name:              t.Name() + "-pg-multi",
+			description:       t.Name() + "-pg-multi description",
+			poolType:          types.NetworkPoolPortGroupType,
+			networkProviderId: vCenter.VSphereVCenter.VcId,
+			backingType:       "port_groups",
+			backingNames:      compatiblePgs,
 		})
 	}
 	if len(portGroups) > 0 {
@@ -117,7 +165,8 @@ func TestAccVcdResourceNetworkPool(t *testing.T) {
 			poolType:          types.NetworkPoolPortGroupType,
 			networkProviderId: vCenter.VSphereVCenter.VcId,
 			backingType:       "none",
-			backingName:       "none",
+			backingNames:      []string{"none"},
+			backingConstraint: types.BackingUseFirstAvailable,
 		})
 	}
 
@@ -130,6 +179,20 @@ func runNetworkPoolTest(t *testing.T, npData networkPoolData) {
 	if npData.backingType == "none" {
 		tmpl = testAccNetworkPoolNoBacking
 	}
+	backingElements := " "
+	if len(npData.backingNames) > 1 {
+		tmpl = testAccNetworkPoolMulti
+		for _, name := range npData.backingNames {
+			backingElements = fmt.Sprintf("%s\n%s", backingElements, fmt.Sprintf(portGroupBacking, name))
+		}
+	}
+	testName := npData.poolType + "-" + npData.backingNames[0]
+	if len(npData.backingNames) > 1 {
+		testName = npData.poolType + "-multi"
+	}
+	if npData.backingNames[0] == "none" {
+		testName = npData.poolType + "-" + npData.name
+	}
 
 	var data = StringMap{
 		"SkipMessage":            " ",
@@ -138,9 +201,11 @@ func runNetworkPoolTest(t *testing.T, npData networkPoolData) {
 		"NetworkProviderId":      npData.networkProviderId,
 		"PoolType":               npData.poolType,
 		"BackingType":            npData.backingType,
-		"BackingName":            npData.backingName,
+		"BackingName":            npData.backingNames[0],
+		"BackingConstraint":      npData.backingConstraint,
+		"BackingElements":        backingElements,
 		"RangeIds":               " ",
-		"FuncName":               t.Name() + "-" + npData.poolType + "-" + npData.backingName,
+		"FuncName":               t.Name() + "-" + testName,
 	}
 
 	if npData.poolType == types.NetworkPoolVlanType {
@@ -160,13 +225,11 @@ func runNetworkPoolTest(t *testing.T, npData networkPoolData) {
 	updatedText := templateFill(tmpl, data)
 	debugPrintf("#[DEBUG] Update: %s", updatedText)
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
-	t.Run(npData.poolType+"-"+npData.backingName, func(t *testing.T) {
-
+	t.Run(testName, func(t *testing.T) {
+		if vcdShortTest {
+			t.Skip(acceptanceTestsSkipped)
+			return
+		}
 		resourceDef := "vcd_network_pool.npool"
 		resource.Test(t, resource.TestCase{
 			ProviderFactories: testAccProviders,
@@ -182,6 +245,9 @@ func runNetworkPoolTest(t *testing.T, npData networkPoolData) {
 						resource.TestCheckResourceAttr(resourceDef, "name", npData.name),
 						resource.TestCheckResourceAttr(resourceDef, "description", npData.description),
 						resource.TestCheckResourceAttr(resourceDef, "status", "REALIZED"),
+						checkWithCondition(npData.backingType != "none",
+							resource.TestCheckResourceAttr(resourceDef, "backing.0."+npData.backingType+".#",
+								fmt.Sprintf("%d", len(npData.backingNames)))),
 					),
 				},
 				// step 1 - update network pool
@@ -196,14 +262,25 @@ func runNetworkPoolTest(t *testing.T, npData networkPoolData) {
 				},
 				// step 2 - import
 				{
-					ResourceName:      resourceDef,
-					ImportState:       true,
-					ImportStateVerify: true,
-					ImportStateIdFunc: importStateIdTopHierarchy(updatedName),
+					ResourceName:            resourceDef,
+					ImportState:             true,
+					ImportStateVerify:       true,
+					ImportStateIdFunc:       importStateIdTopHierarchy(updatedName),
+					ImportStateVerifyIgnore: []string{"backing_components_use_constraint"},
 				},
 			},
 		})
 	})
+}
+
+// checkWithCondition runs a check only if the leading condition is true
+func checkWithCondition(condition bool, f resource.TestCheckFunc) resource.TestCheckFunc {
+	if !condition {
+		return func(s *terraform.State) error {
+			return nil
+		}
+	}
+	return f
 }
 
 const testAccNetworkPoolWithBacking = `
@@ -223,6 +300,26 @@ resource "vcd_network_pool" "npool" {
 }
 `
 
+const portGroupBacking = `
+    port_groups {
+      name = "%s"
+    }
+`
+
+const testAccNetworkPoolMulti = `
+{{.SkipMessage}}
+resource "vcd_network_pool" "npool" {
+  name                = "{{.NetworkPoolName}}"
+  description         = "{{.NetworkPoolDescription}}"
+  network_provider_id = "{{.NetworkProviderId}}"
+  type                = "{{.PoolType}}"
+
+  backing {
+    {{.BackingElements}}
+  }
+}
+`
+
 const testAccNetworkPoolNoBacking = `
 {{.SkipMessage}}
 resource "vcd_network_pool" "npool" {
@@ -230,6 +327,9 @@ resource "vcd_network_pool" "npool" {
   description         = "{{.NetworkPoolDescription}}"
   network_provider_id = "{{.NetworkProviderId}}"
   type                = "{{.PoolType}}"
+
+  backing_components_use_constraint = "{{.BackingConstraint}}"
+
   backing {
     {{.RangeIds}}
   }
