@@ -28,9 +28,9 @@ resource "vcd_catalog_vapp_template" "myNewVappTemplate" {
   description       = "new vapp template"
   ova_path          = "/home/user/file.ova"
   upload_piece_size = 10
-  
+
   lease {
-    storage_lease_in_sec = 60*60*24*7 # set storage lease for 7 days (60 seconds * 60 minutes * 24 hour * 7 days)
+    storage_lease_in_sec = 60 * 60 * 24 * 7 # set storage lease for 7 days (60 seconds * 60 minutes * 24 hour * 7 days)
   }
 
   metadata_entry {
