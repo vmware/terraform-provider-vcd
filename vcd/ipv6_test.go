@@ -179,9 +179,9 @@ func TestAccVcdIpv6Support(t *testing.T) {
 				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "external_network.*", map[string]string{
-						"gateway":            "2002:0:0:1234:abcd:ffff:c0a6:121",
+						"gateway":            "2002:0:0:1234:abbd:ffff:c0a6:121",
 						"prefix_length":      "124",
-						"primary_ip":         "2002:0:0:1234:abcd:ffff:c0a6:122",
+						"primary_ip":         "2002:0:0:1234:abbd:ffff:c0a6:122",
 						"allocated_ip_count": "2",
 					}),
 				),
@@ -489,12 +489,12 @@ resource "vcd_external_network_v2" "segment-backed" {
   }
 
   ip_scope {
-    gateway       = "2002:0:0:1234:abcd:ffff:c0a6:121"
+    gateway       = "2002:0:0:1234:abbd:ffff:c0a6:121"
     prefix_length = "124"
 
     static_ip_pool {
-      start_address = "2002:0:0:1234:abcd:ffff:c0a6:122"
-      end_address   = "2002:0:0:1234:abcd:ffff:c0a6:124"
+      start_address = "2002:0:0:1234:abbd:ffff:c0a6:122"
+      end_address   = "2002:0:0:1234:abbd:ffff:c0a6:124"
     }
   }
 }
