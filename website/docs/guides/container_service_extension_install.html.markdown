@@ -46,12 +46,12 @@ can't log in with a user created in the same run.
 
 ### Step 1: Configure Settings for CSE Server
 
--> This step of the installation refers to the Terraform configuration present [here][step1].
+-> This step of the installation refers to the [Terraform configuration present here][step1].
 
 This step will create the same elements as the _"Configure Settings for CSE Server"_ section in UI wizard. The subsections
-below can be helpful to understand all the building blocks that are described in the [proposed Terraform configuration][step1].
+below can be helpful to understand all the building blocks that are described in the proposed Terraform configuration.
 
-In this [configuration][step1] there is also a file named `terraform.tfvars.example`, which needs to be to renamed to `terraform.tfvars`
+In the directory there is also a file named `terraform.tfvars.example`, which needs to be to renamed to `terraform.tfvars`
 and its values to be set to the correct ones. In general, for this specific step, the proposed HCL files (`.tf`) should not be
 modified and be applied as they are.
 
@@ -79,11 +79,11 @@ To customise it, the [sample configuration][step1] asks for the following variab
   [the RDE template file for CSE v4.1](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/entities/vcdkeconfig.json.template)
   used in the sample configuration, that can be rendered correctly with the Terraform built-in function `templatefile`.
   (Note: In `terraform.tfvars.example` the path for the CSE v4.1 RDE contents is already provided).
-- `capvcd_version`: The version for CAPVCD. By default, is **"1.1.0"** for CSE v4.1.
+- `capvcd_version`: The version for CAPVCD. The default value is **"1.1.0"** for CSE v4.1.
   (Note: Do not confuse with the version of the `capvcdCluster` [RDE Type][rde_type],
   which **must be "1.2.0"** for CSE v4.1 and cannot be changed through a variable).
-- `cpi_version`: The version for CPI (Cloud Provider Interface). By default, is **"1.4.0"** for CSE v4.1.
-- `csi_version`: The version for CSI (Cloud Storage Interface). By default, is **"1.4.0"** for CSE v4.1.
+- `cpi_version`: The version for CPI (Cloud Provider Interface). The default value is **"1.4.0"** for CSE v4.1.
+- `csi_version`: The version for CSI (Cloud Storage Interface). The default value is **"1.4.0"** for CSE v4.1.
 - `github_personal_access_token`: Create this one [here](https://github.com/settings/tokens),
   this will avoid installation errors caused by GitHub rate limiting, as the TKGm cluster creation process requires downloading
   some Kubernetes components from GitHub.
@@ -119,13 +119,13 @@ Once all variables are reviewed and set, you can start the installation with `te
 
 -> This step of the installation refers to the Terraform configuration present [here][step2].
 
-~> Be sure that previous step is successfully completed.
+~> Be sure that the previous step is successfully completed.
 
 This step will create all the remaining elements to install CSE v4.1 in VCD. You can read subsequent sections
 to have a better understanding of the building blocks that are described in the [proposed Terraform configuration][step2].
 
-In this [configuration][step2] you can also find a file named `terraform.tfvars.example`, you need to rename it to `terraform.tfvars`
-and change the values present there to the correct ones. You can also modify the proposed resources so they fit better to your needs.
+In this [configuration][step2] you can also find a file named `terraform.tfvars.example` that needs to be updated with correct values and renamed to `terraform.tfvars`
+and change the values present there to the correct ones. You can also modify the proposed resources, so they fit better to your needs.
 
 #### Organizations
 
@@ -411,7 +411,7 @@ a replacement:
 ```hcl
 resource "vcd_rde" "vcdkeconfig_instance" {
   # Same values as before, except:
-  rde_type_id = vcd_rde_type.vcdkeconfig_type_v110.id # Update to the new RDE Type
+  rde_type_id  = vcd_rde_type.vcdkeconfig_type_v110.id # Update to the new RDE Type
   input_entity = templatefile(var.vcdkeconfig_template_filepath, {
     # Same values as before, except:
     node_startup_timeout          = var.node_startup_timeout
