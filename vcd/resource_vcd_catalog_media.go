@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -65,6 +67,12 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 				Description: "absolute or relative path to Media file",
+			},
+			"upload_any_file": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "If true, will allow uploading any file type, not only .ISO",
 			},
 			"upload_piece_size": {
 				Type:        schema.TypeInt,
@@ -157,7 +165,14 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 
 	uploadPieceSize := d.Get("upload_piece_size").(int)
 	mediaName := d.Get("name").(string)
-	task, err := catalog.UploadMediaImage(mediaName, d.Get("description").(string), mediaPath, int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes)
+	var task govcd.UploadTask
+	uploadAnyFile := d.Get("upload_any_file").(bool)
+
+	if uploadAnyFile {
+		task, err = catalog.UploadMediaFile(mediaName, d.Get("description").(string), mediaPath, int64(uploadPieceSize)*1024*1024, false) // Convert from megabytes to bytes)
+	} else {
+		task, err = catalog.UploadMediaImage(mediaName, d.Get("description").(string), mediaPath, int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes)
+	}
 	if err != nil {
 		log.Printf("Error uploading new catalog media: %s", err)
 		return diag.Errorf("error uploading new catalog media: %s", err)
@@ -290,6 +305,20 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	dSet(d, "status", mediaRecord.MediaRecord.Status)
 	dSet(d, "storage_profile_name", mediaRecord.MediaRecord.StorageProfileName)
 
+	if origin == "datasource" {
+		downloadToFile := d.Get("download_to_file").(string)
+		if downloadToFile != "" {
+			contents, err := media.Download()
+			if err != nil {
+				return diag.Errorf("error downloading media contents")
+			}
+			downloadToFile = path.Clean(downloadToFile)
+			err = os.WriteFile(downloadToFile, contents, 0600)
+			if err != nil {
+				return diag.Errorf("error writing media contents to file '%s'", downloadToFile)
+			}
+		}
+	}
 	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog_media", media)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to update media item metadata: %s", err)
