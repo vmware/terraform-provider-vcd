@@ -223,6 +223,7 @@ func metadataEntryResourceSchema(resourceType string) *schema.Schema {
 // The schema is for those resources which have deprecated "metadata" attribute, as it contains several constraints and optional-compute
 // combinations for that matter.
 // The description will refer to the resource type given as input.
+// TODO: Remove this function once "metadata" attribute is deleted in a future major release.
 func metadataEntryResourceSchemaDeprecated(resourceType string) *schema.Schema {
 	return &schema.Schema{
 		Type:          schema.TypeSet,
@@ -370,6 +371,7 @@ func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient,
 
 // updateMetadataInStateDeprecated updates deprecated metadata and the new metadata_entry in the Terraform state for the given receiver object.
 // This can be done as both are Computed, for compatibility reasons.
+// TODO: Remove this function once "metadata" attribute is deleted in a future major release.
 func updateMetadataInStateDeprecated(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject metadataCompatible) diag.Diagnostics {
 
 	// We temporarily remove the ignored metadata filter to retrieve the deprecated metadata contents,
@@ -426,6 +428,7 @@ func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourc
 }
 
 // setMetadataEntryInState sets the given metadata entries retrieved from VCD in the Terraform state.
+// TODO: Refactor this function once "metadata" attribute is deleted in a future major release.
 func setMetadataEntryInState(d *schema.ResourceData, metadataFromVcd []*types.MetadataEntry) error {
 	// A consequence of having metadata_entry computed is that to remove the entries one needs to write `metadata_entry {}`.
 	// This snippet guarantees that if we try to delete metadata with `metadata_entry {}`, we don't
@@ -458,6 +461,7 @@ func setMetadataEntryInState(d *schema.ResourceData, metadataFromVcd []*types.Me
 
 // convertFromStateToMetadataValues converts the structure retrieved from Terraform state to a structure compatible
 // with the Go SDK.
+// TODO: Refactor this function once "metadata" attribute is deleted in a future major release.
 func convertFromStateToMetadataValues(metadataAttribute []interface{}) (map[string]types.MetadataValue, error) {
 	metadataValues := map[string]types.MetadataValue{}
 	for _, rawItem := range metadataAttribute {
@@ -502,6 +506,7 @@ func convertFromStateToMetadataValues(metadataAttribute []interface{}) (map[stri
 
 // getMetadataKeyWithDomainMap converts the input metadata attribute from Terraform state to a map that associates keys
 // with their domain (true if is from SYSTEM domain, false if GENERAL).
+// TODO: Refactor this function once "metadata" attribute is deleted in a future major release.
 func getMetadataKeyWithDomainMap(metadataAttribute []interface{}) map[string]bool {
 	metadataKeys := map[string]bool{}
 	for _, rawItem := range metadataAttribute {
