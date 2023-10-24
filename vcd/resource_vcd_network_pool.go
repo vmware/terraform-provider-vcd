@@ -158,6 +158,7 @@ func resourceVcdNetworkPool() *schema.Resource {
 							Optional:      true,
 							Computed:      true,
 							MaxItems:      1,
+							ForceNew:      true,
 							Description:   "Transport Zone Backing",
 							ConflictsWith: []string{"backing.0.port_groups", "backing.0.distributed_switches"},
 							Elem:          resourceNetworkPoolBacking("resource"),
@@ -166,6 +167,7 @@ func resourceVcdNetworkPool() *schema.Resource {
 							Type:          schema.TypeSet,
 							Optional:      true,
 							Computed:      true,
+							ForceNew:      true,
 							Description:   "Backing port groups",
 							ConflictsWith: []string{"backing.0.distributed_switches", "backing.0.transport_zone"},
 							Elem:          resourceNetworkPoolBacking("resource"),
@@ -174,6 +176,7 @@ func resourceVcdNetworkPool() *schema.Resource {
 							Type:          schema.TypeList,
 							Optional:      true,
 							Computed:      true,
+							ForceNew:      true,
 							MaxItems:      1,
 							Description:   "Backing distributed switches",
 							ConflictsWith: []string{"backing.0.port_groups", "backing.0.transport_zone"},
@@ -308,19 +311,11 @@ func resourceNetworkPoolCreate(ctx context.Context, d *schema.ResourceData, meta
 // resourceNetworkPoolUpdate updates the network pool
 // The only fields that can be updated are name, description, and range IDs (for VLAN type)
 // everything else is either read-only or ForceNew.
-// The backing components (transport_zone, port_groups, distributed_switches) cannot be set as ForceNew,
-// but cannot be updated either, so an error is issued when trying to change them
 func resourceNetworkPoolUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	networkPoolName := d.Get("name").(string)
 	networkPoolType := d.Get("type").(string)
 	networkPoolDescription := d.Get("description").(string)
-
-	for _, elem := range []string{"transport_zone", "port_groups", "distributed_switches"} {
-		if d.HasChanges("backing.0." + elem) {
-			return diag.Errorf("[network pool update] no changes allowed in backing.%s - To change this element the network pool must be destroyed and created anew ", elem)
-		}
-	}
 
 	networkPool, err := vcdClient.GetNetworkPoolById(d.Id())
 	if err != nil {
