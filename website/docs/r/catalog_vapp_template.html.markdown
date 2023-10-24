@@ -29,6 +29,10 @@ resource "vcd_catalog_vapp_template" "myNewVappTemplate" {
   ova_path          = "/home/user/file.ova"
   upload_piece_size = 10
 
+  lease {
+    storage_lease_in_sec = 60 * 60 * 24 * 7 # set storage lease for 7 days (60 seconds * 60 minutes * 24 hour * 7 days)
+  }
+
   metadata_entry {
     key         = "license"
     value       = "public"
@@ -62,6 +66,9 @@ The following arguments are supported:
 * `upload_piece_size` - (Optional) - Size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB
 * `metadata` -  (Deprecated) Use `metadata_entry` instead. Key/value map of metadata to assign to the associated vApp Template
 * `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
+* `lease` - (Optional *v3.11+*) The information about the vApp Template lease. It includes the field below. When this section is
+  included, the field is mandatory. If lease value is higher than the one allowed for the whole Org, we get an error
+   * `storage_lease_in_sec` - How long the vApp Template is available before being automatically deleted or marked as expired. 0 means never expires (or maximum allowed by parent Org). Regular values accepted from 3600+.
 
 ## Attribute Reference
 
