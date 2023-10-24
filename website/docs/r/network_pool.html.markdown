@@ -135,28 +135,44 @@ to remove the network pool, as the element is not shown in the list anymore.
 If we don't have preference about which of the elements we will use as backing for the network pool, we could let
 the system pick the first available. This could be a good idea when we know that there is only one element available, or 
 we know that all elements have similar capabilities.
-If we are in these circumstances, we could avoid some details and skip the definition of the backing elements.
+If we are in these circumstances, we could avoid some details and skip the definition of the backing elements, but we
+must specify the value of `backing_components_use_constraint` as either `use-when-only-one` or `use-first-available`.
 
 ```hcl
 data "vcd_nsxt_manager" "mgr" {
   name = "nsxManager1"
 }
 
-resource "vcd_network_pool" "npool" {
+resource "vcd_network_pool" "npool1" {
+  name                = "new-network-pool"
+  description         = "network pool without explicit transport zone"
+  network_provider_id = data.vcd_nsxt_manager.mgr.id
+  type                = "PORTGROUP_BACKED"
+
+  backing_components_use_constraint = "use-when-only-one"
+
+  backing {
+  }
+}
+
+resource "vcd_network_pool" "npool2" {
   name                = "new-network-pool"
   description         = "network pool without explicit transport zone"
   network_provider_id = data.vcd_nsxt_manager.mgr.id
   type                = "GENEVE"
+
+  backing_components_use_constraint = "use-first-available"
+
   backing {
   }
 }
 ```
 
-The system will pick the first available transport zone, or fail if none was available. The name of the used transport
+The system will pick the first (or the only) available transport zone, or fail if none was available. The name of the used transport
 zone will be shown if we use an `output` for the network pool.
 
 ```hcl
-output "pool" {
+output "pool1" {
   value = vcd_network_pool.npool.backing
 }
 ```
@@ -167,6 +183,10 @@ output "pool" {
 * `type` - (Required) Type of the network pool (one of `GENEVE`, `VLAN`, `PORTGROUP_BACKED`)
 * `network_provider_id` - (Required) Id of the network provider (either vCenter or NSX-T manager)
 * `description` - (Optional) Description of the network pool
+* `backing_components_use_constraint` - (Optional) Define how the backing components are considered. It should be one of the following:
+    * `use-explicit-name` (default) The backing components must be named explicitly;
+    * `use-when-only-one` The unnamed backing component will be used if there is only one available;
+    * `use-first-available` Use the first available backing component.
 * `backing` - (Optional) The components used by the network pool. See [Backing](#backing) below for details
 
 ## Attribute Reference
