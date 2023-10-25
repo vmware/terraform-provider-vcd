@@ -33,13 +33,17 @@ func TestAccVcdOrgLdap(t *testing.T) {
 	params["FuncName"] = t.Name()
 	configText := templateFill(testAccOrgLdap, params)
 
+	params["FuncName"] = t.Name() + "-Sys"
+	configTextSystem := templateFill(testAccOrgLdapSystem, params)
+
 	params["FuncName"] = t.Name() + "-DS"
 	configTextDS := templateFill(testAccOrgLdap+testAccOrgLdapDS, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION Resource: %s\n", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION Resource (Custom): %s\n", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION Resource (System): %s\n", configTextSystem)
 	debugPrintf("#[DEBUG] CONFIGURATION Data source: %s\n", configTextDS)
 
 	orgDsDef := "data.vcd_org." + orgName
@@ -82,6 +86,15 @@ func TestAccVcdOrgLdap(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdTopHierarchy(orgName),
+			},
+			{
+				Config: configTextSystem,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckOrgLdapExists(ldapResourceDef),
+					resource.TestCheckResourceAttr(orgDsDef, "name", testConfig.VCD.Org),
+					resource.TestCheckResourceAttr(ldapResourceDef, "ldap_mode", "SYSTEM"),
+					resource.TestCheckResourceAttrPair(orgDsDef, "id", ldapResourceDef, "org_id"),
+				),
 			},
 		},
 	})
@@ -185,6 +198,18 @@ resource "vcd_org_ldap" "{{.OrgName}}" {
     # password value does not get returned by GET
     ignore_changes = [custom_settings[0].password]
   }
+}
+`
+
+const testAccOrgLdapSystem = `
+data "vcd_org" "{{.OrgName}}" {
+  name = "{{.OrgName}}"
+}
+
+resource "vcd_org_ldap" "{{.OrgName}}" {
+  org_id         = data.vcd_org.{{.OrgName}}.id
+  ldap_mode      = "SYSTEM"
+  custom_user_ou = "ou=Foo,dc=domain,dc=local base DN"
 }
 `
 
