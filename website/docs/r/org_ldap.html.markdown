@@ -14,7 +14,7 @@ Supported in provider *v3.8+*
 
 -> **Note:** This resource requires system administrator privileges.
 
-## Example Usage
+## Example Usage 1 - Custom configuration
 
 ```hcl
 provider "vcd" {
@@ -77,6 +77,20 @@ resource "vcd_org_ldap" "my-org-ldap" {
     # password value does not get returned by GET
     ignore_changes = [custom_settings[0].password]
   }
+}
+```
+
+## Example Usage 2 - Using system configuration
+
+```hcl
+data "vcd_org" "my-org" {
+  name = "my-org"
+}
+
+resource "vcd_org_ldap" "my-org-ldap" {
+  org_id         = data.vcd_org.my-org.id
+  ldap_mode      = "SYSTEM"
+  custom_user_ou = "ou=Foo,dc=domain,dc=local base DN"
 }
 ```
 
