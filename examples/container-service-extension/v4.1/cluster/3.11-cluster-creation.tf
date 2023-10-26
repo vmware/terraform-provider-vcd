@@ -137,7 +137,6 @@ locals {
   })
 }
 
-
 # This is the RDE that manages the TKGm cluster.
 resource "vcd_rde" "k8s_cluster_instance" {
   org                = "tenant_org" # This is not required

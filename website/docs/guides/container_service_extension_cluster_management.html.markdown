@@ -319,8 +319,22 @@ Upgradeable items:
 
 ### Upgrade a cluster to CSE v4.1
 
+To upgrade a cluster from CSE v4.0 to v4.1, first of all you need to change the RDE Type that the TKGm cluster `vcd_rde` uses:
 
+```
+rde_type_id = data.vcd_rde_type.capvcdcluster_type_v1_2_0.id # This must reference the CAPVCD RDE Type v1.2.0
+```
 
+Then, before updating, please revisit the ["Creating a Kubernetes cluster"](#creating-a-kubernetes-cluster) and
+["Updating a Kubernetes cluster"](#updating-a-kubernetes-cluster) sections, to be sure that you consider the new features
+and requirements of v4.1 that need to be included in the CAPVCD YAML:
+
+* Adding the `MachineHealthCheck` section to the cluster template YAML to use CSE v4.1 health checking capabilities.
+* Adding the needed `preKubeadmCommands` sections to the cluster template YAML.
+* Updating to a supported TKGm OVA (see the table above with the supported versions).
+
+With the new CAPVCD YAML, you need to get the actual cluster state from the `vcd_rde` `computed_entity` attribute and
+create a new value for the input `entity` argument. Follow the steps mentioned in ["Updating a Kubernetes cluster"](#updating-a-kubernetes-cluster).
 
 ## Deleting a Kubernetes cluster
 
