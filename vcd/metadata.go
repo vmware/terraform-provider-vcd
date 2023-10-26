@@ -344,6 +344,11 @@ func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourc
 		return diag.FromErr(err)
 	}
 
+	// VMs can have special metadata automatically set by VCD that require to be filtered out
+	if resourceType == "vcd_vapp_vm" || resourceType == "vcd_vm" {
+		_ = filterAndGetVcdInheritedMetadata(deprecatedMetadata)
+	}
+
 	// Set deprecated metadata attribute, just for compatibility reasons
 	err = d.Set("metadata", getMetadataStruct(deprecatedMetadata.MetadataEntry))
 	if err != nil {
@@ -361,12 +366,48 @@ func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourc
 		return diag.Errorf("error getting metadata to save in state: %s", err)
 	}
 
+	// VMs can have special metadata automatically set by VCD that require to be filtered out and
+	// set into a different attribute.
+	if resourceType == "vcd_vapp_vm" || resourceType == "vcd_vm" {
+		inheritedMetadataBlock := filterAndGetVcdInheritedMetadata(metadata)
+		err = d.Set("inherited_metadata", inheritedMetadataBlock)
+		if err != nil {
+			return diag.Errorf("could not set 'inherited_metadata' attribute: %s", err)
+		}
+	}
+
 	err = setMetadataEntryInState(d, metadata.MetadataEntry)
 	if err != nil {
 		return diag.Errorf("error setting metadata entry in state: %s", err)
 	}
 
 	return nil
+}
+
+// filterAndSetVcdMetadataEntryToVm filters the metadata created by VCD from the input metadata, that gets updated without these.
+// Then, the entries filtered out are returned as a Terraform HCL block ready to be set into the corresponding attribute.
+func filterAndGetVcdInheritedMetadata(metadata *types.Metadata) []interface{} {
+	if len(metadata.MetadataEntry) == 0 {
+		return nil
+	}
+	var filteredMetadata []*types.MetadataEntry
+	inheritedMetadataBlock := make([]interface{}, 1)
+	inheritedMetadataBlockAttributes := make(map[string]interface{})
+	for _, metadataEntry := range metadata.MetadataEntry {
+		switch metadataEntry.Key {
+		case "vm.origin.id":
+			inheritedMetadataBlockAttributes["vm_origin_id"] = metadataEntry.TypedValue.Value
+		case "vm.origin.name":
+			inheritedMetadataBlockAttributes["vm_origin_name"] = metadataEntry.TypedValue.Value
+		case "vm.origin.type":
+			inheritedMetadataBlockAttributes["vm_origin_type"] = metadataEntry.TypedValue.Value
+		default:
+			filteredMetadata = append(filteredMetadata, metadataEntry)
+		}
+	}
+	metadata.MetadataEntry = filteredMetadata
+	inheritedMetadataBlock[0] = inheritedMetadataBlockAttributes
+	return inheritedMetadataBlock
 }
 
 // setMetadataEntryInState sets the given metadata entries retrieved from VCD in the Terraform state.

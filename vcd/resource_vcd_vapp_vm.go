@@ -685,6 +685,32 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true,
 			Description: "Shows the status of the VM",
 		},
+		"inherited_metadata": {
+			Computed:    true,
+			MinItems:    1,
+			MaxItems:    1,
+			Type:        schema.TypeList,
+			Description: "Metadata that is automatically set by VCD",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"vm_origin_id": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "ID of the VM from which this VM was generated",
+					},
+					"vm_origin_name": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "Name of the VM from which this VM was generated",
+					},
+					"vm_origin_type": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "Type of the VM from which this VM was generated",
+					},
+				},
+			},
+		},
 	}
 }
 
