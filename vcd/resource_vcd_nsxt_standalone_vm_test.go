@@ -110,6 +110,9 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_vm."+standaloneVmName, "disk.*", map[string]string{
 						"size_in_mb": "5",
 					}),
+					resource.TestMatchResourceAttr("vcd_vm."+standaloneVmName, "inherited_metadata.0.vm_origin_id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestCheckResourceAttrSet("vcd_vm."+standaloneVmName, "inherited_metadata.0.vm_origin_name"),
+					resource.TestMatchResourceAttr("vcd_vm."+standaloneVmName, "inherited_metadata.0.vm_origin_type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`)),
 				),
 			},
 			{

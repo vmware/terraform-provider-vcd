@@ -687,8 +687,6 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 		},
 		"inherited_metadata": {
 			Computed:    true,
-			MinItems:    1,
-			MaxItems:    1,
 			Type:        schema.TypeList,
 			Description: "Metadata that is automatically set by VCD",
 			Elem: &schema.Resource{
