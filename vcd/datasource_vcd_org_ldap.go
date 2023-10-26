@@ -125,6 +125,11 @@ func datasourceVcdOrgLdap() *schema.Resource {
 				Computed:    true,
 				Description: "Type of LDAP settings (one of NONE, SYSTEM, CUSTOM)",
 			},
+			"custom_user_ou": { // CustomUsersOu
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "If ldap_mode is SYSTEM, specifies a LDAP attribute=value pair to use for OU (organizational unit)",
+			},
 			"custom_settings": { // CustomOrgLdapSettings
 				Type:        schema.TypeList,
 				Computed:    true,
