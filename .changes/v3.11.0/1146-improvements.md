@@ -1,2 +1,2 @@
 * Add support to the metadata that gets automatically created on `vcd_vapp_vm` and `vcd_vm` when they use a vApp Template,
-  with the new `inherited_metadata` block [GH-1146]
+  with the new `inherited_metadata` block. Example of metadata entries of this kind: `vm.origin.id`, `vm.origin.name`, `vm.origin.type` [GH-1146]
