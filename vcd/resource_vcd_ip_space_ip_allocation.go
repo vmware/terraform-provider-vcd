@@ -63,6 +63,11 @@ func resourceVcdIpAllocation() *schema.Resource {
 				Computed:    true,
 				Description: "Required if 'type' is IP_PREFIX",
 			},
+			"value": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "IP address or CIDR to use. (VCD 10.4.2+)",
+			},
 			"ip_address": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -119,6 +124,12 @@ func resourceVcdIpAllocationCreate(ctx context.Context, d *schema.ResourceData, 
 		Type:     d.Get("type").(string),
 		Quantity: addrOf(1),
 	}
+
+	if d.Get("value").(string) != "" {
+		allocationConfig.Value = d.Get("value").(string)
+		allocationConfig.Quantity = nil // Quantity field must not be set when 'value' is specified
+	}
+
 	prefixLength := d.Get("prefix_length").(string)
 	if prefixLength != "" {
 		intPrefixLength, _ := strconv.Atoi(prefixLength)
@@ -184,9 +195,22 @@ func resourceVcdIpAllocationUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("error retrieving IP Allocation: %s", err)
 	}
 
+	changeOccured := false
 	if d.HasChange("usage_state") || d.HasChange("description") {
 		ipAllocation.IpSpaceIpAllocation.UsageState = d.Get("usage_state").(string)
 		ipAllocation.IpSpaceIpAllocation.Description = d.Get("description").(string)
+		changeOccured = true
+	}
+
+	if d.HasChange("value") {
+		ipAllocation.IpSpaceIpAllocation.Value = d.Get("value").(string)
+		// if d.Get("value").(string) != "" {
+		// 	ipAllocation.IpSpaceIpAllocation.
+		// }
+		changeOccured = true
+	}
+
+	if changeOccured {
 		_, err = ipAllocation.Update(ipAllocation.IpSpaceIpAllocation)
 		if err != nil {
 			return diag.Errorf("error updating IP Space IP Allocation: %s", err)
