@@ -47,9 +47,9 @@ worker_placement_policy = "\"\""      # An existing VM Placement Policy for work
 worker_storage_profile  = "*"         # An existing Storage Profile for worker nodes
 
 # Storage and TKGm OVA
-disk_size    = "20Gi"                                                                     # Specifies the disk size for every node in the cluster
-tkgm_catalog = "tkgm_catalog"                                                             # An existing catalog where TKGm OVAs are
-tkgm_ova_name     = "ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc" # An existing TKGm OVA
+disk_size     = "20Gi"                                                                     # Specifies the disk size for every node in the cluster
+tkgm_catalog  = "tkgm_catalog"                                                             # An existing catalog where TKGm OVAs are
+tkgm_ova_name = "ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc" # An existing TKGm OVA
 
 # Internal networking
 pod_cidr     = "100.96.0.0/11" # Specifies the IPs that the Kubernetes Pods will use
