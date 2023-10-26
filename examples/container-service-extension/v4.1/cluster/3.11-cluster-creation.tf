@@ -117,7 +117,7 @@ locals {
 
     DISK_SIZE         = var.disk_size
     VCD_CATALOG       = var.tkgm_catalog
-    VCD_TEMPLATE_NAME = var.tkgm_ova
+    VCD_TEMPLATE_NAME = var.tkgm_ova_name
 
     POD_CIDR     = var.pod_cidr
     SERVICE_CIDR = var.service_cidr

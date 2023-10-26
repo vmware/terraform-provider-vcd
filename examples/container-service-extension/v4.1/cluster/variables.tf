@@ -134,8 +134,8 @@ variable "tkgm_catalog" {
   description = "The TKGm Catalog used to pick the OVAs to create the Kubernetes cluster"
 }
 
-variable "tkgm_ova" {
-  description = "The TKGm OVA to create the Kubernetes cluster"
+variable "tkgm_ova_name" {
+  description = "The TKGm OVA name, to create the Kubernetes cluster"
 }
 
 variable "pod_cidr" {
