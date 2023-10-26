@@ -327,7 +327,7 @@ func vimObjectRefToMoref(input *types.VimObjectRef) string {
 }
 
 // ObjectMap extracts an array of wanted elements from an array of complex objects.
-// The Input type is the complex object
+// The Input type is the complex object.
 // The Output type could be a simple data type, such as a string or a number, but could
 // also be a different object.
 // The conversion is performed by the f function, which takes one complex input object and
@@ -348,4 +348,15 @@ func ObjectMap[Input any, Output any](input []Input, f func(Input) Output) []Out
 		result[i] = f(input[i])
 	}
 	return result
+}
+
+// firstNonEmpty returns the first non empty string from a list
+// If all arguments are empty, returns an empty string
+func firstNonEmpty(args ...string) string {
+	for _, s := range args {
+		if s != "" {
+			return s
+		}
+	}
+	return ""
 }

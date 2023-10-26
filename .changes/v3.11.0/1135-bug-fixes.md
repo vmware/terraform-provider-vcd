@@ -1,0 +1,1 @@
+* Fix test TestAccVcdRightsContainers and expand it to test most available items [GH-1135]
