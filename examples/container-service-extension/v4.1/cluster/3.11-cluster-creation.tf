@@ -199,10 +199,11 @@ data "vcd_rde_interface_behavior" "capvcd_behavior" {
 }
 
 data "vcd_rde_behavior_invocation" "get_kubeconfig" {
+  count       = local.is_k8s_cluster_provisioned ? 1 : 0 # Guarantees that the cluster is in correct state when invoking
   rde_id      = vcd_rde.k8s_cluster_instance.id
   behavior_id = data.vcd_rde_interface_behavior.capvcd_behavior.id
 }
 
 output "kubeconfig" {
-  value = local.is_k8s_cluster_provisioned ? jsondecode(data.vcd_rde_behavior_invocation.get_kubeconfig.result)["entity"]["status"]["capvcd"]["private"]["kubeConfig"] : null
+  value = local.is_k8s_cluster_provisioned ? jsondecode(data.vcd_rde_behavior_invocation[0].get_kubeconfig.result)["entity"]["status"]["capvcd"]["private"]["kubeConfig"] : null
 }
