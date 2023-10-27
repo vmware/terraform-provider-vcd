@@ -209,6 +209,11 @@ func resourceNetworkPoolCreate(ctx context.Context, d *schema.ResourceData, meta
 		networkPoolProviderType = networkProviderNsxtManager
 	}
 
+	expectedProviderType := networkProviders[networkPoolType]
+	if networkPoolProviderType != expectedProviderType {
+		return diag.Errorf("expected network provider type for network pool '%s' is '%s', but given '%s'",
+			networkPoolType, expectedProviderType, networkPoolProviderType)
+	}
 	var networkPoolProvider types.OpenApiReference
 
 	if networkPoolProviderType == networkProviderVcenter {
