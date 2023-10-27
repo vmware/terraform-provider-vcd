@@ -312,7 +312,7 @@ data "vcd_rde_behavior_invocation" "get_kubeconfig" {
 }
 
 output "kubeconfig" {
-  value = local.is_k8s_cluster_provisioned ? jsondecode(data.vcd_rde_behavior_invocation[0].get_kubeconfig.result)["entity"]["status"]["capvcd"]["private"]["kubeConfig"] : null
+  value = local.is_k8s_cluster_provisioned ? jsondecode(data.vcd_rde_behavior_invocation.get_kubeconfig[0].result)["entity"]["status"]["capvcd"]["private"]["kubeConfig"] : null
 }
 ```
 
