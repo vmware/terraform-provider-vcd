@@ -185,6 +185,27 @@ output "computed_k8s_cluster_events" {
   value = local.has_status ? local.k8s_cluster_computed["status"]["vcdKe"]["eventSet"] : null
 }
 
-output "computed_k8s_cluster_kubeconfig" {
-  value = local.is_k8s_cluster_provisioned ? local.k8s_cluster_computed["status"]["capvcd"]["private"]["kubeConfig"] : null
+# Obtain the Kubeconfig once the cluster is ready
+data "vcd_rde_interface" "cse_interface" {
+  count   = is_k8s_cluster_provisioned ? 1 : 0
+  vendor  = "cse"
+  nss     = "capvcd"
+  version = "1.0.0"
+}
+
+data "vcd_rde_interface_behavior" "capvcd_behavior" {
+  count            = is_k8s_cluster_provisioned ? 1 : 0
+  provider         = vcd.admin
+  rde_interface_id = data.vcd_rde_interface.cse_interface.id
+  name             = "getFullEntity"
+}
+
+data "vcd_rde_behavior_invocation" "get_kubeconfig" {
+  count       = is_k8s_cluster_provisioned ? 1 : 0
+  rde_id      = vcd_rde.k8s_cluster_instance.id
+  behavior_id = data.vcd_rde_interface_behavior.capvcd_behavior.id
+}
+
+output "kubeconfig" {
+  value = local.is_k8s_cluster_provisioned ? jsondecode(data.vcd_rde_behavior_invocation.get_kubeconfig.result)["entity"]["status"]["capvcd"]["private"]["kubeConfig"] : null
 }
