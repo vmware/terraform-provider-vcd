@@ -285,15 +285,33 @@ output "computed_k8s_cluster_events" {
 ```
 
 When the status displayed by `computed_k8s_cluster_status` is `provisioned`, it will mean that the TKGm cluster is successfully provisioned and
-the Kubeconfig is available and ready to use. It can be retrieved it with:
+the Kubeconfig is available and ready to use. It can be retrieved it with the `vcd_rde_behavior_invocation` data source:
 
 ```hcl
 locals {
   is_k8s_cluster_provisioned = local.has_status ? local.k8s_cluster_computed["status"]["vcdKe"]["state"] == "provisioned" ? lookup(local.k8s_cluster_computed["status"], "capvcd", null) != null : false : false
 }
 
-output "computed_k8s_cluster_kubeconfig" {
-  value = local.is_k8s_cluster_provisioned ? local.k8s_cluster_computed["status"]["capvcd"]["private"]["kubeConfig"] : null
+# Obtain the Kubeconfig once the cluster is ready
+data "vcd_rde_interface" "cse_interface" {
+  vendor  = "cse"
+  nss     = "capvcd"
+  version = "1.0.0"
+}
+
+data "vcd_rde_interface_behavior" "capvcd_behavior" {
+  provider         = vcd.admin
+  rde_interface_id = data.vcd_rde_interface.cse_interface.id
+  name             = "getFullEntity"
+}
+
+data "vcd_rde_behavior_invocation" "get_kubeconfig" {
+  rde_id      = vcd_rde.k8s_cluster_instance.id
+  behavior_id = data.vcd_rde_interface_behavior.capvcd_behavior.id
+}
+
+output "kubeconfig" {
+  value = local.is_k8s_cluster_provisioned ? jsondecode(data.vcd_rde_behavior_invocation.get_kubeconfig.result)["entity"]["status"]["capvcd"]["private"]["kubeConfig"] : null
 }
 ```
 
