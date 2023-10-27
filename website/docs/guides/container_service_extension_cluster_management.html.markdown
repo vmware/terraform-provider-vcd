@@ -315,6 +315,8 @@ output "kubeconfig" {
 }
 ```
 
+Then, running `terraform output -no-color -raw kubeconfig > kubeconfig.yaml` should give you a completely operational KubeConfig YAML file.
+
 ## Updating a Kubernetes cluster
 
 We can perform a Terraform update to resize a TKGm cluster, for example. In order to do that, we must take into account how the
