@@ -289,21 +289,9 @@ the Kubeconfig is available and ready to use. It can now be retrieved it with th
 the following snippet to the existing configuration:
 
 ```hcl
-data "vcd_rde_interface" "cse_interface" {
-  vendor  = "cse"
-  nss     = "capvcd"
-  version = "1.0.0"
-}
-
-data "vcd_rde_interface_behavior" "capvcd_behavior" {
-  provider         = vcd.admin
-  rde_interface_id = data.vcd_rde_interface.cse_interface.id
-  name             = "getFullEntity"
-}
-
 data "vcd_rde_behavior_invocation" "get_kubeconfig" {
   rde_id      = vcd_rde.k8s_cluster_instance.id
-  behavior_id = data.vcd_rde_interface_behavior.capvcd_behavior.id
+  behavior_id = "urn:vcloud:behavior-interface:getFullEntity:cse:capvcd:1.0.0"
 }
 
 output "kubeconfig" {
