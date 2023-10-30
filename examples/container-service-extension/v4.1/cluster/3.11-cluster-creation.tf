@@ -175,7 +175,6 @@ resource "vcd_rde" "k8s_cluster_instance" {
 locals {
   k8s_cluster_computed       = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)
   has_status                 = lookup(local.k8s_cluster_computed, "status", null) != null
-  is_k8s_cluster_provisioned = local.has_status ? local.k8s_cluster_computed["status"]["vcdKe"]["state"] == "provisioned" ? lookup(local.k8s_cluster_computed["status"], "capvcd", null) != null : false : false
 }
 output "computed_k8s_cluster_status" {
   value = local.has_status ? local.k8s_cluster_computed["status"]["vcdKe"]["state"] : null
@@ -183,27 +182,4 @@ output "computed_k8s_cluster_status" {
 
 output "computed_k8s_cluster_events" {
   value = local.has_status ? local.k8s_cluster_computed["status"]["vcdKe"]["eventSet"] : null
-}
-
-# Obtain the Kubeconfig once the cluster is ready
-data "vcd_rde_interface" "cse_interface" {
-  vendor  = "cse"
-  nss     = "capvcd"
-  version = "1.0.0"
-}
-
-data "vcd_rde_interface_behavior" "capvcd_behavior" {
-  provider         = vcd.admin
-  rde_interface_id = data.vcd_rde_interface.cse_interface.id
-  name             = "getFullEntity"
-}
-
-data "vcd_rde_behavior_invocation" "get_kubeconfig" {
-  count       = local.is_k8s_cluster_provisioned ? 1 : 0 # Guarantees that the cluster is in correct state when invoking
-  rde_id      = vcd_rde.k8s_cluster_instance.id
-  behavior_id = data.vcd_rde_interface_behavior.capvcd_behavior.id
-}
-
-output "kubeconfig" {
-  value = local.is_k8s_cluster_provisioned ? jsondecode(data.vcd_rde_behavior_invocation.get_kubeconfig[0].result)["entity"]["status"]["capvcd"]["private"]["kubeConfig"] : null
 }
