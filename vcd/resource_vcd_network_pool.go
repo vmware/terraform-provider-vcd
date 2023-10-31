@@ -160,33 +160,33 @@ func resourceVcdNetworkPool() *schema.Resource {
 							MaxItems:      1,
 							ForceNew:      true,
 							Description:   "Transport Zone Backing",
-							ConflictsWith: []string{"backing.0.port_groups", "backing.0.distributed_switches"},
+							ConflictsWith: []string{"backing.0.port_group", "backing.0.distributed_switch"},
 							Elem:          resourceNetworkPoolBacking("resource"),
 						},
-						"port_groups": {
+						"port_group": {
 							Type:          schema.TypeSet,
 							Optional:      true,
 							Computed:      true,
 							ForceNew:      true,
 							Description:   "Backing port groups",
-							ConflictsWith: []string{"backing.0.distributed_switches", "backing.0.transport_zone"},
+							ConflictsWith: []string{"backing.0.distributed_switch", "backing.0.transport_zone"},
 							Elem:          resourceNetworkPoolBacking("resource"),
 						},
-						"distributed_switches": {
+						"distributed_switch": {
 							Type:          schema.TypeList,
 							Optional:      true,
 							Computed:      true,
 							ForceNew:      true,
 							MaxItems:      1,
 							Description:   "Backing distributed switches",
-							ConflictsWith: []string{"backing.0.port_groups", "backing.0.transport_zone"},
+							ConflictsWith: []string{"backing.0.port_group", "backing.0.transport_zone"},
 							Elem:          resourceNetworkPoolBacking("resource"),
 						},
-						"range_ids": {
+						"range_id": {
 							Type:          schema.TypeList,
 							Optional:      true,
 							Description:   "Distributed Switch ID ranges (used with VLAN)",
-							ConflictsWith: []string{"backing.0.port_groups", "backing.0.transport_zone"},
+							ConflictsWith: []string{"backing.0.port_group", "backing.0.transport_zone"},
 							Elem:          resourceNetworkPoolVlanIdRange,
 						},
 					},
@@ -326,7 +326,7 @@ func resourceNetworkPoolUpdate(ctx context.Context, d *schema.ResourceData, meta
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if d.HasChanges("backing.0.range_ids") {
+	if d.HasChanges("backing.0.range_id") {
 		backing, err := getNetworkPoolBacking(networkPoolType, d)
 		if err != nil {
 			return diag.Errorf("error getting backing info: %s", err)
@@ -399,7 +399,7 @@ func genericNetworkPoolRead(_ context.Context, d *schema.ResourceData, meta inte
 				"type": backingTypeDistributedSwitch,
 			})
 		}
-		backing["distributed_switches"] = dSwitches
+		backing["distributed_switch"] = dSwitches
 		var ranges []any
 		for _, r := range networkPool.NetworkPool.Backing.VlanIdRanges.Values {
 			ranges = append(ranges, map[string]any{
@@ -407,7 +407,7 @@ func genericNetworkPoolRead(_ context.Context, d *schema.ResourceData, meta inte
 				"end_id":   r.EndId,
 			})
 		}
-		backing["range_ids"] = ranges
+		backing["range_id"] = ranges
 	case types.NetworkPoolPortGroupType:
 		var pGroups []any
 		for _, pg := range networkPool.NetworkPool.Backing.PortGroupRefs {
@@ -417,7 +417,7 @@ func genericNetworkPoolRead(_ context.Context, d *schema.ResourceData, meta inte
 				"type": backingTypePortGroup,
 			})
 		}
-		backing["port_groups"] = pGroups
+		backing["port_group"] = pGroups
 	}
 	err = d.Set("backing", []any{backing})
 	if err != nil {
@@ -467,25 +467,25 @@ func getNetworkPoolBacking(networkPoolType string, d *schema.ResourceData) (*typ
 				tzMap := tzRawList[0].(map[string]any)
 				backing.TransportZoneRef.Name = tzMap["name"].(string)
 			}
-		case "port_groups":
+		case "port_group":
 			pgRawList := value.(*schema.Set)
 			for _, m := range pgRawList.List() {
 				if networkPoolType != types.NetworkPoolPortGroupType {
-					return nil, fmt.Errorf("port_groups specified with invalid type %s", networkPoolType)
+					return nil, fmt.Errorf("port_group specified with invalid type %s", networkPoolType)
 				}
 				pgMap := m.(map[string]any)
 				backing.PortGroupRefs = append(backing.PortGroupRefs, types.OpenApiReference{Name: pgMap["name"].(string)})
 			}
-		case "distributed_switches":
+		case "distributed_switch":
 			dsRawList := value.([]any)
 			for _, m := range dsRawList {
 				if networkPoolType != types.NetworkPoolVlanType {
-					return nil, fmt.Errorf("distributed_switches specified with invalid type %s", networkPoolType)
+					return nil, fmt.Errorf("distributed_switch specified with invalid type %s", networkPoolType)
 				}
 				dsMap := m.(map[string]any)
 				backing.VdsRefs = append(backing.VdsRefs, types.OpenApiReference{Name: dsMap["name"].(string)})
 			}
-		case "range_ids":
+		case "range_id":
 			ridRawList := value.([]any)
 			for _, m := range ridRawList {
 				ridMap := m.(map[string]any)
@@ -498,7 +498,7 @@ func getNetworkPoolBacking(networkPoolType string, d *schema.ResourceData) (*typ
 	}
 	if len(backing.VdsRefs) > 0 {
 		if len(backing.VlanIdRanges.Values) == 0 {
-			return nil, fmt.Errorf("[getNetworkPoolBacking] distributed_switches selected but no range IDs were indicated")
+			return nil, fmt.Errorf("[getNetworkPoolBacking] distributed_switch selected but no range IDs were indicated")
 		}
 	}
 	// Note: an empty backing block is acceptable, as the system will try to fetch the first available backing

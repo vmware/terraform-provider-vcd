@@ -75,16 +75,16 @@ func datasourceVcdNetworkPool() *schema.Resource {
 						"port_groups": {
 							Type:        schema.TypeList,
 							Computed:    true,
-							Description: "Port Groups backing",
+							Description: "Port Group backing",
 							Elem:        resourceNetworkPoolBacking("resource"),
 						},
-						"distributed_switches": {
+						"distributed_switch": {
 							Type:        schema.TypeList,
 							Computed:    true,
-							Description: "Distributed switches backing",
+							Description: "Distributed switch backing",
 							Elem:        resourceNetworkPoolBacking("resource"),
 						},
-						"range_ids": {
+						"range_id": {
 							Type:        schema.TypeList,
 							Computed:    true,
 							Description: "Distributed Switch ID ranges (used with VLAN backing)",

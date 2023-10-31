@@ -15,7 +15,7 @@ Supported in provider *v3.11+*
 
 ~> Only `System Administrator` can create this resource.
 
-## Example Usage 1 - Type "GENEVE"
+## Example Usage 1 - Type "GENEVE" (NSX-T)
 
 ```hcl
 data "vcd_nsxt_manager" "mgr" {
@@ -50,10 +50,10 @@ resource "vcd_network_pool" "npool" {
   type                = "VLAN"
 
   backing {
-    distributed_switches {
+    distributed_switch {
       name = "NsxTDVS"
     }
-    range_ids {
+    range_id {
       start_id = 101
       end_id   = 200
     }
@@ -74,7 +74,7 @@ resource "vcd_network_pool" "npool" {
   type                = "PORTGROUP_BACKED"
 
   backing {
-    port_groups {
+    port_group {
       name = "TestbedPG"
     }
   }
@@ -143,10 +143,14 @@ data "vcd_nsxt_manager" "mgr" {
   name = "nsxManager1"
 }
 
-resource "vcd_network_pool" "npool1" {
+data "vcd_vcenter" "vc1" {
+  name = "vc1"
+}
+
+resource "vcd_network_pool" "npool-1" {
   name                = "new-network-pool"
   description         = "network pool without explicit transport zone"
-  network_provider_id = data.vcd_nsxt_manager.mgr.id
+  network_provider_id = data.vcd_vcenter.vc1.id
   type                = "PORTGROUP_BACKED"
 
   backing_components_use_constraint = "use-when-only-one"
@@ -155,7 +159,7 @@ resource "vcd_network_pool" "npool1" {
   }
 }
 
-resource "vcd_network_pool" "npool2" {
+resource "vcd_network_pool" "npool-2" {
   name                = "new-network-pool"
   description         = "network pool without explicit transport zone"
   network_provider_id = data.vcd_nsxt_manager.mgr.id
@@ -173,7 +177,7 @@ zone will be shown if we use an `output` for the network pool.
 
 ```hcl
 output "pool1" {
-  value = vcd_network_pool.npool.backing
+  value = vcd_network_pool.npool1.backing
 }
 ```
 
@@ -199,10 +203,10 @@ output "pool1" {
 * `network_provider_type` Type of network provider
 
 ### Backing
-* `transport_zone` - (Optional) [backing structure](#backing-element) used for `GENEVE` network pool
-* `distributed_switches` - (Optional) [backing structure](#backing-element) used for `VLAN` network pool
-* `port_groups` - (Optional) [backing structure](#backing-element) used for `PORTGROUP_BACKED` network pool
-* `range_ids` - (Optional) A list of range IDs, required with `VLAN` network pools
+* `transport_zone` - (Optional) A [backing structure](#backing-element) used for `GENEVE` network pool
+* `distributed_switch` - (Optional) A [backing structure](#backing-element) used for `VLAN` network pool
+* `port_group` - (Optional) A list of [backing structure](#backing-element) used for `PORTGROUP_BACKED` network pool
+* `range_id` - (Optional) A list of range IDs, required with `VLAN` network pools
     * `start_id` - (Required) The first ID of the range
     * `end_id` - (Required) The last ID of the range
 

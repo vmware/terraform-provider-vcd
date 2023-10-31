@@ -54,7 +54,7 @@ func TestAccVcdResourceNetworkPool(t *testing.T) {
 		t.Skipf("error getting distributed switches: %s", err)
 	}
 	var params = make(url.Values)
-	params.Set("virtualCenter.id", vCenter.VSphereVCenter.VcId)
+	params.Set("filter", fmt.Sprintf("virtualCenter.id==%s", vCenter.VSphereVCenter.VcId))
 	portGroups, err := vcdClient.GetAllVcenterImportableDvpgs(params)
 	if err != nil {
 		t.Skipf("error getting port groups: %s", err)
@@ -103,7 +103,7 @@ func TestAccVcdResourceNetworkPool(t *testing.T) {
 			description:       t.Name() + "-vlan-name description",
 			poolType:          types.NetworkPoolVlanType,
 			networkProviderId: vCenter.VSphereVCenter.VcId,
-			backingType:       "distributed_switches",
+			backingType:       "distributed_switch",
 			backingNames:      []string{ds.BackingRef.Name},
 		})
 	}
@@ -144,7 +144,7 @@ func TestAccVcdResourceNetworkPool(t *testing.T) {
 			description:       t.Name() + "-pg-name description",
 			poolType:          types.NetworkPoolPortGroupType,
 			networkProviderId: vCenter.VSphereVCenter.VcId,
-			backingType:       "port_groups",
+			backingType:       "port_group",
 			backingNames:      []string{pg.VcenterImportableDvpg.BackingRef.Name},
 		})
 	}
@@ -154,7 +154,7 @@ func TestAccVcdResourceNetworkPool(t *testing.T) {
 			description:       t.Name() + "-pg-multi description",
 			poolType:          types.NetworkPoolPortGroupType,
 			networkProviderId: vCenter.VSphereVCenter.VcId,
-			backingType:       "port_groups",
+			backingType:       "port_group",
 			backingNames:      compatiblePgs,
 		})
 	}
@@ -301,7 +301,7 @@ resource "vcd_network_pool" "npool" {
 `
 
 const portGroupBacking = `
-    port_groups {
+    port_group {
       name = "%s"
     }
 `
@@ -336,7 +336,7 @@ resource "vcd_network_pool" "npool" {
 }
 `
 const testAccRangeIds = `
-    range_ids {
+    range_id {
       start_id = 101
       end_id   = 200
     }
