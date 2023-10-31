@@ -724,7 +724,7 @@ func importablePortGroupList(d *schema.ResourceData, meta interface{}) (list []s
 		return nil, fmt.Errorf("error retrieving vCenter '%s': %s", vCenterName, err)
 	}
 	var params = make(url.Values)
-	params.Set("virtualCenter.id", vCenter.VSphereVCenter.VcId)
+	params.Set("filter", fmt.Sprintf("virtualCenter.id==%s", vCenter.VSphereVCenter.VcId))
 	pgroups, err := client.GetAllVcenterImportableDvpgs(params)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving importable port groups for vCenter '%s': %s", vCenterName, err)
