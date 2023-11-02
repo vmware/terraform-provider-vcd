@@ -1,6 +1,6 @@
 # This file was downloaded from https://raw.githubusercontent.com/vmware/cluster-api-provider-cloud-director/main/templates/cluster-template-v1.25.7.yaml
 # Only the commented lines were added manually.
----
+
 # The MachineHealthCheck was added manually. You can add this section if you want automatic health checks in your
 # Kubernetes clusters.
 apiVersion: cluster.x-k8s.io/v1beta1
