@@ -349,3 +349,14 @@ func ObjectMap[Input any, Output any](input []Input, f func(Input) Output) []Out
 	}
 	return result
 }
+
+// firstNonEmpty returns the first non empty string from a list
+// If all arguments are empty, returns an empty string
+func firstNonEmpty(args ...string) string {
+	for _, s := range args {
+		if s != "" {
+			return s
+		}
+	}
+	return ""
+}

@@ -86,6 +86,23 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Default:     1,
 				Description: "Size of upload file piece size in megabytes",
 			},
+			"lease": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
+				MaxItems:    1,
+				Description: "Defines lease parameters for this vApp template",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"storage_lease_in_sec": {
+							Type:         schema.TypeInt,
+							Required:     true,
+							Description:  "How long the vApp template is available before being automatically deleted or marked as expired. 0 means never expires (or expires at the maximum limit provided by the parent Org)",
+							ValidateFunc: validateIntLeaseSeconds(), // Lease can be either 0 or 3600+
+						},
+					},
+				},
+			},
 			"metadata": {
 				Type:          schema.TypeMap,
 				Optional:      true,
@@ -135,6 +152,10 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 	d.SetId(vAppTemplate.VAppTemplate.ID)
 	log.Printf("[TRACE] Catalog vApp Template created: %s", vappTemplateName)
 
+	err = vappTemplateLeaseUpdate(vcdClient, vAppTemplate, d)
+	if err != nil {
+		return diag.Errorf("error updating VApp template lease terms: %s", err)
+	}
 	return resourceVcdCatalogVappTemplateRead(ctx, d, meta)
 }
 
@@ -190,7 +211,19 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 	if err != nil {
 		diag.Errorf("Unable to set attribute 'vm_names' for the vApp Template: %s", err)
 	}
-
+	leaseInfo, err := vAppTemplate.GetLease()
+	if err != nil {
+		return diag.Errorf("unable to get lease information: %s", err)
+	}
+	leaseData := []map[string]interface{}{
+		{
+			"storage_lease_in_sec": leaseInfo.StorageLeaseInSeconds,
+		},
+	}
+	err = d.Set("lease", leaseData)
+	if err != nil {
+		return diag.Errorf("unable to set lease information in state: %s", err)
+	}
 	d.SetId(vAppTemplate.VAppTemplate.ID)
 
 	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog_vapp_template", vAppTemplate)
@@ -202,7 +235,8 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 }
 
 func resourceVcdCatalogVappTemplateUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	vAppTemplate, err := findVAppTemplate(d, meta.(*VCDClient), "resource")
+	vcdClient := meta.(*VCDClient)
+	vAppTemplate, err := findVAppTemplate(d, vcdClient, "resource")
 
 	if d.HasChange("description") || d.HasChange("name") {
 		if err != nil {
@@ -217,6 +251,10 @@ func resourceVcdCatalogVappTemplateUpdate(_ context.Context, d *schema.ResourceD
 		}
 	}
 
+	err = vappTemplateLeaseUpdate(vcdClient, vAppTemplate, d)
+	if err != nil {
+		return diag.Errorf("error updating VApp template lease terms: %s", err)
+	}
 	err = createOrUpdateMetadata(d, vAppTemplate, "metadata")
 	if err != nil {
 		return diag.FromErr(err)
@@ -253,6 +291,25 @@ func resourceVcdCatalogVappTemplateDelete(_ context.Context, d *schema.ResourceD
 	}
 	log.Printf("[TRACE] vApp Template delete completed: %s", vAppTemplateName)
 
+	return nil
+}
+
+func vappTemplateLeaseUpdate(vcdClient *VCDClient, vAppTemplate *govcd.VAppTemplate, d *schema.ResourceData) error {
+	var storageLease = vAppTemplate.VAppTemplate.LeaseSettingsSection.StorageLeaseInSeconds
+	rawLeaseSection1, ok := d.GetOk("lease")
+	if ok {
+		// We have a lease block
+		rawLeaseSection2 := rawLeaseSection1.([]interface{})
+		leaseSection := rawLeaseSection2[0].(map[string]interface{})
+		storageLease = leaseSection["storage_lease_in_sec"].(int)
+	}
+
+	if storageLease != vAppTemplate.VAppTemplate.LeaseSettingsSection.StorageLeaseInSeconds {
+		err := vAppTemplate.RenewLease(storageLease)
+		if err != nil {
+			return fmt.Errorf("error updating VApp template lease terms: %s", err)
+		}
+	}
 	return nil
 }
 

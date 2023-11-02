@@ -84,6 +84,7 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceVAppTemplate, "metadata.vapp_template_metadata", "vApp Template Metadata v2"),
 					resource.TestCheckResourceAttr(resourceVAppTemplate, "metadata.vapp_template_metadata2", "vApp Template Metadata2 v2"),
 					resource.TestCheckResourceAttr(resourceVAppTemplate, "metadata.vapp_template_metadata3", "vApp Template Metadata3"),
+					resource.TestCheckResourceAttr(resourceVAppTemplate, "lease.0.storage_lease_in_sec", fmt.Sprintf("%d", 3600*24*3)),
 				),
 			},
 			{
@@ -98,6 +99,7 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata", "vApp Template Metadata"),
 					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata2", "vApp Template Metadata2"),
 					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata3", "vApp Template Metadata3"),
+					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "lease.0.storage_lease_in_sec", fmt.Sprintf("%d", 0)),
 				),
 			},
 			{
@@ -109,6 +111,7 @@ func TestAccVcdCatalogVAppTemplateResource(t *testing.T) {
 					resource.TestMatchResourceAttr(resourceVAppTemplateFromUrl, "description", regexp.MustCompile(`^Name: yVM.*`)),
 					resource.TestCheckResourceAttrPair(resourceVAppTemplateFromUrl, "vdc_id", datasourceVdc, "id"),
 					resource.TestCheckResourceAttrSet(resourceVAppTemplateFromUrl, "vm_names.0"),
+					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "lease.0.storage_lease_in_sec", fmt.Sprintf("%d", 3600*18)),
 					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata", "vApp Template Metadata"),
 					resource.TestCheckResourceAttr(resourceVAppTemplateFromUrl, "metadata.vapp_template_metadata2", "vApp Template Metadata2_2"),
 				),
@@ -223,10 +226,10 @@ resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
   org        = "{{.Org}}"
   catalog_id = data.vcd_catalog.{{.Catalog}}.id
 
-  name                 = "{{.VAppTemplateName}}"
-  description          = "{{.Description}}"
-  ova_path             = "{{.OvaPath}}"
-  upload_piece_size    = {{.UploadPieceSize}}
+  name              = "{{.VAppTemplateName}}"
+  description       = "{{.Description}}"
+  ova_path          = "{{.OvaPath}}"
+  upload_piece_size = {{.UploadPieceSize}}
 
   metadata = {
     vapp_template_metadata  = "vApp Template Metadata"
@@ -250,10 +253,14 @@ resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
   org        = "{{.Org}}"
   catalog_id = data.vcd_catalog.{{.Catalog}}.id
 
-  name                 = "{{.VAppTemplateName}}Updated"
-  description          = "{{.Description}}Updated"
-  ova_path             = "{{.OvaPath}}"
-  upload_piece_size    = {{.UploadPieceSize}}
+  name              = "{{.VAppTemplateName}}Updated"
+  description       = "{{.Description}}Updated"
+  ova_path          = "{{.OvaPath}}"
+  upload_piece_size = {{.UploadPieceSize}}
+
+  lease {
+	storage_lease_in_sec = 3600*24*3
+  }
 
   metadata = {
     vapp_template_metadata  = "vApp Template Metadata v2"
@@ -283,6 +290,10 @@ resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
   # description  = ""
   ovf_url        = "{{.OvfUrl}}"
 
+  lease {
+	storage_lease_in_sec = 0
+  }
+
   metadata = {
     vapp_template_metadata  = "vApp Template Metadata"
     vapp_template_metadata2 = "vApp Template Metadata2"
@@ -310,6 +321,10 @@ resource "vcd_catalog_vapp_template" "{{.VAppTemplateName}}" {
   # Due to a bug in VCD we omit the description
   # description  = ""
   ovf_url        = "{{.OvfUrl}}"
+
+  lease {
+	storage_lease_in_sec = 3600*18
+  }
 
   metadata = {
     vapp_template_metadata  = "vApp Template Metadata"
