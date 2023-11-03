@@ -384,8 +384,9 @@ func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourc
 	return nil
 }
 
-// filterAndSetVcdMetadataEntryToVm filters the metadata created by VCD from the input metadata, that gets updated without these.
-// Then, the entries filtered out are returned as a Terraform HCL block ready to be set into the corresponding attribute.
+// filterAndGetVcdInheritedMetadata takes metadata from the input parameter and extracts the specific entries that were created
+// automatically by VCD (inherited metadata), returning them as a structure that is ready to be set in the corresponding
+// Terraform schema attribute. The extracted metadata will be no longer present in the former metadata parameter.
 func filterAndGetVcdInheritedMetadata(metadata *types.Metadata) []interface{} {
 	if len(metadata.MetadataEntry) == 0 {
 		return nil

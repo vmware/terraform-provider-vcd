@@ -120,7 +120,7 @@ The following arguments are supported:
 * `status_text` - (*v3.8+*) The vApp status as text.
 * `security_tags` - (*v3.9+*) Set of security tags assigned to this VM.
 * `inherited_metadata` - (*v3.11+*) A block that contains metadata that is automatically added by VCD and provides
-  details of the origin of the VM. The sub-attributes are:
+  details on the origin of the VM. The sub-attributes are:
   * `vm_origin_id` - The ID of the VM from which this VM was generated
   * `vm_origin_name` - The name of the VM from which this VM was generated
   * `vm_origin_type` - The type of the VM from which this VM was generated
