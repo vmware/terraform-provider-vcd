@@ -9,7 +9,7 @@
 #   You can check the comments on each resource/data source for more help and context.
 # ------------------------------------------------------------------------------------------------------------
 
-# Login into VCD with the cse_admin username created above. This will be used to provision
+# Log in to VCD with the cse_admin username created above. This will be used to provision
 # an API token that must be consumed by the CSE Server.
 # This should not be changed.
 provider "vcd" {

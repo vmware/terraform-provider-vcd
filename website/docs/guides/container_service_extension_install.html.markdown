@@ -29,36 +29,36 @@ In order to complete the steps described in this guide, please be aware:
 
 ## Installation process
 
--> To install CSE v4.1, this guide will make use of the ready-to-use Terraform configuration located [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/install).
+-> To install CSE v4.1, this guide will make use of the example Terraform configuration located [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/install).
 You can check it, customise it to your needs and apply. However, reading this guide first is recommended to understand what it does and how to use it.
 
-The installation process is split in two independent steps that must be run separately:
+The installation process is split in two independent steps that must be run one after the other:
 
 - The first step installs the same elements as the _"Configure Settings for CSE Server"_ section in UI wizard, that is, creates the
   [RDE Interfaces][rde_interface], [RDE Types][rde_type], [RDE Interface Behaviors][rde_interface_behavior] and the [RDE][rde] that
   are required for the CSE Server to work, in addition to a new [Role][role], new [VM Sizing Policies][sizing] and a CSE Administrator [User][user] that will be
   referenced later on in the second step.
-- The second step will configure remaining resources, like [Organizations][org], [VDCs][vdc], [Catalogs and OVAs][catalog], Networks and the CSE Server [VM][vm].
+- The second step will configure the remaining resources, like [Organizations][org], [VDCs][vdc], [Catalogs and OVAs][catalog], Networks and the CSE Server [VM][vm].
 
 The reason for such as split is that the CSE Administrator created during the first step is used to configure a new `provider` block in
-the second one, so it can provision a valid [API token][api_token]. This operation must be done separately as a `provider` block
+the second one, so that it can provision a valid [API token][api_token]. This operation must be done separately as a `provider` block
 can't log in with a user created in the same run.
 
 ### Step 1: Configure Settings for CSE Server
 
--> This step of the installation refers to the [Terraform configuration present here][step1].
+-> This step of the installation refers to the [step 1 of the example Terraform configuration][step1][step1].
 
 This step will create the same elements as the _"Configure Settings for CSE Server"_ section in UI wizard. The subsections
-below can be helpful to understand all the building blocks that are described in the proposed Terraform configuration.
+below can be helpful to understand all the building blocks that are described in the proposed example of Terraform configuration.
 
-In the directory there is also a file named `terraform.tfvars.example`, which needs to be to renamed to `terraform.tfvars`
+In the directory there is also a file named `terraform.tfvars.example`, which needs to be renamed to `terraform.tfvars`
 and its values to be set to the correct ones. In general, for this specific step, the proposed HCL files (`.tf`) should not be
 modified and be applied as they are.
 
 #### RDE Interfaces, Types and Behaviors
 
 CSE v4.1 requires a set of Runtime Defined Entity items, such as [Interfaces][rde_interface], [Types][rde_type] and [Behaviors][rde_interface_behavior].
-In the [proposed configuration][step1] you can find the following:
+In the [step 1 configuration][step1] you can find the following:
 
 - The required `VCDKEConfig` [RDE Interface][rde_interface] and [RDE Type][rde_type]. These two resources specify the schema of the **CSE Server
   configuration** that will be instantiated with a [RDE][rde].
@@ -72,12 +72,12 @@ In the [proposed configuration][step1] you can find the following:
 #### RDE (CSE Server configuration / VCDKEConfig)
 
 The CSE Server configuration lives in a [Runtime Defined Entity][rde] that uses the `VCDKEConfig` [RDE Type][rde_type].
-To customise it, the [sample configuration][step1] asks for the following variables that you can set in `terraform.tfvars`:
+To customise it, the [step 1 configuration][step1] asks for the following variables that you can set in `terraform.tfvars`:
 
 - `vcdkeconfig_template_filepath` references a local file that defines the `VCDKEConfig` [RDE][rde] contents.
-  It should be a JSON with template variables that Terraform can interpret, like
+  It should be a JSON file with template variables that Terraform can interpret, like
   [the RDE template file for CSE v4.1](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/entities/vcdkeconfig.json.template)
-  used in the sample configuration, that can be rendered correctly with the Terraform built-in function `templatefile`.
+  used in the step 1 configuration, that can be rendered correctly with the Terraform built-in function `templatefile`.
   (Note: In `terraform.tfvars.example` the path for the CSE v4.1 RDE contents is already provided).
 - `capvcd_version`: The version for CAPVCD. The default value is **"1.1.0"** for CSE v4.1.
   (Note: Do not confuse with the version of the `capvcdCluster` [RDE Type][rde_type],
@@ -89,29 +89,29 @@ To customise it, the [sample configuration][step1] asks for the following variab
   some Kubernetes components from GitHub.
   The token should have the `public_repo` scope for classic tokens and `Public Repositories` for fine-grained tokens.
 - `bootstrap_vm_sizing_policy`: The [VM Sizing Policy][sizing] used by the Bootstrap VM.
-- `http_proxy`: Address of your HTTP proxy server. Optional in the sample configuration.
-- `https_proxy`: Address of your HTTPS proxy server. Optional in the sample configuration.
-- `no_proxy`: A list of comma-separated domains without spaces that indicate the targets that must **not** go through the configured proxy. Optional in the sample configuration.
-- `syslog_host`: Domain where to send the system logs. Optional in the sample configuration.
-- `syslog_port`: Port where to send the system logs. Optional in the sample configuration.
-- `node_startup_timeout`: A node will be considered unhealthy and remediated if joining the cluster takes longer than this timeout (seconds, defaults to 900 in the sample configuration).
-- `node_not_ready_timeout`: A newly joined node will be considered unhealthy and remediated if it cannot host workloads for longer than this timeout (seconds, defaults to 300 in the sample configuration).
-- `node_unknown_timeout`: A healthy node will be considered unhealthy and remediated if it is unreachable for longer than this timeout (seconds, defaults to 300 in the sample configuration).
+- `http_proxy`: Address of your HTTP proxy server. Optional in the step 1 configuration.
+- `https_proxy`: Address of your HTTPS proxy server. Optional in the step 1 configuration.
+- `no_proxy`: A list of comma-separated domains without spaces that indicate the targets that must **not** go through the configured proxy. Optional in the step 1 configuration.
+- `syslog_host`: Domain where to send the system logs. Optional in the step 1 configuration.
+- `syslog_port`: Port where to send the system logs. Optional in the step 1 configuration.
+- `node_startup_timeout`: A node will be considered unhealthy and remediated if joining the cluster takes longer than this timeout (seconds, defaults to 900 in the step 1 configuration).
+- `node_not_ready_timeout`: A newly joined node will be considered unhealthy and remediated if it cannot host workloads for longer than this timeout (seconds, defaults to 300 in the step 1 configuration).
+- `node_unknown_timeout`: A healthy node will be considered unhealthy and remediated if it is unreachable for longer than this timeout (seconds, defaults to 300 in the step 1 configuration).
 - `max_unhealthy_node_percentage`: Remediation will be suspended when the number of unhealthy nodes exceeds this percentage.
-  (100% means that unhealthy nodes will always be remediated, while 0% means that unhealthy nodes will never be remediated). Defaults to 100 in the sample configuration.
-- `container_registry_url`: URL from where TKG clusters will fetch container images, useful for VCD appliances that are completely isolated from Internet. Defaults to "projects.registry.vmware.com" in the sample configuration.
+  (100% means that unhealthy nodes will always be remediated, while 0% means that unhealthy nodes will never be remediated). Defaults to 100 in the step 1 configuration.
+- `container_registry_url`: URL from where TKG clusters will fetch container images, useful for VCD appliances that are completely isolated from Internet. Defaults to "projects.registry.vmware.com" in the step 1 configuration.
 - `bootstrap_vm_certificates`: Certificate(s) to allow the ephemeral VM (created during cluster creation) to authenticate with.
-  For example, when pulling images from a container registry. Optional in the sample configuration.
+  For example, when pulling images from a container registry. Optional in the step 1 configuration.
 - `k8s_cluster_certificates`: Certificate(s) to allow clusters to authenticate with.
-  For example, when pulling images from a container registry. Optional in the sample configuration.
+  For example, when pulling images from a container registry. Optional in the step 1 configuration.
 
 #### Rights, Roles and VM Sizing Policies
 
 CSE v4.1 requires a set of new [Rights Bundles][rights_bundle], [Roles][role] and [VM Sizing Policies][sizing] that are also created
-in this step of the [proposed configuration][step1]. Nothing should be customised here, except for the "CSE Administrator"
+in this step of the [step 1 configuration][step1]. Nothing should be customised here, except for the "CSE Administrator"
 account to be created, where you can provide a username of your choice (`cse_admin_username`) and its password (`cse_admin_password`).
 
-This account will be used to provision an [API Token][api_token] to deploy the CSE Server, in the next step.
+This account will be used in the next step to provision an [API Token][api_token] to deploy the CSE Server.
 
 Once all variables are reviewed and set, you can start the installation with `terraform apply`. When it finishes successfully, you can continue with the **step 2**.
 
@@ -119,41 +119,41 @@ Once all variables are reviewed and set, you can start the installation with `te
 
 -> This step of the installation refers to the Terraform configuration present [here][step2].
 
-~> Be sure that the previous step is successfully completed.
+~> Make sure that the previous step is successfully completed.
 
-This step will create all the remaining elements to install CSE v4.1 in VCD. You can read subsequent sections
-to have a better understanding of the building blocks that are described in the [proposed Terraform configuration][step2].
+This step will create all the remaining elements to install CSE v4.1 in VCD. You can read the subsequent sections
+to have a better understanding of the building blocks that are described in the [step 2 Terraform configuration][step2].
 
 In this [configuration][step2] you can also find a file named `terraform.tfvars.example` that needs to be updated with correct values and renamed to `terraform.tfvars`
-and change the values present there to the correct ones. You can also modify the proposed resources, so they fit better to your needs.
+and change the values present there to the correct ones. You can also modify the proposed resources to better suit your needs.
 
 #### Organizations
 
-The [proposed configuration][step2] will create two new [Organizations][org], as specified in the [CSE documentation][cse_docs]:
+The [step 2 configuration][step2] will create two new [Organizations][org], as specified in the [CSE documentation][cse_docs]:
 
 - A Solutions [Organization][org], which will host all provider-scoped items, such as the CSE Server.
   It should only be accessible to the CSE Administrator and Providers.
 - A Tenant [Organization][org], which will host the [TKGm clusters][tkgm_docs] for the users of this tenant to consume them.
 
 -> If you already have these two [Organizations][org] created and you want to use them instead,
-you can leverage customising the [proposed configuration][step2] to use the Organization [data source][org_d] to fetch them.
+you can leverage customising the [step 2 configuration][step2] to use the Organization [data source][org_d] to fetch them.
 
 #### VDCs
 
-The [proposed configuration][step2] will create two [VDCs][vdc], one for the Solutions Organization and another one for the Tenant Organization.
+The [step 2 configuration][step2] will create two [VDCs][vdc], one for the Solutions Organization and another one for the Tenant Organization.
 
 You need to specify the following values in `terraform.tfvars`:
 
 - `provider_vdc_name`: This is used to fetch an existing [Provider VDC][provider_vdc], that will be used to create the two VDCs.
-  If you are going to use more than one [Provider VDC][provider_vdc], please consider modifying the proposed configuration.
+  If you are going to use more than one [Provider VDC][provider_vdc], please consider modifying the step 2 configuration.
   In UI, [Provider VDCs][provider_vdc] can be found in the Provider view, inside _Cloud Resources_ menu.
 - `nsxt_edge_cluster_name`: This is used to fetch an existing [Edge Cluster][edge_cluster], that will be used to create the two VDCs.
-  If you are going to use more than one [Edge Cluster][edge_cluster], please consider modifying the proposed configuration.
+  If you are going to use more than one [Edge Cluster][edge_cluster], please consider modifying the step 2 configuration.
   In UI, [Edge Clusters][edge_cluster] can be found in the NSX-T manager web UI.
 - `network_pool_name`: This references an existing Network Pool, which is used to create both VDCs.
-  If you are going to use more than one Network Pool, please consider modifying the proposed configuration.
+  If you are going to use more than one Network Pool, please consider modifying the step 2 configuration.
 
-In the [proposed configuration][step2] the Tenant Organization's VDC has all the required VM Sizing Policies from the first step assigned,
+In the [step 2 configuration][step2] the Tenant Organization's VDC has all the required VM Sizing Policies from the first step assigned,
 with the `TKG small` being the default one. You can customise it to make any other TKG policy the default one.
 
 You can also leverage changing the storage profiles and other parameters to fit the requirements of your organization. Also,
@@ -161,7 +161,7 @@ if you already have usable [VDCs][vdc], you can change the configuration to fetc
 
 #### Catalog and OVAs
 
-The [proposed configuration][step2] will create two catalogs:
+The [step 2 configuration][step2] will create two catalogs:
 
 - A catalog to host CSE Server OVA files, only accessible to CSE Administrators. This catalog will allow CSE Administrators to organise and manage
   all the CSE Server OVAs that are required to run and upgrade the CSE Server.
@@ -183,7 +183,7 @@ In case you're using a pre-uploaded OVA, leverage the [vcd_catalog_vapp_template
 
 #### Networking
 
-The [proposed configuration][step2] prepares a basic networking layout that will make CSE v4.1 work. However, it is
+The [step 2 configuration][step2] prepares a basic networking layout that will make CSE v4.1 work. However, it is
 recommended that you review the code and adapt the different parts to your needs, specially for the resources like `vcd_nsxt_firewall`.
 
 The configuration will create the following:
@@ -198,13 +198,13 @@ The configuration will create the following:
   In this setup, we just provide a routed network per organization, so the CSE Server is inside its own network, isolated from the [TKGm clusters][tkgm_docs] network.
 - Two [SNAT rules][nat_rule] that will allow outbound access. Feel free to adjust or replace these rules with other ways of providing outbound access.
 
-~> SNAT rules is just a proposal to give the CSE Server and the clusters outbound access. Please review the [proposed configuration][step2]
+~> SNAT rules is just a proposal to give the CSE Server and the clusters outbound access. Please review the [step 2 configuration][step2]
 first.
 
-In order to create all the items listed above, the [proposed configuration][step2] asks for the following variables that you can customise in `terraform.tfvars`:
+In order to create all the items listed above, the [step 2 configuration][step2] asks for the following variables that you can customise in `terraform.tfvars`:
 
 - `nsxt_manager_name`: It is the name of an existing [NSX-T Manager][nsxt_manager], which is needed in order to create the [Provider Gateways][provider_gateway].
-  If you are going to use more than one [NSX-T Manager][nsxt_manager], please consider modifying the proposed configuration.
+  If you are going to use more than one [NSX-T Manager][nsxt_manager], please consider modifying the step 2 configuration.
   In UI, [NSX-T Managers][nsxt_manager] can be found in the Provider view, inside _Infrastructure Resources > NSX-T_.
 - `solutions_nsxt_tier0_router_name`: It is the name of an existing [Tier-0 Router][nsxt_tier0_router], which is needed in order to create the [Provider Gateway][provider_gateway] in the Solutions Organization.
   In UI, [Tier-0 Routers][nsxt_tier0_router] can be found in the NSX-T manager web UI.
@@ -261,11 +261,11 @@ In order to create all the items listed above, the [proposed configuration][step
   Organization [Routed network][routed_network].
 - `tenant_routed_network_dns`: DNS Server for the Tenant Organization [Routed network][routed_network]. It can be left blank if it's not needed.
 
-If you wish to have a different networking setup, please modify the [proposed configuration][step2].
+If you wish to have a different networking setup, please modify the [step 2 configuration][step2].
 
 #### CSE Server
 
-There is also a set of resources created by the [proposed configuration][step2] that correspond to the CSE Server vApp.
+There is also a set of resources created by the [step 2 configuration][step2] that correspond to the CSE Server vApp.
 The generated VM makes use of the uploaded CSE OVA and some required guest properties:
 
 - `cse_admin_username`: This must be the same CSE Administrator user created in the first step.
@@ -276,7 +276,7 @@ The generated VM makes use of the uploaded CSE OVA and some required guest prope
 
 -> If the old CSE 3.x plugin is installed, you will need to remove it before installing the new one.
 
-The final resource created by the [proposed configuration][step2] is the [`vcd_ui_plugin`][ui_plugin] resource.
+The final resource created by the [step 2 configuration][step2] is the [`vcd_ui_plugin`][ui_plugin] resource.
 
 This resource is **optional**, it will be only created if the variable `k8s_container_clusters_ui_plugin_path` is not empty,
 so you can leverage whether your tenant users or system administrators will need it or not. It can be useful for troubleshooting,
@@ -359,8 +359,8 @@ resource "vcd_rde_interface" "cse_interface" {
 ```
 
 CSE v4.1 also requires the usage of [RDE Interface Behaviors][rde_interface_behavior] and
-[RDE Behavior Access Controls][rde_type_behavior_acl], that can be created with the following snippets (these can
-also be found in the [proposed configuration][step1]):
+[RDE Behavior Access Controls][rde_type_behavior_acl] that can be created with the following snippets (these can
+also be found in the [step 1 configuration][step1]):
 
 ```hcl
 resource "vcd_rde_interface_behavior" "capvcd_behavior" {
@@ -431,7 +431,7 @@ Please notice that you need to upgrade the CAPVCD, CPI and CSI versions. The new
 ### Update Rights and Roles
 
 There are differences between the rights needed in v4.0 and v4.1. You can check the resources `vcd_rights_bundle.k8s_clusters_rights_bundle` and
-`vcd_global_role.k8s_cluster_author` in the [proposed configuration][step1] to see the new required set of rights.
+`vcd_global_role.k8s_cluster_author` in the [step 1 configuration][step1] to see the new required set of rights.
 
 ### Upload the new CSE v4.1 OVA
 
@@ -466,7 +466,7 @@ This will re-deploy the VM with the new CSE v4.1 Server.
 ## Update CSE Server Configuration
 
 To make changes to the existing server configuration, you should be able to locate the [`vcd_rde`][rde] resource named `vcdkeconfig_instance`
-in the [proposed configuration][step2] that was created during the installation process. To update its configuration, you can
+in the [step 2 configuration][step2] that was created during the installation process. To update its configuration, you can
 **change the variable values that are referenced**. For this, you can review the **"CSE Server"** section in the Installation process to
 see how this can be done.
 
@@ -498,7 +498,7 @@ This must be done as a 2-step operation.
 To upgrade the CSE Server appliance, first you need to upload a new CSE Server OVA to the CSE catalog and then replace
 the reference to the [vApp Template][catalog_vapp_template] in the CSE Server VM.
 
-In the [proposed configuration][step2], you can find the `cse_ova` [vApp Template][catalog_vapp_template] and the 
+In the [step 2 configuration][step2], you can find the `cse_ova` [vApp Template][catalog_vapp_template] and the 
 `cse_server_vm` [VM][vm] that were applied during the installation process.
 Then you can create a new `vcd_catalog_vapp_template` and modify `cse_server_vm` to reference it:
 
