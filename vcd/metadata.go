@@ -384,9 +384,9 @@ func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourc
 	return nil
 }
 
-// filterAndGetVcdInheritedMetadata takes metadata from the input parameter and extracts the specific entries that were created
-// automatically by VCD (inherited metadata), returning them as a structure that is ready to be set in the corresponding
-// Terraform schema attribute. The extracted metadata will be no longer present in the former metadata parameter.
+// filterAndGetVcdInheritedMetadata filters out the metadata entries that were created automatically by VCD (inherited metadata)
+// from the input metadata parameter, then returns these entries as a structure that is ready to be set in the corresponding
+// Terraform schema attribute. The filtered out entries will not be longer present in the original metadata input parameter.
 func filterAndGetVcdInheritedMetadata(metadata *types.Metadata) []interface{} {
 	if len(metadata.MetadataEntry) == 0 {
 		return nil
