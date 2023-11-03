@@ -411,7 +411,7 @@ a replacement:
 ```hcl
 resource "vcd_rde" "vcdkeconfig_instance" {
   # Same values as before, except:
-  rde_type_id  = vcd_rde_type.vcdkeconfig_type_v110.id # Update to the new RDE Type
+  rde_type_id = vcd_rde_type.vcdkeconfig_type_v110.id # Update to the new RDE Type
   input_entity = templatefile(var.vcdkeconfig_template_filepath, {
     # Same values as before, except:
     node_startup_timeout          = var.node_startup_timeout
