@@ -148,7 +148,7 @@ func getPvdcList(d *schema.ResourceData, meta interface{}) (list []string, err e
 func getVdcGroups(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
-	org, err := client.GetAdminOrgByName(d.Get("org").(string))
+	org, err := client.GetAdminOrg(firstNonEmpty(d.Get("org").(string), d.Get("parent").(string)))
 	if err != nil {
 		return list, err
 	}
@@ -203,7 +203,8 @@ func externalNetworkList(d *schema.ResourceData, meta interface{}) (list []strin
 
 func rightsList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
-	org, err := client.GetAdminOrg(d.Get("org").(string))
+
+	org, err := client.GetAdminOrg(firstNonEmpty(d.Get("org").(string), d.Get("parent").(string)))
 	if err != nil {
 		return list, err
 	}
@@ -229,7 +230,7 @@ func rightsList(d *schema.ResourceData, meta interface{}) (list []string, err er
 func rolesList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
-	org, err := client.GetAdminOrg(d.Get("org").(string))
+	org, err := client.GetAdminOrg(firstNonEmpty(d.Get("org").(string), d.Get("parent").(string)))
 	if err != nil {
 		return list, err
 	}
@@ -276,7 +277,7 @@ func globalRolesList(d *schema.ResourceData, meta interface{}) (list []string, e
 func libraryCertificateList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
-	adminOrg, err := client.GetAdminOrg(d.Get("org").(string))
+	adminOrg, err := client.GetAdminOrg(firstNonEmpty(d.Get("org").(string), d.Get("parent").(string)))
 	if err != nil {
 		return list, err
 	}
@@ -332,8 +333,7 @@ func rightsBundlesList(d *schema.ResourceData, meta interface{}) (list []string,
 
 func catalogList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
-
-	org, err := client.GetAdminOrg(d.Get("org").(string))
+	org, err := client.GetAdminOrg(firstNonEmpty(d.Get("org").(string), d.Get("parent").(string)))
 	if err != nil {
 		return list, err
 	}
@@ -449,7 +449,7 @@ func vappTemplateList(d *schema.ResourceData, meta interface{}) (list []string, 
 func vdcList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
 
-	org, err := client.GetAdminOrg(d.Get("org").(string))
+	org, err := client.GetAdminOrg(firstNonEmpty(d.Get("org").(string), d.Get("parent").(string)))
 	if err != nil {
 		return list, err
 	}
@@ -469,7 +469,7 @@ func vdcList(d *schema.ResourceData, meta interface{}, resType string) (list []s
 func orgUserList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
-	org, err := client.GetAdminOrg(d.Get("org").(string))
+	org, err := client.GetAdminOrg(firstNonEmpty(d.Get("org").(string), d.Get("parent").(string)))
 	if err != nil {
 		return list, err
 	}

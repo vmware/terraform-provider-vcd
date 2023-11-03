@@ -77,12 +77,12 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 	} else {
 		fmt.Print("`Networking.ExternalNetwork` value isn't configured, datasource test using this will be skipped\n")
 	}
-	if testConfig.VCD.ProviderVdc.Name != "" {
+	if testConfig.VCD.ProviderVdc.Name != "" && usingSysAdmin() {
 		lists = append(lists, listDef{name: "provider-vdc", resourceType: "vcd_provider_vdc", knownItem: testConfig.VCD.ProviderVdc.Name})
 	} else {
 		fmt.Print("`VCD.ProviderVdc` value isn't configured, datasource test using this will be skipped\n")
 	}
-	if testConfig.VCD.NsxtProviderVdc.Name != "" {
+	if testConfig.VCD.NsxtProviderVdc.Name != "" && usingSysAdmin() {
 		lists = append(lists, listDef{name: "nsxt-provider-vdc", resourceType: "vcd_provider_vdc", knownItem: testConfig.VCD.NsxtProviderVdc.Name})
 	} else {
 		fmt.Print("`VCD.NsxtProviderVdc` value isn't configured, datasource test using this will be skipped\n")
@@ -154,13 +154,31 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 			"VCD.Vdc` value isn't configured, datasource test using this will be skipped\n")
 	}
 
-	if testConfig.Nsxt.VdcGroup != "" && testConfig.Nsxt.VdcGroupEdgeGateway != "" {
+	if testConfig.Nsxt.VdcGroup != "" {
+		// Retrieves the list of VDC groups, filling the "parent" field
 		lists = append(lists, listDef{
-			name:         "VdcGroupEdge",
-			resourceType: "vcd_nsxt_edgegateway",
-			parent:       testConfig.Nsxt.VdcGroup,
-			knownItem:    testConfig.Nsxt.VdcGroupEdgeGateway,
+			name:         "VdcGroupAsParent",
+			resourceType: "vcd_vdc_group",
+			parent:       testConfig.VCD.Org,
+			knownItem:    testConfig.Nsxt.VdcGroup,
 		})
+
+		// Retrieves the list of VDC groups, filling only the "org" field through the provider
+		lists = append(lists, listDef{
+			name:         "VdcGroupAsOrg",
+			resourceType: "vcd_vdc_group",
+			knownItem:    testConfig.Nsxt.VdcGroup,
+		})
+
+		// Retrieves the list of NSX-T edge gateway belonging to a VDC group
+		if testConfig.Nsxt.VdcGroupEdgeGateway != "" {
+			lists = append(lists, listDef{
+				name:         "VdcGroupEdge",
+				resourceType: "vcd_nsxt_edgegateway",
+				parent:       testConfig.Nsxt.VdcGroup,
+				knownItem:    testConfig.Nsxt.VdcGroupEdgeGateway,
+			})
+		}
 	}
 
 	if testConfig.Nsxt.Vdc != "" {

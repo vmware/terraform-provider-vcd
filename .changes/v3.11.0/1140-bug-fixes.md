@@ -1,0 +1,2 @@
+* Fix organization retrieval in `vcd_resource_list` when users fill the `"parent"` field instead of `"org"` [GH-1140]
+* Fix organization retrieval in `vcd_resource_list` when field `"org"` from the provider block was not used [GH-1140]

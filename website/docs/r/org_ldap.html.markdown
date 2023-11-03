@@ -14,7 +14,7 @@ Supported in provider *v3.8+*
 
 -> **Note:** This resource requires system administrator privileges.
 
-## Example Usage
+## Example Usage 1 - Custom configuration
 
 ```hcl
 provider "vcd" {
@@ -80,12 +80,27 @@ resource "vcd_org_ldap" "my-org-ldap" {
 }
 ```
 
+## Example Usage 2 - Using system configuration
+
+```hcl
+data "vcd_org" "my-org" {
+  name = "my-org"
+}
+
+resource "vcd_org_ldap" "my-org-ldap" {
+  org_id         = data.vcd_org.my-org.id
+  ldap_mode      = "SYSTEM"
+  custom_user_ou = "ou=Foo,dc=domain,dc=local base DN"
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
 
 * `org_id` - (Required) Org ID: there is only one LDAP configuration available for an organization. Thus, the resource can be identified by the Org.
 * `ldap_mode` - (Required) One of `NONE`, `CUSTOM`, `SYSTEM`. Note that using `NONE` has the effect of removing the LDAP settings
+* `custom_user_ou` - (Optional; *v3.11+*) If `ldap_mode` is `SYSTEM`, specifies an LDAP `attribute=value` pair to use for OU (organizational unit)
 * `custom_settings` - (Optional) LDAP server configuration. Becomes mandatory if `ldap_mode` is set to `CUSTOM`. See [Custom Settings](#custom-settings) below for details
 
 <a id="custom-settings"></a>

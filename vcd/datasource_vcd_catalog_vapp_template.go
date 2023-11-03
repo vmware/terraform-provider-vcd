@@ -58,6 +58,20 @@ func datasourceVcdCatalogVappTemplate() *schema.Resource {
 				Computed:    true,
 				Description: "Set of VM names within the vApp template",
 			},
+			"lease": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "Defines lease parameters for this vApp template",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"storage_lease_in_sec": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "How long the vApp template is available before being automatically deleted or marked as expired. 0 means never expires",
+						},
+					},
+				},
+			},
 			"filter": {
 				Type:        schema.TypeList,
 				MaxItems:    1,
