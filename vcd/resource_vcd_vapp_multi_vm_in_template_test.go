@@ -91,12 +91,12 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 						"vcd_vapp_vm."+vmName2, "power_on", "true"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName2, "metadata.vm_metadata", "VM Metadata."),
-					resource.TestMatchResourceAttr(
-						"vcd_vapp_vm."+vmName2, "inherited_metadata.0.vm_origin_id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestCheckResourceAttrSet(
-						"vcd_vapp_vm."+vmName2, "inherited_metadata.0.vm_origin_name"),
-					resource.TestMatchResourceAttr(
-						"vcd_vapp_vm."+vmName2, "inherited_metadata.0.vm_origin_type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`)),
+					testMatchResourceAttrWhenVersionMatches(
+						"vcd_vapp_vm."+vmName2, "inherited_metadata.0.vm_origin_id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
+					testCheckResourceAttrSetWhenVersionMatches(
+						"vcd_vapp_vm."+vmName2, "inherited_metadata.0.vm_origin_name", ">= 38.1"),
+					testMatchResourceAttrWhenVersionMatches(
+						"vcd_vapp_vm."+vmName2, "inherited_metadata.0.vm_origin_type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
 				),
 			},
 			{

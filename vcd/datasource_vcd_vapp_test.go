@@ -124,6 +124,10 @@ output "status_text" {
 func TestAccVcdVAppInheritedMetadata(t *testing.T) {
 	preTestChecks(t)
 
+	if checkVersion(testConfig.Provider.ApiVersion, "< 38.1") {
+		t.Skipf("This test tests VCD 10.5.1+ (API V38.1+) features. Skipping.")
+	}
+
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
 		"Vdc":              testConfig.Nsxt.Vdc,
