@@ -345,7 +345,7 @@ func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourc
 	}
 
 	// VMs can have special metadata automatically set by VCD that require to be filtered out
-	if resourceType == "vcd_vapp_vm" || resourceType == "vcd_vm" {
+	if resourceType == "vcd_vapp" || resourceType == "vcd_vapp_vm" || resourceType == "vcd_vm" {
 		_ = filterAndGetVcdInheritedMetadata(deprecatedMetadata)
 	}
 
@@ -368,7 +368,7 @@ func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourc
 
 	// VMs can have special metadata automatically set by VCD that require to be filtered out and
 	// set into a different attribute.
-	if resourceType == "vcd_vapp_vm" || resourceType == "vcd_vm" {
+	if resourceType == "vcd_vapp" || resourceType == "vcd_vapp_vm" || resourceType == "vcd_vm" {
 		inheritedMetadataBlock := filterAndGetVcdInheritedMetadata(metadata)
 		err = d.Set("inherited_metadata", inheritedMetadataBlock)
 		if err != nil {
@@ -403,6 +403,12 @@ func filterAndGetVcdInheritedMetadata(metadata *types.Metadata) []interface{} {
 			inheritedMetadataBlockAttributes["vm_origin_name"] = metadataEntry.TypedValue.Value
 		case "vm.origin.type":
 			inheritedMetadataBlockAttributes["vm_origin_type"] = metadataEntry.TypedValue.Value
+		case "vapp.origin.id":
+			inheritedMetadataBlockAttributes["vapp_origin_id"] = metadataEntry.TypedValue.Value
+		case "vapp.origin.name":
+			inheritedMetadataBlockAttributes["vapp_origin_name"] = metadataEntry.TypedValue.Value
+		case "vapp.origin.type":
+			inheritedMetadataBlockAttributes["vapp_origin_type"] = metadataEntry.TypedValue.Value
 		default:
 			filteredMetadata = append(filteredMetadata, metadataEntry)
 		}
