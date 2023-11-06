@@ -347,7 +347,7 @@ Also, you need to meet [the pre-requisites criteria](#pre-requisites).
 
 ### Create the new RDE elements
 
-A new [RDE Interface][rde_interface] needs to be created. This one is completely new, introduced in version v4.1:
+A new [RDE Interface][rde_interface] needs to be created, which is required by the new v4.1 version:
 
 ```hcl
 resource "vcd_rde_interface" "cse_interface" {
