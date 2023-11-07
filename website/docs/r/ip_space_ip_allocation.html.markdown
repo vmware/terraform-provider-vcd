@@ -93,6 +93,26 @@ resource "vcd_ip_space_ip_allocation" "public-ip-prefix-manual" {
 }
 ```
 
+## Example Usage (Specifying explicit value)
+
+```hcl
+resource "vcd_ip_space_ip_allocation" "public-floating-ip-2" {
+  org_id      = data.vcd_org.org1.id
+  ip_space_id = vcd_ip_space.space1.id
+  type        = "FLOATING_IP"
+  value       = "11.11.11.102"
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
+}
+
+resource "vcd_ip_space_ip_allocation" "public-ip-prefix" {
+  org_id        = data.vcd_org.org1.id
+  ip_space_id   = vcd_ip_space.space1.id
+  type          = "IP_PREFIX"
+  prefix_length = 29
+  value         = "10.10.10.96/29"
+}
+```
 
 ## Argument Reference
 
@@ -106,7 +126,7 @@ The following arguments are supported:
     Prefix
 * `prefix_length` (Optional) Required when `type=IP_PREFIX`
 * `value` - (Optional; VCD *10.4.2+*) An option to request a specific IP or subnet from IP Space
-* `usage_state` - (Optiona) Not required unless manual IP reservation is required which can be
+* `usage_state` - (Optional) Not required unless manual IP reservation is required which can be
   enabled `USED_MANUAL`. Value `UNUSED` must be set to release manual allocation of IP.
 * `description` - (Optional) Can only be set when `usage_state=USED_MANUAL`
 

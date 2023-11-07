@@ -848,6 +848,8 @@ func importCustomIpAllocationFunc(path []string, cachedField *testCachedFieldVal
 	}
 }
 
+// TestAccVcdIpSpaceIpAllocationCustomValue checks VCD 10.4.2+ capability to explicitly specify
+// which IP or Prefix should be allocated
 func TestAccVcdIpSpaceIpAllocationCustomValue(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
@@ -872,26 +874,6 @@ func TestAccVcdIpSpaceIpAllocationCustomValue(t *testing.T) {
 	params["FuncName"] = t.Name() + "step1"
 	configText1 := templateFill(testAccVcdIpSpaceIpAllocationCustomValueStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
-
-	// params["FuncName"] = t.Name() + "step2"
-	// configText2 := templateFill(testAccVcdIpSpaceIpAllocationStep2, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
-
-	// params["FuncName"] = t.Name() + "step3DS"
-	// configText3DS := templateFill(testAccVcdIpSpaceIpAllocationStep3DS, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3DS)
-
-	// params["FuncName"] = t.Name() + "step4"
-	// configText4 := templateFill(testAccVcdIpSpaceIpAllocationStep4, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
-
-	// params["FuncName"] = t.Name() + "step5"
-	// configText5 := templateFill(testAccVcdIpSpaceIpAllocationStep5, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 5: %s", configText5)
-
-	// params["FuncName"] = t.Name() + "step6"
-	// configText6 := templateFill(testAccVcdIpSpaceIpAllocationStep6, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 6: %s", configText6)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)

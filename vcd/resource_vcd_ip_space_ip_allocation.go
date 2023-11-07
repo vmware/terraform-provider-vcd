@@ -57,21 +57,32 @@ func resourceVcdIpAllocation() *schema.Resource {
 				Description: "Custom description can only be set when usage_state is set to 'USED_MANUAL'",
 			},
 			"prefix_length": {
-				Type:        schema.TypeString,
-				ForceNew:    true,
-				Optional:    true,
-				Computed:    true,
-				Description: "Required if 'type' is IP_PREFIX",
+				Type:          schema.TypeString,
+				ForceNew:      true,
+				Optional:      true,
+				Computed:      true,
+				Description:   "Required if 'type' is IP_PREFIX and no custom 'value` is provided",
+				ConflictsWith: []string{"value"},
 			},
 			"value": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "IP address or CIDR to use. (VCD 10.4.2+)",
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "IP address or CIDR to use. (VCD 10.4.2+)",
+				ConflictsWith: []string{"prefix_length"},
+				ForceNew:      true, // Once a particular IP or Prefix is allocated - its changes are ignored by the API
 			},
 			"ip_address": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "IP address or CIDR",
+			},
+			"ip_addresses": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "A Set of allocated IP addresses",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"used_by_id": {
 				Type:        schema.TypeString,
@@ -125,15 +136,15 @@ func resourceVcdIpAllocationCreate(ctx context.Context, d *schema.ResourceData, 
 		Quantity: addrOf(1),
 	}
 
-	if d.Get("value").(string) != "" {
-		allocationConfig.Value = d.Get("value").(string)
-		allocationConfig.Quantity = nil // Quantity field must not be set when 'value' is specified
-	}
-
 	prefixLength := d.Get("prefix_length").(string)
 	if prefixLength != "" {
 		intPrefixLength, _ := strconv.Atoi(prefixLength)
 		allocationConfig.PrefixLength = &intPrefixLength
+	}
+
+	if d.Get("value").(string) != "" {
+		allocationConfig.Value = d.Get("value").(string)
+		allocationConfig.Quantity = nil // Quantity field must not be set when 'value' is specified
 	}
 
 	allocation, err := ipSpace.AllocateIp(orgId, org.Org.Name, &allocationConfig)
@@ -202,6 +213,7 @@ func resourceVcdIpAllocationUpdate(ctx context.Context, d *schema.ResourceData, 
 		changeOccured = true
 	}
 
+	// 'value' cannot be updated, it has ForceNew
 	if d.HasChange("value") {
 		ipAllocation.IpSpaceIpAllocation.Value = d.Get("value").(string)
 		// if d.Get("value").(string) != "" {
