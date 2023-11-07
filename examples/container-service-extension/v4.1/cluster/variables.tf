@@ -23,23 +23,6 @@ variable "cluster_author_password" {
   sensitive   = true
 }
 
-variable "administrator_user" {
-  description = "Username of the System administrator"
-  default     = "administrator"
-}
-
-variable "administrator_password" {
-  description = "Password of the System administrator"
-  type        = string
-  sensitive   = true
-}
-
-variable "administrator_org" {
-  description = "The VCD administrator organization (Example: 'System')"
-  type        = string
-  default     = "System"
-}
-
 variable "cluster_author_token_file" {
   description = "The file where the API Token for the CSE Cluster author will be stored"
   type        = string

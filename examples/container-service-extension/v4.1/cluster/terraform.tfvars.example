@@ -6,10 +6,6 @@
 vcd_url                 = "https://vcd.my-awesome-corp.com"
 insecure_login          = "true"
 
-administrator_user      = "administrator"
-administrator_password  = "change-me"
-administrator_org       = "System"
-
 cluster_author_user     = "cluster_author"
 cluster_author_password = "change-me"
 

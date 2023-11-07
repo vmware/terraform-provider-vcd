@@ -34,11 +34,11 @@ You can check it, customise it to your needs and apply. However, reading this gu
 
 The installation process is split in two independent steps that must be run one after the other:
 
-- The first step installs the same elements as the _"Configure Settings for CSE Server"_ section in UI wizard, that is, creates the
+* The first step installs the same elements as the _"Configure Settings for CSE Server"_ section in UI wizard, that is, creates the
   [RDE Interfaces][rde_interface], [RDE Types][rde_type], [RDE Interface Behaviors][rde_interface_behavior] and the [RDE][rde] that
   are required for the CSE Server to work, in addition to a new [Role][role], new [VM Sizing Policies][sizing] and a CSE Administrator [User][user] that will be
   referenced later on in the second step.
-- The second step will configure the remaining resources, like [Organizations][org], [VDCs][vdc], [Catalogs and OVAs][catalog], Networks, and the CSE Server [VM][vm].
+* The second step will configure the remaining resources, like [Organizations][org], [VDCs][vdc], [Catalogs and OVAs][catalog], Networks, and the CSE Server [VM][vm].
 
 The reason for such as split is that the CSE Administrator created during the first step is used to configure a new `provider` block in
 the second one, so that it can provision a valid [API token][api_token]. This operation must be done separately as a `provider` block
@@ -60,13 +60,13 @@ modified and be applied as they are.
 CSE v4.1 requires a set of Runtime Defined Entity items, such as [Interfaces][rde_interface], [Types][rde_type] and [Behaviors][rde_interface_behavior].
 In the [step 1 configuration][step1] you can find the following:
 
-- The required `VCDKEConfig` [RDE Interface][rde_interface] and [RDE Type][rde_type]. These two resources specify the schema of the **CSE Server
+* The required `VCDKEConfig` [RDE Interface][rde_interface] and [RDE Type][rde_type]. These two resources specify the schema of the **CSE Server
   configuration** that will be instantiated with a [RDE][rde].
 
-- The required `capvcd` [RDE Interface][rde_interface] and `capvcdCluster` [RDE Type][rde_type].
+* The required `capvcd` [RDE Interface][rde_interface] and `capvcdCluster` [RDE Type][rde_type].
   These two resources specify the schema of the [TKGm clusters][tkgm_docs].
 
-- The required [RDE Interface Behaviors][rde_interface_behavior] used to retrieve critical information from the [TKGm clusters][tkgm_docs],
+* The required [RDE Interface Behaviors][rde_interface_behavior] used to retrieve critical information from the [TKGm clusters][tkgm_docs],
   for example, the resulting **Kubeconfig**.
 
 #### RDE (CSE Server configuration / VCDKEConfig)
@@ -74,34 +74,34 @@ In the [step 1 configuration][step1] you can find the following:
 The CSE Server configuration lives in a [Runtime Defined Entity][rde] that uses the `VCDKEConfig` [RDE Type][rde_type].
 To customise it, the [step 1 configuration][step1] asks for the following variables that you can set in `terraform.tfvars`:
 
-- `vcdkeconfig_template_filepath` references a local file that defines the `VCDKEConfig` [RDE][rde] contents.
+* `vcdkeconfig_template_filepath` references a local file that defines the `VCDKEConfig` [RDE][rde] contents.
   It should be a JSON file with template variables that Terraform can interpret, like
   [the RDE template file for CSE v4.1](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/entities/vcdkeconfig.json.template)
   used in the step 1 configuration, that can be rendered correctly with the Terraform built-in function `templatefile`.
   (Note: In `terraform.tfvars.example` the path for the CSE v4.1 RDE contents is already provided).
-- `capvcd_version`: The version for CAPVCD. The default value is **"1.1.0"** for CSE v4.1.
+* `capvcd_version`: The version for CAPVCD. The default value is **"1.1.0"** for CSE v4.1.
   (Note: Do not confuse with the version of the `capvcdCluster` [RDE Type][rde_type],
   which **must be "1.2.0"** for CSE v4.1 and cannot be changed through a variable).
-- `cpi_version`: The version for CPI (Cloud Provider Interface). The default value is **"1.4.0"** for CSE v4.1.
-- `csi_version`: The version for CSI (Cloud Storage Interface). The default value is **"1.4.0"** for CSE v4.1.
-- `github_personal_access_token`: Create this one [here](https://github.com/settings/tokens),
+* `cpi_version`: The version for CPI (Cloud Provider Interface). The default value is **"1.4.0"** for CSE v4.1.
+* `csi_version`: The version for CSI (Cloud Storage Interface). The default value is **"1.4.0"** for CSE v4.1.
+* `github_personal_access_token`: Create this one [here](https://github.com/settings/tokens),
   this will avoid installation errors caused by GitHub rate limiting, as the TKGm cluster creation process requires downloading
   some Kubernetes components from GitHub.
   The token should have the `public_repo` scope for classic tokens and `Public Repositories` for fine-grained tokens.
-- `http_proxy`: Address of your HTTP proxy server. Optional in the step 1 configuration.
-- `https_proxy`: Address of your HTTPS proxy server. Optional in the step 1 configuration.
-- `no_proxy`: A list of comma-separated domains without spaces that indicate the targets that must **not** go through the configured proxy. Optional in the step 1 configuration.
-- `syslog_host`: Domain where to send the system logs. Optional in the step 1 configuration.
-- `syslog_port`: Port where to send the system logs. Optional in the step 1 configuration.
-- `node_startup_timeout`: A node will be considered unhealthy and remediated if joining the cluster takes longer than this timeout (seconds, defaults to 900 in the step 1 configuration).
-- `node_not_ready_timeout`: A newly joined node will be considered unhealthy and remediated if it cannot host workloads for longer than this timeout (seconds, defaults to 300 in the step 1 configuration).
-- `node_unknown_timeout`: A healthy node will be considered unhealthy and remediated if it is unreachable for longer than this timeout (seconds, defaults to 300 in the step 1 configuration).
-- `max_unhealthy_node_percentage`: Remediation will be suspended when the number of unhealthy nodes exceeds this percentage.
+* `http_proxy`: Address of your HTTP proxy server. Optional in the step 1 configuration.
+* `https_proxy`: Address of your HTTPS proxy server. Optional in the step 1 configuration.
+* `no_proxy`: A list of comma-separated domains without spaces that indicate the targets that must **not** go through the configured proxy. Optional in the step 1 configuration.
+* `syslog_host`: Domain where to send the system logs. Optional in the step 1 configuration.
+* `syslog_port`: Port where to send the system logs. Optional in the step 1 configuration.
+* `node_startup_timeout`: A node will be considered unhealthy and remediated if joining the cluster takes longer than this timeout (seconds, defaults to 900 in the step 1 configuration).
+* `node_not_ready_timeout`: A newly joined node will be considered unhealthy and remediated if it cannot host workloads for longer than this timeout (seconds, defaults to 300 in the step 1 configuration).
+* `node_unknown_timeout`: A healthy node will be considered unhealthy and remediated if it is unreachable for longer than this timeout (seconds, defaults to 300 in the step 1 configuration).
+* `max_unhealthy_node_percentage`: Remediation will be suspended when the number of unhealthy nodes exceeds this percentage.
   (100% means that unhealthy nodes will always be remediated, while 0% means that unhealthy nodes will never be remediated). Defaults to 100 in the step 1 configuration.
-- `container_registry_url`: URL from where TKG clusters will fetch container images, useful for VCD appliances that are completely isolated from Internet. Defaults to "projects.registry.vmware.com" in the step 1 configuration.
-- `bootstrap_vm_certificates`: Certificate(s) to allow the ephemeral VM (created during cluster creation) to authenticate with.
+* `container_registry_url`: URL from where TKG clusters will fetch container images, useful for VCD appliances that are completely isolated from Internet. Defaults to "projects.registry.vmware.com" in the step 1 configuration.
+* `bootstrap_vm_certificates`: Certificate(s) to allow the ephemeral VM (created during cluster creation) to authenticate with.
   For example, when pulling images from a container registry. Optional in the step 1 configuration.
-- `k8s_cluster_certificates`: Certificate(s) to allow clusters to authenticate with.
+* `k8s_cluster_certificates`: Certificate(s) to allow clusters to authenticate with.
   For example, when pulling images from a container registry. Optional in the step 1 configuration.
 
 #### Rights, Roles and VM Sizing Policies
@@ -130,9 +130,9 @@ and change the values present there to the correct ones. You can also modify the
 
 The [step 2 configuration][step2] will create two new [Organizations][org], as specified in the [CSE documentation][cse_docs]:
 
-- A Solutions [Organization][org], which will host all provider-scoped items, such as the CSE Server.
+* A Solutions [Organization][org], which will host all provider-scoped items, such as the CSE Server.
   It should only be accessible to the CSE Administrator and Providers.
-- A Tenant [Organization][org], which will host the [TKGm clusters][tkgm_docs] for the users of this tenant to consume them.
+* A Tenant [Organization][org], which will host the [TKGm clusters][tkgm_docs] for the users of this tenant to consume them.
 
 -> If you already have these two [Organizations][org] created and you want to use them instead,
 you can leverage customising the [step 2 configuration][step2] to use the Organization [data source][org_d] to fetch them.
@@ -143,13 +143,13 @@ The [step 2 configuration][step2] will create two [VDCs][vdc], one for the Solut
 
 You need to specify the following values in `terraform.tfvars`:
 
-- `provider_vdc_name`: This is used to fetch an existing [Provider VDC][provider_vdc], that will be used to create the two VDCs.
+* `provider_vdc_name`: This is used to fetch an existing [Provider VDC][provider_vdc], that will be used to create the two VDCs.
   If you are going to use more than one [Provider VDC][provider_vdc], please consider modifying the step 2 configuration.
   In UI, [Provider VDCs][provider_vdc] can be found in the Provider view, inside _Cloud Resources_ menu.
-- `nsxt_edge_cluster_name`: This is used to fetch an existing [Edge Cluster][edge_cluster], that will be used to create the two VDCs.
+* `nsxt_edge_cluster_name`: This is used to fetch an existing [Edge Cluster][edge_cluster], that will be used to create the two VDCs.
   If you are going to use more than one [Edge Cluster][edge_cluster], please consider modifying the step 2 configuration.
   In UI, [Edge Clusters][edge_cluster] can be found in the NSX-T manager web UI.
-- `network_pool_name`: This references an existing Network Pool, which is used to create both VDCs.
+* `network_pool_name`: This references an existing Network Pool, which is used to create both VDCs.
   If you are going to use more than one Network Pool, please consider modifying the step 2 configuration.
 
 In the [step 2 configuration][step2] the Tenant Organization's VDC has all the required VM Sizing Policies from the first step assigned,
@@ -162,16 +162,16 @@ if you already have usable [VDCs][vdc], you can change the configuration to fetc
 
 The [step 2 configuration][step2] will create two catalogs:
 
-- A catalog to host CSE Server OVA files, only accessible to CSE Administrators. This catalog will allow CSE Administrators to organise and manage
+* A catalog to host CSE Server OVA files, only accessible to CSE Administrators. This catalog will allow CSE Administrators to organise and manage
   all the CSE Server OVAs that are required to run and upgrade the CSE Server.
-- A catalog to host TKGm OVA files, only accessible to CSE Administrators but shared as read-only to tenants, that can use them to create [TKGm clusters][tkgm_docs].
+* A catalog to host TKGm OVA files, only accessible to CSE Administrators but shared as read-only to tenants, that can use them to create [TKGm clusters][tkgm_docs].
 
 Then it will upload the required OVAs to them. The OVAs can be specified in `terraform.tfvars`:
 
-- `tkgm_ova_folder`: This will reference the path to the TKGm OVA, as an absolute or relative path. It should **not** end with a trailing `/`.
-- `tkgm_ova_files`: This will reference the file names of the TKGm OVAs, like `[ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc.ova, ubuntu-2004-kube-v1.24.11+vmware.1-tkg.1-2ccb2a001f8bd8f15f1bfbc811071830.ova]`.
-- `cse_ova_folder`: This will reference the path to the CSE OVA, as an absolute or relative path. It should **not** end with a trailing `/`.
-- `cse_ova_file`: This will reference the file name of the CSE OVA, like `VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova`.
+* `tkgm_ova_folder`: This will reference the path to the TKGm OVA, as an absolute or relative path. It should **not** end with a trailing `/`.
+* `tkgm_ova_files`: This will reference the file names of the TKGm OVAs, like `[ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc.ova, ubuntu-2004-kube-v1.24.11+vmware.1-tkg.1-2ccb2a001f8bd8f15f1bfbc811071830.ova]`.
+* `cse_ova_folder`: This will reference the path to the CSE OVA, as an absolute or relative path. It should **not** end with a trailing `/`.
+* `cse_ova_file`: This will reference the file name of the CSE OVA, like `VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova`.
 
 -> To download the required OVAs, please refer to the [CSE documentation][cse_docs]. 
 You can also check the [Product Interoperability Matrix][product_matrix] to confirm the appropriate version of TKGm.
@@ -187,29 +187,29 @@ recommended that you review the code and adapt the different parts to your needs
 
 The configuration will create the following:
 
-- A [Provider Gateway][provider_gateway] per Organization. You can learn more about Provider Gateways [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-E6BAC24B-9628-495A-BA67-6DE6C5CF70F2.html).
+* A [Provider Gateway][provider_gateway] per Organization. You can learn more about Provider Gateways [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-E6BAC24B-9628-495A-BA67-6DE6C5CF70F2.html).
   In this configuration we just expose some static IPs to the two Organizations, so they can consume them.
-- An [Edge Gateway][edge_gateway] per Organization. You can learn more about Edge Gateways [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-45C0FEDF-84F2-4487-8DB8-3BC281EB25CD.html).
+* An [Edge Gateway][edge_gateway] per Organization. You can learn more about Edge Gateways [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-45C0FEDF-84F2-4487-8DB8-3BC281EB25CD.html).
   In this configuration we create two that act as a router for each Organization that we created.
-- Configure ALB with a shared Service Engine Group. You can learn more about Advanced Load Balancers [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-92A0563D-A272-4958-B732-9C35901D9DB8.html).
+* Configure ALB with a shared Service Engine Group. You can learn more about Advanced Load Balancers [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-92A0563D-A272-4958-B732-9C35901D9DB8.html).
   In this setup, we provide a virtual service pool that CSE Server uses to provide load balancing capabilities to the [TKGm clusters][tkgm_docs].
-- A [Routed network][routed_network] per Organization. You can learn more about Routed networks [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-74C4D27F-9E2A-4EB2-BBE1-CDD45C80E270.html).
+* A [Routed network][routed_network] per Organization. You can learn more about Routed networks [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-74C4D27F-9E2A-4EB2-BBE1-CDD45C80E270.html).
   In this setup, we just provide a routed network per organization, so the CSE Server is inside its own network, isolated from the [TKGm clusters][tkgm_docs] network.
-- Two [SNAT rules][nat_rule] that will allow outbound access. Feel free to adjust or replace these rules with other ways of providing outbound access.
+* Two [SNAT rules][nat_rule] that will allow outbound access. Feel free to adjust or replace these rules with other ways of providing outbound access.
 
 ~> SNAT rules is just a proposal to give the CSE Server and the clusters outbound access. Please review the [step 2 configuration][step2]
 first.
 
 In order to create all the items listed above, the [step 2 configuration][step2] asks for the following variables that you can customise in `terraform.tfvars`:
 
-- `nsxt_manager_name`: It is the name of an existing [NSX-T Manager][nsxt_manager], which is needed in order to create the [Provider Gateways][provider_gateway].
+* `nsxt_manager_name`: It is the name of an existing [NSX-T Manager][nsxt_manager], which is needed in order to create the [Provider Gateways][provider_gateway].
   If you are going to use more than one [NSX-T Manager][nsxt_manager], please consider modifying the step 2 configuration.
   In UI, [NSX-T Managers][nsxt_manager] can be found in the Provider view, inside _Infrastructure Resources > NSX-T_.
-- `solutions_nsxt_tier0_router_name`: It is the name of an existing [Tier-0 Router][nsxt_tier0_router], which is needed in order to create the [Provider Gateway][provider_gateway] in the Solutions Organization.
+* `solutions_nsxt_tier0_router_name`: It is the name of an existing [Tier-0 Router][nsxt_tier0_router], which is needed in order to create the [Provider Gateway][provider_gateway] in the Solutions Organization.
   In UI, [Tier-0 Routers][nsxt_tier0_router] can be found in the NSX-T manager web UI.
-- `solutions_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Solutions Organization.
-- `solutions_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
-- `solutions_provider_gateway_static_ip_ranges`: This is a list IP ranges that will be used by the [Provider Gateway][provider_gateway] that serves the Solutions Organization.
+* `solutions_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Solutions Organization.
+* `solutions_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
+* `solutions_provider_gateway_static_ip_ranges`: This is a list IP ranges that will be used by the [Provider Gateway][provider_gateway] that serves the Solutions Organization.
   At least one IP is required. You can check the minimum amount of IPs required in [CSE documentation][cse_docs].
   Each element of the list should be a 2-tuple like `[first IP, last IP]`. For example, a valid value
   for this attribute would be:
@@ -219,11 +219,11 @@ In order to create all the items listed above, the [step 2 configuration][step2]
     ["10.20.30.180", "10.20.30.182"], # A range of three IPs ending in 180,181,182
   ]
   ```
-- `tenant_nsxt_tier0_router_name`: It is the name of an existing [Tier-0 Router][nsxt_tier0_router], which is needed in order to create the [Provider Gateway][provider_gateway] in the Tenant Organization.
+* `tenant_nsxt_tier0_router_name`: It is the name of an existing [Tier-0 Router][nsxt_tier0_router], which is needed in order to create the [Provider Gateway][provider_gateway] in the Tenant Organization.
   In UI, [Tier-0 Routers][nsxt_tier0_router] can be found in the NSX-T manager web UI.
-- `tenant_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Tenant Organization.
-- `tenant_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
-- `tenant_provider_gateway_static_ip_ranges`: This is a list IP ranges that will be used by the [Provider Gateway][provider_gateway] that serves the Tenant Organization.
+* `tenant_provider_gateway_gateway_ip`: The gateway IP of the [Provider Gateway][provider_gateway] that will be used by the Tenant Organization.
+* `tenant_provider_gateway_gateway_prefix_length`: Prefix length for the mentioned [Provider Gateway][provider_gateway].
+* `tenant_provider_gateway_static_ip_ranges`: This is a list IP ranges that will be used by the [Provider Gateway][provider_gateway] that serves the Tenant Organization.
   At least one IP is required. You can check the minimum amount of IPs required in [CSE documentation][cse_docs].
   Each element of the list should be a 2-tuple like `[first IP, last IP]`. For example, a valid value
   for this attribute would be:
@@ -233,32 +233,32 @@ In order to create all the items listed above, the [step 2 configuration][step2]
     ["10.20.30.180", "10.20.30.182"], # A range of three IPs ending in 180,181,182
   ]
   ```
-- `alb_controller_url`: URL of an existing ALB controller that will be created in VCD side. See the [ALB guide][alb] for more info.
-- `alb_controller_username`: Username to access the ALB controller. See the [ALB guide][alb] for more info.
-- `alb_controller_password`: Password of the username used to access the ALB controller. See the [ALB guide][alb] for more info.
-- `alb_importable_cloud_name`: Name of the existing ALB Cloud defined in the ALB controller that will be imported to create an ALB Cloud in VCD. See the [ALB guide][alb] for more info.
-- `solutions_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed_network] that will be created in the Solutions Organization.
-- `solutions_routed_network_prefix_length`: The prefix length of the [Routed network][routed_network] that will be created in the Solutions Organization.
-- `solutions_routed_network_ip_pool_start_address`: The [Routed network][routed_network] that will be created in the Solutions Organization will have a pool of usable IPs, this field
+* `alb_controller_url`: URL of an existing ALB controller that will be created in VCD side. See the [ALB guide][alb] for more info.
+* `alb_controller_username`: Username to access the ALB controller. See the [ALB guide][alb] for more info.
+* `alb_controller_password`: Password of the username used to access the ALB controller. See the [ALB guide][alb] for more info.
+* `alb_importable_cloud_name`: Name of the existing ALB Cloud defined in the ALB controller that will be imported to create an ALB Cloud in VCD. See the [ALB guide][alb] for more info.
+* `solutions_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed_network] that will be created in the Solutions Organization.
+* `solutions_routed_network_prefix_length`: The prefix length of the [Routed network][routed_network] that will be created in the Solutions Organization.
+* `solutions_routed_network_ip_pool_start_address`: The [Routed network][routed_network] that will be created in the Solutions Organization will have a pool of usable IPs, this field
   defines the first usable IP.
-- `solutions_routed_network_ip_pool_end_address`: The [Routed network][routed_network] that will be created in the Solutions Organization will have a pool of usable IPs, this field
+* `solutions_routed_network_ip_pool_end_address`: The [Routed network][routed_network] that will be created in the Solutions Organization will have a pool of usable IPs, this field
   defines the end usable IP.
-- `solutions_snat_external_ip`: This is used to create a SNAT rule on the Solutions Edge Gateway to provide Internet connectivity to the CSE Server. The external IP should be one available IP of the Solutions
+* `solutions_snat_external_ip`: This is used to create a SNAT rule on the Solutions Edge Gateway to provide Internet connectivity to the CSE Server. The external IP should be one available IP of the Solutions
   [Provider Gateway][provider_gateway].
-- `solutions_snat_internal_network_cidr`: This is used to create a SNAT rule on the Solutions Edge Gateway to provide Internet connectivity to the CSE Server. The subnet should correspond to the Solutions
+* `solutions_snat_internal_network_cidr`: This is used to create a SNAT rule on the Solutions Edge Gateway to provide Internet connectivity to the CSE Server. The subnet should correspond to the Solutions
   Organization [Routed network][routed_network].
-- `solutions_routed_network_dns`: DNS Server for the Solutions Organization [Routed network][routed_network]. It can be left blank if it's not needed.
-- `tenant_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed_network] that will be created in the Tenant Organization.
-- `tenant_routed_network_prefix_length`: The prefix length of the [Routed network][routed_network] that will be created in the Tenant Organization.
-- `tenant_routed_network_ip_pool_start_address`: The [Routed network][routed_network] that will be created in the Tenant Organization will have a pool of usable IPs, this field
+* `solutions_routed_network_dns`: DNS Server for the Solutions Organization [Routed network][routed_network]. It can be left blank if it's not needed.
+* `tenant_routed_network_gateway_ip`: The gateway IP of the [Routed network][routed_network] that will be created in the Tenant Organization.
+* `tenant_routed_network_prefix_length`: The prefix length of the [Routed network][routed_network] that will be created in the Tenant Organization.
+* `tenant_routed_network_ip_pool_start_address`: The [Routed network][routed_network] that will be created in the Tenant Organization will have a pool of usable IPs, this field
   defines the first usable IP.
-- `tenant_routed_network_ip_pool_end_address`: The [Routed network][routed_network] that will be created in the Tenant Organization will have a pool of usable IPs, this field
+* `tenant_routed_network_ip_pool_end_address`: The [Routed network][routed_network] that will be created in the Tenant Organization will have a pool of usable IPs, this field
   defines the end usable IP.
-- `tenant_snat_external_ip`: This is used to create a SNAT rule on the Tenant Edge Gateway to provide Internet connectivity to the clusters. The external IP should be one available IP of the Tenant
+* `tenant_snat_external_ip`: This is used to create a SNAT rule on the Tenant Edge Gateway to provide Internet connectivity to the clusters. The external IP should be one available IP of the Tenant
   [Provider Gateway][provider_gateway].
-- `tenant_snat_internal_network_cidr`: This is used to create a SNAT rule on the Tenant Edge Gateway to provide Internet connectivity to the clusters. The subnet should correspond to the Tenant
+* `tenant_snat_internal_network_cidr`: This is used to create a SNAT rule on the Tenant Edge Gateway to provide Internet connectivity to the clusters. The subnet should correspond to the Tenant
   Organization [Routed network][routed_network].
-- `tenant_routed_network_dns`: DNS Server for the Tenant Organization [Routed network][routed_network]. It can be left blank if it's not needed.
+* `tenant_routed_network_dns`: DNS Server for the Tenant Organization [Routed network][routed_network]. It can be left blank if it's not needed.
 
 If you wish to have a different networking setup, please modify the [step 2 configuration][step2].
 
@@ -267,9 +267,9 @@ If you wish to have a different networking setup, please modify the [step 2 conf
 There is also a set of resources created by the [step 2 configuration][step2] that correspond to the CSE Server vApp.
 The generated VM makes use of the uploaded CSE OVA and some required guest properties:
 
-- `cse_admin_username`: This must be the same CSE Administrator user created in the first step.
-- `cse_admin_password`: This must be the same CSE Administrator user's password created in the first step.
-- `cse_admin_api_token_file`: This specifies the path where the API token is saved and consumed.
+* `cse_admin_username`: This must be the same CSE Administrator user created in the first step.
+* `cse_admin_password`: This must be the same CSE Administrator user's password created in the first step.
+* `cse_admin_api_token_file`: This specifies the path where the API token is saved and consumed.
 
 #### UI plugin installation
 
@@ -292,7 +292,7 @@ If you decide to install it, `k8s_container_clusters_ui_plugin_path` should poin
 To validate that the CSE Server is working correctly, you can either do it programmatically with a [DNAT rule][nat_rule] that maps
 one available IP to the CSE Server, or using the UI:
 
-- With a [DNAT rule][nat_rule] you would be able to connect to the CSE Server VM through `ssh` and the credentials that are stored in the `terraform.tfstate` file,
+* With a [DNAT rule][nat_rule] you would be able to connect to the CSE Server VM through `ssh` and the credentials that are stored in the `terraform.tfstate` file,
   with a resource similar to this:
 ```
 resource "vcd_nsxt_nat_rule" "solutions_nat" {
@@ -309,7 +309,7 @@ resource "vcd_nsxt_nat_rule" "solutions_nat" {
 }
 ```
 
-- Using the UI, you can go to the CSE Server VM and open a **web console**. The credentials to login are shown in _Guest customization properties_ > _Edit_.
+* Using the UI, you can go to the CSE Server VM and open a **web console**. The credentials to login are shown in _Guest customization properties_ > _Edit_.
 
 Once you gain access to the CSE Server, you can check the `cse.log` file, the configuration file or check Internet connectivity.
 If something does not work, please check the **Troubleshooting** section below.
@@ -322,20 +322,20 @@ To evaluate the correctness of the setup, you can check the _"Verifying that the
 
 The most common issues are:
 
-- Lack of Internet connectivity in CSE Server:
-  - Verify that the IPs specified in your Provider Gateways are correct.
-  - Verify that the IPs specified in your Edge Gateways are correct.
-  - Verify that your Firewall setup is not blocking outbound connectivity.
-  - Verify that the Routed network has the DNS correctly set and working.
+* Lack of Internet connectivity in CSE Server:
+  * Verify that the IPs specified in your Provider Gateways are correct.
+  * Verify that the IPs specified in your Edge Gateways are correct.
+  * Verify that your Firewall setup is not blocking outbound connectivity.
+  * Verify that the Routed network has the DNS correctly set and working.
 
-- OVA upload is taking too long:
-  - Verify your Internet connectivity is not having any issues.
-  - OVAs are quite big, you could tune `upload_piece_size` to speed up the upload process.
-  - If upload fails, or you need to re-upload it, you can do a `terraform apply -replace=vcd_catalog_vapp_template.cse_ova`.
-  - Verify that there's not a huge latency between your VCD and the place where Terraform configuration is run.
+* OVA upload is taking too long:
+  * Verify your Internet connectivity is not having any issues.
+  * OVAs are quite big, you could tune `upload_piece_size` to speed up the upload process.
+  * If upload fails, or you need to re-upload it, you can do a `terraform apply -replace=vcd_catalog_vapp_template.cse_ova`.
+  * Verify that there's not a huge latency between your VCD and the place where Terraform configuration is run.
 
-- Cluster creation is failing:
-  - Please visit the [CSE documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
+* Cluster creation is failing:
+  * Please visit the [CSE documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
 
 ## Upgrade from CSE v4.0 to v4.1
 
@@ -534,7 +534,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [api_token]: /providers/vmware/vcd/latest/docs/resources/api_token
 [catalog]: /providers/vmware/vcd/latest/docs/resources/catalog
 [catalog_vapp_template_ds]: /providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template
-[cse_cluster_management_guide]: /providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_cluster_management
+[cse_cluster_management_guide]: /providers/vmware/vcd/latest/docs/guides/container_service_extension_4__cluster_management
 [cse_docs]: https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html
 [edge_cluster]: /providers/vmware/vcd/latest/docs/data-sources/nsxt_edge_cluster
 [edge_gateway]: /providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway
