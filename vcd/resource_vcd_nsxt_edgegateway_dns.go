@@ -47,7 +47,7 @@ func resourceVcdNsxtEdgegatewayDns() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-				Description: "IP of the DNS forwarder. " +
+				Description: "IP on which the DNS forwarder listens." +
 					"Can be modified only if the Edge Gateway has a dedicated external network.",
 				ValidateFunc: validation.IsIPAddress,
 			},
@@ -60,8 +60,8 @@ func resourceVcdNsxtEdgegatewayDns() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				Computed: true,
-				Description: "The external IP address of the SNAT rule. Can be set only if the Edge Gateway's external " +
-					"network is using IP spaces. (VCD 10.5.0+)",
+				Description: "The external IP address of the SNAT rule. " +
+					"Can be modified only if the Edge Gateway's external network is using IP spaces. (VCD 10.5.0+)",
 			},
 			"default_forwarder_zone": {
 				Type:        schema.TypeList,
@@ -185,6 +185,10 @@ func resourceVcdNsxtEdgegatewayDnsCreateUpdate(ctx context.Context, d *schema.Re
 }
 
 func resourceVcdNsxtEdgegatewayDnsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdNsxtEdgegatewayDnsRead(ctx, d, meta, "resource")
+}
+
+func genericVcdNsxtEdgegatewayDnsRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
@@ -192,7 +196,7 @@ func resourceVcdNsxtEdgegatewayDnsRead(ctx context.Context, d *schema.ResourceDa
 
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
-		if govcd.ContainsNotFound(err) {
+		if origin == "resource" && govcd.ContainsNotFound(err) {
 			// When parent Edge Gateway is not found - this resource is also not found and should be
 			// removed from state
 			d.SetId("")
@@ -205,11 +209,12 @@ func resourceVcdNsxtEdgegatewayDnsRead(ctx context.Context, d *schema.ResourceDa
 	if err != nil {
 		return diag.Errorf("[edge gateway dns read] error retrieving NSX-T Edge Gateway DNS config: %s", err)
 	}
+	d.SetId(dns.EdgeGatewayId)
 	dSet(d, "edge_gateway_id", dns.EdgeGatewayId)
 
 	err = setNsxtEdgeGatewayDnsConfig(d, dns.NsxtEdgeGatewayDns)
 	if err != nil {
-		return diag.Errorf("error storing state: %s", err)
+		return diag.Errorf("[edge gateway dns read] error storing state: %s", err)
 	}
 
 	return nil
