@@ -473,7 +473,7 @@ func TestAccVcdVAppVmMetadata(t *testing.T) {
 		StringMap{
 			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"Media":   testConfig.Media.NsxtBackedMediaName,
-		})
+		}, true)
 }
 
 const testAccCheckVcdVAppVmMetadata = `
@@ -549,7 +549,7 @@ func TestAccVcdVmMetadata(t *testing.T) {
 		StringMap{
 			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"Media":   testConfig.Media.NsxtBackedMediaName,
-		})
+		}, true)
 }
 
 const testAccCheckVcdVmMetadata = `

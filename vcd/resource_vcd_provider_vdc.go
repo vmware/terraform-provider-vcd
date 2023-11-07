@@ -200,14 +200,7 @@ func resourceVcdProviderVdc() *schema.Resource {
 				ForceNew:    true,
 				Description: "ID of the vCenter server that provides the resource pools and datastores",
 			},
-			// TODO: metadata handling to be added after refactoring of conflicting fields "metadata" and "metadata_entry"
-			//"metadata": {
-			//	Type:        schema.TypeMap,
-			//	Computed:    true,
-			//	Description: "Key and value pairs for Provider VDC metadata",
-			//	Deprecated:  "Use metadata_entry instead",
-			//},
-			//"metadata_entry": getMetadataEntrySchema("Provider VDC", false),
+			"metadata_entry": metadataEntryResourceSchema("Provider VDC"),
 		},
 	}
 }
@@ -331,6 +324,16 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	metadataCompatiblePvdc, err := providerVdc.ToProviderVdc()
+	if err != nil {
+		return diag.Errorf("could not create metadata for Provider VDC '%s': %s", providerVdc.VMWProviderVdc.ID, err)
+	}
+	err = createOrUpdateMetadataEntryInVcd(d, metadataCompatiblePvdc)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	d.SetId(providerVdc.VMWProviderVdc.ID)
 	return resourceVcdProviderVdcRead(ctx, d, meta)
 }
@@ -473,17 +476,10 @@ func genericResourceVcdProviderVdcRead(ctx context.Context, d *schema.ResourceDa
 		dSet(d, "vcenter_id", extendedProviderVdc.VMWProviderVdc.VimServer[0].ID)
 	}
 
-	// TODO: metadata handling to be added after refactoring of conflicting fields "metadata" and "metadata_entry"
-	//metadata, err := providerVdc.GetMetadata()
-	//if err != nil {
-	//	log.Printf("[DEBUG] Error retrieving metadata for Provider VDC: %s", err)
-	//	return diag.Errorf("error retrieving metadata for Provider VDC %s: %s", providerVdcName, err)
-	//}
-	//if len(metadata.MetadataEntry) > 0 {
-	//	if err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
-	//		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
-	//	}
-	//}
+	diagErr := updateMetadataInState(d, vcdClient, "vcd_provider_vdc", providerVdc)
+	if diagErr != nil {
+		return diagErr
+	}
 
 	d.SetId(providerVdc.ProviderVdc.ID)
 	return nil
@@ -537,6 +533,16 @@ func resourceVcdProviderVdcUpdate(ctx context.Context, d *schema.ResourceData, m
 			return diag.Errorf("error changing highest supported hardware version: %s", err)
 		}
 	}
+
+	metadataCompatiblePvdc, err := pvdc.ToProviderVdc()
+	if err != nil {
+		return diag.Errorf("could not create metadata for Provider VDC '%s': %s", pvdc.VMWProviderVdc.ID, err)
+	}
+	err = createOrUpdateMetadataEntryInVcd(d, metadataCompatiblePvdc)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	return resourceVcdProviderVdcRead(ctx, d, meta)
 }
 

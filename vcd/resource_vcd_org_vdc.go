@@ -238,7 +238,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": metadataEntryResourceSchema("VDC"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("VDC"),
 			"vm_sizing_policy_ids": {
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -505,7 +505,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 		return diag.FromErr(err)
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_org_vdc", adminVdc)
+	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_org_vdc", adminVdc)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set VDC metadata")
 		return diagErr

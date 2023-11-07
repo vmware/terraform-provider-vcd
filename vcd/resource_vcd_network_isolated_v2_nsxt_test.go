@@ -656,7 +656,7 @@ func TestAccVcdIsolatedNetworkV2Metadata(t *testing.T) {
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdIsolatedNetworkV2Metadata, "vcd_network_isolated_v2.test-network-isolated-v2",
 		testAccCheckVcdIsolatedNetworkV2MetadataDatasource, "data.vcd_network_isolated_v2.test-network-isolated-v2-ds",
-		nil)
+		nil, true)
 }
 
 const testAccCheckVcdIsolatedNetworkV2Metadata = `
