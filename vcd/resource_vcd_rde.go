@@ -257,7 +257,9 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd
 	var filteredRdes []*govcd.DefinedEntity
 	orgName := d.Get("org")
 	for _, rde := range rdes {
-		if rde.DefinedEntity.Org != nil && orgName == rde.DefinedEntity.Org.Name {
+		// If there's no Organization informed in the RDE, we cannot filter, hence we add it to the result anyway.
+		// If there's an Org in the RDE, it should match the information that the attribute has.
+		if rde.DefinedEntity.Org == nil || orgName == rde.DefinedEntity.Org.Name {
 			filteredRdes = append(filteredRdes, rde)
 		}
 	}
