@@ -1,4 +1,4 @@
-//go:build ALL || functional
+//go:build ALL || providerVdc || functional
 
 package vcd
 
@@ -9,6 +9,10 @@ import (
 	"regexp"
 	"testing"
 )
+
+func init() {
+	testingTags["providerVdc"] = "resource_vcd_provider_vdc_test.go"
+}
 
 func TestAccVcdResourceProviderVdc(t *testing.T) {
 	// Note: you need to have at least one free resource pool to test provider VDC creation,
