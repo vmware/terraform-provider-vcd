@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
 page_title: "VMware Cloud Director: Container Service Extension v4.1 Kubernetes clusters management"
-sidebar_current: "docs-vcd-guides-cse-cluster-management"
+sidebar_current: "docs-vcd-guides-cse-4-x-cluster-management"
 description: |-
   Provides guidance on provisioning Kubernetes clusters using Container Service Extension v4.1
 ---
