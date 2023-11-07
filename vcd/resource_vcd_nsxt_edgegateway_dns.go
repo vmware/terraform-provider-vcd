@@ -49,10 +49,19 @@ func resourceVcdNsxtEdgegatewayDns() *schema.Resource {
 				Computed: true,
 				Description: "IP of the DNS forwarder. " +
 					"Can be modified only if the Edge Gateway has a dedicated external network.",
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
 				ValidateFunc: validation.IsIPAddress,
+			},
+			"snat_rule_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "The value is `true` if a SNAT rule exists for the DNS forwarder.",
+			},
+			"snat_rule_ip_address": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+				Description: "The external IP address of the SNAT rule. Can be set only if the Edge Gateway's external " +
+					"network is using IP spaces. (VCD 10.5.0+)",
 			},
 			"default_forwarder_zone": {
 				Type:        schema.TypeList,
@@ -74,12 +83,12 @@ func resourceVcdNsxtEdgegatewayDns() *schema.Resource {
 
 var defaultForwarderZone = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"zone_id": {
+		"id": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Unique ID of the forwarder zone.",
 		},
-		"display_name": {
+		"name": {
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "Name of the forwarder zone.",
@@ -99,10 +108,15 @@ var defaultForwarderZone = &schema.Resource{
 
 var conditionalForwarderZone = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"zone_id": {
+		"id": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Unique ID of the forwarder zone.",
+		},
+		"name": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "Name of the forwarder zone.",
 		},
 		"upstream_servers": {
 			Type:        schema.TypeSet,
@@ -117,7 +131,7 @@ var conditionalForwarderZone = &schema.Resource{
 		"domain_names": {
 			Type:        schema.TypeSet,
 			Required:    true,
-			Description: "List of domain names on which conditional forwarding is based.",
+			Description: "Set of domain names on which conditional forwarding is based.",
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
@@ -126,7 +140,7 @@ var conditionalForwarderZone = &schema.Resource{
 }
 
 func resourceVcdNsxtEdgegatewayDnsCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceVcdNsxtEdgegatewayDhcpV6CreateUpdate(ctx, d, meta, "create")
+	return resourceVcdNsxtEdgegatewayDnsCreateUpdate(ctx, d, meta, "create")
 }
 
 func resourceVcdNsxtEdgegatewayDnsUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -138,7 +152,7 @@ func resourceVcdNsxtEdgegatewayDnsCreateUpdate(ctx context.Context, d *schema.Re
 
 	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
 	if err != nil {
-		return diag.Errorf("[dhcpv6 (SLAAC Profile) %s] %s", origin, err)
+		return diag.Errorf("[edge gateway dns %s] %s", origin, err)
 	}
 	defer unlock()
 
@@ -147,22 +161,27 @@ func resourceVcdNsxtEdgegatewayDnsCreateUpdate(ctx context.Context, d *schema.Re
 
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
-		return diag.Errorf("[dhcpv6 (SLAAC Profile) %s] error retrieving Edge Gateway: %s", origin, err)
+		return diag.Errorf("[edge gateway dns %s] error retrieving Edge Gateway: %s", origin, err)
 	}
 
-	dhcpv6Config, err := getNsxtEdgeGatewaySlaacProfileType(d)
+	dns, err := nsxtEdge.GetDnsConfig()
 	if err != nil {
-		return diag.Errorf("[dhcpv6 (SLAAC Profile) %s] error getting DHCPv6 configuration: %s", origin, err)
+		return diag.Errorf("[edge gateway dns %s] error getting current DNS configuration: %s", origin, err)
 	}
 
-	_, err = nsxtEdge.UpdateSlaacProfile(dhcpv6Config)
+	dnsConfig, err := getNsxtEdgeGatewayDnsConfig(d, vcdClient)
 	if err != nil {
-		return diag.Errorf("[dhcpv6 (SLAAC Profile) %s] error updating DHCPv6 configuration: %s", origin, err)
+		return diag.Errorf("[edge gateway dns %s] error getting DNS configuration from schema: %s", origin, err)
+	}
+
+	_, err = dns.Update(dnsConfig)
+	if err != nil {
+		return diag.Errorf("[edge gateway dns %s] error updating DNS configuration: %s", origin, err)
 	}
 
 	d.SetId(edgeGatewayId)
 
-	return resourceVcdNsxtEdgegatewayDhcpV6Read(ctx, d, meta)
+	return resourceVcdNsxtEdgegatewayDnsRead(ctx, d, meta)
 }
 
 func resourceVcdNsxtEdgegatewayDnsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -179,15 +198,16 @@ func resourceVcdNsxtEdgegatewayDnsRead(ctx context.Context, d *schema.ResourceDa
 			d.SetId("")
 			return nil
 		}
-		return diag.Errorf("[dhcpv6 (SLAAC Profile) read] error retrieving NSX-T Edge Gateway DHCPv6 (SLAAC Profile): %s", err)
+		return diag.Errorf("[edge gateway dns read] error retrieving NSX-T Edge Gateway DNS config: %s", err)
 	}
 
-	slaacProfile, err := nsxtEdge.GetSlaacProfile()
+	dns, err := nsxtEdge.GetDnsConfig()
 	if err != nil {
-		return diag.Errorf("[dhcpv6 (SLAAC Profile) read] error retrieving NSX-T Edge Gateway DHCPv6 (SLAAC Profile): %s", err)
+		return diag.Errorf("[edge gateway dns read] error retrieving NSX-T Edge Gateway DNS config: %s", err)
 	}
+	dSet(d, "edge_gateway_id", dns.EdgeGatewayId)
 
-	err = setNsxtEdgeGatewaySlaacProfileData(d, slaacProfile)
+	err = setNsxtEdgeGatewayDnsConfig(d, dns.NsxtEdgeGatewayDns)
 	if err != nil {
 		return diag.Errorf("error storing state: %s", err)
 	}
@@ -200,7 +220,7 @@ func resourceVcdNsxtEdgegatewayDnsDelete(ctx context.Context, d *schema.Resource
 
 	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
 	if err != nil {
-		return diag.Errorf("[dhcpv6 (SLAAC Profile) delete] %s", err)
+		return diag.Errorf("[edge gateway dns delete] %s", err)
 	}
 	defer unlock()
 
@@ -209,20 +229,24 @@ func resourceVcdNsxtEdgegatewayDnsDelete(ctx context.Context, d *schema.Resource
 
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
 	if err != nil {
-		return diag.Errorf("[dhcpv6 (SLAAC Profile) delete] error retrieving Edge Gateway: %s", err)
+		return diag.Errorf("[edge gateway dns delete] error retrieving Edge Gateway: %s", err)
 	}
 
-	// Disabling DHCPv6 configuration requires at least Mode field
-	_, err = nsxtEdge.UpdateSlaacProfile(&types.NsxtEdgeGatewaySlaacProfile{Mode: "DISABLED", Enabled: false})
+	dns, err := nsxtEdge.GetDnsConfig()
 	if err != nil {
-		return diag.Errorf("[dhcpv6 (SLAAC Profile) delete] error updating DHCPv6 Profile: %s", err)
+		return diag.Errorf("[edge gateway dns delete] error retrieving DNS Configuration: %s", err)
+	}
+
+	err = dns.Delete()
+	if err != nil {
+		return diag.Errorf("[edge gateway dns delete] error deleting DNS Configuration: %s", err)
 	}
 
 	return nil
 }
 
 func resourceVcdNsxtEdgegatewayDnsImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	log.Printf("[TRACE] NSX-T Edge Gateway DHCPv6 import initiated")
+	log.Printf("[TRACE] NSX-T Edge Gateway DNS import initiated")
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
@@ -252,4 +276,90 @@ func resourceVcdNsxtEdgegatewayDnsImport(ctx context.Context, d *schema.Resource
 	d.SetId(edge.EdgeGateway.ID)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func getNsxtEdgeGatewayDnsConfig(d *schema.ResourceData, vcdClient *VCDClient) (*types.NsxtEdgeGatewayDns, error) {
+	enabled := d.Get("enabled").(bool)
+	listenerIp := d.Get("listener_ip").(string)
+	snatRuleEnabled := d.Get("snat_rule_enabled").(bool)
+
+	// SNAT Rule IP address field was introduced in API version 38.0
+	if _, ok := d.GetOk("snat_rule_ip_address"); ok {
+		if vcdClient.Client.APIVCDMaxVersionIs("<38.0") {
+			return nil, fmt.Errorf("snat rule ip address is supported on vcd version 10.5.0 and newer")
+		}
+	}
+	snatRuleIp := d.Get("snat_rule_ip_address").(string)
+
+	defaultUpstreamServersSet := d.Get("default_forwarder_zone.0.upstream_servers").(*schema.Set)
+	defaultUpstreamServers := convertSchemaSetToSliceOfStrings(defaultUpstreamServersSet)
+	defaultForwarderZone := &types.NsxtDnsForwarderZoneConfig{
+		DisplayName:     d.Get("default_forwarder_zone.0.name").(string),
+		UpstreamServers: defaultUpstreamServers,
+	}
+
+	conditionalForwarderZoneSet := d.Get("conditional_forwarder_zone").(*schema.Set)
+	conditionalForwarderZones := make([]*types.NsxtDnsForwarderZoneConfig, len(conditionalForwarderZoneSet.List()))
+	for zoneIndex, zone := range conditionalForwarderZoneSet.List() {
+		zoneDefinition := zone.(map[string]any)
+		upstreamServersSet := zoneDefinition["upstream_servers"].(*schema.Set)
+		upstreamServers := convertSchemaSetToSliceOfStrings(upstreamServersSet)
+		domainNameSet := zoneDefinition["domain_names"].(*schema.Set)
+		domainNames := convertSchemaSetToSliceOfStrings(domainNameSet)
+		zone := &types.NsxtDnsForwarderZoneConfig{
+			ID:              zoneDefinition["id"].(string),
+			DisplayName:     zoneDefinition["name"].(string),
+			UpstreamServers: upstreamServers,
+			DnsDomainNames:  domainNames,
+		}
+		conditionalForwarderZones[zoneIndex] = zone
+	}
+
+	dnsConfig := &types.NsxtEdgeGatewayDns{
+		Enabled:                   enabled,
+		ListenerIp:                listenerIp,
+		SnatRuleEnabled:           snatRuleEnabled,
+		SnatRuleExternalIpAddress: snatRuleIp,
+		DefaultForwarderZone:      defaultForwarderZone,
+		ConditionalForwarderZones: conditionalForwarderZones,
+	}
+
+	return dnsConfig, nil
+}
+
+func setNsxtEdgeGatewayDnsConfig(d *schema.ResourceData, dnsConfig *types.NsxtEdgeGatewayDns) error {
+	dSet(d, "enabled", dnsConfig.Enabled)
+	dSet(d, "listener_ip", dnsConfig.ListenerIp)
+	dSet(d, "snat_rule_enabled", dnsConfig.SnatRuleEnabled)
+	dSet(d, "snat_rule_ip_address", dnsConfig.SnatRuleExternalIpAddress)
+
+	defaultForwarderZoneBlock := make([]interface{}, 1)
+	defaultForwarderZone := make(map[string]interface{})
+	defaultForwarderZone["id"] = dnsConfig.DefaultForwarderZone.ID
+	defaultForwarderZone["name"] = dnsConfig.DefaultForwarderZone.DisplayName
+	defaultForwarderZone["upstream_servers"] = convertStringsToTypeSet(dnsConfig.DefaultForwarderZone.UpstreamServers)
+	defaultForwarderZoneBlock[0] = defaultForwarderZone
+
+	err := d.Set("default_forwarder_zone", defaultForwarderZoneBlock)
+	if err != nil {
+		return fmt.Errorf("error storing 'default_forwarder_zone' into state: %s", err)
+	}
+
+	conditionalForwarderZoneInterface := make([]interface{}, len(dnsConfig.ConditionalForwarderZones))
+	for index, zone := range dnsConfig.ConditionalForwarderZones {
+		singleZone := make(map[string]interface{})
+		singleZone["id"] = zone.ID
+		singleZone["name"] = zone.DisplayName
+		singleZone["domain_names"] = convertStringsToTypeSet(zone.DnsDomainNames)
+		singleZone["upstream_servers"] = convertStringsToTypeSet(zone.UpstreamServers)
+
+		conditionalForwarderZoneInterface[index] = singleZone
+	}
+
+	err = d.Set("conditional_forwarder_zone", conditionalForwarderZoneInterface)
+	if err != nil {
+		return fmt.Errorf("error storing 'conditional_forwarder_zone' into state: %s", err)
+	}
+
+	return nil
 }
