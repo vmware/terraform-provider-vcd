@@ -534,7 +534,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [api_token]: /providers/vmware/vcd/latest/docs/resources/api_token
 [catalog]: /providers/vmware/vcd/latest/docs/resources/catalog
 [catalog_vapp_template_ds]: /providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template
-[cse_cluster_management_guide]: /providers/vmware/vcd/latest/docs/guides/container_service_extension_4__cluster_management
+[cse_cluster_management_guide]: /providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_cluster_management
 [cse_docs]: https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html
 [edge_cluster]: /providers/vmware/vcd/latest/docs/data-sources/nsxt_edge_cluster
 [edge_gateway]: /providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway
