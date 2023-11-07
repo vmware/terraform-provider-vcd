@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------------------------------
 # CSE v4.1 installation, step 1:
 #
-# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_install
+# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install
 #   before applying this configuration.
 #
 # * The installation process is split into two steps as the first one creates a CSE admin user that needs to be
@@ -30,5 +30,5 @@ provider "vcd" {
   org                  = var.administrator_org
   allow_unverified_ssl = var.insecure_login
   logging              = true
-  logging_file         = "cse_install_sysadmin.log"
+  logging_file         = "cse_install_step1.log"
 }

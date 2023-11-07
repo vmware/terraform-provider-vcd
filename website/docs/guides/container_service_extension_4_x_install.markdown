@@ -46,7 +46,7 @@ can't log in with a user created in the same run.
 
 ### Step 1: Configure Settings for CSE Server
 
--> This step of the installation refers to the [step 1 of the example Terraform configuration][step1][step1].
+-> This step of the installation refers to the [step 1 of the example Terraform configuration][step1].
 
 This step will create the same elements as the _"Configure Settings for CSE Server"_ section in UI wizard. The subsections
 below can be helpful to understand all the building blocks that are described in the proposed example of Terraform configuration.
@@ -88,7 +88,6 @@ To customise it, the [step 1 configuration][step1] asks for the following variab
   this will avoid installation errors caused by GitHub rate limiting, as the TKGm cluster creation process requires downloading
   some Kubernetes components from GitHub.
   The token should have the `public_repo` scope for classic tokens and `Public Repositories` for fine-grained tokens.
-- `bootstrap_vm_sizing_policy`: The [VM Sizing Policy][sizing] used by the Bootstrap VM.
 - `http_proxy`: Address of your HTTP proxy server. Optional in the step 1 configuration.
 - `https_proxy`: Address of your HTTPS proxy server. Optional in the step 1 configuration.
 - `no_proxy`: A list of comma-separated domains without spaces that indicate the targets that must **not** go through the configured proxy. Optional in the step 1 configuration.
@@ -274,7 +273,7 @@ The generated VM makes use of the uploaded CSE OVA and some required guest prope
 
 #### UI plugin installation
 
--> If the old CSE 3.x plugin is installed, you will need to remove it before installing the new one.
+-> If the old CSE 3.x UI plugin is installed, you will need to remove it before installing the new one.
 
 The final resource created by the [step 2 configuration][step2] is the [`vcd_ui_plugin`][ui_plugin] resource.
 
@@ -447,7 +446,6 @@ resource "vcd_catalog_vapp_template" "cse_ova_v4_1" {
   description = "VMware_Cloud_Director_Container_Service_Extension-4.1.0"
   ova_path    = "VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova"
 }
-
 ```
 
 ### Update CSE Server
