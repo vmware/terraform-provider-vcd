@@ -363,7 +363,7 @@ ask for creation again. It can be now removed from the HCL configuration.
 [capvcd]: https://github.com/vmware/cluster-api-provider-cloud-director
 [capvcd_templates]: https://github.com/vmware/cluster-api-provider-cloud-director/tree/main/templates
 [cluster]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/cluster
-[cse_install_guide]: /providers/vmware/vcd/latest/docs/guides/container_service_extension_install
+[cse_install_guide]: /providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install
 [cse_docs]: https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html
 [rde]: /providers/vmware/vcd/latest/docs/resources/rde
 [rde_input_vs_computed]: /providers/vmware/vcd/latest/docs/resources/rde#input-entity-vs-computed-entity
