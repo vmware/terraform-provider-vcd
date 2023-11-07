@@ -242,6 +242,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_rde_type_behavior":                         resourceVcdRdeTypeBehavior(),                  // 3.10
 	"vcd_rde_type_behavior_acl":                     resourceVcdRdeTypeBehaviorAccessLevel(),       // 3.10
 	"vcd_nsxt_edgegateway_l2_vpn_tunnel":            resourceVcdNsxtEdgegatewayL2VpnTunnel(),       // 3.11
+	"vcd_nsxt_edgegateway_dns":                      resourceVcdNsxtEdgegatewayDns(),               // 3.11
 }
 
 // Provider returns a terraform.ResourceProvider.
