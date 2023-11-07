@@ -123,7 +123,6 @@ locals {
 
 # This is the RDE that manages the TKGm cluster.
 resource "vcd_rde" "k8s_cluster_instance" {
-  org                = "tenant_org" # This is not required
   name               = var.k8s_cluster_name
   rde_type_id        = data.vcd_rde_type.capvcdcluster_type.id # This must reference the CAPVCD RDE Type
   resolve            = false                                   # MUST be false as it is resolved by CSE Server
@@ -167,3 +166,17 @@ output "computed_k8s_cluster_status" {
 output "computed_k8s_cluster_events" {
   value = local.has_status ? local.k8s_cluster_computed["status"]["vcdKe"]["eventSet"] : null
 }
+
+
+# After the output "computed_k8s_cluster_status" is "provisioned" and the RDE is resolved, you can retrieve
+# the cluster's Kubeconfig with the following snippet. It is commented as the invocation of the Behavior that
+# retrieves the Kubeconfig requires the cluster to be created (the RDE to be resolved).
+/*
+data "vcd_rde_behavior_invocation" "get_kubeconfig" {
+  rde_id      = vcd_rde.k8s_cluster_instance.id
+  behavior_id = "urn:vcloud:behavior-interface:getFullEntity:cse:capvcd:1.0.0"
+}
+
+output "kubeconfig" {
+  value = jsondecode(data.vcd_rde_behavior_invocation.get_kubeconfig.result)["entity"]["status"]["capvcd"]["private"]["kubeConfig"]
+}*/
