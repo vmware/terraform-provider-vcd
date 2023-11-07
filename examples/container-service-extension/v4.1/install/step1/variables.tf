@@ -77,6 +77,7 @@ variable "csi_version" {
 variable "github_personal_access_token" {
   type        = string
   description = "VCDKEConfig: Prevents potential github rate limiting errors during cluster creation and deletion"
+  default     = ""
   sensitive   = true
 }
 

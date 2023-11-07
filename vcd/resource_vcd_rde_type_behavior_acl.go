@@ -172,7 +172,6 @@ func resourceVcdRdeTypeBehaviorAccessLevelDelete(_ context.Context, d *schema.Re
 	if err != nil {
 		return diag.Errorf("[RDE Type Behavior Access Level delete] could not delete the Access Levels of RDE Type with ID '%s': %s", rdeTypeId, err)
 	}
-
 	return nil
 }
 

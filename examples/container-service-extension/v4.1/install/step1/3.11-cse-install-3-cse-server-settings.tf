@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------------------------------
 # CSE v4.1 installation, step 1:
 #
-# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install
+# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_install
 #   before applying this configuration.
 #
 # * The installation process is split into two steps as the first one creates a CSE admin user that needs to be
