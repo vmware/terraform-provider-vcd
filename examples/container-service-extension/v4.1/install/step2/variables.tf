@@ -204,12 +204,12 @@ variable "alb_importable_cloud_name" {
 # ------------------------------------------------
 
 variable "tkgm_ova_folder" {
-  description = "Absolute path to the TKGm OVA file, with no file name (Example: '/home/bob/Downloads/tkgm')"
+  description = "Absolute path to the TKGm OVA files, with no file name (Example: '/home/bob/Downloads/tkgm')"
   type        = string
 }
 
 variable "tkgm_ova_files" {
-  description = "TKGm OVA file names, with no path (Example: 'ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc.ova')"
+  description = "A set of TKGm OVA file names, with no path (Example: 'ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc.ova')"
   type        = set(string)
 }
 

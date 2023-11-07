@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------------------------------
 # CSE v4.1 installation, step 1:
 #
-# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_install
+# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install
 #   before applying this configuration.
 #
 # * The installation process is split into two steps as the first one creates a CSE admin user that needs to be
@@ -32,7 +32,7 @@ resource "vcd_rde_type" "vcdkeconfig_type" {
   nss           = "VCDKEConfig"
   version       = "1.1.0"
   name          = "VCD-KE RDE Schema"
-  schema_url    = "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/upgrade-cse41/examples/container-service-extension/v4.1/schemas/vcdkeconfig-type-schema-v1.1.0.json"
+  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/vcdkeconfig-type-schema-v1.1.0.json"
   interface_ids = [vcd_rde_interface.vcdkeconfig_interface.id]
 }
 
@@ -73,7 +73,7 @@ resource "vcd_rde_type" "capvcdcluster_type" {
   nss           = "capvcdCluster"
   version       = "1.2.0"
   name          = "CAPVCD Cluster"
-  schema_url    = "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/upgrade-cse41/examples/container-service-extension/v4.1/schemas/capvcd-type-schema-v1.2.0.json"
+  schema_url    = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/capvcd-type-schema-v1.2.0.json"
   interface_ids = [data.vcd_rde_interface.kubernetes_interface.id]
 
   depends_on = [vcd_rde_interface_behavior.capvcd_behavior] # Interface Behaviors must be created before any RDE Type

@@ -1,6 +1,6 @@
 # Change configuration to your needs and rename to 'terraform.tfvars'
 # For more details about the variables specified here, please read the guide first:
-# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_install
+# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install
 
 # ------------------------------------------------
 # VCD Provider config
@@ -93,9 +93,9 @@ cse_ova_file   = "VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova" #
 # CSE Server initialization
 # ------------------------------------------------
 
-cse_admin_username       = "cse_admin" # This must be the same user created in step 1
-cse_admin_password       = "change-me" # This must be the same password of the user created in step 1
-cse_admin_api_token_file = "cse_admin_api_token.json"
+cse_admin_username       = "cse_admin"                # This must be the same user created in step 1
+cse_admin_password       = "change-me"                # This must be the same password of the user created in step 1
+cse_admin_api_token_file = "cse_admin_api_token.json" # This file will contain the API token of the CSE Admin user, store it carefully.
 
 # ------------------------------------------------
 # Other configuration
