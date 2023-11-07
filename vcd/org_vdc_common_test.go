@@ -426,7 +426,7 @@ func TestAccVcdVdcMetadata(t *testing.T) {
 		StringMap{
 			"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
 			"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
-		})
+		}, true)
 }
 
 const testAccCheckVcdVdcMetadata = `

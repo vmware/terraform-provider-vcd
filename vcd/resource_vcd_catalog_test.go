@@ -951,7 +951,7 @@ func TestAccVcdCatalogMetadata(t *testing.T) {
 	testMetadataEntryCRUD(t,
 		testAccCheckVcdCatalogMetadata, "vcd_catalog.test-catalog",
 		testAccCheckVcdCatalogMetadataDatasource, "data.vcd_catalog.test-catalog-ds",
-		nil)
+		nil, true)
 }
 
 const testAccCheckVcdCatalogMetadata = `

@@ -226,7 +226,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Deprecated:    "Use metadata_entry instead",
 			ConflictsWith: []string{"metadata_entry"},
 		},
-		"metadata_entry": metadataEntryResourceSchema("VM"),
+		"metadata_entry": metadataEntryResourceSchemaDeprecated("VM"),
 		"href": {
 			Type:        schema.TypeString,
 			Optional:    true,
@@ -2295,7 +2295,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 	dSet(d, "status", vm.VM.Status)
 	dSet(d, "status_text", statusText)
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_vapp_vm", vm)
+	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_vapp_vm", vm)
 	if diagErr != nil {
 		return diagErr
 	}
