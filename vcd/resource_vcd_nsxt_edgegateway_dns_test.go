@@ -56,11 +56,11 @@ func TestAccVcdNsxtEdgegatewayDns(t *testing.T) {
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
-					resource.TestCheckResourceAttr(resourceName, "default_forwarder_zone.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "default_forwarder_zone.0.name", params["DefaultForwarderName"].(string)),
 					resource.TestCheckTypeSetElemAttr(resourceName, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp1"].(string)),
 					resource.TestCheckTypeSetElemAttr(resourceName, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp2"].(string)),
 					resource.TestCheckTypeSetElemAttr(resourceName, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp3"].(string)),
+					resource.TestCheckResourceAttr(resourceName, "conditional_forwarder_zone.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "conditional_forwarder_zone.*", map[string]string{
 						"name": params["ConditionalForwardZone1"].(string),
 					}),
@@ -78,6 +78,7 @@ func TestAccVcdNsxtEdgegatewayDns(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "default_forwarder_zone.0.name", params["DefaultForwarderName"].(string)),
 					resource.TestCheckTypeSetElemAttr(resourceName, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp1"].(string)),
 					resource.TestCheckTypeSetElemAttr(resourceName, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp2"].(string)),
+					resource.TestCheckResourceAttr(resourceName, "conditional_forwarder_zone.#", "2"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "conditional_forwarder_zone.*", map[string]string{
 						"name": params["ConditionalForwardZone1"].(string),
 					}),

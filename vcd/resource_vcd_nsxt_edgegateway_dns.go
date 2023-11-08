@@ -74,7 +74,7 @@ func resourceVcdNsxtEdgegatewayDns() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				MaxItems:    5,
-				Description: "Conditional forwarder zone",
+				Description: "Conditional forwarder zones",
 				Elem:        conditionalForwarderZone,
 			},
 		},
