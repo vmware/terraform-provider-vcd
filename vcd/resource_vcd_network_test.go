@@ -1345,7 +1345,7 @@ func TestAccVcdDirectNetworkMetadata(t *testing.T) {
 		StringMap{
 			"ExternalNetwork": testConfig.Networking.ExternalNetwork,
 			"Vdc":             testConfig.VCD.Vdc,
-		})
+		}, true)
 }
 
 const testAccCheckVcdDirectNetworkMetadata = `
@@ -1401,7 +1401,7 @@ func TestAccVcdIsolatedNetworkMetadata(t *testing.T) {
 		testAccCheckVcdIsolatedNetworkMetadataDatasource, "data.vcd_network_isolated.test-network-isolated-ds",
 		StringMap{
 			"Vdc": testConfig.VCD.Vdc,
-		})
+		}, true)
 }
 
 const testAccCheckVcdIsolatedNetworkMetadata = `
@@ -1457,7 +1457,7 @@ func TestAccVcdRoutedNetworkMetadata(t *testing.T) {
 		StringMap{
 			"Vdc":         testConfig.VCD.Vdc,
 			"EdgeGateway": testConfig.Networking.EdgeGateway,
-		})
+		}, true)
 }
 
 const testAccCheckVcdRoutedNetworkMetadata = `

@@ -12,6 +12,19 @@ then
     exit 1
 fi
 
+function check_eol {
+    file_name=$1
+    # Checks the last line of the file.
+    # Counts the number of lines (==EOL)
+    has_eol=$(tail -n 1 $file_name | wc -l | tr -d ' ' | tr -d '\t')
+
+    # If there isn't an EOL, we add one on the spot
+    if [ "$has_eol" == "0" ]
+    then
+        echo ""
+    fi
+}
+
 # We can indicate a version on the command line
 version=$1
 
@@ -52,6 +65,7 @@ do
     for f in $(ls *${section}.md | sort -n)
     do
         cat $f
+        check_eol $f
     done
     echo ""
 done
