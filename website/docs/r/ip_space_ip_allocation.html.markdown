@@ -93,7 +93,7 @@ resource "vcd_ip_space_ip_allocation" "public-ip-prefix-manual" {
 }
 ```
 
-## Example Usage (Specifying explicit value)
+## Example Usage (Specifying explicit value on VCD 10.4.2+)
 
 ```hcl
 resource "vcd_ip_space_ip_allocation" "public-floating-ip-2" {
@@ -109,8 +109,9 @@ resource "vcd_ip_space_ip_allocation" "public-ip-prefix" {
   org_id        = data.vcd_org.org1.id
   ip_space_id   = vcd_ip_space.space1.id
   type          = "IP_PREFIX"
-  prefix_length = 29
   value         = "10.10.10.96/29"
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
 }
 ```
 
@@ -125,7 +126,9 @@ The following arguments are supported:
   * `IP_PREFIX` - allocates subnets. **Note** field `prefix_length` is required to allocate IP
     Prefix
 * `prefix_length` (Optional) Required when `type=IP_PREFIX`
-* `value` - (Optional; VCD *10.4.2+*) An option to request a specific IP or subnet from IP Space
+* `value` - (Optional; VCD *10.4.2+*) An option to request a specific IP or subnet from IP Space.
+  **Note:** This field does not support IP ranges because it would cause multiple allocations
+  created in one resource. Please use multiple resource instances to allocate IP ranges.
 * `usage_state` - (Optional) Not required unless manual IP reservation is required which can be
   enabled `USED_MANUAL`. Value `UNUSED` must be set to release manual allocation of IP.
 * `description` - (Optional) Can only be set when `usage_state=USED_MANUAL`
