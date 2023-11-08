@@ -131,10 +131,16 @@ func getStringAttributeAsPointer(d *schema.ResourceData, attrName string) *strin
 	return &attributeValue
 }
 
+// getUuidRegex returns a regular expression that matches UUIDs used by VCD
+func getUuidRegex(prefix, suffix string) *regexp.Regexp {
+	uuidRegexFormat := fmt.Sprintf("%s[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}%s", prefix, suffix)
+	return regexp.MustCompile(uuidRegexFormat)
+}
+
 // extractUuid finds an UUID in the input string
 // Returns an empty string if no UUID was found
 func extractUuid(input string) string {
-	reGetID := regexp.MustCompile(`([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})`)
+	reGetID := getUuidRegex("(", ")")
 	matchListIds := reGetID.FindAllStringSubmatch(input, -1)
 	if len(matchListIds) > 0 && len(matchListIds[0]) > 0 {
 		return matchListIds[len(matchListIds)-1][len(matchListIds[0])-1]
