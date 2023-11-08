@@ -1,4 +1,4 @@
-//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || uiPlugin || ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || uiPlugin || providerVdc || ALL
 
 package vcd
 
@@ -168,6 +168,11 @@ type TestConfig struct {
 		RoutedNetwork             string `json:"routedNetwork"`
 		IsolatedNetwork           string `json:"isolatedNetwork"`
 		DirectNetwork             string `json:"directNetwork"`
+		IpDiscoveryProfile        string `json:"ipDiscoveryProfile"`
+		MacDiscoveryProfile       string `json:"macDiscoveryProfile"`
+		SpoofGuardProfile         string `json:"spoofGuardProfile"`
+		QosProfile                string `json:"qosProfile"`
+		SegmentSecurityProfile    string `json:"segmentSecurityProfile"`
 	} `json:"nsxt"`
 	VSphere struct {
 		ResourcePoolForVcd1 string `json:"resourcePoolForVcd1,omitempty"`

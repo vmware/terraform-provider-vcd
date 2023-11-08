@@ -142,6 +142,11 @@ func resourceVcdOrgLdap() *schema.Resource {
 				Description:  "Type of LDAP settings (one of NONE, SYSTEM, CUSTOM)",
 				ValidateFunc: validation.StringInSlice([]string{types.LdapModeNone, types.LdapModeSystem, types.LdapModeCustom}, false),
 			},
+			"custom_user_ou": { // CustomUsersOu
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "If ldap_mode is SYSTEM, specifies a LDAP attribute=value pair to use for OU (organizational unit)",
+			},
 			"custom_settings": { // CustomOrgLdapSettings
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -261,6 +266,7 @@ func genericVcdOrgLdapRead(ctx context.Context, d *schema.ResourceData, meta int
 
 	dSet(d, "org_id", orgId)
 	dSet(d, "ldap_mode", config.OrgLdapMode)
+	dSet(d, "custom_user_ou", config.CustomUsersOu)
 	d.SetId(adminOrg.AdminOrg.ID)
 
 	if config.OrgLdapMode == "CUSTOM" {
@@ -328,6 +334,11 @@ func resourceVcdOrgLdapDelete(ctx context.Context, d *schema.ResourceData, meta 
 func fillLdapSettings(d *schema.ResourceData) (*types.OrgLdapSettingsType, error) {
 	settings := types.OrgLdapSettingsType{
 		OrgLdapMode: d.Get("ldap_mode").(string),
+	}
+
+	if settings.OrgLdapMode == "SYSTEM" {
+		settings.CustomUsersOu = d.Get("custom_user_ou").(string)
+		return &settings, nil
 	}
 
 	if settings.OrgLdapMode != "CUSTOM" {
