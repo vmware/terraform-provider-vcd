@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -70,19 +71,21 @@ func resourceVcdIpAllocation() *schema.Resource {
 				Description:   "IP address or CIDR to use. (VCD 10.4.2+)",
 				ConflictsWith: []string{"prefix_length"},
 				ForceNew:      true, // Once a particular IP or Prefix is allocated - its changes are ignored by the API
+
+				// API supports allocation of IP ranges (e.g. 10.10.10.1-10.10.10.3), but this
+				// results in multiple separate allocations with separate IDs which goes against
+				// Terraform principle. We have 'quantity' field disabled for the same reason.
+				// Users can define multiple instances of this resource to allocate IP ranges
+				ValidateFunc: validation.StringDoesNotMatch(
+					regexp.MustCompile("-"), // having a hyphen '-' in the value means that it is an IP range
+					"This resource does not support allocating IP ranges due to Terraform resources map to single entity. "+
+						"Please use multiple resource instances to allocate multiple IP addresses",
+				),
 			},
 			"ip_address": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "IP address or CIDR",
-			},
-			"ip_addresses": {
-				Type:        schema.TypeSet,
-				Computed:    true,
-				Description: "A Set of allocated IP addresses",
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
 			},
 			"used_by_id": {
 				Type:        schema.TypeString,
@@ -206,23 +209,9 @@ func resourceVcdIpAllocationUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("error retrieving IP Allocation: %s", err)
 	}
 
-	changeOccured := false
 	if d.HasChange("usage_state") || d.HasChange("description") {
 		ipAllocation.IpSpaceIpAllocation.UsageState = d.Get("usage_state").(string)
 		ipAllocation.IpSpaceIpAllocation.Description = d.Get("description").(string)
-		changeOccured = true
-	}
-
-	// 'value' cannot be updated, it has ForceNew
-	if d.HasChange("value") {
-		ipAllocation.IpSpaceIpAllocation.Value = d.Get("value").(string)
-		// if d.Get("value").(string) != "" {
-		// 	ipAllocation.IpSpaceIpAllocation.
-		// }
-		changeOccured = true
-	}
-
-	if changeOccured {
 		_, err = ipAllocation.Update(ipAllocation.IpSpaceIpAllocation)
 		if err != nil {
 			return diag.Errorf("error updating IP Space IP Allocation: %s", err)
