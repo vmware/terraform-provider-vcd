@@ -146,6 +146,11 @@ func resourceVcdIpAllocationCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if d.Get("value").(string) != "" {
+		// API throws an exception if this is specified for older versions
+		if vcdClient.Client.APIVCDMaxVersionIs("< 37.2") {
+			return diag.Errorf("'value' can only be specified on VCD 10.4.2+")
+		}
+
 		allocationConfig.Value = d.Get("value").(string)
 		allocationConfig.Quantity = nil // Quantity field must not be set when 'value' is specified
 	}
