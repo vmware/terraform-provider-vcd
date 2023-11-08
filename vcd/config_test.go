@@ -168,6 +168,11 @@ type TestConfig struct {
 		RoutedNetwork             string `json:"routedNetwork"`
 		IsolatedNetwork           string `json:"isolatedNetwork"`
 		DirectNetwork             string `json:"directNetwork"`
+		IpDiscoveryProfile        string `json:"ipDiscoveryProfile"`
+		MacDiscoveryProfile       string `json:"macDiscoveryProfile"`
+		SpoofGuardProfile         string `json:"spoofGuardProfile"`
+		QosProfile                string `json:"qosProfile"`
+		SegmentSecurityProfile    string `json:"segmentSecurityProfile"`
 	} `json:"nsxt"`
 	VSphere struct {
 		ResourcePoolForVcd1 string `json:"resourcePoolForVcd1,omitempty"`
