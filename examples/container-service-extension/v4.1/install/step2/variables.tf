@@ -32,22 +32,7 @@ variable "administrator_org" {
 }
 
 # ------------------------------------------------
-# CSE administrator user details
-# ------------------------------------------------
-
-variable "cse_admin_user" {
-  description = "The CSE administrator user created in previous step (Example: 'cse-admin')"
-  type        = string
-}
-
-variable "cse_admin_api_token" {
-  description = "The CSE administrator API token that should have been created before running this installation step"
-  type        = string
-  sensitive   = true
-}
-
-# ------------------------------------------------
-# VDC setup
+# Infrastructure
 # ------------------------------------------------
 
 variable "provider_vdc_name" {
@@ -64,34 +49,6 @@ variable "network_pool_name" {
   description = "The network pool to be used on VDC creation"
   type        = string
 }
-
-# ------------------------------------------------
-# Catalog and OVAs
-# ------------------------------------------------
-
-variable "tkgm_ova_folder" {
-  description = "Absolute path to the TKGm OVA file, with no file name (Example: '/home/bob/Downloads/tkgm')"
-  type        = string
-}
-
-variable "tkgm_ova_file" {
-  description = "TKGm OVA file name, with no path (Example: 'ubuntu-2004-kube-v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933.ova')"
-  type        = string
-}
-
-variable "cse_ova_folder" {
-  description = "Absolute path to the CSE OVA file, with no file name (Example: '/home/bob/Downloads/cse')"
-  type        = string
-}
-
-variable "cse_ova_file" {
-  description = "CSE OVA file name, with no path (Example: 'VMware_Cloud_Director_Container_Service_Extension-4.0.1.62-21109756.ova')"
-  type        = string
-}
-
-# ------------------------------------------------
-# Networking
-# ------------------------------------------------
 
 variable "nsxt_manager_name" {
   description = "NSX-T manager name, required to create the Provider Gateways"
@@ -222,9 +179,6 @@ variable "tenant_routed_network_dns_suffix" {
   default     = ""
 }
 
-# ------------------------------------------------
-# ALB
-# ------------------------------------------------
 variable "alb_controller_username" {
   description = "The user to create an ALB Controller with"
   type        = string
@@ -246,77 +200,54 @@ variable "alb_importable_cloud_name" {
 }
 
 # ------------------------------------------------
-# CSE Server
+# Catalog and OVAs
 # ------------------------------------------------
-variable "vcdkeconfig_template_filepath" {
+
+variable "tkgm_ova_folder" {
+  description = "Absolute path to the TKGm OVA files, with no file name (Example: '/home/bob/Downloads/tkgm')"
   type        = string
-  description = "Path to the VCDKEConfig JSON template"
-  default     = "../../entities/vcdkeconfig-template.json"
 }
 
-variable "capvcd_version" {
-  type        = string
-  description = "Version of CAPVCD"
-  default     = "1.0.0"
+variable "tkgm_ova_files" {
+  description = "A set of TKGm OVA file names, with no path (Example: 'ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc.ova')"
+  type        = set(string)
 }
 
-variable "capvcd_rde_version" {
+variable "cse_ova_folder" {
+  description = "Absolute path to the CSE OVA file, with no file name (Example: '/home/bob/Downloads/cse')"
   type        = string
-  description = "Version of the CAPVCD Runtime Defined Entity Type"
-  default     = "1.1.0"
 }
 
-variable "cpi_version" {
+variable "cse_ova_file" {
+  description = "CSE OVA file name, with no path (Example: 'VMware_Cloud_Director_Container_Service_Extension-4.0.1.62-21109756.ova')"
   type        = string
-  description = "VCDKEConfig: Cloud Provider Interface version"
-  default     = "1.2.0"
 }
 
-variable "csi_version" {
+# ------------------------------------------------
+# CSE Server initialization
+# ------------------------------------------------
+
+variable "cse_admin_username" {
+  description = "The CSE administrator user that was created in step 1"
   type        = string
-  description = "VCDKEConfig: Container Storage Interface version"
-  default     = "1.3.0"
 }
 
-variable "github_personal_access_token" {
+variable "cse_admin_password" {
+  description = "The password to set for the CSE administrator user that was created in step 1"
   type        = string
-  description = "VCDKEConfig: Prevents potential github rate limiting errors during cluster creation and deletion"
   sensitive   = true
 }
 
-variable "no_proxy" {
+variable "cse_admin_api_token_file" {
+  description = "The file where the API Token for the CSE Administrator will be stored"
   type        = string
-  description = "VCDKEConfig: List of comma-separated domains without spaces"
-  default     = "localhost,127.0.0.1,cluster.local,.svc"
-}
-
-variable "http_proxy" {
-  type        = string
-  description = "VCDKEConfig: Address of your HTTP proxy server"
-  default     = ""
-}
-
-variable "https_proxy" {
-  type        = string
-  description = "VCDKEConfig: Address of your HTTPS proxy server"
-  default     = ""
-}
-
-variable "syslog_host" {
-  type        = string
-  description = "VCDKEConfig: Domain for system logs"
-  default     = ""
-}
-
-variable "syslog_port" {
-  type        = string
-  description = "VCDKEConfig: Port for system logs"
-  default     = ""
+  default     = "cse_admin_api_token.json"
 }
 
 # ------------------------------------------------
 # Other configuration
 # ------------------------------------------------
+
 variable "k8s_container_clusters_ui_plugin_path" {
   type        = string
   description = "Path to the Kubernetes Container Clusters UI Plugin zip file"

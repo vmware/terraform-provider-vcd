@@ -8,6 +8,9 @@ description: |-
 
 # Container Service Extension v3.1.x
 
+~> This CSE installation method is **deprecated** in favor of CSE v4.x. Please have a look at the new guide
+[here](https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install)
+
 ## About
 
 This guide describes the required steps to configure VCD to install the Container Service Extension (CSE) v3.1.x, that
