@@ -129,11 +129,8 @@ The following arguments are supported:
 * `href` - (Computed) The vApp Hyper Reference.
 * `status` - (Computed; *v2.5+*) The vApp status as a numeric code.
 * `status_text` - (Computed; *v2.5+*) The vApp status as text.
-* `inherited_metadata` - (Computed; *v3.11+*) A block that contains read-only metadata that is automatically added by VCD and provides
-  details on the origin of the vApp. The sub-attributes are:
-    * `vapp_origin_id` - The ID of the vApp from which this vApp was generated
-    * `vapp_origin_name` - The name of the vApp from which this vApp was generated
-    * `vapp_origin_type` - The type of the vApp from which this vApp was generated
+* `inherited_metadata` - (Computed; *v3.11+*) A map that contains read-only metadata that is automatically added by VCD and provides
+  details on the origin of the vApp (e.g. `vapp.origin.id`, `vapp.origin.name`, `vapp.origin.type`).
 
 <a id="metadata"></a>
 ## Metadata

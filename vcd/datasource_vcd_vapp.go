@@ -79,28 +79,9 @@ func datasourceVcdVApp() *schema.Resource {
 				},
 			},
 			"inherited_metadata": {
+				Type:        schema.TypeMap,
 				Computed:    true,
-				Type:        schema.TypeList,
 				Description: "Metadata that is automatically set by VCD",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"vapp_origin_id": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "ID of the vApp from which this vApp was generated",
-						},
-						"vapp_origin_name": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "Name of the vApp from which this vApp was generated",
-						},
-						"vapp_origin_type": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: "Type of the vApp from which this vApp was generated",
-						},
-					},
-				},
 			},
 		},
 	}

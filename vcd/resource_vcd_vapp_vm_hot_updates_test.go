@@ -124,9 +124,9 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `storage_profile`, params["StorageProfile"].(string)),
 
-					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.0.vm_origin_id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
-					testCheckResourceAttrSetWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.0.vm_origin_name", ">= 38.1"),
-					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.0.vm_origin_type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
+					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.vm.origin.id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
+					testCheckResourceAttrSetWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.vm.origin.name", ">= 38.1"),
+					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.vm.origin.type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
 				),
 			},
 			// Step 1 - update - network changes
@@ -160,9 +160,9 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `storage_profile`, params["StorageProfile2"].(string)),
 
-					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.0.vm_origin_id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
-					testCheckResourceAttrSetWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.0.vm_origin_name", ">= 38.1"),
-					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.0.vm_origin_type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
+					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.vm.origin.id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
+					testCheckResourceAttrSetWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.vm.origin.name", ">= 38.1"),
+					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.vm.origin.type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
 
 					testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1),
 				),
@@ -202,9 +202,9 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `storage_profile`, params["StorageProfile2"].(string)),
 
-					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.0.vm_origin_id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
-					testCheckResourceAttrSetWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.0.vm_origin_name", ">= 38.1"),
-					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.0.vm_origin_type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
+					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.vm.origin.id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
+					testCheckResourceAttrSetWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.vm.origin.name", ">= 38.1"),
+					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.vm.origin.type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
 
 					testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1),
 				),
@@ -237,9 +237,9 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `storage_profile`, params["StorageProfile2"].(string)),
 
-					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.0.vm_origin_id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
-					testCheckResourceAttrSetWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.0.vm_origin_name", ">= 38.1"),
-					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.0.vm_origin_type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
+					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.vm.origin.id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
+					testCheckResourceAttrSetWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.vm.origin.name", ">= 38.1"),
+					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.vm.origin.type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
 
 					step5Check,
 				),

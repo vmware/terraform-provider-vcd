@@ -63,11 +63,8 @@ The following arguments are supported:
 * `lease` - (*v3.5+*) - The information about the vApp lease. It includes the following fields:
   * `runtime_lease_in_sec` - How long any of the VMs in the vApp can run before the vApp is automatically powered off or suspended. 0 means never expires.
   * `storage_lease_in_sec` - How long the vApp is available before being automatically deleted or marked as expired. 0 means never expires.
-* `inherited_metadata` - (*v3.11+*) A block that contains read-only metadata that is automatically added by VCD and provides
-  details on the origin of the vApp. The sub-attributes are:
-  * `vapp_origin_id` - The ID of the vApp from which this vApp was generated
-  * `vapp_origin_name` - The name of the vApp from which this vApp was generated
-  * `vapp_origin_type` - The type of the vApp from which this vApp was generated
+* `inherited_metadata` - (*v3.11+*) A map that contains read-only metadata that is automatically added by VCD and provides
+  details on the origin of the vApp (e.g. `vapp.origin.id`, `vapp.origin.name`, `vapp.origin.type`).
 
 <a id="metadata"></a>
 ## Metadata

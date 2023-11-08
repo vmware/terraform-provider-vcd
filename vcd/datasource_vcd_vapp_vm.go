@@ -438,28 +438,9 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 			Description: "Shows the status of the VM",
 		},
 		"inherited_metadata": {
+			Type:        schema.TypeMap,
 			Computed:    true,
-			Type:        schema.TypeList,
 			Description: "Metadata that is automatically set by VCD",
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"vm_origin_id": {
-						Type:        schema.TypeString,
-						Computed:    true,
-						Description: "ID of the VM from which this VM was generated",
-					},
-					"vm_origin_name": {
-						Type:        schema.TypeString,
-						Computed:    true,
-						Description: "Name of the VM from which this VM was generated",
-					},
-					"vm_origin_type": {
-						Type:        schema.TypeString,
-						Computed:    true,
-						Description: "Type of the VM from which this VM was generated",
-					},
-				},
-			},
 		},
 	}
 }

@@ -158,11 +158,11 @@ func TestAccVcdVAppInheritedMetadata(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"data.vcd_vapp.fetched_vapp", "metadata.%", "0"),
 					resource.TestMatchResourceAttr(
-						"data.vcd_vapp.fetched_vapp", "inherited_metadata.0.vapp_origin_id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+						"data.vcd_vapp.fetched_vapp", "inherited_metadata.vapp.origin.id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
 					resource.TestCheckResourceAttrSet(
-						"data.vcd_vapp.fetched_vapp", "inherited_metadata.0.vapp_origin_name"),
+						"data.vcd_vapp.fetched_vapp", "inherited_metadata.vapp.origin.name"),
 					resource.TestMatchResourceAttr(
-						"data.vcd_vapp.fetched_vapp", "inherited_metadata.0.vapp_origin_type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`)),
+						"data.vcd_vapp.fetched_vapp", "inherited_metadata.vapp.origin.type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`)),
 				),
 			},
 		},

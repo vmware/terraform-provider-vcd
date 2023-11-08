@@ -110,9 +110,9 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_vm."+standaloneVmName, "disk.*", map[string]string{
 						"size_in_mb": "5",
 					}),
-					testMatchResourceAttrWhenVersionMatches("vcd_vm."+standaloneVmName, "inherited_metadata.0.vm_origin_id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
-					testCheckResourceAttrSetWhenVersionMatches("vcd_vm."+standaloneVmName, "inherited_metadata.0.vm_origin_name", ">= 38.1"),
-					testMatchResourceAttrWhenVersionMatches("vcd_vm."+standaloneVmName, "inherited_metadata.0.vm_origin_type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
+					testMatchResourceAttrWhenVersionMatches("vcd_vm."+standaloneVmName, "inherited_metadata.vm.origin.id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
+					testCheckResourceAttrSetWhenVersionMatches("vcd_vm."+standaloneVmName, "inherited_metadata.vm.origin.name", ">= 38.1"),
+					testMatchResourceAttrWhenVersionMatches("vcd_vm."+standaloneVmName, "inherited_metadata.vm.origin.type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
 				),
 			},
 			{
