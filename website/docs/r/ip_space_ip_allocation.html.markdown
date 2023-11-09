@@ -106,7 +106,7 @@ The following arguments are supported:
     Prefix
 * `prefix_length` (Optional) Required when `type=IP_PREFIX`
 * `value` - (Optional; VCD *10.4.2+*) An option to request a specific IP or subnet from IP Space
-* `usage_state` - (Optiona) Not required unless manual IP reservation is required which can be
+* `usage_state` - (Optional) Not required unless manual IP reservation is required which can be
   enabled `USED_MANUAL`. Value `UNUSED` must be set to release manual allocation of IP.
 * `description` - (Optional) Can only be set when `usage_state=USED_MANUAL`
 
