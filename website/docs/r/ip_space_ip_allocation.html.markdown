@@ -129,8 +129,8 @@ The following arguments are supported:
 * `value` - (Optional; VCD *10.4.2+*) An option to request a specific IP or subnet from IP Space.
   **Note:** This field does not support IP ranges because it would cause multiple allocations
   created in one resource. Please use multiple resource instances to allocate IP ranges.
-* `usage_state` - (Optional) Not required unless manual IP reservation is required which can be
-  enabled `USED_MANUAL`. Value `UNUSED` must be set to release manual allocation of IP.
+* `usage_state` - (Optional) (Optional) Only used with manual reservations. Value `USED_MANUAL`
+  enables manual IP reservation. Value `UNUSED` is set to release manual allocation of IP.
 * `description` - (Optional) Can only be set when `usage_state=USED_MANUAL`
 
 ~> IP Allocation resources can be created only if there is a NSX-T Edge Gateway
