@@ -152,6 +152,24 @@ func resourceVcdIpSpace() *schema.Resource {
 				Default:     false,
 				Description: "Flag whether route advertisement should be enabled",
 			},
+			"default_firewall_rule_creation_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Flag whether default firewall rule creation should be enabled (VCD 10.5.0+)",
+			},
+			"default_no_snat_rule_creation_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Flag whether NO SNAT rule creation should be enabled (VCD 10.5.0+)",
+			},
+			"default_snat_rule_creation_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Flag whether SNAT rule creation should be enabled (VCD 10.5.0+)",
+			},
 		},
 	}
 }
@@ -160,7 +178,7 @@ func resourceVcdIpSpaceCreate(ctx context.Context, d *schema.ResourceData, meta 
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] IP Space creation initiated")
 
-	ipSpaceConfig, err := getIpSpaceType(d, "create")
+	ipSpaceConfig, err := getIpSpaceType(vcdClient, d, "create")
 	if err != nil {
 		return diag.Errorf("could not get IP Space type: %s", err)
 	}
@@ -179,7 +197,7 @@ func resourceVcdIpSpaceUpdate(ctx context.Context, d *schema.ResourceData, meta 
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] IP Space update initiated")
 
-	ipSpaceConfig, err := getIpSpaceType(d, "update")
+	ipSpaceConfig, err := getIpSpaceType(vcdClient, d, "update")
 	if err != nil {
 		return diag.Errorf("could not get IP Space type: %s", err)
 	}
@@ -319,7 +337,29 @@ func resourceVcdIpSpaceImport(ctx context.Context, d *schema.ResourceData, meta 
 	return []*schema.ResourceData{d}, nil
 }
 
-func getIpSpaceType(d *schema.ResourceData, operation string) (*types.IpSpace, error) {
+func getIpSpaceDefaultGatewayServiceConfig(vcdClient *VCDClient, d *schema.ResourceData) (*types.IpSpaceDefaultGatewayServiceConfig, error) {
+	gwSvcConfig := &types.IpSpaceDefaultGatewayServiceConfig{
+		EnableDefaultFirewallRuleCreation: d.Get("default_firewall_rule_creation_enabled").(bool),
+		EnableDefaultNoSnatRuleCreation:   d.Get("default_no_snat_rule_creation_enabled").(bool),
+		EnableDefaultSnatRuleCreation:     d.Get("default_snat_rule_creation_enabled").(bool),
+	}
+
+	// Firewall, SNAT and NO SNAT rule creation is only supported in VCD 10.5.0+
+	// Performing runtime validation as supplying any of these values will cause an ugly error due to these fields
+	// not being present on VCDs before 10.5.0
+	if !vcdClient.Client.APIVCDMaxVersionIs(">= 38.0") {
+		// If any of these values are `true`, but VCD does not support it - return error
+		if gwSvcConfig.EnableDefaultFirewallRuleCreation || gwSvcConfig.EnableDefaultNoSnatRuleCreation || gwSvcConfig.EnableDefaultSnatRuleCreation {
+			return nil, fmt.Errorf("default Firewall and NAT rule creation is only supported in VCD 10.5.0+")
+		}
+		// none of these values are `true` therefore simply returning `nil` so that no values are sent
+		return nil, nil
+	}
+
+	return gwSvcConfig, nil
+}
+
+func getIpSpaceType(vcdClient *VCDClient, d *schema.ResourceData, operation string) (*types.IpSpace, error) {
 	ipSpace := &types.IpSpace{
 		Name:                      d.Get("name").(string),
 		Description:               d.Get("description").(string),
@@ -328,6 +368,15 @@ func getIpSpaceType(d *schema.ResourceData, operation string) (*types.IpSpace, e
 		IPSpaceExternalScope:      d.Get("external_scope").(string),
 		RouteAdvertisementEnabled: d.Get("route_advertisement_enabled").(bool),
 	}
+
+	// Get default gateway service configuration (firewall, snat, no snat rule creation)
+	// It is available in VCD 10.5.0+, therefore it also does validation if any of the fields are
+	// set to
+	defaultGatewayServiceConfig, err := getIpSpaceDefaultGatewayServiceConfig(vcdClient, d)
+	if err != nil {
+		return nil, fmt.Errorf("error preparing IP Space configuration: %s", err)
+	}
+	ipSpace.DefaultGatewayServiceConfig = defaultGatewayServiceConfig
 
 	// IP Ranges
 	ipRangeQuota := d.Get("ip_range_quota").(string)
@@ -426,6 +475,12 @@ func setIpSpaceData(d *schema.ResourceData, ipSpace *types.IpSpace) error {
 
 	if ipSpace.OrgRef != nil && ipSpace.OrgRef.ID != "" {
 		dSet(d, "org_id", ipSpace.OrgRef.ID)
+	}
+
+	if ipSpace.DefaultGatewayServiceConfig != nil {
+		dSet(d, "default_firewall_rule_creation_enabled", ipSpace.DefaultGatewayServiceConfig.EnableDefaultFirewallRuleCreation)
+		dSet(d, "default_no_snat_rule_creation_enabled", ipSpace.DefaultGatewayServiceConfig.EnableDefaultNoSnatRuleCreation)
+		dSet(d, "default_snat_rule_creation_enabled", ipSpace.DefaultGatewayServiceConfig.EnableDefaultSnatRuleCreation)
 	}
 
 	ipRangeQuotaStr := strconv.Itoa(ipSpace.IPSpaceRanges.DefaultFloatingIPQuota)
