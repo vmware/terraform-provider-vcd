@@ -145,7 +145,7 @@ Edge Gateway withing VDC will return errors of type `This operation is denied`.
   function [cidrhost](https://developer.hashicorp.com/terraform/language/functions/cidrhost) is a
   convenient method to getting IPs within returned CIDR
 * `allocation_date` - allocation date in formated as `2023-06-07T09:57:58.721Z` (ISO 8601)
-* `usage_state` - `USED` or `UNUSED` is populated by system unless set to `USED_MANUAL`
+* `usage_state` - `USED` or `UNUSED` is populated by system unless set to `USED_MANUAL` or `UNUSED`
 * `used_by_id` - contains entity ID that is using the IP if `usage_state=USED`
 * `ip` - convenience field. For `type=IP_PREFIX` it will contain only the IP from CIDR returned
 
