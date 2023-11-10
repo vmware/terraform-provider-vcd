@@ -139,6 +139,39 @@ resource "vcd_ip_space" "space1" {
 }
 ```
 
+## Example Usage (VCD 10.5.0+ - Public IP Space with Firewall and NAT rule autocreation)
+
+```hcl
+resource "vcd_ip_space" "space1" {
+  name = "Public-Tokyo"
+  type = "PUBLIC"
+
+  internal_scope = ["192.168.1.0/24", "10.10.10.0/24", "11.11.11.0/24"]
+  external_scope = "0.0.0.0/0"
+
+  route_advertisement_enabled              = true
+    default_firewall_rule_creation_enabled = true
+  default_no_snat_rule_creation_enabled    = true
+  default_snat_rule_creation_enabled       = true
+
+
+  ip_prefix {
+    default_quota = 2
+
+    prefix {
+      first_ip      = "192.168.1.100"
+      prefix_length = 30
+      prefix_count  = 4
+    }
+  }
+
+  ip_range {
+    start_address = "11.11.11.100"
+    end_address   = "11.11.11.110"
+  }
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -166,9 +199,14 @@ The following arguments are supported:
   ([ip_range](#ipspace-ip-range)), enter a number of floating IP addresses to allocate individually.
   `-1` is unlimited, while `0` means that no IPs can be allocated.
 * `ip_prefix` - (Optional) One or more IP prefixes (blocks) [ip_prefix](#ipspace-ip-prefix)
-
 * `route_advertisement_enabled` - (Optional) Toggle on the route advertisement option to
   enable advertising networks with IP prefixes from this IP space (default `false`)
+* `default_firewall_rule_creation_enabled` - (Optional, *v3.11+*, *VCD 10.5.0+*) Defines whether
+  default firewall rule creation should be enabled
+* `default_no_snat_rule_creation_enabled` - (Optional, *v3.11+*, *VCD 10.5.0+*) Defines whether NO SNAT
+  rule creation should be enabled
+* `default_snat_rule_creation_enabled` - (Optional, *v3.11+*, *VCD 10.5.0+*) Defines whether SNAT rule
+  creation should be enabled
 
 <a id="ipspace-ip-range"></a>
 
