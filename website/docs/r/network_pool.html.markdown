@@ -149,7 +149,7 @@ data "vcd_vcenter" "vc1" {
 
 resource "vcd_network_pool" "npool-1" {
   name                = "new-network-pool"
-  description         = "network pool without explicit transport zone"
+  description         = "network pool without explicit port group"
   network_provider_id = data.vcd_vcenter.vc1.id
   type                = "PORTGROUP_BACKED"
 
