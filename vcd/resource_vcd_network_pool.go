@@ -136,7 +136,7 @@ func resourceVcdNetworkPool() *schema.Resource {
 				Computed:    true,
 				Description: "Type of network provider",
 			},
-			"backing_components_use_constraint": {
+			"backing_selection_constraint": {
 				Type:     schema.TypeString,
 				Optional: true,
 				Default:  types.BackingUseExplicit,
@@ -200,7 +200,7 @@ func resourceNetworkPoolCreate(ctx context.Context, d *schema.ResourceData, meta
 	vcdClient := meta.(*VCDClient)
 	networkPoolName := d.Get("name").(string)
 	networkPoolDescription := d.Get("description").(string)
-	backingComponentsUseConstraint := d.Get("backing_components_use_constraint").(string)
+	backingComponentsUseConstraint := d.Get("backing_selection_constraint").(string)
 
 	networkPoolType := d.Get("type").(string)
 	networkPoolProviderId := d.Get("network_provider_id").(string)

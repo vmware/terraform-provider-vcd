@@ -335,7 +335,7 @@ resource "vcd_network_pool" "np1" {
   network_provider_id = data.vcd_nsxt_manager.mgr1.id
   type                = "GENEVE" # provider VDC needs either a GENEVE (NSX-T) or a VXLAN (NSX-V) network pool
 
-  backing_components_use_constraint = "use-first-available"
+  backing_selection_constraint = "use-first-available"
 
   backing {
   }

@@ -266,7 +266,7 @@ func runNetworkPoolTest(t *testing.T, npData networkPoolData) {
 					ImportState:             true,
 					ImportStateVerify:       true,
 					ImportStateIdFunc:       importStateIdTopHierarchy(updatedName),
-					ImportStateVerifyIgnore: []string{"backing_components_use_constraint"},
+					ImportStateVerifyIgnore: []string{"backing_selection_constraint"},
 				},
 			},
 		})
@@ -328,7 +328,7 @@ resource "vcd_network_pool" "npool" {
   network_provider_id = "{{.NetworkProviderId}}"
   type                = "{{.PoolType}}"
 
-  backing_components_use_constraint = "{{.BackingConstraint}}"
+  backing_selection_constraint = "{{.BackingConstraint}}"
 
   backing {
     {{.RangeIds}}
