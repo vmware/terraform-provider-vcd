@@ -90,7 +90,7 @@ var alsoDelete = entityList{
 var isTest = regexp.MustCompile(`^[Tt]est`)
 
 // alwaysShow lists the resources that will always be shown
-var alwaysShow = []string{"vcd_provider_vdc", "vcd_org", "vcd_catalog", "vcd_org_vdc", "vcd_nsxt_alb_controller"}
+var alwaysShow = []string{"vcd_provider_vdc", "vcd_org", "vcd_catalog", "vcd_org_vdc", "vcd_nsxt_alb_controller", "vcd_nsxt_segment_profile_template"}
 
 func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	if verbose {
@@ -316,7 +316,33 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 				if toBeDeleted {
 					err = netRef.Delete()
 					if err != nil {
-						return fmt.Errorf("error deleting Org VDC '%s': %s", netRef.OpenApiOrgVdcNetwork.Name, err)
+						return fmt.Errorf("error deleting Org VDC network '%s': %s", netRef.OpenApiOrgVdcNetwork.Name, err)
+					}
+				}
+			}
+
+			// --------------------------------------------------------------
+			// Disks
+			// --------------------------------------------------------------
+			disks, err := vdc.QueryDisks("*")
+			if err != nil {
+				return fmt.Errorf("error retrieving Org VDC disk list: %s", err)
+			}
+			for _, diskRef := range *disks {
+				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, diskRef.Name, "vcd_independent_disk", 2, verbose)
+				if toBeDeleted {
+
+					disk, err := vdc.GetDiskByHref(diskRef.HREF)
+					if err != nil {
+						return fmt.Errorf("error retrieving Org VDC disk '%s': %s", diskRef.Name, err)
+					}
+					task, err := disk.Delete()
+					if err != nil {
+						return fmt.Errorf("error deleting Org VDC disk '%s': %s", diskRef.Name, err)
+					}
+					err = task.WaitTaskCompletion()
+					if err != nil {
+						return fmt.Errorf("error finishing deletion of Org VDC disk '%s': %s", diskRef.Name, err)
 					}
 				}
 			}
@@ -448,6 +474,31 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			err = deleteUIPlugin(uiPlugin)
 			if err != nil {
 				return err
+			}
+		}
+	}
+
+	// --------------------------------------------------------------
+	// Segment Profile Templates can be used in:
+	// * Global Default Segment Profiles (Infrastructure resources -> Segment Profile Templates -> Global Defaults)
+	// * VDC defaults (Cloud Resources -> Organization VDCs -> _any NSX-T vdc_ -> Segment Profile Templates)
+	// * Org VDC Networks (Org VDC networks do not show )
+	// It is best to attempt cleanup at the end, when all the other artifacts that can consume them
+	// are already removed
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		allSpts, err := govcdClient.GetAllSegmentProfileTemplates(nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving all Segment Profile Templates: %s", err)
+		}
+		for _, spt := range allSpts {
+			// This will delete all Segment Profile Templates that match the `isTest` regex.
+			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, spt.NsxtSegmentProfileTemplate.Name, "vcd_nsxt_segment_profile_template", 0, verbose)
+			if toBeDeleted {
+				err = spt.Delete()
+				if err != nil {
+					return fmt.Errorf("error deleting Segment Profile Template '%s': %s", spt.NsxtSegmentProfileTemplate.Name, err)
+				}
 			}
 		}
 	}

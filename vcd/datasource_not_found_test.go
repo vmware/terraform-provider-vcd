@@ -35,6 +35,24 @@ func TestAccDataSourceNotFound(t *testing.T) {
 
 func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient) func(*testing.T) {
 	return func(t *testing.T) {
+
+		type skipAlways struct {
+			dataSourceName string
+			reason         string
+		}
+
+		skipAlwaysSlice := []skipAlways{
+			{
+				dataSourceName: "vcd_nsxt_global_default_segment_profile_template",
+				reason:         "Global Default Segment Profile Template configuration is always available",
+			},
+		}
+		for _, skip := range skipAlwaysSlice {
+			if dataSourceName == skip.dataSourceName {
+				t.Skipf("Skipping: %s", skip.reason)
+			}
+		}
+
 		// Skip subtest based on versions
 		type skipOnVersion struct {
 			skipVersionConstraint string
@@ -96,6 +114,16 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			"vcd_resource_pool",
 			"vcd_network_pool",
 			"vcd_nsxt_edgegateway_qos_profile",
+			"vcd_nsxt_segment_ip_discovery_profile",
+			"vcd_nsxt_segment_mac_discovery_profile",
+			"vcd_nsxt_segment_spoof_guard_profile",
+			"vcd_nsxt_segment_qos_profile",
+			"vcd_nsxt_segment_security_profile",
+			"vcd_org_vdc_nsxt_network_profile",
+			"vcd_nsxt_global_default_segment_profile_template",
+			"vcd_nsxt_network_segment_profile",
+			"vcd_nsxt_segment_profile_template",
+			"vcd_nsxt_network_context_profile",
 		}
 		dataSourcesRequiringAlbConfig := []string{
 			"vcd_nsxt_alb_cloud",
@@ -142,8 +170,15 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			"DataSourceName":  dataSourceName,
 			"MandatoryFields": addedParams,
 		}
+
 		if dataSourceName == "vcd_nsxv_distributed_firewall" {
 			params["MandatoryFields"] = `vdc_id = "deadbeef-dead-beef-dead-beefdeadbeef"`
+		}
+
+		if dataSourceName == "vcd_org_vdc_nsxt_network_profile" {
+			config := `org = "` + testConfig.VCD.Org + `"` + "\n"
+			config += `vdc = "non-existing"` + "\n"
+			params["MandatoryFields"] = config
 		}
 
 		params["FuncName"] = "NotFoundDataSource-" + dataSourceName
