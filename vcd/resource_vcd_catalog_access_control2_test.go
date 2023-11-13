@@ -125,7 +125,11 @@ func TestAccVcdCatalogAccessControl2(t *testing.T) {
 					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog3, false, false, 0, 0, 0),
 					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog4, false, false, 0, 0, 0),
 					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog5, false, false, 0, 0, 0),
-					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog6, false, false, 0, 0, 0)),
+					testCheckCatalogAndItemsExist(testConfig.VCD.Org, catalog6, false, false, 0, 0, 0),
+					resource.TestCheckResourceAttr("vcd_org."+newOrg1, "number_of_catalogs", "0"),
+					resource.TestCheckResourceAttr("vcd_org."+newOrg2, "number_of_catalogs", "0"),
+					resource.TestCheckResourceAttr("vcd_org."+newOrg3, "number_of_catalogs", "0"),
+				),
 			},
 			// Test access
 			{
@@ -208,6 +212,19 @@ func TestAccVcdCatalogAccessControl2(t *testing.T) {
 							"subject_name": userName1,
 							"access_level": types.ControlAccessReadWrite,
 						}),
+					resource.TestCheckResourceAttr("vcd_org."+newOrg1, "number_of_catalogs", "2"),
+					resource.TestCheckResourceAttr("vcd_org."+newOrg2, "number_of_catalogs", "2"),
+					resource.TestCheckResourceAttr("vcd_org."+newOrg3, "number_of_catalogs", "2"),
+					resource.TestCheckResourceAttr("vcd_org."+newOrg1, "list_of_catalogs.#", "2"),
+					resource.TestCheckResourceAttr("vcd_org."+newOrg2, "list_of_catalogs.#", "2"),
+					resource.TestCheckResourceAttr("vcd_org."+newOrg3, "list_of_catalogs.#", "2"),
+					// The list of catalogs is sorted alphabetically, so we expect them to be found in a specific order
+					resource.TestCheckResourceAttr("vcd_org."+newOrg1, "list_of_catalogs.0", catalog5),
+					resource.TestCheckResourceAttr("vcd_org."+newOrg1, "list_of_catalogs.1", catalog6),
+					resource.TestCheckResourceAttr("vcd_org."+newOrg2, "list_of_catalogs.0", catalog5),
+					resource.TestCheckResourceAttr("vcd_org."+newOrg2, "list_of_catalogs.1", catalog6),
+					resource.TestCheckResourceAttr("vcd_org."+newOrg3, "list_of_catalogs.0", catalog5),
+					resource.TestCheckResourceAttr("vcd_org."+newOrg3, "list_of_catalogs.1", catalog6),
 				)},
 
 			// Tests import by name

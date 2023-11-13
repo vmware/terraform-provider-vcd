@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 	"time"
 
@@ -464,19 +465,33 @@ func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.Ad
 	}
 	dSet(d, "number_of_catalogs", numberOfCatalogs)
 	dSet(d, "number_of_vdcs", numberOfVdcs)
-	var availableCatalogs []interface{}
+	var rawAvailableCatalogs []interface{}
+	var availableCatalogs []string
 	for _, c := range adminOrg.AdminOrg.Catalogs.Catalog {
 		availableCatalogs = append(availableCatalogs, c.Name)
 	}
-	err := d.Set("list_of_catalogs", availableCatalogs)
+	if len(availableCatalogs) > 0 {
+		sort.Strings(availableCatalogs)
+		for _, c := range availableCatalogs {
+			rawAvailableCatalogs = append(rawAvailableCatalogs, c)
+		}
+	}
+	err := d.Set("list_of_catalogs", rawAvailableCatalogs)
 	if err != nil {
 		return diag.Errorf("error setting list of catalogs: %s", err)
 	}
-	var availableVdcs []interface{}
+	var rawAvailableVdcs []interface{}
+	var availableVdcs []string
 	for _, v := range adminOrg.AdminOrg.Vdcs.Vdcs {
 		availableVdcs = append(availableVdcs, v.Name)
 	}
-	err = d.Set("list_of_vdcs", availableVdcs)
+	if len(availableVdcs) > 0 {
+		sort.Strings(availableVdcs)
+		for _, v := range availableVdcs {
+			rawAvailableVdcs = append(rawAvailableVdcs, v)
+		}
+	}
+	err = d.Set("list_of_vdcs", rawAvailableVdcs)
 	if err != nil {
 		return diag.Errorf("error setting list of VDCs: %s", err)
 	}
