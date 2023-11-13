@@ -117,17 +117,16 @@ data "vcd_nsxt_edgegateway" "my-edge-gateway" {
   owner_id = data.vcd_org_vdc.my-vdc-or-vdc-group.id
 }
 
-resource "vcd_nsxt_edgegateway_dns" "imported" {
-  org  = "my-org"
-  name = "my-dns"
+resource "vcd_nsxt_edgegateway_dns" "dns-imported" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.my-edge-gateway.id
 }
 ```
 
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_edgegateway_dns.imported my-org.nsxt-vdc.nsxt-edge
+terraform import vcd_nsxt_edgegateway_dns.dns-imported my-org.nsxt-vdc.nsxt-edge
 ```
 
-The above would import the `nsxt-edge` Edge Gateway DNS forwarder configuration for this particular
+The above would import the `dns-imported` Edge Gateway DNS forwarder configuration for this particular
 Edge Gateway.
