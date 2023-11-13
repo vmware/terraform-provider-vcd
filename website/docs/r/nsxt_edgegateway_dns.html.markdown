@@ -70,10 +70,11 @@ The following arguments are supported:
 * `snat_rule_ip_address` - (Optional, VCD 10.5.1+) This property only applies if the Edge Gateway 
   is connected to a Provider Gateway using IP Spaces. If specified, VCD will 
   conveniently manage the SNAT rule with the specified IP address for the DNS forwarder. 
+  The specified IP can be allocated using [`vcd_ip_space_ip_allocation`](/providers/vmware/vcd/latest/docs/resources/ip_space_ip_allocation) 
 * `default_forwarder_zone` - (Required) The default forwarder zone to use if 
-  there’s no matching domain in the conditional forwarder zones. See [#default-forwarder-zone]
+  there’s no matching domain in the conditional forwarder zones. See [`default_forwarder_zone`](#default-forwarder-zone)
 * `conditional_forwarder_zone` - (Optional) A set (up to 5) of conditional forwarder zones that allows to define 
-  specific forwarding routes based on the domain. See [#conditional-forwarder-zone]
+  specific forwarding routes based on the domain. See [`conditional_forwarder_zone`](#conditional-forwarder-zone)
 
 ## Attribute Reference
 
