@@ -150,6 +150,7 @@ func resourceVcdNetworkPool() *schema.Resource {
 				Type:        schema.TypeList,
 				MaxItems:    1,
 				Optional:    true,
+				Computed:    true,
 				Description: "The components used by the network pool",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
