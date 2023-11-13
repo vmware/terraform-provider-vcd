@@ -67,10 +67,10 @@ The following arguments are supported:
 
 ## Attribute Reference
 
-* `number_of_catalogs` - (*v3.11+*) Number of catalogs, owned or shared, available to this organization
-* `list_of_catalogs` - (*v3.11+*) List of catalogs, owned or shared, available to this organization
-* `number_of_vdcs` - (*v3.11+*) Number of VDCs, owned or shared, available to this organization
-* `list_of_vdcs` - (*v3.11+*) List of VDCs, owned or shared, available to this organization
+* `number_of_catalogs` - (*v3.11+*) Number of catalogs owned or shared, available to this organization.
+* `list_of_catalogs` - (*v3.11+*) List of catalogs (sorted alphabetically), owned or shared, available to this organization.
+* `number_of_vdcs` - (*v3.11+*) Number of VDCs owned or shared, available to this organization.
+* `list_of_vdcs` - (*v3.11+*) List of VDCs (sorted alphabetically), owned or shared, available to this organization.
 
 <a id="vapp-lease"></a>
 ## vApp Lease
