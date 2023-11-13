@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_edgegateway_dns"
-sidebar_current: "docs-vcd-resource-nsxt-edge-dns"
+sidebar_current: "docs-vcd-resource-nsxt-edgegateway-dns"
 description: |-
   Provides a resource to manage NSX-T Edge Gateway DNS configuration.
 ---
