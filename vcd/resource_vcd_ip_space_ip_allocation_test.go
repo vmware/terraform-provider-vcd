@@ -835,7 +835,7 @@ resource "vcd_ip_space" "space1" {
 `
 
 // importCustomIpAllocationFunc has specific that it accepts cachedField address so that late
-// evaluation of this field can be done. It is needed so that VCD Allocation IP address can be
+// evaluation of this field can be done. It is needed so that VCD Allocated IP address can be
 // captured and then used in the import. It cannot be known in advance as it is up to VCD to
 // allocate IP address from IP Space
 func importCustomIpAllocationFunc(path []string, cachedField *testCachedFieldValue) resource.ImportStateIdFunc {
