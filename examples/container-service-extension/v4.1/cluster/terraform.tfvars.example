@@ -6,6 +6,7 @@
 vcd_url                 = "https://vcd.my-awesome-corp.com"
 insecure_login          = "true"
 
+# This user should have the "Kubernetes Cluster Author" role.
 cluster_author_user     = "cluster_author"
 cluster_author_password = "change-me"
 

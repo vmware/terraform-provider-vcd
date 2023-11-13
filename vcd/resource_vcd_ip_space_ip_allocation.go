@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -57,11 +58,29 @@ func resourceVcdIpAllocation() *schema.Resource {
 				Description: "Custom description can only be set when usage_state is set to 'USED_MANUAL'",
 			},
 			"prefix_length": {
-				Type:        schema.TypeString,
-				ForceNew:    true,
-				Optional:    true,
-				Computed:    true,
-				Description: "Required if 'type' is IP_PREFIX",
+				Type:          schema.TypeString,
+				ForceNew:      true,
+				Optional:      true,
+				Computed:      true,
+				Description:   "Required if 'type' is IP_PREFIX and no custom 'value` is provided",
+				ConflictsWith: []string{"value"},
+			},
+			"value": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "IP address or CIDR to use. (VCD 10.4.2+)",
+				ConflictsWith: []string{"prefix_length"},
+				ForceNew:      true, // Once a particular IP or Prefix is allocated - its changes are ignored by the API
+
+				// API supports allocation of IP ranges (e.g. 10.10.10.1-10.10.10.3), but this
+				// results in multiple separate allocations with separate IDs which goes against
+				// Terraform principle. We have 'quantity' field disabled for the same reason.
+				// Users can define multiple instances of this resource to allocate IP ranges
+				ValidateFunc: validation.StringDoesNotMatch(
+					regexp.MustCompile("-"), // having a hyphen '-' in the value means that it is an IP range
+					"This resource does not support allocating IP ranges due to Terraform resources map to single entity. "+
+						"Please use multiple resource instances to allocate multiple IP addresses",
+				),
 			},
 			"ip_address": {
 				Type:        schema.TypeString,
@@ -119,10 +138,21 @@ func resourceVcdIpAllocationCreate(ctx context.Context, d *schema.ResourceData, 
 		Type:     d.Get("type").(string),
 		Quantity: addrOf(1),
 	}
+
 	prefixLength := d.Get("prefix_length").(string)
 	if prefixLength != "" {
 		intPrefixLength, _ := strconv.Atoi(prefixLength)
 		allocationConfig.PrefixLength = &intPrefixLength
+	}
+
+	if d.Get("value").(string) != "" {
+		// API throws an exception if this is specified for older versions
+		if vcdClient.Client.APIVCDMaxVersionIs("< 37.2") {
+			return diag.Errorf("'value' can only be specified on VCD 10.4.2+")
+		}
+
+		allocationConfig.Value = d.Get("value").(string)
+		allocationConfig.Quantity = nil // Quantity field must not be set when 'value' is specified
 	}
 
 	allocation, err := ipSpace.AllocateIp(orgId, org.Org.Name, &allocationConfig)

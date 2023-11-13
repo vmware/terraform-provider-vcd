@@ -10,10 +10,10 @@ description: |-
 
 ## About
 
-This guide explains how to create, update and delete TKGm clusters in a VCD appliance with Container Service Extension v4.1
+This guide explains how to create, update and delete **Tanzu Kubernetes Grid multicloud (TKGm)** clusters in a VCD appliance with Container Service Extension v4.1
 installed, using Terraform.
 
-We will use the [`vcd_rde`][rde] resource for this purpose.
+We will use the Runtime Defined Entity (RDE) resource [`vcd_rde`][rde] for this purpose.
 
 ~> This section assumes that the CSE installation was done following the [CSE v4.1 installation guide][cse_install_guide].
 That is, CSE Server should be up and running and all elements must be working.
@@ -53,9 +53,9 @@ placeholders that can be found in that file:
   "Tenant Organization" during CSE installation phase.
 * `vdc`: The VDC in which the TKGm clusters will be created. In this guide it was created as `tenant_vdc` and named
   "Tenant VDC" during CSE installation phase.
-* `api_token`: The API token that corresponds to the user that will create the cluster. This is set automatically with a reference to
-  a `vcd_api_token` resource. One can customise the path to the JSON file where the API token is stored using `cluster_author_token_file` variable.
-* `capi_yaml`: This must be set with a valid single-lined CAPVCD YAML, that will be explained next.
+* `api_token`: The API token that corresponds to the user that will create the cluster. This is created with a [`vcd_api_token`][api_token] resource.
+  One can customise the path to the JSON file where the API token is stored using `cluster_author_token_file` variable.
+* `capi_yaml`: This must be set with a valid single-lined CAPVCD YAML, that is explained below.
 * `delete`: This is used to delete a cluster. See ["Deleting a Kubernetes cluster"](#deleting-a-kubernetes-cluster) section for more info.
   During creation it should be always `false`.
 * `force_delete`: This is used to forcefully delete a cluster. See ["Deleting a Kubernetes cluster"](#deleting-a-kubernetes-cluster) section for more info.
@@ -360,6 +360,7 @@ the update of these two properties.
 Once updated, one can monitor the `vcd_rde` resource to check the deletion process. Eventually, the RDE won't exist anymore in VCD and Terraform will
 ask for creation again. It can be now removed from the HCL configuration.
 
+[api_token]: /providers/vmware/vcd/latest/docs/resources/api_token
 [capvcd]: https://github.com/vmware/cluster-api-provider-cloud-director
 [capvcd_templates]: https://github.com/vmware/cluster-api-provider-cloud-director/tree/main/templates
 [cluster]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/cluster
