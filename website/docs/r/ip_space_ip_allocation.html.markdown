@@ -106,10 +106,10 @@ resource "vcd_ip_space_ip_allocation" "public-floating-ip-2" {
 }
 
 resource "vcd_ip_space_ip_allocation" "public-ip-prefix" {
-  org_id        = data.vcd_org.org1.id
-  ip_space_id   = vcd_ip_space.space1.id
-  type          = "IP_PREFIX"
-  value         = "10.10.10.96/29"
+  org_id      = data.vcd_org.org1.id
+  ip_space_id = vcd_ip_space.space1.id
+  type        = "IP_PREFIX"
+  value       = "10.10.10.96/29"
 
   depends_on = [vcd_nsxt_edgegateway.ip-space]
 }
