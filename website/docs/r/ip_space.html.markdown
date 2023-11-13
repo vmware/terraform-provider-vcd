@@ -149,10 +149,10 @@ resource "vcd_ip_space" "space1" {
   internal_scope = ["192.168.1.0/24", "10.10.10.0/24", "11.11.11.0/24"]
   external_scope = "0.0.0.0/0"
 
-  route_advertisement_enabled              = true
-    default_firewall_rule_creation_enabled = true
-  default_no_snat_rule_creation_enabled    = true
-  default_snat_rule_creation_enabled       = true
+  route_advertisement_enabled            = true
+  default_firewall_rule_creation_enabled = true
+  default_no_snat_rule_creation_enabled  = true
+  default_snat_rule_creation_enabled     = true
 
 
   ip_prefix {
