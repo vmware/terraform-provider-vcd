@@ -464,31 +464,26 @@ func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.Ad
 	}
 	dSet(d, "number_of_catalogs", numberOfCatalogs)
 	dSet(d, "number_of_vdcs", numberOfVdcs)
-	if numberOfCatalogs > 0 {
-		var availableCatalogs []interface{}
-		for _, c := range adminOrg.AdminOrg.Catalogs.Catalog {
-			availableCatalogs = append(availableCatalogs, c.Name)
-		}
-		err := d.Set("list_of_catalogs", availableCatalogs)
-		if err != nil {
-			return diag.Errorf("error setting list of catalogs: %s", err)
-		}
+	var availableCatalogs []interface{}
+	for _, c := range adminOrg.AdminOrg.Catalogs.Catalog {
+		availableCatalogs = append(availableCatalogs, c.Name)
 	}
-	if numberOfVdcs > 0 {
-		var availableVdcs []interface{}
-		for _, v := range adminOrg.AdminOrg.Vdcs.Vdcs {
-			availableVdcs = append(availableVdcs, v.Name)
-		}
-		err := d.Set("list_of_vdcs", availableVdcs)
-		if err != nil {
-			return diag.Errorf("error setting list of VDCs: %s", err)
-		}
+	err := d.Set("list_of_catalogs", availableCatalogs)
+	if err != nil {
+		return diag.Errorf("error setting list of catalogs: %s", err)
 	}
-	var err error
+	var availableVdcs []interface{}
+	for _, v := range adminOrg.AdminOrg.Vdcs.Vdcs {
+		availableVdcs = append(availableVdcs, v.Name)
+	}
+	err = d.Set("list_of_vdcs", availableVdcs)
+	if err != nil {
+		return diag.Errorf("error setting list of VDCs: %s", err)
+	}
 
 	vappLeaseSettings := adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings
 	// OrgVAppLeaseSettings should always be filled, as the API silently uses defaults when we don't provide lease values,
-	// but let's try to make it future proof and check for initialization
+	// but let's try to make it future-proof and check for initialization
 	if vappLeaseSettings != nil {
 		var vappLease = make(map[string]interface{})
 
