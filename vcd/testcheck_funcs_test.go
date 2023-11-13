@@ -170,19 +170,3 @@ func resourceFieldIntNotEqual(object, field string, notEqualTo int) resource.Tes
 		return nil
 	}
 }
-
-func testMatchResourceAttrWhenVersionMatches(name, key string, r *regexp.Regexp, versionConstraint string) resource.TestCheckFunc {
-	if !checkVersion(testConfig.Provider.ApiVersion, versionConstraint) {
-		debugPrintf("This test requires %s features. Skipping this assertion", versionConstraint)
-		return resource.TestCheckResourceAttrSet(name, "id") // Returns a dummy checker that always passes
-	}
-	return resource.TestMatchResourceAttr(name, key, r)
-}
-
-func testCheckResourceAttrSetWhenVersionMatches(name, key, versionConstraint string) resource.TestCheckFunc {
-	if !checkVersion(testConfig.Provider.ApiVersion, versionConstraint) {
-		debugPrintf("This test requires %s features. Skipping this assertion", versionConstraint)
-		return resource.TestCheckResourceAttrSet(name, "id") // Returns a dummy checker that always passes
-	}
-	return resource.TestCheckResourceAttrSet(name, key)
-}

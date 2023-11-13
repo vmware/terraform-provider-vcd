@@ -47,6 +47,7 @@ func TestAccVcdNsxtEdgegatewayDns(t *testing.T) {
 	}
 
 	resourceName := "vcd_nsxt_edgegateway_dns." + params["DnsConfig"].(string)
+	// resourceNameIpSpaces := "vcd_nsxt_edgegateway_dns." + params["DnsConfigIpSpaces"].(string)
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -75,6 +76,7 @@ func TestAccVcdNsxtEdgegatewayDns(t *testing.T) {
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
+
 					resource.TestCheckResourceAttr(resourceName, "default_forwarder_zone.0.name", params["DefaultForwarderName"].(string)),
 					resource.TestCheckTypeSetElemAttr(resourceName, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp1"].(string)),
 					resource.TestCheckTypeSetElemAttr(resourceName, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp2"].(string)),
@@ -85,7 +87,6 @@ func TestAccVcdNsxtEdgegatewayDns(t *testing.T) {
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "conditional_forwarder_zone.*", map[string]string{
 						"name": params["ConditionalForwardZone2"].(string),
 					}),
-					resource.TestCheckTypeSetElemAttr(resourceName, "conditional_forwarder_zone.*.upstream_servers.*", params["ServerIp4"].(string)),
 					resource.TestCheckTypeSetElemAttr(resourceName, "conditional_forwarder_zone.*.upstream_servers.*", params["ServerIp5"].(string)),
 					resource.TestCheckTypeSetElemAttr(resourceName, "conditional_forwarder_zone.*.domain_names.*", params["DomainName2"].(string)),
 					resource.TestCheckTypeSetElemAttr(resourceName, "conditional_forwarder_zone.*.domain_names.*", params["DomainName3"].(string)),
@@ -115,7 +116,6 @@ data "vcd_nsxt_edgegateway" "{{.EdgeGw}}" {
   owner_id = data.vcd_org_vdc.{{.NsxtVdc}}.id
   name     = "{{.EdgeGw}}"
 }
-
 `
 
 const testAccVcdNsxtEdgegatewayDnsStep1 = testAccVcdNsxtEdgegatewayDnsPrereqs + `
@@ -168,7 +168,6 @@ resource "vcd_nsxt_edgegateway_dns" "{{.DnsConfig}}" {
     name = "{{.ConditionalForwardZone1}}"
 
     upstream_servers = [
-      "{{.ServerIp4}}",
       "{{.ServerIp5}}",
     ]
 
