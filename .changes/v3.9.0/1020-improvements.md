@@ -1,1 +1,0 @@
-* Add property `read_only_shared_with_all_orgs` to vcd_catalog_access_control to address Issue #987 [GH-1020]
