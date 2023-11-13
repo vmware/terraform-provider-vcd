@@ -198,7 +198,7 @@ func resourceVcdCatalogAccessControlRead(_ context.Context, d *schema.ResourceDa
 	sharedReadOnly, err := runWithRetry(sessionText,
 		fmt.Sprintf("%s error checking catalog read-only sharing status", sessionText),
 		time.Second*30,
-		nil, //func() error { return catalog.Refresh() },
+		nil,
 		func() (any, error) {
 			return catalog.IsSharedReadOnly()
 		},

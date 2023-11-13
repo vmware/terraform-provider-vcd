@@ -105,8 +105,6 @@ func TestAccVcdCatalogAccessControl2(t *testing.T) {
 	resourceAC2 := "vcd_catalog_access_control." + acCatalog2
 	resourceAC3 := "vcd_catalog_access_control." + acCatalog3
 	resourceAC4 := "vcd_catalog_access_control." + acCatalog4
-	//resourceAC5 := "vcd_catalog_access_control." + acCatalog5
-	//resourceAC6 := "vcd_catalog_access_control." + acCatalog6
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: buildMultipleProviders(),
 		CheckDestroy: resource.ComposeTestCheckFunc(
@@ -132,10 +130,6 @@ func TestAccVcdCatalogAccessControl2(t *testing.T) {
 			// Test access
 			{
 				Config: configTextAccess,
-				//PreConfig: func() {
-				//	fmt.Printf("sleeping for 30 seconds\n")
-				//	time.Sleep(30 * time.Second)
-				//},
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogAccessControlExists(resourceAC0, testConfig.VCD.Org),
 					testAccCheckVcdCatalogAccessControlExists(resourceAC1, testConfig.VCD.Org),
