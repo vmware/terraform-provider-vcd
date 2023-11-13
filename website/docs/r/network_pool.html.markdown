@@ -154,9 +154,6 @@ resource "vcd_network_pool" "npool-1" {
   type                = "PORTGROUP_BACKED"
 
   backing_selection_constraint = "use-when-only-one"
-
-  backing {
-  }
 }
 
 resource "vcd_network_pool" "npool-2" {
@@ -166,9 +163,6 @@ resource "vcd_network_pool" "npool-2" {
   type                = "GENEVE"
 
   backing_selection_constraint = "use-first-available"
-
-  backing {
-  }
 }
 ```
 
