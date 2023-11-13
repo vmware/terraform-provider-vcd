@@ -102,7 +102,7 @@ The following arguments are supported:
   this property must be set to `false`.
 * `everyone_access_level` - (Optional) Access level when the Catalog is shared with everyone (it can only be set to
   `ReadOnly`). Required if `shared_with_everyone` is set.
-* `read_only_shared_with_all_orgs` - (Optional; *v3.11+*) If true, the catalog is shared as read-only with all organizations
+* `read_only_shared_with_all_orgs` - (Optional; *v3.11+*) If true, the catalog is shared as read-only with all organizations.
 * `shared_with` - (Optional) one or more blocks defining a subject (one of Organization, User, or Group) to which we are sharing. 
    See [shared_with](#shared_with) below for detail. It cannot be used if `shared_with_everyone` is true.
 
