@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func datasourceVcdNsxtEdgegatewayDns() *schema.Resource {
+func datasourceVcdNsxtEdgeGatewayDns() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdNsxtEdgeGatewayDnsRead,
 		Schema: map[string]*schema.Schema{

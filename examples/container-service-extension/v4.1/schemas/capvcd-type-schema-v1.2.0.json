@@ -1,0 +1,472 @@
+{
+    "definitions": {
+        "k8sNetwork": {
+            "type": "object",
+            "description": "The network-related settings for the cluster.",
+            "properties": {
+                "pods": {
+                    "type": "object",
+                    "description": "The network settings for Kubernetes pods.",
+                    "properties": {
+                        "cidrBlocks": {
+                            "type": "array",
+                            "description": "Specifies a range of IP addresses to use for Kubernetes pods.",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "services": {
+                    "type": "object",
+                    "description": "The network settings for Kubernetes services",
+                    "properties": {
+                        "cidrBlocks": {
+                            "type": "array",
+                            "description": "The range of IP addresses to use for Kubernetes services",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "type": "object",
+    "required": [
+        "kind",
+        "metadata",
+        "apiVersion",
+        "spec"
+    ],
+    "properties": {
+        "kind": {
+            "enum": [
+                "CAPVCDCluster"
+            ],
+            "type": "string",
+            "description": "The kind of the Kubernetes cluster.",
+            "title": "The kind of the Kubernetes cluster.",
+            "default": "CAPVCDCluster"
+        },
+        "spec": {
+            "type": "object",
+            "properties": {
+                "capiYaml": {
+                    "type": "string",
+                    "title": "CAPI yaml",
+                    "description": "User specification of the CAPI yaml; It is user's responsibility to embed the correct CAPI yaml generated as per instructions - https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/docs/CLUSTERCTL.md#generate-cluster-manifests-for-workload-cluster"
+                },
+                "yamlSet": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "User specified K8s Yaml strings",
+                    "description": "User specified K8s Yaml strings to be applied on the target cluster. The component Projector will process this property periodically."
+                },
+                "vcdKe": {
+                    "type": "object",
+                    "properties": {
+                        "isVCDKECluster": {
+                            "type": "boolean",
+                            "title": "User's intent to have this specification processed by VCDKE",
+                            "description": "Does user wants this specification to be processed by the VCDKE component of CSE stack?"
+                        },
+                        "markForDelete": {
+                            "type": "boolean",
+                            "title": "User's intent to delete the cluster",
+                            "description": "Mark the cluster for deletion",
+                            "default": false
+                        },
+                        "autoRepairOnErrors": {
+                            "type": "boolean",
+                            "title": "User's intent to let the VCDKE repair/recreate the cluster",
+                            "description": "User's intent to let the VCDKE repair/recreate the cluster on any errors during cluster creation",
+                            "default": true
+                        },
+                        "forceDelete": {
+                            "type": "boolean",
+                            "title": "User's intent to delete the cluster forcefully",
+                            "description": "User's intent to delete the cluster forcefully",
+                            "default": false
+                        },
+                        "defaultStorageClassOptions": {
+                            "type": "object",
+                            "properties": {
+                                "vcdStorageProfileName": {
+                                    "type": "string",
+                                    "title": "Name of the VCD storage profile",
+                                    "description": "Name of the VCD storage profile"
+                                },
+                                "k8sStorageClassName": {
+                                    "type": "string",
+                                    "title": "Name of the Kubernetes storage class to be created",
+                                    "description": "Name of the Kubernetes storage class to be created"
+                                },
+                                "useDeleteReclaimPolicy": {
+                                    "type": "boolean",
+                                    "title": "Reclaim policy of the Kubernetes storage class",
+                                    "description": "Reclaim policy of the Kubernetes storage class"
+                                },
+                                "fileSystem": {
+                                    "type": "string",
+                                    "title": "Default file System of the volumes",
+                                    "description": "Default file System of the volumes to be created from the default storage class"
+                                }
+                            },
+                            "title": "Default Storage class options to be set on the target cluster",
+                            "description": "Default Storage class options to be set on the target cluster"
+                        },
+                        "secure": {
+                            "type": "object",
+                            "x-vcloud-restricted": ["private", "secure"],
+                            "properties": {
+                                "apiToken": {
+                                    "type": "string",
+                                    "title": "API Token (Refresh Token) of the user",
+                                    "description": "API Token (Refresh Token) of the user."
+                                }
+                            },
+                            "title": "Encrypted data",
+                            "description": "Fields under this section will be encrypted"
+                        }
+                    },
+                    "title": "User specification for VCDKE component",
+                    "description": "User specification for VCDKE component"
+                }
+            },
+            "title": "User specification for the cluster",
+            "description": "User specification for the cluster"
+        },
+        "metadata": {
+            "type": "object",
+            "properties": {
+                "orgName": {
+                    "type": "string",
+                    "description": "The name of the Organization in which cluster needs to be created or managed.",
+                    "title": "The name of the Organization in which cluster needs to be created or managed."
+                },
+                "virtualDataCenterName": {
+                    "type": "string",
+                    "description": "The name of the Organization data center in which the cluster need to be created or managed.",
+                    "title": "The name of the Organization data center in which the cluster need to be created or managed."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "The name of the cluster.",
+                    "title": "The name of the cluster."
+                },
+                "site": {
+                    "type": "string",
+                    "description": "Fully Qualified Domain Name (https://VCD-FQDN.com) of the VCD site in which the cluster is deployed",
+                    "title": "Fully Qualified Domain Name of the VCD site in which the cluster is deployed"
+                }
+            },
+            "title": "User specification of the metadata of the cluster",
+            "description": "User specification of the metadata of the cluster"
+        },
+        "status": {
+            "type": "object",
+            "x-vcloud-restricted": "protected",
+            "properties": {
+                "capvcd": {
+                    "type": "object",
+                    "properties": {
+                        "phase": {
+                            "type": "string"
+                        },
+                        "kubernetes": {
+                            "type": "string"
+                        },
+                        "errorSet": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {}
+                            }
+                        },
+                        "eventSet": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {}
+                            }
+                        },
+                        "k8sNetwork": {
+                            "$ref": "#/definitions/k8sNetwork"
+                        },
+                        "uid": {
+                            "type": "string"
+                        },
+                        "parentUid": {
+                            "type": "string"
+                        },
+                        "useAsManagementCluster": {
+                            "type": "boolean"
+                        },
+                        "clusterApiStatus": {
+                            "type": "object",
+                            "properties": {
+                                "phase": {
+                                    "type": "string",
+                                    "description": "The phase describing the control plane infrastructure deployment."
+                                },
+                                "apiEndpoints": {
+                                    "type": "array",
+                                    "description": "Control Plane load balancer endpoints",
+                                    "items": {
+                                        "host": {
+                                            "type": "string"
+                                        },
+                                        "port": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "nodePool": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "name of the node pool"
+                                    },
+                                    "sizingPolicy": {
+                                        "type": "string",
+                                        "description": "name of the sizing policy used by the node pool"
+                                    },
+                                    "placementPolicy": {
+                                        "type": "string",
+                                        "description": "name of the sizing policy used by the node pool"
+                                    },
+                                    "diskSizeMb": {
+                                        "type": "integer",
+                                        "description": "disk size of the VMs in the node pool in MB"
+                                    },
+                                    "nvidiaGpuEnabled": {
+                                        "type": "boolean",
+                                        "description": "boolean indicating if the node pools have nvidia GPU enabled"
+                                    },
+                                    "storageProfile": {
+                                        "type": "string",
+                                        "description": "storage profile used by the node pool"
+                                    },
+                                    "desiredReplicas": {
+                                        "type": "integer",
+                                        "description": "desired replica count of the nodes in the node pool"
+                                    },
+                                    "availableReplicas": {
+                                        "type": "integer",
+                                        "description": "number of available replicas in the node pool"
+                                    }
+                                }
+                            }
+                        },
+                        "clusterResourceSet": {
+                            "properties": {},
+                            "type": "object"
+                        },
+                        "clusterResourceSetBindings": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "clusterResourceSetName": {
+                                        "type": "string"
+                                    },
+                                    "kind": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "applied": {
+                                        "type": "boolean"
+                                    },
+                                    "lastAppliedTime": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "capvcdVersion": {
+                            "type": "string"
+                        },
+                        "vcdProperties": {
+                            "type": "object",
+                            "properties": {
+                                "organizations": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "id": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "site": {
+                                    "type": "string"
+                                },
+                                "orgVdcs": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "id": {
+                                                "type": "string"
+                                            },
+                                            "ovdcNetworkName": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "upgrade": {
+                            "type": "object",
+                            "description": "determines the state of upgrade. If no upgrade is issued, only the existing version is stored.",
+                            "properties": {
+                                "current": {
+                                    "type": "object",
+                                    "properties": {
+                                        "kubernetesVersion": {
+                                            "type": "string",
+                                            "description": "current kubernetes version of the cluster. If being upgraded, will represent target kubernetes version of the cluster."
+                                        },
+                                        "tkgVersion": {
+                                            "type": "string",
+                                            "description": "current TKG version of the cluster. If being upgraded, will represent the tarkget TKG version of the cluster."
+                                        }
+                                    }
+                                },
+                                "previous": {
+                                    "type": "object",
+                                    "properties": {
+                                        "kubernetesVersion": {
+                                            "type": "string",
+                                            "description": "the kubernetes version from which the cluster was upgraded from. If cluster upgrade is still in progress, the field will represent the source kubernetes version from which the cluster is being upgraded."
+                                        },
+                                        "tkgVersion": {
+                                            "type": "string",
+                                            "description": "the TKG version from which the cluster was upgraded from. If cluster upgrade is still in progress, the field will represent the source TKG versoin from which the cluster is being upgraded."
+                                        }
+                                    }
+                                },
+                                "ready": {
+                                    "type": "boolean",
+                                    "description": "boolean indicating the status of the cluster upgrade."
+                                }
+                            }
+                        },
+                        "private": {
+                            "type": "object",
+                            "x-vcloud-restricted": ["private", "secure"],
+                            "description": "Placeholder for the properties invisible and secure to non-admin users.",
+                            "properties": {
+                                "kubeConfig": {
+                                    "type": "string",
+                                    "description": "Kube config to access the Kubernetes cluster."
+                                }
+                            }
+                        },
+                        "vcdResourceSet": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {}
+                            }
+                        },
+                        "createdByVersion": {
+                            "type": "string",
+                            "description": "CAPVCD version used to create the cluster"
+                        }
+                    },
+                    "title": "CAPVCD's view of the current status of the cluster",
+                    "description": "CAPVCD's view of the current status of the cluster"
+                },
+                "vcdKe": {
+                    "type": "object",
+                    "properties": {
+                        "state": {
+                            "type": "string",
+                            "title": "VCDKE's view of the current state of the cluster",
+                            "description": "VCDKE's view of the current state of the cluster - provisioning/provisioned/error"
+                        },
+                        "vcdKeVersion": {
+                            "type": "string",
+                            "title": "VCDKE/CSE product version",
+                            "description": "The VCDKE version with which the cluster is originally created"
+                        },
+                        "defaultStorageClass": {
+                            "type": "object",
+                            "properties": {
+                                "vcdStorageProfileName": {
+                                    "type": "string",
+                                    "title": "Name of the VCD storage profile",
+                                    "description": "Name of the VCD storage profile"
+                                },
+                                "k8sStorageClassName": {
+                                    "type": "string",
+                                    "title": "Name of the Kubernetes storage class to be created",
+                                    "description": "Name of the Kubernetes storage class to be created"
+                                },
+                                "useDeleteReclaimPolicy": {
+                                    "type": "boolean",
+                                    "title": "Reclaim policy of the Kubernetes storage class",
+                                    "description": "Reclaim policy of the Kubernetes storage class"
+                                },
+                                "fileSystem": {
+                                    "type": "string",
+                                    "title": "Default file System of the volumes",
+                                    "description": "Default file System of the volumes to be created from the default storage class"
+                                }
+                            },
+                            "title": "Default Storage class options to be set on the target cluster",
+                            "description": "Default Storage class options to be set on the target cluster"
+                        }
+                    },
+                    "title": "VCDKE's view of the current status of the cluster",
+                    "description": "Current status of the cluster from VCDKE's point of view"
+                },
+                "cpi": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "title": "Name of the Cloud Provider Interface",
+                            "description": "Name of the CPI"
+                        },
+                        "version": {
+                            "type": "string",
+                            "title": "Product version of the CPI",
+                            "description": "Product version of the CPI"
+                        }
+                    },
+                    "title": "CPI for VCD's view of the current status of the cluster",
+                    "description": "CPI for VCD's view of the current status of the cluster"
+                }
+            },
+            "title": "Current status of the cluster",
+            "description": "Current status of the cluster. The subsections are updated by various components of CSE stack - VCDKE, Projector, CAPVCD, CPI, CSI and Extensions"
+        },
+        "apiVersion": {
+            "type": "string",
+            "default": "capvcd.vmware.com/v1.2",
+            "description": "The version of the payload format"
+        }
+    }
+}

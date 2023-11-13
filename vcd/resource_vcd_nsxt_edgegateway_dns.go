@@ -13,7 +13,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-func resourceVcdNsxtEdgegatewayDns() *schema.Resource {
+func resourceVcdNsxtEdgeGatewayDns() *schema.Resource {
 	return &schema.Resource{
 		ReadContext:   resourceVcdNsxtEdgegatewayDnsRead,
 		CreateContext: resourceVcdNsxtEdgegatewayDnsCreate,

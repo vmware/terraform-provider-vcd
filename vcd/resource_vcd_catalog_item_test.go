@@ -332,7 +332,7 @@ func TestAccVcdCatalogItemMetadata(t *testing.T) {
 		StringMap{
 			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"OvfUrl":  testConfig.Ova.OvfUrl,
-		})
+		}, true)
 }
 
 const testAccCheckVcdCatalogItemMetadata = `

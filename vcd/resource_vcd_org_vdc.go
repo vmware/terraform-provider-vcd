@@ -238,7 +238,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": metadataEntryResourceSchema("VDC"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("VDC"),
 			"vm_sizing_policy_ids": {
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -275,7 +275,9 @@ func resourceVcdOrgVdc() *schema.Resource {
 			"edge_cluster_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "ID of NSX-T Edge Cluster (provider vApp networking services and DHCP capability for Isolated networks)",
+				Deprecated:  "Please use 'vcd_org_vdc_nsxt_network_profile' resource to manage Edge Cluster and Segment Profile Templates",
 			},
 			"enable_nsxv_distributed_firewall": {
 				Type:        schema.TypeBool,
@@ -503,7 +505,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 		return diag.FromErr(err)
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_org_vdc", adminVdc)
+	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_org_vdc", adminVdc)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set VDC metadata")
 		return diagErr

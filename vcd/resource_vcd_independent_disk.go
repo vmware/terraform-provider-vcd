@@ -130,7 +130,7 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": metadataEntryResourceSchema("Disk"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("Disk"),
 		},
 	}
 }
@@ -528,7 +528,7 @@ func setMainData(d *schema.ResourceData, vcdClient *VCDClient, disk *govcd.Disk,
 		return diag.Errorf("[Independent disk read] error setting the list of attached VM IDs: %s ", err)
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_independent_disk", disk)
+	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_independent_disk", disk)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set Independent disk metadata")
 		return diagErr
