@@ -1,4 +1,4 @@
-//go:build ALL || functional
+//go:build ALL || providerVdc || functional
 
 package vcd
 
@@ -9,6 +9,10 @@ import (
 	"regexp"
 	"testing"
 )
+
+func init() {
+	testingTags["providerVdc"] = "resource_vcd_provider_vdc_test.go"
+}
 
 func TestAccVcdResourceProviderVdc(t *testing.T) {
 	// Note: you need to have at least one free resource pool to test provider VDC creation,
@@ -413,3 +417,80 @@ resource "vcd_org_vdc" "testVdc" {
   delete_recursive         = true
 }
 `
+
+// TestAccVcdProviderVdcMetadata tests metadata CRUD on Provider VDCs
+func TestAccVcdProviderVdcMetadata(t *testing.T) {
+	skipIfNotSysAdmin(t)
+	testMetadataEntryCRUD(t,
+		testAccCheckVcdProviderVdcMetadata, "vcd_provider_vdc.test-provider-vdc",
+		testAccCheckVcdProviderVdcMetadataDatasource, "data.vcd_provider_vdc.test-provider-vdc-ds",
+		StringMap{
+			"Vcenter":         testConfig.Networking.Vcenter,
+			"ResourcePool":    testConfig.VSphere.ResourcePoolForVcd1,
+			"NsxtManager":     testConfig.Nsxt.Manager,
+			"NsxtNetworkPool": testConfig.VCD.NsxtProviderVdc.NetworkPool,
+			"StorageProfile":  testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		}, false)
+}
+
+const testAccCheckVcdProviderVdcMetadata = `
+data "vcd_vcenter" "vcenter" {
+  name = "{{.Vcenter}}"
+}
+
+data "vcd_resource_pool" "rp" {
+  name       = "{{.ResourcePool}}"
+  vcenter_id = data.vcd_vcenter.vcenter.id
+}
+
+data "vcd_nsxt_manager" "mgr" {
+  name = "{{.NsxtManager}}"
+}
+
+data "vcd_network_pool" "np" {
+  name = "{{.NsxtNetworkPool}}"
+}
+
+resource "vcd_provider_vdc" "test-provider-vdc" {
+  name                               = "{{.Name}}"
+  description                        = "{{.Name}}"
+  is_enabled                         = true
+  vcenter_id                         = data.vcd_vcenter.vcenter.id
+  nsxt_manager_id                    = data.vcd_nsxt_manager.mgr.id
+  network_pool_ids                   = [data.vcd_network_pool.np.id]
+  resource_pool_ids                  = [data.vcd_resource_pool.rp.id]
+  storage_profile_names              = ["{{.StorageProfile}}"]
+  highest_supported_hardware_version = data.vcd_resource_pool.rp.hardware_version
+  {{.Metadata}}
+}
+`
+
+const testAccCheckVcdProviderVdcMetadataDatasource = `
+data "vcd_provider_vdc" "test-provider-vdc-ds" {
+  name = vcd_provider_vdc.test-provider-vdc.name
+}
+`
+
+func TestAccVcdProviderVdcMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (metadataCompatible, error) {
+		providerVdc, err := vcdClient.GetProviderVdcById(id)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve Provider VDC '%s': %s", id, err)
+		}
+
+		return providerVdc, nil
+	}
+
+	testMetadataEntryIgnore(t,
+		testAccCheckVcdProviderVdcMetadata, "vcd_provider_vdc.test-provider-vdc",
+		testAccCheckVcdProviderVdcMetadataDatasource, "data.vcd_provider_vdc.test-provider-vdc-ds",
+		getObjectById, StringMap{
+			"Vcenter":         testConfig.Networking.Vcenter,
+			"ResourcePool":    testConfig.VSphere.ResourcePoolForVcd1,
+			"NsxtManager":     testConfig.Nsxt.Manager,
+			"NsxtNetworkPool": testConfig.VCD.NsxtProviderVdc.NetworkPool,
+			"StorageProfile":  testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		})
+}

@@ -99,11 +99,7 @@ The following arguments are supported:
 * `storage_profile_ids` - Set of IDs to the Storage Profiles available to this Provider VDC.
 * `universal_network_pool_id` - ID of the universal network reference.
 * `host_ids` - Set containing all the hosts which are connected to VC server.
-<!--
-// metadata to be added soon
-* `metadata` - (Deprecated) Use `metadata_entry` instead. Key and value pairs for Provider VDC Metadata.
 * `metadata_entry` - A set of metadata entries assigned to the Provider VDC. See [Metadata](#metadata) section for details.
--->
 
 <a id="compute-capacity"></a>
 ## Compute Capacity

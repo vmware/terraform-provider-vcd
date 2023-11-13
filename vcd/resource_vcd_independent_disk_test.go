@@ -674,7 +674,7 @@ func TestAccVcdIndependentDiskMetadata(t *testing.T) {
 		testAccCheckVcdIndependentDiskMetadataDatasource, "data.vcd_independent_disk.test-independent-disk-ds",
 		StringMap{
 			"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
-		})
+		}, true)
 }
 
 const testAccCheckVcdIndependentDiskMetadata = `

@@ -194,7 +194,7 @@ func resourceOrg() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": metadataEntryResourceSchema("Organization"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("Organization"),
 		},
 	}
 }
@@ -533,7 +533,7 @@ func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.Ad
 		}
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_org", adminOrg)
+	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_org", adminOrg)
 	if diagErr != nil {
 		log.Printf("[DEBUG] Unable to set Org metadata")
 		return diagErr
