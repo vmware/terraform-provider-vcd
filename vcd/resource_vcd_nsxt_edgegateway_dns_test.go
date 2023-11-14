@@ -17,8 +17,11 @@ func TestAccVcdNsxtEdgegatewayDns(t *testing.T) {
 	var params = StringMap{
 		"Org":                     testConfig.VCD.Org,
 		"NsxtVdc":                 testConfig.Nsxt.Vdc,
+		"VdcGroup":                testConfig.Nsxt.VdcGroup,
+		"VdcGroupEdgeGw":          testConfig.Nsxt.VdcGroupEdgeGateway,
 		"EdgeGw":                  testConfig.Nsxt.EdgeGateway,
 		"DnsConfig":               t.Name(),
+		"VdcGroupDnsConfig":       t.Name() + "vdcgroup",
 		"DefaultForwarderName":    t.Name() + "default",
 		"ConditionalForwardZone1": t.Name() + "conditional1",
 		"ConditionalForwardZone2": t.Name() + "conditional2",
@@ -47,7 +50,7 @@ func TestAccVcdNsxtEdgegatewayDns(t *testing.T) {
 	}
 
 	resourceName := "vcd_nsxt_edgegateway_dns." + params["DnsConfig"].(string)
-	// resourceNameIpSpaces := "vcd_nsxt_edgegateway_dns." + params["DnsConfigIpSpaces"].(string)
+	resourceNameVdcGroup := "vcd_nsxt_edgegateway_dns." + params["VdcGroupDnsConfig"].(string)
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -70,6 +73,21 @@ func TestAccVcdNsxtEdgegatewayDns(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr(resourceName, "conditional_forwarder_zone.*.domain_names.*", params["DomainName1"].(string)),
 					resource.TestCheckTypeSetElemAttr(resourceName, "conditional_forwarder_zone.*.domain_names.*", params["DomainName2"].(string)),
 					resource.TestCheckTypeSetElemAttr(resourceName, "conditional_forwarder_zone.*.domain_names.*", params["DomainName3"].(string)),
+
+					resource.TestCheckResourceAttr(resourceNameVdcGroup, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceNameVdcGroup, "default_forwarder_zone.0.name", params["DefaultForwarderName"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceNameVdcGroup, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp1"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceNameVdcGroup, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp2"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceNameVdcGroup, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp3"].(string)),
+					resource.TestCheckResourceAttr(resourceNameVdcGroup, "conditional_forwarder_zone.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceNameVdcGroup, "conditional_forwarder_zone.*", map[string]string{
+						"name": params["ConditionalForwardZone1"].(string),
+					}),
+					resource.TestCheckTypeSetElemAttr(resourceNameVdcGroup, "conditional_forwarder_zone.*.upstream_servers.*", params["ServerIp4"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceNameVdcGroup, "conditional_forwarder_zone.*.upstream_servers.*", params["ServerIp5"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceNameVdcGroup, "conditional_forwarder_zone.*.domain_names.*", params["DomainName1"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceNameVdcGroup, "conditional_forwarder_zone.*.domain_names.*", params["DomainName2"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceNameVdcGroup, "conditional_forwarder_zone.*.domain_names.*", params["DomainName3"].(string)),
 				),
 			},
 			{
@@ -93,6 +111,25 @@ func TestAccVcdNsxtEdgegatewayDns(t *testing.T) {
 
 					resource.TestCheckTypeSetElemAttr(resourceName, "conditional_forwarder_zone.*.upstream_servers.*", params["ServerIp3"].(string)),
 					resource.TestCheckTypeSetElemAttr(resourceName, "conditional_forwarder_zone.*.domain_names.*", params["DomainName1"].(string)),
+
+					resource.TestCheckResourceAttr(resourceNameVdcGroup, "enabled", "true"),
+
+					resource.TestCheckResourceAttr(resourceNameVdcGroup, "default_forwarder_zone.0.name", params["DefaultForwarderName"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceNameVdcGroup, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp1"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceNameVdcGroup, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp2"].(string)),
+					resource.TestCheckResourceAttr(resourceNameVdcGroup, "conditional_forwarder_zone.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceNameVdcGroup, "conditional_forwarder_zone.*", map[string]string{
+						"name": params["ConditionalForwardZone1"].(string),
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceNameVdcGroup, "conditional_forwarder_zone.*", map[string]string{
+						"name": params["ConditionalForwardZone2"].(string),
+					}),
+					resource.TestCheckTypeSetElemAttr(resourceNameVdcGroup, "conditional_forwarder_zone.*.upstream_servers.*", params["ServerIp5"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceNameVdcGroup, "conditional_forwarder_zone.*.domain_names.*", params["DomainName2"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceNameVdcGroup, "conditional_forwarder_zone.*.domain_names.*", params["DomainName3"].(string)),
+
+					resource.TestCheckTypeSetElemAttr(resourceNameVdcGroup, "conditional_forwarder_zone.*.upstream_servers.*", params["ServerIp3"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceNameVdcGroup, "conditional_forwarder_zone.*.domain_names.*", params["DomainName1"].(string)),
 				),
 			},
 			{
@@ -111,10 +148,20 @@ const testAccVcdNsxtEdgegatewayDnsPrereqs = `
 data "vcd_org_vdc" "{{.NsxtVdc}}" {
   name = "{{.NsxtVdc}}"		
 }
+
+data "vcd_vdc_group" "{{.VdcGroup}}" {
+  org  = "{{.Org}}"
+  name = "{{.VdcGroup}}"
+}
 	
 data "vcd_nsxt_edgegateway" "{{.EdgeGw}}" {
   owner_id = data.vcd_org_vdc.{{.NsxtVdc}}.id
   name     = "{{.EdgeGw}}"
+}
+
+data "vcd_nsxt_edgegateway" "{{.VdcGroupEdgeGw}}" {
+  owner_id = data.vcd_vdc_group.{{.VdcGroup}}.id
+  name     = "{{.VdcGroupEdgeGw}}"
 }
 `
 
@@ -148,10 +195,79 @@ resource "vcd_nsxt_edgegateway_dns" "{{.DnsConfig}}" {
     ]
   }
 }
+
+resource "vcd_nsxt_edgegateway_dns" "{{.VdcGroupDnsConfig}}" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.{{.VdcGroupEdgeGw}}.id
+  enabled         = true
+  
+  default_forwarder_zone {
+    name = "{{.DefaultForwarderName}}"
+    
+    upstream_servers = [
+      "{{.ServerIp1}}",
+      "{{.ServerIp2}}",
+      "{{.ServerIp3}}",
+    ]
+  }
+
+  conditional_forwarder_zone {
+    name = "{{.ConditionalForwardZone1}}"
+
+    upstream_servers = [
+      "{{.ServerIp4}}",
+      "{{.ServerIp5}}",
+    ]
+
+    domain_names = [
+      "{{.DomainName1}}",
+      "{{.DomainName2}}",
+      "{{.DomainName3}}",
+    ]
+  }
+}
 `
 
 const testAccVcdNsxtEdgegatewayDnsStep2 = testAccVcdNsxtEdgegatewayDnsPrereqs + `
 resource "vcd_nsxt_edgegateway_dns" "{{.DnsConfig}}" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGw}}.id
+  enabled         = true
+  
+  default_forwarder_zone {
+    name = "{{.DefaultForwarderName}}"
+    
+    upstream_servers = [
+      "{{.ServerIp1}}",
+      "{{.ServerIp2}}",
+    ]
+  }
+
+  conditional_forwarder_zone {
+    name = "{{.ConditionalForwardZone1}}"
+
+    upstream_servers = [
+      "{{.ServerIp5}}",
+    ]
+
+    domain_names = [
+      "{{.DomainName2}}",
+      "{{.DomainName3}}",
+    ]
+  }
+
+  conditional_forwarder_zone {
+    name = "{{.ConditionalForwardZone2}}"
+
+    upstream_servers = [
+      "{{.ServerIp3}}",
+    ]
+
+    domain_names = [
+      "{{.DomainName1}}",
+    ]
+  }
+}
+
+resource "vcd_nsxt_edgegateway_dns" "{{.VdcGroupDnsConfig}}" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGw}}.id
   enabled         = true
   
