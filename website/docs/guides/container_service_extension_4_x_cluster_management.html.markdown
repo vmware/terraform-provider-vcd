@@ -55,11 +55,11 @@ placeholders that can be found in that file:
   "Tenant VDC" during CSE installation phase.
 * `api_token`: The API token that corresponds to the user that will create the cluster. This is created with a [`vcd_api_token`][api_token] resource.
   One can customise the path to the JSON file where the API token is stored using `cluster_author_token_file` variable.
-* `capi_yaml`: This must be set with a valid single-lined CAPVCD YAML, that is explained below.
+* `capi_yaml`: This must be set with a valid CAPVCD YAML, that is explained below.
 * `delete`: This is used to delete a cluster. See ["Deleting a Kubernetes cluster"](#deleting-a-kubernetes-cluster) section for more info.
-  During creation it should be always `false`.
+  During creation, it should be always `false`.
 * `force_delete`: This is used to forcefully delete a cluster. See ["Deleting a Kubernetes cluster"](#deleting-a-kubernetes-cluster) section for more info.
-  During creation it should be always `false`.
+  During creation, it should be always `false`.
 * `auto_repair_on_errors`: Setting this to `true` will make the CSE Server to automatically repair the TKGm cluster on errors.
 
 The following four placeholders are **only needed if one wants to provide a default storage class** with the TKGm cluster.
