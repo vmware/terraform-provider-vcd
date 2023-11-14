@@ -373,6 +373,7 @@ The following arguments are supported:
     * `vcd_vm`      (only standalone VMs)
     * `vcd_org_user`
     * `vcd_edgegateway`
+    * `vcd_independent_disk`
     * `vcd_nsxt_edgegateway`
     * `vcd_lb_server_pool`
     * `vcd_lb_service_monitor`

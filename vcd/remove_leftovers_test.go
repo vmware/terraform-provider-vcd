@@ -347,7 +347,33 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 				if toBeDeleted {
 					err = netRef.Delete()
 					if err != nil {
-						return fmt.Errorf("error deleting Org VDC '%s': %s", netRef.OpenApiOrgVdcNetwork.Name, err)
+						return fmt.Errorf("error deleting Org VDC network '%s': %s", netRef.OpenApiOrgVdcNetwork.Name, err)
+					}
+				}
+			}
+
+			// --------------------------------------------------------------
+			// Disks
+			// --------------------------------------------------------------
+			disks, err := vdc.QueryDisks("*")
+			if err != nil {
+				return fmt.Errorf("error retrieving Org VDC disk list: %s", err)
+			}
+			for _, diskRef := range *disks {
+				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, diskRef.Name, "vcd_independent_disk", 2, verbose)
+				if toBeDeleted {
+
+					disk, err := vdc.GetDiskByHref(diskRef.HREF)
+					if err != nil {
+						return fmt.Errorf("error retrieving Org VDC disk '%s': %s", diskRef.Name, err)
+					}
+					task, err := disk.Delete()
+					if err != nil {
+						return fmt.Errorf("error deleting Org VDC disk '%s': %s", diskRef.Name, err)
+					}
+					err = task.WaitTaskCompletion()
+					if err != nil {
+						return fmt.Errorf("error finishing deletion of Org VDC disk '%s': %s", diskRef.Name, err)
 					}
 				}
 			}

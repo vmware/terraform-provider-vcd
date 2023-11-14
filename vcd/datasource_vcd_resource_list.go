@@ -874,6 +874,34 @@ func getNsxtEdgeGatewayList(d *schema.ResourceData, meta interface{}) (list []st
 	return genericResourceList(d, "vcd_nsxt_edgegateway", ancestors, items)
 }
 
+func diskList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+	vdcName, err := getVdcName(client, d)
+	if err != nil {
+		return list, err
+	}
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), vdcName)
+	if err != nil {
+		return list, err
+	}
+
+	var items []resourceRef
+
+	disks, err := vdc.QueryDisks("*")
+	if err != nil {
+		return list, err
+	}
+	for _, diskRef := range *disks {
+		items = append(items, resourceRef{
+			name:   diskRef.Name,
+			id:     extractUuid(diskRef.HREF),
+			href:   diskRef.HREF,
+			parent: vdc.Vdc.Name,
+		})
+	}
+	return genericResourceList(d, "vcd_independent_disk", []string{org.Org.Name, vdc.Vdc.Name}, items)
+}
+
 func vappList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
 	vdcName, err := getVdcName(client, d)
@@ -1290,6 +1318,8 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 		list, err = vappTemplateList(d, meta)
 	case "vcd_catalog_media", "catalog_media", "media_items", "mediaitems", "mediaitem":
 		list, err = catalogItemList(d, meta, "vcd_catalog_media")
+	case "vcd_independent_disk", "disk", "disks":
+		list, err = diskList(d, meta)
 	case "vcd_vapp", "vapp", "vapps", "vcd_cloned_vapp":
 		list, err = vappList(d, meta, "vcd_vapp")
 	case "vcd_vapp_access_control":
