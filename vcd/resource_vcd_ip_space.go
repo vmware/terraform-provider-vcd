@@ -481,6 +481,10 @@ func setIpSpaceData(d *schema.ResourceData, ipSpace *types.IpSpace) error {
 		dSet(d, "default_firewall_rule_creation_enabled", ipSpace.DefaultGatewayServiceConfig.EnableDefaultFirewallRuleCreation)
 		dSet(d, "default_no_snat_rule_creation_enabled", ipSpace.DefaultGatewayServiceConfig.EnableDefaultNoSnatRuleCreation)
 		dSet(d, "default_snat_rule_creation_enabled", ipSpace.DefaultGatewayServiceConfig.EnableDefaultSnatRuleCreation)
+	} else { // default is always `false`
+		dSet(d, "default_firewall_rule_creation_enabled", false)
+		dSet(d, "default_no_snat_rule_creation_enabled", false)
+		dSet(d, "default_snat_rule_creation_enabled", false)
 	}
 
 	ipRangeQuotaStr := strconv.Itoa(ipSpace.IPSpaceRanges.DefaultFloatingIPQuota)
