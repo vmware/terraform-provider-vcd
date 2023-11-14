@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"os"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"strings"
 	"time"
 )
@@ -327,19 +327,6 @@ func resourceVcdCatalogAccessControlImport(_ context.Context, d *schema.Resource
 // * preRun is an (optional) operation to run before attempting the operation
 // * operation is the main operation we are running
 func runWithRetry(operationDescription, errorMessage string, timeout time.Duration, preRun func() error, operation func() (any, error)) (any, error) {
-	// ---------------------------------------------------------
-	// TODO: remove this check after PR review
-	// Note to reviewers: setting the environment variable VCD_SKIP_RETRY will make some catalog tests fail
-	// ---------------------------------------------------------
-	if os.Getenv("VCD_SKIP_RETRY") != "" {
-		if preRun != nil {
-			err := preRun()
-			if err != nil {
-				return nil, err
-			}
-		}
-		return operation()
-	}
 	if operation == nil {
 		return nil, fmt.Errorf("argument 'operation' cannot be null")
 	}
@@ -359,15 +346,7 @@ func runWithRetry(operationDescription, errorMessage string, timeout time.Durati
 		}
 		result, err = operation()
 		if err == nil {
-			// ---------------------------------------------------------
-			// TODO: convert printing on screen to logging after PR review
-			// Note to reviewers: setting the environment variable VCD_RETRY_VERBOSE
-			// will show on screen the result of the operation. An 'attempts' value greater than 0 indicates
-			// a case where we would have a failure without the retry
-			// ---------------------------------------------------------
-			if os.Getenv("VCD_RETRY_VERBOSE") != "" {
-				fmt.Printf("%s attempts: %d - elapsed: %s\n", operationDescription, attempts, elapsed)
-			}
+			util.Logger.Printf("%s attempts: %d - elapsed: %s\n", operationDescription, attempts, elapsed)
 			return result, nil
 		}
 		elapsed = time.Since(start)
