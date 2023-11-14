@@ -154,7 +154,6 @@ resource "vcd_ip_space" "space1" {
   default_no_snat_rule_creation_enabled  = true
   default_snat_rule_creation_enabled     = true
 
-
   ip_prefix {
     default_quota = 2
 
