@@ -1,0 +1,1 @@
+* Fix Issue [#1112](https://github.com/vmware/terraform-provider-vcd/issues/1112): Data source `vcd_vcenter` fails when name contains spaces [GH-1115]
