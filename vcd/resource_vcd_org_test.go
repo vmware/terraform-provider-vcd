@@ -4,12 +4,9 @@ package vcd
 
 import (
 	"fmt"
-	"testing"
-	"time"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"testing"
 )
 
 const orgNameTestAccVcdOrg string = "TestAccVcdOrg"
@@ -352,28 +349,6 @@ func testAccCheckVcdOrgExists(resourceName string) resource.TestCheckFunc {
 			return fmt.Errorf("error: could not find Org: %v", err)
 		}
 
-		return nil
-	}
-}
-
-func testAccCheckOrgDestroy(orgName string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		conn := testAccProvider.Meta().(*VCDClient)
-		var org *govcd.AdminOrg
-		var err error
-		for N := 0; N < 30; N++ {
-			org, err = conn.GetAdminOrgByName(orgName)
-			if err != nil && org == nil {
-				break
-			}
-			time.Sleep(time.Second)
-		}
-		if err != govcd.ErrorEntityNotFound {
-			return fmt.Errorf("org %s was not destroyed", orgName)
-		}
-		if org != nil {
-			return fmt.Errorf("org %s was found", orgName)
-		}
 		return nil
 	}
 }
