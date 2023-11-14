@@ -18,7 +18,7 @@ type listDef struct {
 	resourceType string
 	parent       string
 	nameRegex    string
-	knownItem    string
+	knownItem    string // Name of the item we know exists. If we want any item, we use '*'
 	unwantedItem string
 	vdc          string
 	listMode     string
@@ -40,6 +40,22 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		{name: "user", resourceType: "vcd_org_user"},
 	}
 
+	knownNetworkPool1 := testConfig.VCD.ProviderVdc.NetworkPool
+	if knownNetworkPool1 != "" {
+		lists = append(lists, listDef{name: "network_pool", resourceType: "vcd_network_pool", knownItem: knownNetworkPool1})
+	}
+	knownNetworkPool2 := testConfig.VCD.NsxtProviderVdc.NetworkPool
+	if knownNetworkPool2 != "" {
+		lists = append(lists, listDef{name: "nsxt_network_pool", resourceType: "vcd_network_pool", knownItem: knownNetworkPool2})
+	}
+	knownVcenter := testConfig.Networking.Vcenter
+	if knownVcenter != "" {
+		lists = append(lists, listDef{name: "port_groups", resourceType: "vcd_importable_port_group", parent: knownVcenter, knownItem: "*"})
+		lists = append(lists, listDef{name: "distributed_switchs", resourceType: "vcd_distributed_switch", parent: knownVcenter, knownItem: "*"})
+	}
+	if testConfig.Nsxt.Manager != "" {
+		lists = append(lists, listDef{name: "transport_zones", resourceType: "vcd_nsxt_transport_zone", parent: testConfig.Nsxt.Manager})
+	}
 	if testConfig.VCD.Org != "" {
 		lists = append(lists, listDef{name: "orgs", resourceType: "vcd_org", knownItem: testConfig.VCD.Org})
 
@@ -393,6 +409,7 @@ func checkImportFile(fileName string, importing bool) resource.TestCheckFunc {
 
 func checkListForKnownItem(resName, target, unwanted string, isWanted, importing bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
+		// If we didn't indicate any known item, the check is always true, even if no item was returned
 		if target == "" {
 			return nil
 		}
@@ -413,12 +430,13 @@ func checkListForKnownItem(resName, target, unwanted string, isWanted, importing
 		}
 
 		for _, item := range list {
+			// if we want ANY item, the comparison is true as long as at least one was found
+			found := item == target || target == "*"
 			if unwanted != "" && item == unwanted {
 				return fmt.Errorf("found unwanted item '%s'", unwanted)
 			}
-			found := item == target
 			if importing {
-				found = strings.Contains(item, target)
+				found = strings.Contains(item, target) || target == "*"
 			}
 			if found {
 				if isWanted {
