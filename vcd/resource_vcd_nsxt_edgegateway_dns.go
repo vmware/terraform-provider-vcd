@@ -174,12 +174,12 @@ func resourceVcdNsxtEdgegatewayDnsCreateUpdate(ctx context.Context, d *schema.Re
 		return diag.Errorf("[edge gateway dns %s] error getting DNS configuration from schema: %s", origin, err)
 	}
 
-	_, err = dns.Update(dnsConfig)
+	updatedDns, err := dns.Update(dnsConfig)
 	if err != nil {
 		return diag.Errorf("[edge gateway dns %s] error updating DNS configuration: %s", origin, err)
 	}
 
-	d.SetId(edgeGatewayId)
+	d.SetId(updatedDns.EdgeGatewayId)
 
 	return resourceVcdNsxtEdgegatewayDnsRead(ctx, d, meta)
 }
@@ -192,15 +192,14 @@ func genericVcdNsxtEdgegatewayDnsRead(_ context.Context, d *schema.ResourceData,
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
-	edgeGatewayId := d.Get("edge_gateway_id").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, d.Id())
 	if err != nil {
 		if origin == "resource" && govcd.ContainsNotFound(err) {
 			// When parent Edge Gateway is not found - this resource is also not found and should be
 			// removed from state
 			d.SetId("")
-			return nil
+			return diag.Errorf("test output")
 		}
 		return diag.Errorf("[edge gateway dns read] error retrieving NSX-T Edge Gateway DNS config: %s", err)
 	}
@@ -276,7 +275,6 @@ func resourceVcdNsxtEdgegatewayDnsImport(ctx context.Context, d *schema.Resource
 
 	dSet(d, "org", orgName)
 	dSet(d, "edge_gateway_id", edge.EdgeGateway.ID)
-
 	// Storing Edge Gateway ID and Read will retrieve all other data
 	d.SetId(edge.EdgeGateway.ID)
 
@@ -299,6 +297,7 @@ func getNsxtEdgeGatewayDnsConfig(d *schema.ResourceData, vcdClient *VCDClient) (
 	defaultUpstreamServersSet := d.Get("default_forwarder_zone.0.upstream_servers").(*schema.Set)
 	defaultUpstreamServers := convertSchemaSetToSliceOfStrings(defaultUpstreamServersSet)
 	defaultForwarderZone := &types.NsxtDnsForwarderZoneConfig{
+		ID:              d.Get("default_forwarder_zone.0.id").(string),
 		DisplayName:     d.Get("default_forwarder_zone.0.name").(string),
 		UpstreamServers: defaultUpstreamServers,
 	}
@@ -333,11 +332,6 @@ func getNsxtEdgeGatewayDnsConfig(d *schema.ResourceData, vcdClient *VCDClient) (
 }
 
 func setNsxtEdgeGatewayDnsConfig(d *schema.ResourceData, dnsConfig *types.NsxtEdgeGatewayDns) error {
-	dSet(d, "enabled", dnsConfig.Enabled)
-	dSet(d, "listener_ip", dnsConfig.ListenerIp)
-	dSet(d, "snat_rule_enabled", dnsConfig.SnatRuleEnabled)
-	dSet(d, "snat_rule_ip_address", dnsConfig.SnatRuleExternalIpAddress)
-
 	defaultForwarderZoneBlock := make([]interface{}, 1)
 	defaultForwarderZone := make(map[string]interface{})
 	defaultForwarderZone["id"] = dnsConfig.DefaultForwarderZone.ID

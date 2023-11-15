@@ -54,7 +54,10 @@ func TestAccVcdNsxtEdgegatewayDns(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckNsxtEdgegatewayDnsDestroy(testConfig.Nsxt.Vdc, testConfig.Nsxt.EdgeGateway),
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckNsxtEdgegatewayDnsDestroy(testConfig.Nsxt.Vdc, params["EdgeGw"].(string)),
+			testAccCheckNsxtEdgegatewayDnsDestroy(testConfig.Nsxt.VdcGroup, params["VdcGroupEdgeGw"].(string)),
+		),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
@@ -302,6 +305,204 @@ resource "vcd_nsxt_edgegateway_dns" "{{.VdcGroupDnsConfig}}" {
 
     domain_names = [
       "{{.DomainName1}}",
+    ]
+  }
+}
+`
+
+func TestAccVcdNsxtEdgegatewayDnsIpSpaces(t *testing.T) {
+	preTestChecks(t)
+
+	if checkVersion(testConfig.Provider.ApiVersion, "<38.1") {
+		t.Skip("This test is only supported since version 38.1 of the API")
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"TestName":             t.Name(),
+		"NsxtManager":          testConfig.Nsxt.Manager,
+		"NsxtTier0Router":      testConfig.Nsxt.Tier0router,
+		"Org":                  testConfig.VCD.Org,
+		"NsxtVdc":              testConfig.Nsxt.Vdc,
+		"EdgeGw":               "ip-spaces-egw",
+		"ExtNet":               t.Name(),
+		"DnsConfig":            t.Name(),
+		"DefaultForwarderName": t.Name() + "default",
+		"ServerIp1":            "1.1.1.1",
+		"ServerIp2":            "2.2.2.2",
+		"ServerIp3":            "3.3.3.3",
+		"IpAddress1":           "11.11.11.100",
+		"IpAddress2":           "11.11.11.101",
+	}
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "step1"
+	configText1 := templateFill(testAccVcdNsxtEdgegatewayDnsIpSpacesStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s\n", configText1)
+
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccVcdNsxtEdgegatewayDnsIpSpacesStep2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s\n", configText2)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resourceName := "vcd_nsxt_edgegateway_dns." + params["DnsConfig"].(string)
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(params["EdgeGw"].(string)),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "default_forwarder_zone.0.name", params["DefaultForwarderName"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceName, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp1"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceName, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp2"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceName, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp3"].(string)),
+					resource.TestCheckResourceAttr(resourceName, "default_forwarder_zone.0.name", params["DefaultForwarderName"].(string)),
+					resource.TestCheckResourceAttr(resourceName, "snat_rule_ip_address", params["IpAddress1"].(string)),
+					resource.TestCheckResourceAttr(resourceName, "snat_rule_enabled", "true"),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "default_forwarder_zone.0.name", params["DefaultForwarderName"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceName, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp1"].(string)),
+					resource.TestCheckTypeSetElemAttr(resourceName, "default_forwarder_zone.0.upstream_servers.*", params["ServerIp2"].(string)),
+					resource.TestCheckResourceAttr(resourceName, "snat_rule_ip_address", params["IpAddress2"].(string)),
+					resource.TestCheckResourceAttr(resourceName, "snat_rule_enabled", "true"),
+				),
+			},
+			{
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(params["EdgeGw"].(string)),
+				ImportStateVerifyIgnore: []string{"org"},
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdNsxtEdgegatewayDnsIpSpacesPrereqs = `
+data "vcd_nsxt_manager" "main" {
+  name = "{{.NsxtManager}}"
+}
+
+data "vcd_nsxt_tier0_router" "router" {
+  name            = "{{.NsxtTier0Router}}"
+  nsxt_manager_id = data.vcd_nsxt_manager.main.id
+}
+
+data "vcd_org" "org1" {
+  name = "{{.Org}}"
+}
+
+data "vcd_org_vdc" "{{.NsxtVdc}}" {
+  org  = "{{.Org}}"
+  name = "{{.NsxtVdc}}"
+}
+
+resource "vcd_ip_space" "ipSpace1" {
+  name = "{{.TestName}}"
+  type = "PUBLIC"
+
+  internal_scope = ["11.11.11.0/24"]
+  external_scope = "0.0.0.0/24"
+
+  route_advertisement_enabled = false
+
+  ip_range {
+    start_address = "11.11.11.100"
+    end_address   = "11.11.11.110"
+  }
+}
+
+resource "vcd_external_network_v2" "{{.ExtNet}}" {
+  name = "{{.ExtNet}}"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  use_ip_spaces = true
+}
+
+resource "vcd_ip_space_uplink" "u1" {
+  name                = "{{.TestName}}"
+  external_network_id = vcd_external_network_v2.{{.ExtNet}}.id
+  ip_space_id         = vcd_ip_space.ipSpace1.id
+}
+
+resource "vcd_nsxt_edgegateway" "{{.EdgeGw}}" {
+  org                 = "{{.Org}}"
+  name                = "{{.EdgeGw}}"
+  owner_id            = data.vcd_org_vdc.{{.NsxtVdc}}.id
+  external_network_id = vcd_external_network_v2.{{.ExtNet}}.id
+
+  depends_on = [vcd_ip_space_uplink.u1]
+}
+
+resource "vcd_ip_space_ip_allocation" "public-floating-ip" {
+  org_id      = data.vcd_org.org1.id
+  ip_space_id = vcd_ip_space.ipSpace1.id
+  type        = "FLOATING_IP"
+
+  value = "{{.IpAddress1}}"
+
+  depends_on = [vcd_nsxt_edgegateway.{{.EdgeGw}}]
+}
+
+resource "vcd_ip_space_ip_allocation" "public-floating-ip-2" {
+  org_id      = data.vcd_org.org1.id
+  ip_space_id = vcd_ip_space.ipSpace1.id
+  type        = "FLOATING_IP"
+
+  value = "{{.IpAddress2}}"
+
+  depends_on = [vcd_nsxt_edgegateway.{{.EdgeGw}}]
+}
+`
+
+const testAccVcdNsxtEdgegatewayDnsIpSpacesStep1 = testAccVcdNsxtEdgegatewayDnsIpSpacesPrereqs + `
+resource "vcd_nsxt_edgegateway_dns" "{{.DnsConfig}}" {
+  edge_gateway_id      = vcd_nsxt_edgegateway.{{.EdgeGw}}.id
+  enabled              = true
+  snat_rule_ip_address = vcd_ip_space_ip_allocation.public-floating-ip.ip_address
+
+  default_forwarder_zone {
+    name = "{{.DefaultForwarderName}}"
+
+    upstream_servers = [
+      "{{.ServerIp1}}",
+      "{{.ServerIp2}}",
+      "{{.ServerIp3}}",
+    ]
+  }
+}
+`
+
+const testAccVcdNsxtEdgegatewayDnsIpSpacesStep2 = testAccVcdNsxtEdgegatewayDnsIpSpacesPrereqs + `
+resource "vcd_nsxt_edgegateway_dns" "{{.DnsConfig}}" {
+  edge_gateway_id      = vcd_nsxt_edgegateway.{{.EdgeGw}}.id
+  enabled              = true
+  snat_rule_ip_address = vcd_ip_space_ip_allocation.public-floating-ip-2.ip_address
+
+  default_forwarder_zone {
+    name = "{{.DefaultForwarderName}}"
+
+    upstream_servers = [
+      "{{.ServerIp1}}",
+      "{{.ServerIp2}}",
+      "{{.ServerIp3}}",
     ]
   }
 }
