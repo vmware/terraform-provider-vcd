@@ -55,7 +55,7 @@ func datasourceVcenterRead(_ context.Context, d *schema.ResourceData, meta inter
 
 	vCenterName := d.Get("name").(string)
 
-	vcs, err := govcd.QueryVirtualCenters(vcdClient.VCDClient, "name=="+vCenterName)
+	vcs, err := govcd.QueryVirtualCenters(vcdClient.VCDClient, "name=="+url.QueryEscape(vCenterName))
 	if err != nil {
 		return diag.Errorf("error occured while querying vCenters: %s", err)
 	}

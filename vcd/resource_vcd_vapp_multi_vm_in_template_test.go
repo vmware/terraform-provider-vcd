@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -90,6 +91,12 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 						"vcd_vapp_vm."+vmName2, "power_on", "true"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName2, "metadata.vm_metadata", "VM Metadata."),
+					testMatchResourceAttrWhenVersionMatches(
+						"vcd_vapp_vm."+vmName2, "inherited_metadata.vm.origin.id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
+					testCheckResourceAttrSetWhenVersionMatches(
+						"vcd_vapp_vm."+vmName2, "inherited_metadata.vm.origin.name", ">= 38.1"),
+					testMatchResourceAttrWhenVersionMatches(
+						"vcd_vapp_vm."+vmName2, "inherited_metadata.vm.origin.type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
 				),
 			},
 			{

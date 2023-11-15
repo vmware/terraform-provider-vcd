@@ -257,6 +257,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_global_default_segment_profile_template": resourceVcdGlobalDefaultSegmentProfileTemplate(),     // 3.11
 	"vcd_org_vdc_nsxt_network_profile":                 resourceVcdNsxtOrgVdcNetworkProfile(),                // 3.11
 	"vcd_nsxt_network_segment_profile":                 resourceVcdNsxtOrgVdcNetworkSegmentProfileTemplate(), // 3.11
+	"vcd_network_pool":                                 resourceVcdNetworkPool(),                             // 3.11
 	"vcd_nsxt_edgegateway_dns":                         resourceVcdNsxtEdgeGatewayDns(),                      // 3.11
 }
 

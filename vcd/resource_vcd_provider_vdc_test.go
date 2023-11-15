@@ -24,6 +24,7 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
 	providerVdcName1 := t.Name()
+	newNetworkPoolName := t.Name()
 	orgVdcName := "TestOrgVdcNewPvdc"
 	orgName := testConfig.VCD.Org
 	providerVdcDescription1 := t.Name() + "description"
@@ -40,7 +41,7 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 		"ResourcePool1":           testConfig.VSphere.ResourcePoolForVcd1,
 		"ResourcePool2":           testConfig.VSphere.ResourcePoolForVcd2,
 		"NsxtManager":             testConfig.Nsxt.Manager,
-		"NsxtNetworkPool":         testConfig.VCD.NsxtProviderVdc.NetworkPool,
+		"NewNsxtNetworkPool":      newNetworkPoolName,
 		"StorageProfile1":         testConfig.VCD.NsxtProviderVdc.StorageProfile,
 		"StorageProfile2":         testConfig.VCD.NsxtProviderVdc.StorageProfile2,
 		"Vcenter":                 testConfig.Networking.Vcenter,
@@ -89,6 +90,7 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
 			checkProviderVdcExists(providerVdcName1, false),
+			checkNetworkPoolExists(newNetworkPoolName, false),
 			checkOrgVdcExists(orgName, orgVdcName, false),
 		),
 		Steps: []resource.TestStep{
@@ -98,6 +100,7 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 				PreConfig: makeFunc("create"),
 				Check: resource.ComposeTestCheckFunc(
 					checkProviderVdcExists(providerVdcName1, true),
+					checkNetworkPoolExists(newNetworkPoolName, true),
 					resource.TestCheckResourceAttr(resourceDef, "name", providerVdcName1),
 					resource.TestCheckResourceAttr(resourceDef, "description", providerVdcDescription1),
 					resource.TestMatchResourceAttr(resourceDef, "id", getProviderVdcDatasourceAttributeUrnRegex("providervdc")),
@@ -327,8 +330,12 @@ data "vcd_nsxt_manager" "mgr1" {
   name = "{{.NsxtManager}}"
 }
 
-data "vcd_network_pool" "np1" {
-  name = "{{.NsxtNetworkPool}}"
+resource "vcd_network_pool" "np1" {
+  name                = "{{.NewNsxtNetworkPool}}"
+  network_provider_id = data.vcd_nsxt_manager.mgr1.id
+  type                = "GENEVE" # provider VDC needs either a GENEVE (NSX-T) or a VXLAN (NSX-V) network pool
+
+  backing_selection_constraint = "use-first-available"
 }
 `
 
@@ -340,7 +347,7 @@ resource "vcd_provider_vdc" "pvdc1" {
   is_enabled                         = true
   vcenter_id                         = data.vcd_vcenter.vcenter1.id
   nsxt_manager_id                    = data.vcd_nsxt_manager.mgr1.id
-  network_pool_ids                   = [data.vcd_network_pool.np1.id]
+  network_pool_ids                   = [vcd_network_pool.np1.id]
   resource_pool_ids                  = [data.vcd_resource_pool.rp1.id]
   storage_profile_names              = ["{{.StorageProfile1}}"]
   highest_supported_hardware_version = data.vcd_resource_pool.rp1.hardware_version
@@ -355,7 +362,7 @@ resource "vcd_provider_vdc" "pvdc1" {
   is_enabled                         = true
   vcenter_id                         = data.vcd_vcenter.vcenter1.id
   nsxt_manager_id                    = data.vcd_nsxt_manager.mgr1.id
-  network_pool_ids                   = [data.vcd_network_pool.np1.id]
+  network_pool_ids                   = [vcd_network_pool.np1.id]
   resource_pool_ids                  = [data.vcd_resource_pool.rp1.id]
   storage_profile_names              = ["{{.StorageProfile1}}"]
   highest_supported_hardware_version = data.vcd_resource_pool.rp1.hardware_version
@@ -369,7 +376,7 @@ resource "vcd_provider_vdc" "pvdc1" {
   is_enabled                         = true
   vcenter_id                         = data.vcd_vcenter.vcenter1.id
   nsxt_manager_id                    = data.vcd_nsxt_manager.mgr1.id
-  network_pool_ids                   = [data.vcd_network_pool.np1.id]
+  network_pool_ids                   = [vcd_network_pool.np1.id]
   resource_pool_ids                  = [data.vcd_resource_pool.rp1.id, data.vcd_resource_pool.rp2.id]
   storage_profile_names              = ["{{.StorageProfile1}}","{{.StorageProfile2}}"]
   highest_supported_hardware_version = data.vcd_resource_pool.rp1.hardware_version
@@ -384,7 +391,7 @@ resource "vcd_provider_vdc" "pvdc1" {
   is_enabled                         = false
   vcenter_id                         = data.vcd_vcenter.vcenter1.id
   nsxt_manager_id                    = data.vcd_nsxt_manager.mgr1.id
-  network_pool_ids                   = [data.vcd_network_pool.np1.id]
+  network_pool_ids                   = [vcd_network_pool.np1.id]
   resource_pool_ids                  = [data.vcd_resource_pool.rp1.id]
   storage_profile_names              = ["{{.StorageProfile1}}"]
   highest_supported_hardware_version = data.vcd_resource_pool.rp1.hardware_version
