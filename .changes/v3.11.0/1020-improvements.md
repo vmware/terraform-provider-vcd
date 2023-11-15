@@ -1,0 +1,2 @@
+* Resource `vcd_catalog_access_control` adds property `read_only_shared_with_all_orgs` to share the catalog as read-only with all organizations [GH-1020]
+* Resource and data source `vcd_org` add properties `number_of_vdcs`, `number_of_catalogs`, `list_of_vdcs`, `list_of_catalogs` [GH-1020]

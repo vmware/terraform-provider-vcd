@@ -300,3 +300,6 @@ vcd.ResourceSchema-vcd_nsxt_edgegateway.tf v3.10.0 "Added support for Segment ba
 vcd.ResourceSchema-vcd_vapp_vm.tf v3.11.0 "added fields 'firmware' and 'boot_options'"
 vcd.ResourceSchema-vcd_vm.tf v3.11.0 "added fields 'firmware' and 'boot_options'"
 vcd.TestAccVcdIpv6Support-step2.tf v3.10.0 "Test had clashing subnets in 3.10"
+vcd.ResourceSchema-vcd_ip_space_ip_allocation.tf v3.10.0 "Added new field 'value'"
+vcd.TestAccVcdStandaloneVmCustomizationSettings.tf v3.10.0 "auto_generate_password defaults to true since API v37.0"
+vcd.TestAccVcdVAppVm_Clone.tf v3.10.0 "VCD 10.5.1 autogenerates metadata that raises inconsistent final plans. Fixed by PR 1146"

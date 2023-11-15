@@ -1,0 +1,1 @@
+* Add `vcd_independent_disk` to the resources retrieved by `vcd_resource_list` [GH-1155]

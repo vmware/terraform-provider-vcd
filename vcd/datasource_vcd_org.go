@@ -54,6 +54,28 @@ func datasourceVcdOrg() *schema.Resource {
 				Computed:    true,
 				Description: "True if this organization is allowed to subscribe to external catalogs.",
 			},
+			"number_of_catalogs": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of catalogs, owned or shared, available to this organization",
+			},
+			"list_of_catalogs": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of catalogs, owned or shared, available to this organization",
+			},
+			"number_of_vdcs": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of VDCs, owned or shared, available to this organization",
+			},
+			"list_of_vdcs": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of VDCs, owned or shared, available to this organization",
+			},
 			"vapp_lease": {
 				Type:     schema.TypeList,
 				Computed: true,

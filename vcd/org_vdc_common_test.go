@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"text/template"
@@ -57,6 +58,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateText)
 	secondUpdateText := strings.Replace(updateText, "#START_STORAGE_PROFILE", "/*", 1)
 	secondUpdateText = strings.Replace(secondUpdateText, "#END_STORAGE_PROFILE", "*/", 1)
+	cachedVdcNumber := &testCachedFieldValue{}
 
 	resourceDef := "vcd_org_vdc." + params["VdcName"].(string)
 	resource.Test(t, resource.TestCase{
@@ -120,10 +122,20 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						resourceDef, "elasticity", regexp.MustCompile(`^`+params["ElasticityValueForAssert"].(string)+`$`)),
 					resource.TestMatchResourceAttr(
 						resourceDef, "include_vm_memory_overhead", regexp.MustCompile(`^`+params["MemoryOverheadValueForAssert"].(string)+`$`)),
+					cachedVdcNumber.cacheTestResourceFieldValue("data.vcd_org.org_before", "number_of_vdcs"),
 				),
 			},
 			{
 				Config: updateText,
+				PreConfig: func() {
+					// Increment number of VDCs, as the Organization is now supposed to have one more
+					numberOfVdcs, err := strconv.Atoi(cachedVdcNumber.String())
+					if err != nil {
+						panic("invalid number of VDCs detected")
+					}
+					numberOfVdcs++
+					cachedVdcNumber.fieldValue = fmt.Sprintf("%d", numberOfVdcs)
+				},
 				Check: resource.ComposeTestCheckFunc(
 					testVcdVdcUpdated("vcd_org_vdc."+params["VdcName"].(string)),
 					resource.TestCheckResourceAttr(
@@ -195,6 +207,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					// This check makes sure we have 2 storage profiles
 					testConditionalCheck(secondStorageProfile != "",
 						resource.TestCheckResourceAttr(resourceDef, "storage_profile.#", "2")),
+					cachedVdcNumber.testCheckCachedResourceFieldValue("data.vcd_org.org_after", "number_of_vdcs"),
 				),
 			},
 			// Test removal of second storage profile
@@ -313,6 +326,10 @@ func testAccCheckVdcDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdVdc_basic = `
+data "vcd_org" "org_before" {
+  name = "{{.OrgName}}"
+}
+
 resource "vcd_org_vdc" "{{.VdcName}}" {
   name = "{{.VdcName}}"
   org  = "{{.OrgName}}"
@@ -356,6 +373,11 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 
 const testAccCheckVcdVdc_update = `
 # skip-binary-test: only for updates
+
+data "vcd_org" "org_after" {
+  name = "{{.OrgName}}"
+}
+
 resource "vcd_org_vdc" "{{.VdcName}}" {
   name = "{{.VdcName}}"
   org  = "{{.OrgName}}"
