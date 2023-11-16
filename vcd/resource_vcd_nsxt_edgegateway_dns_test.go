@@ -363,7 +363,7 @@ data "vcd_nsxt_edgegateway_dns" "data_{{.VdcGroupDnsConfig}}" {
 func TestAccVcdNsxtEdgegatewayDnsIpSpaces(t *testing.T) {
 	preTestChecks(t)
 
-	if checkVersion(testConfig.Provider.ApiVersion, "<38.1") {
+	if checkVersion(testConfig.Provider.ApiVersion, "<38.0") {
 		t.Skip("This test is only supported since version 38.1 of the API")
 	}
 

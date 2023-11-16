@@ -67,7 +67,7 @@ The following arguments are supported:
 * `enabled` - (Optional) Status of the DNS forwarding service. Defaults to `true`.
 * `listener_ip` - (Optional) The IP on which the DNS forwarder listens. If the Edge Gateway 
   has a dedicated external network, this can be changed.
-* `snat_rule_ip_address` - (Optional, VCD 10.5.1+) This property only applies if the Edge Gateway 
+* `snat_rule_ip_address` - (Optional, VCD 10.5.0+) This property only applies if the Edge Gateway 
   is connected to a Provider Gateway using IP Spaces. If specified, VCD will 
   conveniently manage the SNAT rule with the specified IP address for the DNS forwarder. 
   The specified IP can be allocated using [`vcd_ip_space_ip_allocation`](/providers/vmware/vcd/latest/docs/resources/ip_space_ip_allocation) 
