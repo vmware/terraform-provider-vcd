@@ -127,7 +127,7 @@ func datasourceVcdIpSpace() *schema.Resource {
 			"default_firewall_rule_creation_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Flag whether default firewall rule creation should be enabled (VCD 10.5.0+)",
+				Description: "Flag exposing whether default firewall rule creation should be enabled (VCD 10.5.0+)",
 			},
 			"default_no_snat_rule_creation_enabled": {
 				Type:        schema.TypeBool,

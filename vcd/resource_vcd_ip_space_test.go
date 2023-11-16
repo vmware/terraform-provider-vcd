@@ -830,7 +830,7 @@ func TestAccVcdIpSpaceGatewayServicesConfiguration(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "step3"
 	configText3 := templateFill(testAccVcdIpSpacePublicGatewayServicesStep3, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText2)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
