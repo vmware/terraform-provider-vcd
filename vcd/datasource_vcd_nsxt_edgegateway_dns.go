@@ -26,7 +26,7 @@ func datasourceVcdNsxtEdgeGatewayDns() *schema.Resource {
 			"enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Status of the DNS Forwarder. Defaults to `true`",
+				Description: "Status of the DNS Forwarder.",
 			},
 			"listener_ip": {
 				Type:        schema.TypeString,
