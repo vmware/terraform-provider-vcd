@@ -157,16 +157,17 @@ resource "vcd_rde" "k8s_cluster_instance" {
 # Some useful outputs to monitor TKGm cluster creation process.
 locals {
   k8s_cluster_computed       = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)
+  being_deleted              = tobool(jsondecode(vcd_rde.k8s_cluster_instance.input_entity)["spec"]["vcdKe"]["markForDelete"]) || tobool(local.k8s_cluster_computed["spec"]["vcdKe"]["forceDelete"])
   has_status                 = lookup(local.k8s_cluster_computed, "status", null) != null
 }
+
 output "computed_k8s_cluster_status" {
-  value = local.has_status ? local.k8s_cluster_computed["status"]["vcdKe"]["state"] : null
+  value = local.has_status && !local.being_deleted ? local.k8s_cluster_computed["status"]["vcdKe"]["state"] : null
 }
 
 output "computed_k8s_cluster_events" {
-  value = local.has_status ? local.k8s_cluster_computed["status"]["vcdKe"]["eventSet"] : null
+  value = local.has_status && !local.being_deleted ? local.k8s_cluster_computed["status"]["vcdKe"]["eventSet"] : null
 }
-
 
 # After the output "computed_k8s_cluster_status" is "provisioned" and the RDE is resolved, you can retrieve
 # the cluster's Kubeconfig with the following snippet. It is commented as the invocation of the Behavior that
