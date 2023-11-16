@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func datasourceVcdNsxtEdgeGatewayDns() *schema.Resource {
@@ -14,7 +15,6 @@ func datasourceVcdNsxtEdgeGatewayDns() *schema.Resource {
 			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
@@ -47,16 +47,72 @@ func datasourceVcdNsxtEdgeGatewayDns() *schema.Resource {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "The default forwarder zone.",
-				Elem:        defaultForwarderZone,
+				Elem:        defaultForwarderZoneDS,
 			},
 			"conditional_forwarder_zone": {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Description: "Conditional forwarder zone",
-				Elem:        conditionalForwarderZone,
+				Elem:        conditionalForwarderZoneDS,
 			},
 		},
 	}
+}
+
+var defaultForwarderZoneDS = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"id": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Unique ID of the forwarder zone.",
+		},
+		"name": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Name of the forwarder zone.",
+		},
+		"upstream_servers": {
+			Type:        schema.TypeSet,
+			Computed:    true,
+			Description: "Servers to which DNS requests should be forwarded to.",
+			Elem: &schema.Schema{
+				Type:         schema.TypeString,
+				ValidateFunc: validation.IsIPAddress,
+			},
+		},
+	},
+}
+
+var conditionalForwarderZoneDS = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"id": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Unique ID of the forwarder zone.",
+		},
+		"name": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Name of the forwarder zone.",
+		},
+		"upstream_servers": {
+			Type:        schema.TypeSet,
+			Computed:    true,
+			Description: "Servers to which DNS requests should be forwarded to.",
+			Elem: &schema.Schema{
+				Type:         schema.TypeString,
+				ValidateFunc: validation.IsIPAddress,
+			},
+		},
+		"domain_names": {
+			Type:        schema.TypeSet,
+			Computed:    true,
+			Description: "Set of domain names on which conditional forwarding is based.",
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+		},
+	},
 }
 
 func datasourceVcdNsxtEdgeGatewayDnsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

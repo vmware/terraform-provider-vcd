@@ -6,7 +6,7 @@ description: |-
   Provides a data source to read NSX-T Edge Gateway DNS forwarder configuration.
 ---
 
-# vcd\_nsxt\_edgegateway\_l2\_vpn\_tunnel
+# vcd\_nsxt\_edgegateway\_dns
 
 Supported in provider *v3.11+* and VCD *10.4+* with NSX-T.
 

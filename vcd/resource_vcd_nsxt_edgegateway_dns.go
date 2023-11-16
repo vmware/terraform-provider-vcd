@@ -193,13 +193,17 @@ func genericVcdNsxtEdgegatewayDnsRead(_ context.Context, d *schema.ResourceData,
 
 	orgName := d.Get("org").(string)
 
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, d.Id())
+	id := d.Id()
+	if id == "" {
+		id = d.Get("edge_gateway_id").(string)
+	}
+
+	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, id)
 	if err != nil {
 		if origin == "resource" && govcd.ContainsNotFound(err) {
 			// When parent Edge Gateway is not found - this resource is also not found and should be
 			// removed from state
 			d.SetId("")
-			return diag.Errorf("test output")
 		}
 		return diag.Errorf("[edge gateway dns read] error retrieving NSX-T Edge Gateway DNS config: %s", err)
 	}
@@ -265,7 +269,7 @@ func resourceVcdNsxtEdgegatewayDnsImport(ctx context.Context, d *schema.Resource
 	}
 
 	if !vdcOrVdcGroup.IsNsxt() {
-		return nil, fmt.Errorf("please use 'vcd_edgegateway' for NSX-V backed VDC")
+		return nil, fmt.Errorf("this resource is only supported on NSX-T backed Edge Gateways")
 	}
 
 	edge, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeName)
@@ -332,6 +336,11 @@ func getNsxtEdgeGatewayDnsConfig(d *schema.ResourceData, vcdClient *VCDClient) (
 }
 
 func setNsxtEdgeGatewayDnsConfig(d *schema.ResourceData, dnsConfig *types.NsxtEdgeGatewayDns) error {
+	dSet(d, "enabled", dnsConfig.Enabled)
+	dSet(d, "listener_ip", dnsConfig.ListenerIp)
+	dSet(d, "snat_rule_enabled", dnsConfig.SnatRuleEnabled)
+	dSet(d, "snat_rule_ip_address", dnsConfig.SnatRuleExternalIpAddress)
+
 	defaultForwarderZoneBlock := make([]interface{}, 1)
 	defaultForwarderZone := make(map[string]interface{})
 	defaultForwarderZone["id"] = dnsConfig.DefaultForwarderZone.ID
