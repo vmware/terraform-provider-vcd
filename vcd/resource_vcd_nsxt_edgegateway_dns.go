@@ -315,6 +315,11 @@ func getNsxtEdgeGatewayDnsConfig(d *schema.ResourceData, vcdClient *VCDClient) (
 		UpstreamServers: defaultUpstreamServers,
 	}
 
+	// Currently, if the conditional forwarder zones are updated, we don't preserve the IDs due to the nature of TypeSets and
+	// just re-create the zones as it doesn't impact performance much and the values can't have any dependencies that would
+	// prevent re-creation.
+	// In the future, we might need to implement partial matching by domain_names, so that the ID stays the same
+	// if domain_names are updated.
 	conditionalForwarderZoneSet := d.Get("conditional_forwarder_zone").(*schema.Set)
 	conditionalForwarderZones := make([]*types.NsxtDnsForwarderZoneConfig, len(conditionalForwarderZoneSet.List()))
 	for zoneIndex, zone := range conditionalForwarderZoneSet.List() {
