@@ -252,6 +252,7 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			dataSourceName == "vcd_nsxt_firewall" || dataSourceName == "vcd_nsxt_route_advertisement" ||
 			dataSourceName == "vcd_nsxt_edgegateway_dhcpv6") || dataSourceName == "vcd_nsxt_edgegateway_dns" && mandatoryFields[fieldIndex] == "edge_gateway_id" {
 			// injecting fake Edge Gateway ID
+			// #nosec G101 -- fake Edge Gateway ID
 			templateFields = templateFields + `edge_gateway_id = "urn:vcloud:gateway:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
 			return templateFields
 		}
