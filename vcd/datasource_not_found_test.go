@@ -124,6 +124,7 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			"vcd_nsxt_network_segment_profile",
 			"vcd_nsxt_segment_profile_template",
 			"vcd_nsxt_network_context_profile",
+			"vcd_nsxt_edgegateway_l2_vpn_tunnel",
 		}
 		dataSourcesRequiringAlbConfig := []string{
 			"vcd_nsxt_alb_cloud",
