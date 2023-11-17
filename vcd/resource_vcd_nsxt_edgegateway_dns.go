@@ -218,6 +218,10 @@ func genericVcdNsxtEdgegatewayDnsRead(_ context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diag.Errorf("[edge gateway dns read] error retrieving NSX-T Edge Gateway DNS config: %s", err)
 	}
+	if dns.NsxtEdgeGatewayDns.DefaultForwarderZone == nil {
+		d.SetId("")
+		return nil
+	}
 	d.SetId(dns.EdgeGatewayId)
 	dSet(d, "edge_gateway_id", dns.EdgeGatewayId)
 
