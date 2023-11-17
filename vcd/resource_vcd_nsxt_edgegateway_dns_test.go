@@ -269,6 +269,7 @@ resource "vcd_nsxt_edgegateway_dns" "{{.VdcGroupDnsConfig}}" {
 `
 
 const testAccVcdNsxtEdgegatewayDnsStep2 = testAccVcdNsxtEdgegatewayDnsPrereqs + `
+# skip-binary-test: used for update
 resource "vcd_nsxt_edgegateway_dns" "{{.DnsConfig}}" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGw}}.id
   enabled         = true
@@ -364,7 +365,7 @@ func TestAccVcdNsxtEdgegatewayDnsIpSpaces(t *testing.T) {
 	preTestChecks(t)
 
 	if checkVersion(testConfig.Provider.ApiVersion, "<38.0") {
-		t.Skip("This test is only supported since version 38.1 of the API")
+		t.Skip("This test is only supported since version 38.0 of the API")
 	}
 
 	// String map to fill the template
@@ -541,6 +542,7 @@ resource "vcd_nsxt_edgegateway_dns" "{{.DnsConfig}}" {
 `
 
 const testAccVcdNsxtEdgegatewayDnsIpSpacesStep2 = testAccVcdNsxtEdgegatewayDnsIpSpacesPrereqs + `
+# skip-binary-test: used for update
 resource "vcd_nsxt_edgegateway_dns" "{{.DnsConfig}}" {
   edge_gateway_id      = vcd_nsxt_edgegateway.{{.EdgeGw}}.id
   enabled              = true

@@ -193,19 +193,25 @@ func genericVcdNsxtEdgegatewayDnsRead(_ context.Context, d *schema.ResourceData,
 
 	orgName := d.Get("org").(string)
 
-	id := d.Id()
-	if id == "" {
-		id = d.Get("edge_gateway_id").(string)
+	var nsxtEdge *govcd.NsxtEdgeGateway
+	var err error
+	edgeGatewayId := d.Get("edge_gateway_id").(string)
+	if d.Id() == "" && edgeGatewayId == "" {
+		return diag.Errorf("id wasn't provided for Edge Gateway DNS")
 	}
-
-	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, id)
+	if edgeGatewayId == "" {
+		nsxtEdge, err = vcdClient.GetNsxtEdgeGatewayById(orgName, d.Id())
+	} else {
+		nsxtEdge, err = vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
+	}
 	if err != nil {
 		if origin == "resource" && govcd.ContainsNotFound(err) {
 			// When parent Edge Gateway is not found - this resource is also not found and should be
 			// removed from state
 			d.SetId("")
+			return nil
 		}
-		return diag.Errorf("[edge gateway dns read] error retrieving NSX-T Edge Gateway DNS config: %s", err)
+		return diag.FromErr(err)
 	}
 
 	dns, err := nsxtEdge.GetDnsConfig()
@@ -288,7 +294,6 @@ func resourceVcdNsxtEdgegatewayDnsImport(ctx context.Context, d *schema.Resource
 func getNsxtEdgeGatewayDnsConfig(d *schema.ResourceData, vcdClient *VCDClient) (*types.NsxtEdgeGatewayDns, error) {
 	enabled := d.Get("enabled").(bool)
 	listenerIp := d.Get("listener_ip").(string)
-	snatRuleEnabled := d.Get("snat_rule_enabled").(bool)
 
 	// SNAT Rule IP address field was introduced in API version 38.0
 	if _, ok := d.GetOk("snat_rule_ip_address"); ok {
@@ -326,7 +331,6 @@ func getNsxtEdgeGatewayDnsConfig(d *schema.ResourceData, vcdClient *VCDClient) (
 	dnsConfig := &types.NsxtEdgeGatewayDns{
 		Enabled:                   enabled,
 		ListenerIp:                listenerIp,
-		SnatRuleEnabled:           snatRuleEnabled,
 		SnatRuleExternalIpAddress: snatRuleIp,
 		DefaultForwarderZone:      defaultForwarderZone,
 		ConditionalForwarderZones: conditionalForwarderZones,

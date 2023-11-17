@@ -67,10 +67,11 @@ The following arguments are supported:
 * `enabled` - (Optional) Status of the DNS forwarding service. Defaults to `true`.
 * `listener_ip` - (Optional) The IP on which the DNS forwarder listens. If the Edge Gateway 
   has a dedicated external network, this can be changed.
-* `snat_rule_ip_address` - (Optional, VCD 10.5.0+) This property only applies if the Edge Gateway 
+* `snat_rule_ip_address` - (Optional, VCD 10.5.0+) This argument only applies if the Edge Gateway 
   is connected to a Provider Gateway using IP Spaces. If specified, VCD will 
-  conveniently manage the SNAT rule with the specified IP address for the DNS forwarder. 
+  conveniently manage the SNAT rule with the specified IP address for the DNS forwarder.
   The specified IP can be allocated using [`vcd_ip_space_ip_allocation`](/providers/vmware/vcd/latest/docs/resources/ip_space_ip_allocation) 
+  If not specified, the IP address will be computed and chosen by VCD.
 * `default_forwarder_zone` - (Required) The default forwarder zone to use if 
   there’s no matching domain in the conditional forwarder zones. See [`default_forwarder_zone`](#default-forwarder-zone)
 * `conditional_forwarder_zone` - (Optional) A set (up to 5) of conditional forwarder zones that allows to define 
@@ -97,8 +98,9 @@ The following arguments are supported:
 
 ## Importing
 
-~> The current implementation of Terraform import can only import resources into the state.
-It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
+~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+configuration. However, an experimental feature in Terraform 1.5+ allows also code generation.
+See [Importing resources][importing-resources] for more information.
 
 An existing NSX-T Edge Gateway DNS forwarder configuration can be [imported][docs-import] into this
 resource via supplying path for it. An example is below:
@@ -123,7 +125,6 @@ resource "vcd_nsxt_edgegateway_dns" "dns-imported" {
 }
 ```
 
-[docs-import]: https://www.terraform.io/docs/import/
 
 ```
 terraform import vcd_nsxt_edgegateway_dns.dns-imported my-org.nsxt-vdc.nsxt-edge
@@ -131,3 +132,6 @@ terraform import vcd_nsxt_edgegateway_dns.dns-imported my-org.nsxt-vdc.nsxt-edge
 
 The above would import the `dns-imported` Edge Gateway DNS forwarder configuration for this particular
 Edge Gateway.
+
+[docs-import]: https://www.terraform.io/docs/import/
+[importing-resources]:https://registry.terraform.io/providers/vmware/vcd/3.10.0/docs/guides/importing_resources
