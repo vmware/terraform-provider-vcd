@@ -345,32 +345,35 @@ func setNsxtEdgeGatewayDnsConfig(d *schema.ResourceData, dnsConfig *types.NsxtEd
 	dSet(d, "snat_rule_enabled", dnsConfig.SnatRuleEnabled)
 	dSet(d, "snat_rule_ip_address", dnsConfig.SnatRuleExternalIpAddress)
 
-	defaultForwarderZoneBlock := make([]interface{}, 1)
-	defaultForwarderZone := make(map[string]interface{})
-	defaultForwarderZone["id"] = dnsConfig.DefaultForwarderZone.ID
-	defaultForwarderZone["name"] = dnsConfig.DefaultForwarderZone.DisplayName
-	defaultForwarderZone["upstream_servers"] = convertStringsToTypeSet(dnsConfig.DefaultForwarderZone.UpstreamServers)
-	defaultForwarderZoneBlock[0] = defaultForwarderZone
-
-	err := d.Set("default_forwarder_zone", defaultForwarderZoneBlock)
-	if err != nil {
-		return fmt.Errorf("error storing 'default_forwarder_zone' into state: %s", err)
+	if dnsConfig.DefaultForwarderZone != nil {
+		defaultForwarderZoneBlock := make([]interface{}, 1)
+		defaultForwarderZone := make(map[string]interface{})
+		defaultForwarderZone["id"] = dnsConfig.DefaultForwarderZone.ID
+		defaultForwarderZone["name"] = dnsConfig.DefaultForwarderZone.DisplayName
+		defaultForwarderZone["upstream_servers"] = convertStringsToTypeSet(dnsConfig.DefaultForwarderZone.UpstreamServers)
+		defaultForwarderZoneBlock[0] = defaultForwarderZone
+		err := d.Set("default_forwarder_zone", defaultForwarderZoneBlock)
+		if err != nil {
+			return fmt.Errorf("error storing 'default_forwarder_zone' into state: %s", err)
+		}
 	}
 
-	conditionalForwarderZoneInterface := make([]interface{}, len(dnsConfig.ConditionalForwarderZones))
-	for index, zone := range dnsConfig.ConditionalForwarderZones {
-		singleZone := make(map[string]interface{})
-		singleZone["id"] = zone.ID
-		singleZone["name"] = zone.DisplayName
-		singleZone["domain_names"] = convertStringsToTypeSet(zone.DnsDomainNames)
-		singleZone["upstream_servers"] = convertStringsToTypeSet(zone.UpstreamServers)
+	if len(dnsConfig.ConditionalForwarderZones) != 0 {
+		conditionalForwarderZoneInterface := make([]interface{}, len(dnsConfig.ConditionalForwarderZones))
+		for index, zone := range dnsConfig.ConditionalForwarderZones {
+			singleZone := make(map[string]interface{})
+			singleZone["id"] = zone.ID
+			singleZone["name"] = zone.DisplayName
+			singleZone["domain_names"] = convertStringsToTypeSet(zone.DnsDomainNames)
+			singleZone["upstream_servers"] = convertStringsToTypeSet(zone.UpstreamServers)
 
-		conditionalForwarderZoneInterface[index] = singleZone
-	}
+			conditionalForwarderZoneInterface[index] = singleZone
+		}
 
-	err = d.Set("conditional_forwarder_zone", conditionalForwarderZoneInterface)
-	if err != nil {
-		return fmt.Errorf("error storing 'conditional_forwarder_zone' into state: %s", err)
+		err := d.Set("conditional_forwarder_zone", conditionalForwarderZoneInterface)
+		if err != nil {
+			return fmt.Errorf("error storing 'conditional_forwarder_zone' into state: %s", err)
+		}
 	}
 
 	return nil

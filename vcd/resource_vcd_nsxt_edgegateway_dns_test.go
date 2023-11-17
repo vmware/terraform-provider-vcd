@@ -36,13 +36,17 @@ func TestAccVcdNsxtEdgegatewayDns(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
+	params["FuncName"] = t.Name() + "step0"
+	configText0 := templateFill(testAccVcdNsxtEdgegatewayDnsStep0, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s\n", configText0)
+
 	params["FuncName"] = t.Name() + "step1"
 	configText1 := templateFill(testAccVcdNsxtEdgegatewayDnsStep1, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s\n", configText1)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s\n", configText1)
 
 	params["FuncName"] = t.Name() + "step2"
 	configText2 := templateFill(testAccVcdNsxtEdgegatewayDnsStep2, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s\n", configText2)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s\n", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -61,6 +65,10 @@ func TestAccVcdNsxtEdgegatewayDns(t *testing.T) {
 			testAccCheckNsxtEdgegatewayDnsDestroy(testConfig.Nsxt.VdcGroup, params["VdcGroupEdgeGw"].(string)),
 		),
 		Steps: []resource.TestStep{
+			{
+				Config: configText0,
+				Check:  resource.TestCheckResourceAttr(datasourceName, "enabled", "false"),
+			},
 			{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -203,6 +211,13 @@ data "vcd_nsxt_edgegateway" "{{.EdgeGw}}" {
 data "vcd_nsxt_edgegateway" "{{.VdcGroupEdgeGw}}" {
   owner_id = data.vcd_vdc_group.{{.VdcGroup}}.id
   name     = "{{.VdcGroupEdgeGw}}"
+}
+`
+
+const testAccVcdNsxtEdgegatewayDnsStep0 = testAccVcdNsxtEdgegatewayDnsPrereqs + `
+# skip-binary-test: check for reading an empty DNS config
+data "vcd_nsxt_edgegateway_dns" "data_{{.DnsConfig}}" {
+  edge_gateway_id = data.vcd_nsxt_edgegateway.{{.EdgeGw}}.id
 }
 `
 
