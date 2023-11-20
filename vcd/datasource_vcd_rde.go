@@ -52,6 +52,7 @@ func datasourceVcdRde() *schema.Resource {
 				Description: "Specifies whether the entity is correctly resolved or not. One of PRE_CREATED, RESOLVED or RESOLUTION_ERROR",
 				Computed:    true,
 			},
+			"metadata_entry": openApiMetadataEntryDatasourceSchema("Runtime Defined Entity"),
 		},
 	}
 }

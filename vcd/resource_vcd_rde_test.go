@@ -536,3 +536,30 @@ func manipulateRde(t *testing.T, vcdClient *VCDClient, rdeId string) {
 		t.Fatalf("could not update RDE with ID '%s': %s", rdeId, err)
 	}
 }
+
+// TestAccVcdRdeMetadata tests metadata CRUD on Runtime Defined Entities.
+func TestAccVcdRdeMetadata(t *testing.T) {
+	skipIfNotSysAdmin(t)
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
+		t.Skip("skipped as metadata for vcd_rde is only supported since VCD 10.4.0")
+	}
+	testOpenApiMetadataEntryCRUD(t,
+		testAccCheckVcdRdeMetadata, "vcd_rde.test-rde",
+		"", "",
+		StringMap{})
+}
+
+const testAccCheckVcdRdeMetadata = `
+data "vcd_rde_type" "rde_type" {
+  vendor  = "vmware"
+  nss     = "tkgcluster"
+  version = "1.0.0"
+}
+resource "vcd_rde" "test-rde" {
+  rde_type_id  = data.vcd_rde_type.rde_type.id
+  name         = "{{.Name}}"
+  input_entity = "{\"foo\":\"bar\"}" # We are just testing metadata so we don't care about entity state
+  {{.Metadata}}
+}
+`

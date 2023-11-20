@@ -131,6 +131,7 @@ The following arguments are supported:
   The referenced JSON will be downloaded on every read operation, and it will break Terraform operations if these contents are no longer present on the remote site.
   If you can't guarantee this, it is safer to use `input_entity`.
 * `external_id` - (Optional) An external input_entity's ID that this Runtime Defined Entity may have a relation to.
+* `metadata_entry` - (Optional; *v3.11+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 
 ## Attribute Reference
 
@@ -185,6 +186,43 @@ should have `resolve=false` to avoid being resolved).
 In this last scenario, it is advisable to mark `resolve_on_removal=true` so Terraform can delete the RDE even if it was not
 resolved by anyone.
 
+<a id="metadata"></a>
+## Metadata
+
+The `metadata_entry` is a set of metadata entries that have the following structure:
+
+* `key` - (Required) Key of this metadata entry.
+* `value` - (Required) Value of this metadata entry.
+* `type` - (Optional) Type of this metadata entry. One of: `StringEntry`, `NumberEntry`, `BoolEntry`. Defaults to `StringEntry`.
+* `domain` - (Optional) Only meaningful for providers. Allows them to share entries with their tenants. Currently, accepted values are: `TENANT`, `PROVIDER`. Defaults to `TENANT`.
+* `readonly` - (Optional) `true` if the metadata entry is read only. Defaults to `false`.
+* `id` - (Computed) Read-only identifier for this metadata entry.
+
+Example:
+
+```hcl
+resource "vcd_rde" "my-rde" {
+  org         = "my-org"
+  rde_type_id = data.vcd_rde_type.my-type.id
+  name        = "My custom RDE"
+  resolve     = true
+  entity_url  = "https://just.an-example.com/entities/custom-rde.json"
+  metadata_entry {
+    key      = "foo"
+    type     = "StringEntry"
+    value    = "bar"
+    domain   = "TENANT"
+    readonly = true
+  }
+  metadata_entry {
+    key      = "bar"
+    type     = "NumberEntry"
+    value    = "42"
+    domain   = "TENANT"
+    readonly = true
+  }
+}
+```
 
 ## Importing
 
