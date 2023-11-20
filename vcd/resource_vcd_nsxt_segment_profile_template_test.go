@@ -4,7 +4,6 @@ package vcd
 
 import (
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -73,17 +72,17 @@ func TestAccVcdNsxtSegmentProfileTemplate(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.empty", "segment_security_profile_id", ""),
 
 					resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.complete", "name", t.Name()+"-complete"),
-					resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "ip_discovery_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "mac_discovery_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "spoof_guard_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "qos_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "segment_security_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "ip_discovery_profile_id", getUuidRegex("", "$")),
+					resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "mac_discovery_profile_id", getUuidRegex("", "$")),
+					resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "spoof_guard_profile_id", getUuidRegex("", "$")),
+					resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "qos_profile_id", getUuidRegex("", "$")),
+					resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.complete", "segment_security_profile_id", getUuidRegex("", "$")),
 
 					resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "name", t.Name()+"-half-complete"),
 					resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "description", ""),
-					resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "ip_discovery_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "mac_discovery_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "spoof_guard_profile_id", regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "ip_discovery_profile_id", getUuidRegex("", "$")),
+					resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "mac_discovery_profile_id", getUuidRegex("", "$")),
+					resource.TestMatchResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "spoof_guard_profile_id", getUuidRegex("", "$")),
 					resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "qos_profile_id", ""),
 					resource.TestCheckResourceAttr("vcd_nsxt_segment_profile_template.half-complete", "segment_security_profile_id", ""),
 				),

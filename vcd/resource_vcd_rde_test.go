@@ -117,8 +117,8 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeFromFile, "rde_type_id", rdeType, "id"),
 					resource.TestMatchResourceAttr(rdeFromFile, "computed_entity", regexp.MustCompile("{.*\"stringValue\".*}")),
 					resource.TestCheckResourceAttr(rdeFromFile, "state", "PRE_CREATED"),
-					resource.TestMatchResourceAttr(rdeFromFile, "org_id", regexp.MustCompile(`urn:vcloud:org:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestMatchResourceAttr(rdeFromFile, "owner_user_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(rdeFromFile, "org_id", getUuidRegex("urn:vcloud:org:", "$")),
+					resource.TestMatchResourceAttr(rdeFromFile, "owner_user_id", getUuidRegex("urn:vcloud:user:", "$")),
 					resource.TestCheckResourceAttr(rdeFromFile, "entity_in_sync", "true"),
 
 					resource.TestMatchResourceAttr(rdeFromUrl, "id", regexp.MustCompile(rdeUrnRegexp)),
@@ -145,7 +145,7 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeTenant, "computed_entity", rdeFromFile, "computed_entity"),
 					resource.TestCheckResourceAttr(rdeTenant, "state", "PRE_CREATED"),
 					resource.TestCheckResourceAttrPair(rdeTenant, "org_id", rdeFromFile, "org_id"),
-					resource.TestMatchResourceAttr(rdeTenant, "owner_user_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)), // Owner is different in this case
+					resource.TestMatchResourceAttr(rdeTenant, "owner_user_id", getUuidRegex("urn:vcloud:user:", "$")), // Owner is different in this case
 					resource.TestCheckResourceAttr(rdeTenant, "entity_in_sync", "true"),
 				),
 			},
