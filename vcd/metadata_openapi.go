@@ -9,7 +9,7 @@ import (
 )
 
 // openApiMetadataEntryDatasourceSchema returns the schema associated to the OpenAPI metadata_entry for a given data source.
-// The description will refer to the object name given as input.
+// The description will refer to the object type given as input.
 func openApiMetadataEntryDatasourceSchema(resourceType string) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeSet,
@@ -25,12 +25,12 @@ func openApiMetadataEntryDatasourceSchema(resourceType string) *schema.Schema {
 				"key": {
 					Type:        schema.TypeString,
 					Computed:    true,
-					Description: "Key of this metadata entry. Required if the metadata entry is not empty",
+					Description: "Key of this metadata entry",
 				},
 				"value": {
 					Type:        schema.TypeString,
 					Computed:    true,
-					Description: "Value of this metadata entry. Required if the metadata entry is not empty",
+					Description: "Value of this metadata entry",
 				},
 				"type": {
 					Type:        schema.TypeString,
