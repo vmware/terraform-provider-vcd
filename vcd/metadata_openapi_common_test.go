@@ -16,20 +16,6 @@ import (
 // The HCL template requires {{.Name}} and {{.Metadata}} fields, and the usual {{.Org}} and {{.Vdc}}.
 // You can add extra parameters as well to inject in the given HCL template, or override these mentioned ones.
 // The data source HCL is always concatenated to the resource after creation, and it's skipped on binary tests.
-//
-// Tests:
-// - Step 1:  Create the resource with no metadata
-// - Step 2:  Taint and re-create with 4 metadata entries, 1 for string, number, bool, date with GENERAL domain (is_system = false)
-// - Step 3:  Add a data source
-// - Step 4:  Delete 1 metadata entry, the bool one
-// - Step 5:  Update the string and date metadata values
-// - Step 6:  Delete all of them
-// - Step 7:  (Sysadmin only) Create 2 entries with is_system=true (readonly and private user_access)
-// - Step 8:  (Sysadmin only) Update the hidden one
-// - Step 9:  (Sysadmin only) Delete all of them
-// - Step 10:  Check a malformed metadata entry
-// - Step 11: (Org user only) Check that specifying an is_system metadata entry with a tenant user gives an error
-// - Step 12+: Some extra tests for deprecated `metadata` attribute
 func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, extraParams StringMap) {
 	preTestChecks(t)
 	var params = StringMap{
