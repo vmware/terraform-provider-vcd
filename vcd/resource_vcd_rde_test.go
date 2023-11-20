@@ -546,7 +546,7 @@ func TestAccVcdRdeMetadata(t *testing.T) {
 	}
 	testOpenApiMetadataEntryCRUD(t,
 		testAccCheckVcdRdeMetadata, "vcd_rde.test-rde",
-		"", "",
+		testAccCheckVcdRdeMetadataDatasource, "data.vcd_rde.test-rde-ds",
 		StringMap{})
 }
 
@@ -557,9 +557,19 @@ data "vcd_rde_type" "rde_type" {
   version = "1.0.0"
 }
 resource "vcd_rde" "test-rde" {
+  org          = "System"
   rde_type_id  = data.vcd_rde_type.rde_type.id
   name         = "{{.Name}}"
   input_entity = "{\"foo\":\"bar\"}" # We are just testing metadata so we don't care about entity state
+  resolve      = true
   {{.Metadata}}
+}
+`
+
+const testAccCheckVcdRdeMetadataDatasource = `
+data "vcd_rde" "test-rde-ds" {
+  org         = "System"
+  rde_type_id = vcd_rde.test-rde.rde_type_id
+  name        = vcd_rde.test-rde.name
 }
 `
