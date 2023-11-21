@@ -90,7 +90,15 @@ var alsoDelete = entityList{
 var isTest = regexp.MustCompile(`^[Tt]est`)
 
 // alwaysShow lists the resources that will always be shown
-var alwaysShow = []string{"vcd_provider_vdc", "vcd_org", "vcd_catalog", "vcd_org_vdc", "vcd_nsxt_alb_controller", "vcd_nsxt_segment_profile_template"}
+var alwaysShow = []string{
+	"vcd_provider_vdc",
+	"vcd_network_pool",
+	"vcd_org",
+	"vcd_catalog",
+	"vcd_org_vdc",
+	"vcd_nsxt_alb_controller",
+	"vcd_nsxt_segment_profile_template",
+}
 
 func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	if verbose {
@@ -138,6 +146,29 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			}
 		}
 	}
+	// --------------------------------------------------------------
+	// Network Pool
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		networkPools, err := govcdClient.QueryNetworkPools()
+		if err != nil {
+			return fmt.Errorf("error retrieving network pools: %s", err)
+		}
+		for _, np := range networkPools {
+			networkPool, err := govcdClient.GetNetworkPoolByName(np.Name)
+			if err != nil {
+				return fmt.Errorf("error retrieving network pool '%s': %s", np.Name, err)
+			}
+			tobeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, np.Name, "vcd_network_pool", 0, verbose)
+			if tobeDeleted {
+				fmt.Printf("\t REMOVING network pool %s\n", np.Name)
+				err := networkPool.Delete()
+				if err != nil {
+					return fmt.Errorf("error deleting network pool '%s': %s", np.Name, err)
+				}
+			}
+		}
+	}
 	// traverses the VCD hierarchy, starting at the Org level
 	orgs, err := govcdClient.GetOrgList()
 	if err != nil {
@@ -151,19 +182,40 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		if err != nil {
 			return fmt.Errorf("error retrieving org %s: %s", orgRef.Name, err)
 		}
+		adminOrg, err := govcdClient.GetAdminOrgById("urn:vcloud:org:" + extractUuid(orgRef.HREF))
+		if err != nil {
+			return fmt.Errorf("error retrieving AdminOrg %s: %s", orgRef.Name, err)
+		}
 		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, orgRef.Name, "vcd_org", 0, verbose)
 		if toBeDeleted {
 			fmt.Printf("\t REMOVING org %s\n", org.Org.Name)
-			adminOrg, err := govcdClient.GetAdminOrgById("urn:vcloud:org:" + extractUuid(orgRef.HREF))
-			if err != nil {
-				return fmt.Errorf("error retrieving org %s: %s", orgRef.Name, err)
-			}
+
 			err = adminOrg.Delete(true, true)
 			if err != nil {
 				return fmt.Errorf("error removing org %s: %s", orgRef.Name, err)
 			}
 			continue
 		}
+
+		// --------------------------------------------------------------
+		// users
+		// --------------------------------------------------------------
+		if adminOrg.AdminOrg.Users != nil {
+			for _, userRef := range adminOrg.AdminOrg.Users.User {
+				toBeDeleted = shouldDeleteEntity(alsoDelete, doNotDelete, userRef.Name, "vcd_org_user", 1, verbose)
+				if toBeDeleted {
+					user, err := adminOrg.GetUserByHref(userRef.HREF)
+					if err != nil {
+						return fmt.Errorf("error retrieving user %s: %s", userRef.Name, err)
+					}
+					err = user.Delete(false)
+					if err != nil {
+						return fmt.Errorf("error deleting user %s: %s", userRef.Name, err)
+					}
+				}
+			}
+		}
+
 		// --------------------------------------------------------------
 		// catalogs
 		// --------------------------------------------------------------
@@ -173,7 +225,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			return fmt.Errorf("error retrieving catalog list: %s", err)
 		}
 		for _, catRec := range catalogs {
-			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, catRec.Name, "catalog", 1, verbose)
+			toBeDeleted = shouldDeleteEntity(alsoDelete, doNotDelete, catRec.Name, "catalog", 1, verbose)
 			catalog, err := org.GetCatalogByHref(catRec.HREF)
 			if err != nil {
 				return fmt.Errorf("error retrieving catalog '%s': %s", catRec.Name, err)
@@ -227,7 +279,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		// --------------------------------------------------------------
 		// VDC Groups
 		// --------------------------------------------------------------
-		adminOrg, err := govcdClient.GetAdminOrgById("urn:vcloud:org:" + extractUuid(orgRef.HREF))
+		adminOrg, err = govcdClient.GetAdminOrgById("urn:vcloud:org:" + extractUuid(orgRef.HREF))
 		if err != nil {
 			return fmt.Errorf("error retrieving org %s: %s", orgRef.Name, err)
 		}

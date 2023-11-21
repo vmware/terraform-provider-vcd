@@ -64,6 +64,10 @@ The following arguments are supported:
 * `metadata_entry` - A set of metadata entries assigned to the organization. See [Metadata](#metadata) section for details.
 * `vapp_lease` - (*v2.7+*) Defines lease parameters for vApps created in this organization. See [vApp Lease](#vapp-lease) below for details. 
 * `vapp_template_lease` - (*v2.7+*) Defines lease parameters for vApp templates created in this organization. See [vApp Template Lease](#vapp-template-lease) below for details.
+* `number_of_catalogs` - (*v3.11+*) Number of catalogs owned or shared, available to this organization.
+* `list_of_catalogs` - (*v3.11+*) List of catalogs (sorted alphabetically), owned or shared, available to this organization.
+* `number_of_vdcs` - (*v3.11+*) Number of VDCs owned or shared, available to this organization.
+* `list_of_vdcs` - (*v3.11+*) List of VDCs (sorted alphabetically), owned or shared, available to this organization.
 
 <a id="vapp-lease"></a>
 ## vApp Lease

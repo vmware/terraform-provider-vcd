@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"net/url"
 	"os"
 	"regexp"
 	"sort"
@@ -642,6 +643,169 @@ func getEdgeGatewayList(d *schema.ResourceData, meta interface{}, resType string
 	return genericResourceList(d, resType, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
+func distributedSwitchList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	vCenterName := d.Get("parent").(string)
+	if vCenterName == "" {
+		return nil, fmt.Errorf("the 'parent' field must contain the vCenter name to retrieve the distributed switches")
+	}
+
+	vCenter, err := client.GetVCenterByName(vCenterName)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving vCenter '%s': %s", vCenterName, err)
+	}
+
+	dSwitches, err := client.GetAllVcenterDistributedSwitches(vCenter.VSphereVCenter.VcId, nil)
+
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving distributed switchs for vCenter '%s': %s", vCenterName, err)
+	}
+
+	var items []resourceRef
+	for _, dsw := range dSwitches {
+		items = append(items, resourceRef{
+			name: dsw.BackingRef.Name,
+			id:   dsw.BackingRef.ID,
+		})
+	}
+	return genericResourceList(d, "vcd_distributed_switch", []string{vCenter.VSphereVCenter.Name}, items)
+}
+
+func transportZoneList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	nsxtManagerName := d.Get("parent").(string)
+	if nsxtManagerName == "" {
+		return nil, fmt.Errorf("the 'parent' field must contain the NSX-T manager name to retrieve the transport zones")
+	}
+
+	managers, err := client.QueryNsxtManagerByName(nsxtManagerName)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving NSX-T manager '%s': %s", nsxtManagerName, err)
+	}
+	if len(managers) == 0 {
+		return nil, fmt.Errorf("no NSX-T manager '%s' found", nsxtManagerName)
+	}
+	if len(managers) > 1 {
+		return nil, fmt.Errorf("more than one NSX-T manager found with name '%s'", nsxtManagerName)
+	}
+
+	manager := managers[0]
+	managerId := "urn:vcloud:nsxtmanager:" + extractUuid(manager.HREF)
+	transportZones, err := client.GetAllNsxtTransportZones(managerId, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving transport zones for NSX-T manager '%s': %s", nsxtManagerName, err)
+	}
+
+	var items []resourceRef
+	for _, tz := range transportZones {
+		if tz.AlreadyImported {
+			continue
+		}
+		items = append(items, resourceRef{
+			name: tz.Name,
+			id:   tz.Id,
+		})
+	}
+	return genericResourceList(d, "vcd_nsxt_transport_zone", []string{manager.Name}, items)
+}
+
+func importablePortGroupList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	vCenterName := d.Get("parent").(string)
+	if vCenterName == "" {
+		return nil, fmt.Errorf("the 'parent' field must contain the vCenter name to retrieve the distributed switches")
+	}
+
+	vCenter, err := client.GetVCenterByName(vCenterName)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving vCenter '%s': %s", vCenterName, err)
+	}
+	var params = make(url.Values)
+	params.Set("filter", fmt.Sprintf("virtualCenter.id==%s", vCenter.VSphereVCenter.VcId))
+	pgroups, err := client.GetAllVcenterImportableDvpgs(params)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving importable port groups for vCenter '%s': %s", vCenterName, err)
+	}
+
+	var items []resourceRef
+	for _, pg := range pgroups {
+		items = append(items, resourceRef{
+			name: pg.VcenterImportableDvpg.BackingRef.Name,
+			id:   pg.VcenterImportableDvpg.BackingRef.ID,
+		})
+	}
+	return genericResourceList(d, "vcd_importable_port_group", []string{vCenter.VSphereVCenter.Name}, items)
+}
+
+func networkPoolList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	networkPools, err := client.QueryNetworkPools()
+	if err != nil {
+		return list, err
+	}
+
+	var items []resourceRef
+	for _, np := range networkPools {
+
+		items = append(items, resourceRef{
+			name: np.Name,
+			id:   extractUuid(np.HREF),
+			href: np.HREF,
+		})
+	}
+	return genericResourceList(d, "vcd_network_pool", nil, items)
+}
+
+func nsxtManagerList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	managers, err := client.QueryNsxtManagers()
+	if err != nil {
+		return list, err
+	}
+
+	var items []resourceRef
+	for _, mgr := range managers {
+
+		items = append(items, resourceRef{
+			name: mgr.Name,
+			id:   extractUuid(mgr.HREF),
+			href: mgr.HREF,
+		})
+
+	}
+	return genericResourceList(d, "vcd_nsxt_manager", nil, items)
+}
+
+func vcenterList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	vcenters, err := client.GetAllVCenters(nil)
+	if err != nil {
+		return list, err
+	}
+
+	var items []resourceRef
+	for _, vc := range vcenters {
+
+		href, err := vc.GetVimServerUrl()
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, resourceRef{
+			name: vc.VSphereVCenter.Name,
+			id:   vc.VSphereVCenter.VcId,
+			href: href,
+		})
+
+	}
+	return genericResourceList(d, "vcd_vcenter", nil, items)
+}
+
 func getNsxtEdgeGatewayList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
@@ -1124,6 +1288,18 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 		list, err = getOrgList(d, meta, requested)
 	case "vcd_provider_vdc", "provider_vdc":
 		list, err = getPvdcList(d, meta)
+	case "vcd_distributed_switch":
+		list, err = distributedSwitchList(d, meta)
+	case "vcd_nsxt_transport_zone":
+		list, err = transportZoneList(d, meta)
+	case "vcd_importable_port_group":
+		list, err = importablePortGroupList(d, meta)
+	case "vcd_network_pool":
+		list, err = networkPoolList(d, meta)
+	case "vcd_vcenter":
+		list, err = vcenterList(d, meta)
+	case "vcd_nsxt_manager":
+		list, err = nsxtManagerList(d, meta)
 	case "vcd_external_network", "external_network", "external_networks":
 		list, err = externalNetworkList(d, meta)
 	case "vcd_org_vdc", "vdc", "vdcs":

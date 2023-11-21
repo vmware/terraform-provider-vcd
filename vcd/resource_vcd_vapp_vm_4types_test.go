@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -498,6 +499,9 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "expose_hardware_virtualization", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "metadata.vm1", "VM Metadata"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "metadata.vm2", "VM Metadata2"),
+					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm.template-vm", "inherited_metadata.vm.origin.id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
+					testCheckResourceAttrSetWhenVersionMatches("vcd_vapp_vm.template-vm", "inherited_metadata.vm.origin.name", ">= 38.1"),
+					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm.template-vm", "inherited_metadata.vm.origin.type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", `guest_properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", `guest_properties.guest.another.subkey`, "another-value"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.#", "0"),
@@ -535,6 +539,9 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "expose_hardware_virtualization", "true"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "metadata.vm1", "VM Metadata"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "metadata.vm2", "VM Metadata2"),
+					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm.template-vm", "inherited_metadata.vm.origin.id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
+					testCheckResourceAttrSetWhenVersionMatches("vcd_vapp_vm.template-vm", "inherited_metadata.vm.origin.name", ">= 38.1"),
+					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm.template-vm", "inherited_metadata.vm.origin.type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", `guest_properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", `guest_properties.guest.another.subkey`, "another-value"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.#", "0"),
