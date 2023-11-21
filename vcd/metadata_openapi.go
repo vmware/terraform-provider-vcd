@@ -5,6 +5,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"reflect"
 	"strconv"
 )
 
@@ -188,7 +189,7 @@ func getMetadataOperations(oldMetadata []interface{}, newMetadata []interface{})
 	metadataToUpdate := map[string]types.OpenApiMetadataEntry{}
 	for newKey, newEntry := range newMetadataEntries {
 		if oldEntry, ok := oldMetadataEntries[newKey]; ok {
-			if oldEntry.KeyValue.Value == newEntry.KeyValue.Value.Value {
+			if reflect.DeepEqual(oldEntry, newEntry) {
 				continue
 			}
 			metadataToUpdate[newKey] = newEntry
@@ -197,7 +198,9 @@ func getMetadataOperations(oldMetadata []interface{}, newMetadata []interface{})
 
 	var metadataToCreate []types.OpenApiMetadataEntry
 	for newKey, newEntry := range newMetadataEntries {
-		if _, ok := metadataToUpdate[newKey]; !ok {
+		_, alreadyExisting := oldMetadataEntries[newKey]
+		_, beingUpdated := metadataToUpdate[newKey]
+		if !alreadyExisting && !beingUpdated {
 			metadataToCreate = append(metadataToCreate, newEntry)
 		}
 	}
