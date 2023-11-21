@@ -261,7 +261,6 @@ func updateOpenApiMetadataInState(d *schema.ResourceData, receiverObject openApi
 		case types.OpenApiMetadataBooleanEntry:
 			value = fmt.Sprintf("%t", metadataEntryFromVcd.KeyValue.Value.Value.(bool))
 		case types.OpenApiMetadataNumberEntry:
-			// OpenAPI doesn't
 			value = fmt.Sprintf("%.0f", metadataEntryFromVcd.KeyValue.Value.Value.(float64))
 		case types.OpenApiMetadataStringEntry:
 			value = metadataEntryFromVcd.KeyValue.Value.Value.(string)
