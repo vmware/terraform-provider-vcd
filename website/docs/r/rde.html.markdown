@@ -196,6 +196,8 @@ The `metadata_entry` is a set of metadata entries that have the following struct
 * `type` - (Optional) Type of this metadata entry. One of: `StringEntry`, `NumberEntry`, `BoolEntry`. Defaults to `StringEntry`.
 * `domain` - (Optional) Only meaningful for providers. Allows them to share entries with their tenants. Currently, accepted values are: `TENANT`, `PROVIDER`. Defaults to `TENANT`.
 * `readonly` - (Optional) `true` if the metadata entry is read only. Defaults to `false`.
+* `persistent` - (Optional) `true` if the metadata is persistent. Persistent entries can be copied over on some entity operation
+  (e.g. Creating a copy of a VDC, capturing a vApp to a template, instantiating a catalog item as a VM...). Defaults to `false`.
 * `id` - (Computed) Read-only identifier for this metadata entry.
 
 Example:

@@ -52,6 +52,11 @@ func openApiMetadataEntryDatasourceSchema(resourceType string) *schema.Schema {
 					Computed:    true,
 					Description: "Namespace of the metadata entry",
 				},
+				"persistent": {
+					Type:        schema.TypeBool,
+					Computed:    true,
+					Description: "Persistent metadata entries can be copied over on some entity operation",
+				},
 			},
 		},
 	}
@@ -105,6 +110,11 @@ func openApiMetadataEntryResourceSchema(resourceType string) *schema.Schema {
 					Type:        schema.TypeString,
 					Optional:    true,
 					Description: "Namespace of the metadata entry",
+				},
+				"persistent": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Description: "Persistent metadata entries can be copied over on some entity operation",
 				},
 			},
 		},
@@ -212,13 +222,14 @@ func getOpenApiMetadataEntryMap(metadataAttribute []interface{}) (map[string]typ
 		}
 
 		metadataMap[metadataEntry["key"].(string)] = types.OpenApiMetadataEntry{
-			IsReadOnly: metadataEntry["readonly"].(bool), // Should be always populated as it has a default value
+			IsReadOnly:   metadataEntry["readonly"].(bool),   // It is always populated as it has a default value
+			IsPersistent: metadataEntry["persistent"].(bool), // It is always populated as it has a default value
 			KeyValue: types.OpenApiMetadataKeyValue{
-				Domain: metadataEntry["domain"].(string), // Should be always populated as it has a default value
-				Key:    metadataEntry["key"].(string),    // Should be always populated as it is required
+				Domain: metadataEntry["domain"].(string), // It is always populated as it has a default value
+				Key:    metadataEntry["key"].(string),    // It is always populated as it is required
 				Value: types.OpenApiMetadataTypedValue{
 					Value: value,
-					Type:  metadataEntry["type"].(string), // Should be always populated as it has a default value
+					Type:  metadataEntry["type"].(string), // It is always populated as it has a default value
 				},
 				Namespace: namespace,
 			},
@@ -256,13 +267,14 @@ func updateOpenApiMetadataInState(d *schema.ResourceData, receiverObject openApi
 		}
 
 		metadataEntry := map[string]interface{}{
-			"id":        metadataEntryFromVcd.ID,
-			"key":       metadataEntryFromVcd.KeyValue.Key,
-			"readonly":  metadataEntryFromVcd.IsReadOnly,
-			"domain":    metadataEntryFromVcd.KeyValue.Domain,
-			"namespace": metadataEntryFromVcd.KeyValue.Namespace,
-			"type":      metadataEntryFromVcd.KeyValue.Value.Type,
-			"value":     value,
+			"id":         metadataEntryFromVcd.ID,
+			"key":        metadataEntryFromVcd.KeyValue.Key,
+			"readonly":   metadataEntryFromVcd.IsReadOnly,
+			"domain":     metadataEntryFromVcd.KeyValue.Domain,
+			"namespace":  metadataEntryFromVcd.KeyValue.Namespace,
+			"type":       metadataEntryFromVcd.KeyValue.Value.Type,
+			"value":      value,
+			"persistent": metadataEntryFromVcd.IsPersistent,
 		}
 		metadata[i] = metadataEntry
 	}
