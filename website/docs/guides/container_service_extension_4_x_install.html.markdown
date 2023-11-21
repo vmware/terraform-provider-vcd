@@ -38,7 +38,7 @@ The installation process is split in two independent steps that must be run one 
   [RDE Interfaces][rde_interface], [RDE Types][rde_type], [RDE Interface Behaviors][rde_interface_behavior] and the [RDE][rde] that
   are required for the CSE Server to work, in addition to a new [Role][role], new [VM Sizing Policies][sizing] and a CSE Administrator [User][user] that will be
   referenced later on in the second step.
-* The second step will configure the remaining resources, like [Organizations][org], [VDCs][vdc], [Catalogs and OVAs][catalog], Networks, and the CSE Server [VM][vm].
+* The second step configures the remaining resources, like [Organizations][org], [VDCs][vdc], [Catalogs and OVAs][catalog], Networks, and the CSE Server [VM][vm].
 
 The reason for such as split is that the CSE Administrator created during the first step is used to configure a new `provider` block in
 the second one, so that it can provision a valid [API token][api_token]. This operation must be done separately as a `provider` block
