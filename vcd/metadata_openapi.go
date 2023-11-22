@@ -162,7 +162,7 @@ func createOrUpdateOpenApiMetadataEntryInVcd(d *schema.ResourceData, resource op
 		}
 		err = resource.DeleteMetadata(namespace, key)
 		if err != nil {
-			return fmt.Errorf("error deleting metadata with %s: %s", namespacedMetadataKey, err)
+			return fmt.Errorf("error deleting metadata with namespace '%s' and key '%s': %s", namespace, key, err)
 		}
 	}
 
@@ -173,7 +173,7 @@ func createOrUpdateOpenApiMetadataEntryInVcd(d *schema.ResourceData, resource op
 		}
 		_, err = resource.UpdateMetadata(namespace, key, metadataEntry.KeyValue.Value.Value)
 		if err != nil {
-			return fmt.Errorf("error updating metadata with %s: %s", namespacedMetadataKey, err)
+			return fmt.Errorf("error updating metadata with namespace '%s' and key '%s': %s", namespace, key, err)
 		}
 	}
 
