@@ -145,7 +145,7 @@ func createOrUpdateOpenApiMetadataEntryInVcd(d *schema.ResourceData, resource op
 		return fmt.Errorf("could not calculate the needed metadata operations: %s", err)
 	}
 
-	// getMetadataOperations retrieves keys and namespaces merged with a separator, this functions
+	// getMetadataOperations retrieves keys and namespaces merged with a separator, this function
 	// splits the values in two: namespace and key, separately.
 	getKeyAndNamespace := func(namespacedKey string) (string, string, error) {
 		r := strings.Split(namespacedKey, "%%%") // Separator used by getOpenApiMetadataEntryMap
