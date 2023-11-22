@@ -249,7 +249,9 @@ func getOpenApiMetadataEntryMap(metadataAttribute []interface{}) (map[string]typ
 			return nil, fmt.Errorf("error parsing the 'value' attribute '%s' from state: %s", metadataEntry["value"].(string), err)
 		}
 
-		// In OpenAPI, metadata is namespaced, hence it is possible to have same keys but in different namespaces
+		// In OpenAPI, metadata is namespaced, hence it is possible to have same keys but in different namespaces.
+		// For that reason, we use "namespace%%%key" to unequivocally identify the metadata entries (notice that %% is needed in
+		// Sprintf to print a single '%').
 		namespacedKey := fmt.Sprintf("%s%%%%%%%s", namespace, metadataEntry["key"].(string))
 		if _, ok := metadataMap[namespacedKey]; ok {
 			return nil, fmt.Errorf("metadata entry with namespace '%s' and key '%s' already exists", namespace, metadataEntry["key"])
