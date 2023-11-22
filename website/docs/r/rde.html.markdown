@@ -225,11 +225,11 @@ resource "vcd_rde" "my-rde" {
     readonly = true
   }
   metadata_entry {
-    key       = "bar"
-    type      = "NumberEntry"
-    value     = "42"
-    domain    = "TENANT"
-    permanent = true
+    key        = "bar"
+    type       = "NumberEntry"
+    value      = "42"
+    domain     = "TENANT"
+    persistent = true
   }
 }
 ```
