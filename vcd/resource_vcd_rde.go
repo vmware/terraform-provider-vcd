@@ -234,12 +234,9 @@ func resourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interfac
 		dSet(d, "entity_in_sync", areJsonEqual)
 	}
 
-	// Metadata is only available since API v37.0
-	if vcdClient.Client.APIVCDMaxVersionIs(">= 37.0") {
-		err = updateOpenApiMetadataInState(d, rde)
-		if err != nil {
-			return diag.Errorf("could not set metadata for the Runtime Defined Entity: %s", err)
-		}
+	err = updateOpenApiMetadataInState(d, rde)
+	if err != nil {
+		return diag.Errorf("could not set metadata for the Runtime Defined Entity: %s", err)
 	}
 
 	d.SetId(rde.DefinedEntity.ID)
