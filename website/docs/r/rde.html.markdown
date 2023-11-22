@@ -189,6 +189,10 @@ resolved by anyone.
 <a id="metadata"></a>
 ## Metadata
 
+-> Due to Terraform limitations, `terraform plan` shows that all metadata entries will be deleted and re-created when performing
+a change in of one or more of them, but applying it will respect every non-changed metadata entry by not performing any modification on
+these.
+
 The `metadata_entry` is a set of metadata entries that have the following structure:
 
 * `key` - (Required) Key of this metadata entry.
@@ -217,11 +221,11 @@ resource "vcd_rde" "my-rde" {
     readonly = true
   }
   metadata_entry {
-    key      = "bar"
-    type     = "NumberEntry"
-    value    = "42"
-    domain   = "TENANT"
-    readonly = true
+    key       = "bar"
+    type      = "NumberEntry"
+    value     = "42"
+    domain    = "TENANT"
+    permanent = true
   }
 }
 ```
