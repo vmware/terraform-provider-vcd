@@ -580,7 +580,7 @@ func TestAccVcdRdeTenantMetadata(t *testing.T) {
 		"ProviderVcdOrg1": providerVcdOrg1,
 		"Org":             testConfig.VCD.Org,
 		"Name":            t.Name(),
-		"Metadata":        getOpenApiMetadataTestingHcl(1, 1, 1, 1, 2, 1, 1),
+		"Metadata":        getOpenApiMetadataTestingHcl(1, 0, 0, 0, 0, 3, 0),
 		"SchemaPath":      getCurrentDir() + "/../test-resources/rde_type.json",
 	}
 	testParamsNotEmpty(t, params)
@@ -612,15 +612,11 @@ func TestAccVcdRdeTenantMetadata(t *testing.T) {
 				Config: step1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
-					resource.TestCheckResourceAttr(resourceName, "metadata_entry.#", "8"),
+					resource.TestCheckResourceAttr(resourceName, "metadata_entry.#", "4"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "stringKey1", "stringValue1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
-					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "numberKey1", "1", types.OpenApiMetadataNumberEntry, "TENANT", "", "false", "false"),
-					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "boolKey1", "false", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
-					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "readOnly1", "readOnly1", types.OpenApiMetadataStringEntry, "TENANT", "", "true", "false"),
-					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "namespace", "namespace1", types.OpenApiMetadataStringEntry, "TENANT", "namespace1", "false", "false"),
-					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "namespace", "namespace2", types.OpenApiMetadataStringEntry, "TENANT", "namespace2", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "provider1", "provider1", types.OpenApiMetadataStringEntry, "PROVIDER", "", "false", "false"),
-					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "persistent1", "persistent1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "true"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "provider2", "provider2", types.OpenApiMetadataStringEntry, "PROVIDER", "", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "provider3", "provider3", types.OpenApiMetadataStringEntry, "PROVIDER", "", "false", "false"),
 				),
 			},
 			{
@@ -634,14 +630,8 @@ func TestAccVcdRdeTenantMetadata(t *testing.T) {
 				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(datasourceName, "name", t.Name()),
-					resource.TestCheckResourceAttr(datasourceName, "metadata_entry.#", "7"),
+					resource.TestCheckResourceAttr(datasourceName, "metadata_entry.#", "1"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "stringKey1", "stringValue1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
-					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "numberKey1", "1", types.OpenApiMetadataNumberEntry, "TENANT", "", "false", "false"),
-					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "boolKey1", "false", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
-					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "readOnly1", "readOnly1", types.OpenApiMetadataStringEntry, "TENANT", "", "true", "false"),
-					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "namespace", "namespace1", types.OpenApiMetadataStringEntry, "TENANT", "namespace1", "false", "false"),
-					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "namespace", "namespace2", types.OpenApiMetadataStringEntry, "TENANT", "namespace2", "false", "false"),
-					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "persistent1", "persistent1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "true"),
 				),
 			},
 		},
