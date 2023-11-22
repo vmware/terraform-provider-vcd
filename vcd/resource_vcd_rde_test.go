@@ -541,8 +541,8 @@ func manipulateRde(t *testing.T, vcdClient *VCDClient, rdeId string) {
 func TestAccVcdRdeMetadata(t *testing.T) {
 	skipIfNotSysAdmin(t)
 	testOpenApiMetadataEntryCRUD(t,
-		testAccCheckVcdRdeMetadata, "vcd_rde.test-rde",
-		testAccCheckVcdRdeMetadataDatasource, "data.vcd_rde.test-rde-ds",
+		testAccCheckVcdRdeMetadata, "vcd_rde.test_rde",
+		testAccCheckVcdRdeMetadataDatasource, "data.vcd_rde.test_rde_ds",
 		StringMap{})
 }
 
@@ -552,7 +552,7 @@ data "vcd_rde_type" "rde_type" {
   nss     = "tkgcluster"
   version = "1.0.0"
 }
-resource "vcd_rde" "test-rde" {
+resource "vcd_rde" "test_rde" {
   org          = "System"
   rde_type_id  = data.vcd_rde_type.rde_type.id
   name         = "{{.Name}}"
@@ -563,9 +563,138 @@ resource "vcd_rde" "test-rde" {
 `
 
 const testAccCheckVcdRdeMetadataDatasource = `
-data "vcd_rde" "test-rde-ds" {
+data "vcd_rde" "test_rde_ds" {
   org         = "System"
-  rde_type_id = vcd_rde.test-rde.rde_type_id
-  name        = vcd_rde.test-rde.name
+  rde_type_id = vcd_rde.test_rde.rde_type_id
+  name        = vcd_rde.test_rde.name
+}
+`
+
+// TestAccVcdRdeTenantMetadata tests that a tenant user cannot read metadata that was created in the RDE with domain = "PROVIDER".
+// It will only be able to read those entries with domain = "TENANT".
+func TestAccVcdRdeTenantMetadata(t *testing.T) {
+	skipIfNotSysAdmin(t)
+	preTestChecks(t)
+	var params = StringMap{
+		"FuncName":        t.Name() + "-Step1",
+		"ProviderVcdOrg1": providerVcdOrg1,
+		"Org":             testConfig.VCD.Org,
+		"Name":            t.Name(),
+		"Metadata":        getOpenApiMetadataTestingHcl(1, 1, 1, 1, 2, 1, 1),
+		"SchemaPath":      getCurrentDir() + "/../test-resources/rde_type.json",
+	}
+	testParamsNotEmpty(t, params)
+
+	step1 := templateFill(testAccCheckVcdRdeTenantMetadata, params)
+	debugPrintf("#[DEBUG] CONFIGURATION Step 1: %s", step1)
+
+	params["FuncName"] = t.Name() + "-Step2"
+	step2 := templateFill(testAccCheckVcdRdeTenantMetadata+testAccCheckVcdRdeMetadataTenantDatasource, params)
+	debugPrintf("#[DEBUG] CONFIGURATION Step 2: %s", step2)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	resourceName := "vcd_rde.test_rde"
+	datasourceName := "data.vcd_rde.test_rde_ds"
+
+	// Required to manipulate rights
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil || vcdClient.VCDClient == nil {
+		t.Errorf("could not get a VCD connection to add rights to tenant user")
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: buildMultipleProviders(),
+		Steps: []resource.TestStep{
+			{
+				Config: step1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
+					resource.TestCheckResourceAttr(resourceName, "metadata_entry.#", "8"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "stringKey1", "stringValue1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "numberKey1", "1", types.OpenApiMetadataNumberEntry, "TENANT", "", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "boolKey1", "false", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "readOnly1", "readOnly1", types.OpenApiMetadataStringEntry, "TENANT", "", "true", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "namespace", "namespace1", types.OpenApiMetadataStringEntry, "TENANT", "namespace1", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "namespace", "namespace2", types.OpenApiMetadataStringEntry, "TENANT", "namespace2", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "provider1", "provider1", types.OpenApiMetadataStringEntry, "PROVIDER", "", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "persistent1", "persistent1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "true"),
+				),
+			},
+			{
+				Config: step2,
+				PreConfig: func() {
+					// Rights will be deleted with the destruction of the RDE Type.
+					addRightsToTenantUser(t, vcdClient, "vmware", params["Name"].(string))
+					// We need to invalidate existing client cache and start a new one as the rights for the tenant user have changed, hence
+					// we can't reuse existing sessions
+					cachedVCDClients.reset()
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(datasourceName, "name", t.Name()),
+					resource.TestCheckResourceAttr(datasourceName, "metadata_entry.#", "7"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "stringKey1", "stringValue1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "numberKey1", "1", types.OpenApiMetadataNumberEntry, "TENANT", "", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "boolKey1", "false", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "readOnly1", "readOnly1", types.OpenApiMetadataStringEntry, "TENANT", "", "true", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "namespace", "namespace1", types.OpenApiMetadataStringEntry, "TENANT", "namespace1", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "namespace", "namespace2", types.OpenApiMetadataStringEntry, "TENANT", "namespace2", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "persistent1", "persistent1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "true"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccCheckVcdRdeTenantMetadata = `
+# skip-binary: This is already tested by TestAccVcdRdeMetadata
+resource "vcd_rde_type" "rde_type" {
+  name    = "{{.Name}}"
+  vendor  = "vmware"
+  nss     = "{{.Name}}"
+  version = "1.0.0"
+  schema  = file("{{.SchemaPath}}")
+}
+
+# This is required because the organization where the RDE is created
+# is lacking of the rights created by the type above.
+# This bundle will be automatically removed by VCD with the destruction of the type.
+resource "vcd_rights_bundle" "rde_type_bundle" {
+  name                   = "{{.Name}} bundle"
+  description            = "{{.Name}} bundle"
+  publish_to_all_tenants = true
+  rights = [
+    "vmware:{{.Name}}: Administrator Full access",
+    "vmware:{{.Name}}: Full Access",
+    "vmware:{{.Name}}: Modify",
+    "vmware:{{.Name}}: View",
+    "vmware:{{.Name}}: Administrator View",
+  ]
+  depends_on = [vcd_rde_type.rde_type]
+}
+
+resource "vcd_rde" "test_rde" {
+  org          = "{{.Org}}"
+  rde_type_id  = vcd_rde_type.rde_type.id
+  name         = "{{.Name}}"
+  input_entity = "{\"foo\":\"bar\"}" # We are just testing metadata so we don't care about entity state
+  resolve      = true
+  {{.Metadata}}
+
+  depends_on = [vcd_rights_bundle.rde_type_bundle] # We need to wait for the rights to be published, otherwise creation will fail
+}
+`
+
+const testAccCheckVcdRdeMetadataTenantDatasource = `
+# skip-binary: This requires manual publishing of rights
+data "vcd_rde" "test_rde_ds" {
+  provider = {{.ProviderVcdOrg1}}
+
+  org         = vcd_rde.test_rde.org
+  rde_type_id = vcd_rde.test_rde.rde_type_id
+  name        = vcd_rde.test_rde.name
 }
 `
