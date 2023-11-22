@@ -5,6 +5,7 @@ package vcd
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"strconv"
 	"strings"
@@ -24,6 +25,8 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 		"Name": t.Name(),
 	}
 
+	// This output allows to perform some assertions on the ID inside a TypeSet,
+	// which is impossible to obtain otherwise.
 	outputHcl := `
 		output "metadata_id" {
            value = tolist(` + resourceAddress + `.metadata_entry)[0].id
@@ -76,7 +79,21 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 	}
 
 	// This is used to validate that metadata IDs don't change despite of an update/delete.
-	//cachedId := testCachedFieldValue{}
+	cachedId := testCachedFieldValue{}
+	testIdsDontChange := func() func(s *terraform.State) error {
+		return func(s *terraform.State) error {
+			rs, ok := s.RootModule().Outputs["metadata_id"]
+			if !ok {
+				return fmt.Errorf("output 'metadata_id' not found")
+			}
+
+			value := rs.String()
+			if cachedId.fieldValue != value || value == "" {
+				return fmt.Errorf("expected metadata_id to be '%s' but it changed to '%s'", cachedId.fieldValue, value)
+			}
+			return nil
+		}
+	}
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -92,7 +109,14 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 				Config: createHcl,
 				Taint:  []string{resourceAddress}, // Forces re-creation to test Create with metadata.
 				Check: resource.ComposeAggregateTestCheckFunc(
-					//cachedId.cacheTestResourceFieldValue("output.metadata_id",),
+					func(s *terraform.State) error {
+						rs, ok := s.RootModule().Outputs["metadata_id"]
+						if !ok {
+							return fmt.Errorf("output 'metadata_id' not found")
+						}
+						cachedId.fieldValue = rs.String()
+						return nil
+					},
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "8"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
@@ -134,6 +158,7 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "namespace", "namespace2", types.OpenApiMetadataStringEntry, "TENANT", "namespace2", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "provider1", "provider1", types.OpenApiMetadataStringEntry, "PROVIDER", "", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "persistent1", "persistent1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "true"),
+					testIdsDontChange(),
 				),
 			},
 			{
@@ -150,6 +175,7 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "namespace", "namespace2", types.OpenApiMetadataStringEntry, "TENANT", "namespace2", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "provider1", "provider1", types.OpenApiMetadataStringEntry, "PROVIDER", "", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "persistent1", "persistent1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "true"),
+					testIdsDontChange(),
 				),
 			},
 			{
