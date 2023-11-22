@@ -24,6 +24,13 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 		"Name": t.Name(),
 	}
 
+	outputHcl := `
+		output "metadata_id" {
+           value = tolist(` + resourceAddress + `.metadata_entry)[0].id
+        }
+	`
+	templateWithOutput := resourceTemplate + outputHcl
+
 	for extraParam, extraParamValue := range extraParams {
 		params[extraParam] = extraParamValue
 	}
@@ -35,22 +42,22 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", noMetadataHcl)
 
 	params["FuncName"] = t.Name() + "Create"
-	params["Metadata"] = getOpenApiMetadataTestingHcl(1, 1, 1, 1, 1, 1, 1)
-	createHcl := templateFill(resourceTemplate, params)
+	params["Metadata"] = getOpenApiMetadataTestingHcl(1, 1, 1, 1, 2, 1, 1)
+	createHcl := templateFill(templateWithOutput, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", createHcl)
 
 	params["FuncName"] = t.Name() + "WithDatasource"
-	withDatasourceHcl := templateFill(datasourceTemplate+"\n# skip-binary-test\n"+resourceTemplate, params)
+	withDatasourceHcl := templateFill(datasourceTemplate+"\n# skip-binary-test\n"+templateWithOutput, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", withDatasourceHcl)
 
 	params["FuncName"] = t.Name() + "DeleteOneKey"
-	params["Metadata"] = getOpenApiMetadataTestingHcl(1, 1, 0, 1, 1, 1, 1)
-	deleteOneKeyHcl := templateFill(resourceTemplate, params)
+	params["Metadata"] = getOpenApiMetadataTestingHcl(1, 1, 0, 1, 2, 1, 1)
+	deleteOneKeyHcl := templateFill(templateWithOutput, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", deleteOneKeyHcl)
 
 	params["FuncName"] = t.Name() + "Update"
 	params["Metadata"] = strings.NewReplacer("stringValue", "stringValueUpdated").Replace(params["Metadata"].(string))
-	updateHcl := templateFill(resourceTemplate, params)
+	updateHcl := templateFill(templateWithOutput, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateHcl)
 
 	params["FuncName"] = t.Name() + "Delete"
@@ -68,6 +75,9 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 		return
 	}
 
+	// This is used to validate that metadata IDs don't change despite of an update/delete.
+	//cachedId := testCachedFieldValue{}
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
@@ -82,13 +92,15 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 				Config: createHcl,
 				Taint:  []string{resourceAddress}, // Forces re-creation to test Create with metadata.
 				Check: resource.ComposeAggregateTestCheckFunc(
+					//cachedId.cacheTestResourceFieldValue("output.metadata_id",),
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
-					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "7"),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "8"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "numberKey1", "1", types.OpenApiMetadataNumberEntry, "TENANT", "", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "boolKey1", "false", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "readOnly1", "readOnly1", types.OpenApiMetadataStringEntry, "TENANT", "", "true", "false"),
-					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "namespaced1", "namespaced1", types.OpenApiMetadataStringEntry, "TENANT", "namespace", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "namespace", "namespace1", types.OpenApiMetadataStringEntry, "TENANT", "namespace1", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "namespace", "namespace2", types.OpenApiMetadataStringEntry, "TENANT", "namespace2", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "provider1", "provider1", types.OpenApiMetadataStringEntry, "PROVIDER", "", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "persistent1", "persistent1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "true"),
 				),
@@ -97,13 +109,14 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 				Config: withDatasourceHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(datasourceAddress, "id", resourceAddress, "id"),
-					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "7"),
-					resource.TestCheckResourceAttr(datasourceAddress, "metadata_entry.#", "7"),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "8"),
+					resource.TestCheckResourceAttr(datasourceAddress, "metadata_entry.#", "8"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "numberKey1", "1", types.OpenApiMetadataNumberEntry, "TENANT", "", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "boolKey1", "false", types.OpenApiMetadataBooleanEntry, "TENANT", "", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "readOnly1", "readOnly1", types.OpenApiMetadataStringEntry, "TENANT", "", "true", "false"),
-					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "namespaced1", "namespaced1", types.OpenApiMetadataStringEntry, "TENANT", "namespace", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "namespace", "namespace1", types.OpenApiMetadataStringEntry, "TENANT", "namespace1", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "namespace", "namespace2", types.OpenApiMetadataStringEntry, "TENANT", "namespace2", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "provider1", "provider1", types.OpenApiMetadataStringEntry, "PROVIDER", "", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "persistent1", "persistent1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "true"),
 				),
@@ -112,12 +125,13 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 				Config: deleteOneKeyHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
-					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "6"),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "7"),
 					// The bool is deleted
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValue1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "numberKey1", "1", types.OpenApiMetadataNumberEntry, "TENANT", "", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "readOnly1", "readOnly1", types.OpenApiMetadataStringEntry, "TENANT", "", "true", "false"),
-					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "namespaced1", "namespaced1", types.OpenApiMetadataStringEntry, "TENANT", "namespace", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "namespace", "namespace1", types.OpenApiMetadataStringEntry, "TENANT", "namespace1", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "namespace", "namespace2", types.OpenApiMetadataStringEntry, "TENANT", "namespace2", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "provider1", "provider1", types.OpenApiMetadataStringEntry, "PROVIDER", "", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "persistent1", "persistent1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "true"),
 				),
@@ -126,13 +140,14 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 				Config: updateHcl,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
-					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "6"),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "7"),
 					// Updated value:
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValueUpdated1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
 					// Not updated values:
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "numberKey1", "1", types.OpenApiMetadataNumberEntry, "TENANT", "", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "readOnly1", "readOnly1", types.OpenApiMetadataStringEntry, "TENANT", "", "true", "false"),
-					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "namespaced1", "namespaced1", types.OpenApiMetadataStringEntry, "TENANT", "namespace", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "namespace", "namespace1", types.OpenApiMetadataStringEntry, "TENANT", "namespace1", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "namespace", "namespace2", types.OpenApiMetadataStringEntry, "TENANT", "namespace2", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "provider1", "provider1", types.OpenApiMetadataStringEntry, "PROVIDER", "", "false", "false"),
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "persistent1", "persistent1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "true"),
 				),
@@ -173,7 +188,8 @@ func getOpenApiMetadataTestingHcl(stringEntries, numberEntries, boolEntries, rea
 		hcl += getOpenApiMetadataEntryHcl(fmt.Sprintf("readOnly%d", i), fmt.Sprintf("readOnly%d", i), types.OpenApiMetadataStringEntry, "TENANT", "", "true", "false")
 	}
 	for i := 1; i <= namespacedEntries; i++ {
-		hcl += getOpenApiMetadataEntryHcl(fmt.Sprintf("namespaced%d", i), fmt.Sprintf("namespaced%d", i), types.OpenApiMetadataStringEntry, "TENANT", "namespace", "false", "false")
+		// This one shares the same key, as it is the goal of namespaces
+		hcl += getOpenApiMetadataEntryHcl("namespace", fmt.Sprintf("namespace%d", i), types.OpenApiMetadataStringEntry, "TENANT", fmt.Sprintf("namespace%d", i), "false", "false")
 	}
 	for i := 1; i <= providerEntries; i++ {
 		hcl += getOpenApiMetadataEntryHcl(fmt.Sprintf("provider%d", i), fmt.Sprintf("provider%d", i), types.OpenApiMetadataStringEntry, "PROVIDER", "", "false", "false")

@@ -126,10 +126,10 @@ func openApiMetadataEntryResourceSchema(resourceType string) *schema.Schema {
 // openApiMetadataCompatible allows to consider all structs that implement OpenAPI metadata handling to be the same type
 type openApiMetadataCompatible interface {
 	GetMetadata() ([]*types.OpenApiMetadataEntry, error)
-	GetMetadataByKey(key string) (*types.OpenApiMetadataEntry, error)
+	GetMetadataByKey(namespace, key string) (*types.OpenApiMetadataEntry, error)
 	AddMetadata(metadataEntry types.OpenApiMetadataEntry) (*types.OpenApiMetadataEntry, error)
-	UpdateMetadata(key string, value interface{}) (*types.OpenApiMetadataEntry, error)
-	DeleteMetadata(key string) error
+	UpdateMetadata(namespace, key string, value interface{}) (*types.OpenApiMetadataEntry, error)
+	DeleteMetadata(namespace, key string) error
 }
 
 // createOrUpdateOpenApiMetadataEntryInVcd creates or updates OpenAPI metadata entries in VCD for the given resource, only if the attribute
@@ -145,20 +145,32 @@ func createOrUpdateOpenApiMetadataEntryInVcd(d *schema.ResourceData, resource op
 		return fmt.Errorf("could not calculate the needed metadata operations: %s", err)
 	}
 
-	// getMetadataOperations gets keys with namespaces. This function retrieves only the key.
-	getKey := func(namespacedKey string) string {
-		return strings.Split(namespacedKey, ",namespace=")[0]
+	// getMetadataOperations gets keys with namespaces separated by %%%. This function retrieves both separated.
+	getKeyAndNamespace := func(namespacedKey string) (string, string, error) {
+		r := strings.Split(namespacedKey, "%%%")
+		if len(r) == 2 {
+			return r[0], r[1], nil
+		}
+		return "", "", fmt.Errorf("bad formatting of metadata map %s, this is a provider error", namespacedKey)
 	}
 
 	for _, namespacedMetadataKey := range metadataToDelete {
-		err := resource.DeleteMetadata(getKey(namespacedMetadataKey))
+		key, namespace, err := getKeyAndNamespace(namespacedMetadataKey)
+		if err != nil {
+			return err
+		}
+		err = resource.DeleteMetadata(namespace, key)
 		if err != nil {
 			return fmt.Errorf("error deleting metadata with %s: %s", namespacedMetadataKey, err)
 		}
 	}
 
 	for namespacedMetadataKey, metadataEntry := range metadataToUpdate {
-		_, err := resource.UpdateMetadata(getKey(namespacedMetadataKey), metadataEntry.KeyValue.Value.Value)
+		key, namespace, err := getKeyAndNamespace(namespacedMetadataKey)
+		if err != nil {
+			return err
+		}
+		_, err = resource.UpdateMetadata(namespace, key, metadataEntry.KeyValue.Value.Value)
 		if err != nil {
 			return fmt.Errorf("error updating metadata with %s: %s", namespacedMetadataKey, err)
 		}
@@ -232,7 +244,7 @@ func getOpenApiMetadataEntryMap(metadataAttribute []interface{}) (map[string]typ
 		}
 
 		// In OpenAPI, metadata is namespaced, hence it is possible to have same keys but in different namespaces
-		namespacedKey := fmt.Sprintf("key=%s,namespace=%s", metadataEntry["key"].(string), namespace)
+		namespacedKey := fmt.Sprintf("%s%%%%%%%s", namespace, metadataEntry["key"].(string))
 		if _, ok := metadataMap[namespacedKey]; ok {
 			return nil, fmt.Errorf("metadata entry with %s already exists", namespacedKey)
 		}
