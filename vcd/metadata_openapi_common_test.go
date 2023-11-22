@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -42,36 +43,41 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 	params["FuncName"] = t.Name() + "NoMetadata"
 	params["Metadata"] = " "
 	noMetadataHcl := templateFill(resourceTemplate, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", noMetadataHcl)
+	debugPrintf("#[DEBUG] CONFIGURATION NoMetadata: %s", noMetadataHcl)
 
 	params["FuncName"] = t.Name() + "Create"
 	params["Metadata"] = getOpenApiMetadataTestingHcl(1, 1, 1, 1, 2, 1, 1)
 	createHcl := templateFill(templateWithOutput, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", createHcl)
+	debugPrintf("#[DEBUG] CONFIGURATION Create: %s", createHcl)
 
 	params["FuncName"] = t.Name() + "WithDatasource"
 	withDatasourceHcl := templateFill(datasourceTemplate+"\n# skip-binary-test\n"+templateWithOutput, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", withDatasourceHcl)
+	debugPrintf("#[DEBUG] CONFIGURATION WithDatasource: %s", withDatasourceHcl)
 
 	params["FuncName"] = t.Name() + "DeleteOneKey"
 	params["Metadata"] = getOpenApiMetadataTestingHcl(1, 1, 0, 1, 2, 1, 1)
 	deleteOneKeyHcl := templateFill(templateWithOutput, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", deleteOneKeyHcl)
+	debugPrintf("#[DEBUG] CONFIGURATION DeleteOneKey: %s", deleteOneKeyHcl)
 
 	params["FuncName"] = t.Name() + "Update"
 	params["Metadata"] = strings.NewReplacer("stringValue", "stringValueUpdated").Replace(params["Metadata"].(string))
 	updateHcl := templateFill(templateWithOutput, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateHcl)
+	debugPrintf("#[DEBUG] CONFIGURATION Update: %s", updateHcl)
+
+	params["FuncName"] = t.Name() + "ErrorUpdate"
+	params["Metadata"] = strings.NewReplacer("TENANT", "PROVIDER").Replace(params["Metadata"].(string))
+	errorUpdateHcl := templateFill("# skip-binary-test\n"+templateWithOutput, params)
+	debugPrintf("#[DEBUG] CONFIGURATION ErrorUpdate: %s", errorUpdateHcl)
 
 	params["FuncName"] = t.Name() + "Delete"
 	params["Metadata"] = " "
 	deleteHcl := templateFill(resourceTemplate, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", deleteHcl)
+	debugPrintf("#[DEBUG] CONFIGURATION Delete: %s", deleteHcl)
 
-	params["FuncName"] = t.Name() + "MetadataEntryWithDefaults"
+	params["FuncName"] = t.Name() + "WithDefaults"
 	params["Metadata"] = "metadata_entry {\n\tkey = \"defaultKey\"\nvalue = \"defaultValue\"\n}"
 	withDefaults := templateFill(resourceTemplate, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", withDefaults)
+	debugPrintf("#[DEBUG] CONFIGURATION WithDefaults: %s", withDefaults)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -177,6 +183,10 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "persistent1", "persistent1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "true"),
 					testIdsDontChange(),
 				),
+			},
+			{
+				Config:      errorUpdateHcl,
+				ExpectError: regexp.MustCompile("only value can be updated for the entry with"),
 			},
 			{
 				Config: deleteHcl,
