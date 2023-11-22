@@ -152,7 +152,7 @@ func createOrUpdateOpenApiMetadataEntryInVcd(d *schema.ResourceData, resource op
 		if len(r) == 2 {
 			return r[0], r[1], nil
 		}
-		return "", "", fmt.Errorf("bad formatting of metadata map %s, this is a provider error", namespacedKey)
+		return "", "", fmt.Errorf("bad formatting of metadata map key %s, this is a provider error", namespacedKey)
 	}
 
 	for _, namespacedMetadataKey := range metadataToDelete {
