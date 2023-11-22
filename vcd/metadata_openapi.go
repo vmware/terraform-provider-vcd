@@ -247,7 +247,7 @@ func getOpenApiMetadataEntryMap(metadataAttribute []interface{}) (map[string]typ
 		// In OpenAPI, metadata is namespaced, hence it is possible to have same keys but in different namespaces
 		namespacedKey := fmt.Sprintf("%s%%%%%%%s", namespace, metadataEntry["key"].(string))
 		if _, ok := metadataMap[namespacedKey]; ok {
-			return nil, fmt.Errorf("metadata entry with %s already exists", namespacedKey)
+			return nil, fmt.Errorf("metadata entry with namespace '%s' and key '%s' already exists", namespace, metadataEntry["key"])
 		}
 
 		metadataMap[namespacedKey] = types.OpenApiMetadataEntry{
