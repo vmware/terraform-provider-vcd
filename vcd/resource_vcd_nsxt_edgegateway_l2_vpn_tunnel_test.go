@@ -19,6 +19,7 @@ import (
 // Remove the CLIENT session and update the SERVER session in different ways.
 func TestAccVcdNsxtEdgeL2VpnTunnel(t *testing.T) {
 	preTestChecks(t)
+	skipIfNotSysAdmin(t)
 
 	// String map to fill the template
 	var params = StringMap{
