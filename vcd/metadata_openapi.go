@@ -145,9 +145,10 @@ func createOrUpdateOpenApiMetadataEntryInVcd(d *schema.ResourceData, resource op
 		return fmt.Errorf("could not calculate the needed metadata operations: %s", err)
 	}
 
-	// getMetadataOperations gets keys with namespaces separated by %%%. This function retrieves both separated.
+	// getMetadataOperations retrieves keys and namespaces merged with a separator, this functions
+	// splits the values in two: namespace and key, separately.
 	getKeyAndNamespace := func(namespacedKey string) (string, string, error) {
-		r := strings.Split(namespacedKey, "%%%")
+		r := strings.Split(namespacedKey, "%%%") // Separator used by getOpenApiMetadataEntryMap
 		if len(r) == 2 {
 			return r[0], r[1], nil
 		}
@@ -155,7 +156,7 @@ func createOrUpdateOpenApiMetadataEntryInVcd(d *schema.ResourceData, resource op
 	}
 
 	for _, namespacedMetadataKey := range metadataToDelete {
-		key, namespace, err := getKeyAndNamespace(namespacedMetadataKey)
+		namespace, key, err := getKeyAndNamespace(namespacedMetadataKey)
 		if err != nil {
 			return err
 		}
@@ -166,7 +167,7 @@ func createOrUpdateOpenApiMetadataEntryInVcd(d *schema.ResourceData, resource op
 	}
 
 	for namespacedMetadataKey, metadataEntry := range metadataToUpdate {
-		key, namespace, err := getKeyAndNamespace(namespacedMetadataKey)
+		namespace, key, err := getKeyAndNamespace(namespacedMetadataKey)
 		if err != nil {
 			return err
 		}
@@ -227,7 +228,7 @@ func getMetadataOperations(oldMetadata []interface{}, newMetadata []interface{})
 }
 
 // getOpenApiMetadataEntryMap converts the input metadata attribute from Terraform state to a map composed by metadata
-// namespaced keys and their values.
+// namespaced keys (this is, namespace and key separated by '%%%') and their values.
 func getOpenApiMetadataEntryMap(metadataAttribute []interface{}) (map[string]types.OpenApiMetadataEntry, error) {
 	metadataMap := map[string]types.OpenApiMetadataEntry{}
 	for _, rawItem := range metadataAttribute {
