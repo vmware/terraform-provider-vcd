@@ -140,12 +140,12 @@ func createOrUpdateOpenApiMetadataEntryInVcd(d *schema.ResourceData, resource op
 	}
 
 	oldRaw, newRaw := d.GetChange("metadata_entry")
-	metadataToAdd, metadataToUpdate, metadataToDelete, err := getMetadataOperations(oldRaw.(*schema.Set).List(), newRaw.(*schema.Set).List())
+	metadataToAdd, metadataToUpdate, metadataToDelete, err := getOpenApiMetadataOperations(oldRaw.(*schema.Set).List(), newRaw.(*schema.Set).List())
 	if err != nil {
 		return fmt.Errorf("could not calculate the needed metadata operations: %s", err)
 	}
 
-	// getMetadataOperations retrieves keys and namespaces merged with a separator, this function
+	// getOpenApiMetadataOperations retrieves keys and namespaces merged with a separator, this function
 	// splits the values in two: namespace and key, separately.
 	getKeyAndNamespace := func(namespacedKey string) (string, string, error) {
 		r := strings.Split(namespacedKey, "%%%") // Separator used by getOpenApiMetadataEntryMap
@@ -186,9 +186,9 @@ func createOrUpdateOpenApiMetadataEntryInVcd(d *schema.ResourceData, resource op
 	return nil
 }
 
-// getMetadataOperations retrieves the metadata that needs to be added, to be updated and to be deleted depending
+// getOpenApiMetadataOperations retrieves the metadata that needs to be added, to be updated and to be deleted depending
 // on the old and new attribute values from Terraform state.
-func getMetadataOperations(oldMetadata []interface{}, newMetadata []interface{}) ([]types.OpenApiMetadataEntry, map[string]types.OpenApiMetadataEntry, []string, error) {
+func getOpenApiMetadataOperations(oldMetadata []interface{}, newMetadata []interface{}) ([]types.OpenApiMetadataEntry, map[string]types.OpenApiMetadataEntry, []string, error) {
 	oldMetadataEntries, err := getOpenApiMetadataEntryMap(oldMetadata)
 	if err != nil {
 		return nil, nil, nil, err
