@@ -150,14 +150,9 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		}
 	}
 
-	// Metadata is only supported since v37.0
-	if vcdClient.Client.APIVCDMaxVersionIs(">= 37.0") {
-		err = createOrUpdateOpenApiMetadataEntryInVcd(d, rde)
-		if err != nil {
-			return diag.Errorf("could not create metadata for the Runtime Defined Entity: %s", err)
-		}
-	} else if _, ok := d.GetOk("metadata_entry"); ok {
-		return diag.Errorf("metadata_entry is only supported since VCD 10.4.0")
+	err = createOrUpdateOpenApiMetadataEntryInVcd(d, rde)
+	if err != nil {
+		return diag.Errorf("could not create metadata for the Runtime Defined Entity: %s", err)
 	}
 
 	return resourceVcdRdeRead(ctx, d, meta)
@@ -339,14 +334,9 @@ func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		}
 	}
 
-	// Metadata is only supported since v37.0
-	if vcdClient.Client.APIVCDMaxVersionIs(">= 37.0") {
-		err = createOrUpdateOpenApiMetadataEntryInVcd(d, rde)
-		if err != nil {
-			return diag.Errorf("could not create metadata for the Runtime Defined Entity: %s", err)
-		}
-	} else if _, ok := d.GetOk("metadata_entry"); ok {
-		return diag.Errorf("metadata_entry is only supported since VCD 10.4.0")
+	err = createOrUpdateOpenApiMetadataEntryInVcd(d, rde)
+	if err != nil {
+		return diag.Errorf("could not create metadata for the Runtime Defined Entity: %s", err)
 	}
 
 	return resourceVcdRdeRead(ctx, d, meta)

@@ -540,10 +540,6 @@ func manipulateRde(t *testing.T, vcdClient *VCDClient, rdeId string) {
 // TestAccVcdRdeMetadata tests metadata CRUD on Runtime Defined Entities.
 func TestAccVcdRdeMetadata(t *testing.T) {
 	skipIfNotSysAdmin(t)
-	vcdClient := createTemporaryVCDConnection(true)
-	if vcdClient != nil && vcdClient.Client.APIVCDMaxVersionIs("< 37.0") {
-		t.Skip("skipped as metadata for vcd_rde is only supported since VCD 10.4.0")
-	}
 	testOpenApiMetadataEntryCRUD(t,
 		testAccCheckVcdRdeMetadata, "vcd_rde.test-rde",
 		testAccCheckVcdRdeMetadataDatasource, "data.vcd_rde.test-rde-ds",
