@@ -198,6 +198,7 @@ The `metadata_entry` is a set of metadata entries that have the following struct
 * `key` - (Required) Key of this metadata entry.
 * `value` - (Required) Value of this metadata entry.
 * `type` - (Optional) Type of this metadata entry. One of: `StringEntry`, `NumberEntry`, `BoolEntry`. Defaults to `StringEntry`.
+* `namespace` - (Optional) Namespace of the metadata entry. Allows having multiple entries with same key in different namespaces.
 * `domain` - (Optional) Only meaningful for providers. Allows them to share entries with their tenants. Currently, accepted values are: `TENANT`, `PROVIDER`. Defaults to `TENANT`.
 * `readonly` - (Optional) `true` if the metadata entry is read only. Defaults to `false`.
 * `persistent` - (Optional) `true` if the metadata is persistent. Persistent entries can be copied over on some entity operation

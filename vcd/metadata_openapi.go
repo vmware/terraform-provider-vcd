@@ -7,6 +7,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 // openApiMetadataEntryDatasourceSchema returns the schema associated to the OpenAPI metadata_entry for a given data source.
@@ -144,17 +145,22 @@ func createOrUpdateOpenApiMetadataEntryInVcd(d *schema.ResourceData, resource op
 		return fmt.Errorf("could not calculate the needed metadata operations: %s", err)
 	}
 
-	for _, metadataKey := range metadataToDelete {
-		err := resource.DeleteMetadata(metadataKey)
+	// getMetadataOperations gets keys with namespaces. This function retrieves only the key.
+	getKey := func(namespacedKey string) string {
+		return strings.Split(namespacedKey, ",namespace=")[0]
+	}
+
+	for _, namespacedMetadataKey := range metadataToDelete {
+		err := resource.DeleteMetadata(getKey(namespacedMetadataKey))
 		if err != nil {
-			return fmt.Errorf("error deleting metadata: %s", err)
+			return fmt.Errorf("error deleting metadata with %s: %s", namespacedMetadataKey, err)
 		}
 	}
 
-	for metadataKey, metadataEntry := range metadataToUpdate {
-		_, err := resource.UpdateMetadata(metadataKey, metadataEntry.KeyValue.Value.Value)
+	for namespacedMetadataKey, metadataEntry := range metadataToUpdate {
+		_, err := resource.UpdateMetadata(getKey(namespacedMetadataKey), metadataEntry.KeyValue.Value.Value)
 		if err != nil {
-			return fmt.Errorf("error updating metadata: %s", err)
+			return fmt.Errorf("error updating metadata with %s: %s", namespacedMetadataKey, err)
 		}
 	}
 
@@ -180,26 +186,26 @@ func getMetadataOperations(oldMetadata []interface{}, newMetadata []interface{})
 	}
 
 	var metadataToRemove []string
-	for oldKey := range oldMetadataEntries {
-		if _, ok := newMetadataEntries[oldKey]; !ok {
-			metadataToRemove = append(metadataToRemove, oldKey)
+	for oldNamespacedKey := range oldMetadataEntries {
+		if _, ok := newMetadataEntries[oldNamespacedKey]; !ok {
+			metadataToRemove = append(metadataToRemove, oldNamespacedKey)
 		}
 	}
 
 	metadataToUpdate := map[string]types.OpenApiMetadataEntry{}
-	for newKey, newEntry := range newMetadataEntries {
-		if oldEntry, ok := oldMetadataEntries[newKey]; ok {
+	for newNamespacedKey, newEntry := range newMetadataEntries {
+		if oldEntry, ok := oldMetadataEntries[newNamespacedKey]; ok {
 			if reflect.DeepEqual(oldEntry, newEntry) {
 				continue
 			}
-			metadataToUpdate[newKey] = newEntry
+			metadataToUpdate[newNamespacedKey] = newEntry
 		}
 	}
 
 	var metadataToCreate []types.OpenApiMetadataEntry
-	for newKey, newEntry := range newMetadataEntries {
-		_, alreadyExisting := oldMetadataEntries[newKey]
-		_, beingUpdated := metadataToUpdate[newKey]
+	for newNamespacedKey, newEntry := range newMetadataEntries {
+		_, alreadyExisting := oldMetadataEntries[newNamespacedKey]
+		_, beingUpdated := metadataToUpdate[newNamespacedKey]
 		if !alreadyExisting && !beingUpdated {
 			metadataToCreate = append(metadataToCreate, newEntry)
 		}
@@ -208,7 +214,8 @@ func getMetadataOperations(oldMetadata []interface{}, newMetadata []interface{})
 	return metadataToCreate, metadataToUpdate, metadataToRemove, nil
 }
 
-// getOpenApiMetadataKeySet converts the input metadata attribute from Terraform state to a map composed by metadata keys and their values.
+// getOpenApiMetadataEntryMap converts the input metadata attribute from Terraform state to a map composed by metadata
+// namespaced keys and their values.
 func getOpenApiMetadataEntryMap(metadataAttribute []interface{}) (map[string]types.OpenApiMetadataEntry, error) {
 	metadataMap := map[string]types.OpenApiMetadataEntry{}
 	for _, rawItem := range metadataAttribute {
@@ -224,7 +231,13 @@ func getOpenApiMetadataEntryMap(metadataAttribute []interface{}) (map[string]typ
 			return nil, fmt.Errorf("error parsing the 'value' attribute '%s' from state: %s", metadataEntry["value"].(string), err)
 		}
 
-		metadataMap[metadataEntry["key"].(string)] = types.OpenApiMetadataEntry{
+		// In OpenAPI, metadata is namespaced, hence it is possible to have same keys but in different namespaces
+		namespacedKey := fmt.Sprintf("key=%s,namespace=%s", metadataEntry["key"].(string), namespace)
+		if _, ok := metadataMap[namespacedKey]; ok {
+			return nil, fmt.Errorf("metadata entry with %s already exists", namespacedKey)
+		}
+
+		metadataMap[namespacedKey] = types.OpenApiMetadataEntry{
 			IsReadOnly:   metadataEntry["readonly"].(bool),   // It is always populated as it has a default value
 			IsPersistent: metadataEntry["persistent"].(bool), // It is always populated as it has a default value
 			KeyValue: types.OpenApiMetadataKeyValue{
@@ -241,16 +254,12 @@ func getOpenApiMetadataEntryMap(metadataAttribute []interface{}) (map[string]typ
 	return metadataMap, nil
 }
 
-// updateOpenApiMetadataInState updates metadata and metadata_entry in the Terraform state for the given receiver object.
+// updateOpenApiMetadataInState updates metadata_entry in the Terraform state for the given receiver object.
 // This can be done as both are Computed, for compatibility reasons.
 func updateOpenApiMetadataInState(d *schema.ResourceData, receiverObject openApiMetadataCompatible) error {
 	allMetadata, err := receiverObject.GetMetadata()
 	if err != nil {
 		return err
-	}
-
-	if len(allMetadata) == 0 {
-		return nil
 	}
 
 	metadata := make([]interface{}, len(allMetadata))
