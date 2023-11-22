@@ -205,6 +205,9 @@ The `metadata_entry` is a set of metadata entries that have the following struct
   (e.g. Creating a copy of a VDC, capturing a vApp to a template, instantiating a catalog item as a VM...). Defaults to `false`.
 * `id` - (Computed) Read-only identifier for this metadata entry.
 
+The only attribute that supports updates for a given metadata entry is `value`. If you need to modify another attribute, such as `readonly` or
+`domain`, please delete and re-create the metadata entry.
+
 Example:
 
 ```hcl

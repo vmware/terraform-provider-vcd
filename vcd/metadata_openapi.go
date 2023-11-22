@@ -211,6 +211,11 @@ func getOpenApiMetadataOperations(oldMetadata []interface{}, newMetadata []inter
 			if reflect.DeepEqual(oldEntry, newEntry) {
 				continue
 			}
+			if oldEntry.IsReadOnly != newEntry.IsReadOnly || oldEntry.IsPersistent != newEntry.IsPersistent ||
+				oldEntry.KeyValue.Namespace != newEntry.KeyValue.Namespace || oldEntry.KeyValue.Domain != newEntry.KeyValue.Domain {
+				return nil, nil, nil, fmt.Errorf("only value can be updated for the entry with namespace '%s' and key '%s'. "+
+					"Please delete it first and re-create if you need to change other properties", oldEntry.KeyValue.Namespace, oldEntry.KeyValue)
+			}
 			metadataToUpdate[newNamespacedKey] = newEntry
 		}
 	}
