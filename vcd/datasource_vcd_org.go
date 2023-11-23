@@ -142,8 +142,6 @@ func datasourceVcdOrg() *schema.Resource {
 }
 
 func datasourceVcdOrgRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
 	vcdClient := meta.(*VCDClient)
 
 	identifier := d.Get("name").(string)
@@ -158,9 +156,14 @@ func datasourceVcdOrgRead(_ context.Context, d *schema.ResourceData, meta interf
 	log.Printf("Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
 
-	diagErr := setOrgData(d, vcdClient, adminOrg)
-	if diagErr != nil {
-		return diagErr
+	diags := setOrgData(d, vcdClient, adminOrg)
+	if diags != nil && diags.HasError() {
+		return diags
+	}
+
+	// This must be checked at the end as setOrgData can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
 	}
 	return diags
 }

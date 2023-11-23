@@ -166,6 +166,7 @@ func resourceVcdCatalogVappTemplateRead(ctx context.Context, d *schema.ResourceD
 // genericVcdCatalogVappTemplateRead performs a Read operation for the vApp Template resource (origin="resource")
 // and data source (origin="datasource").
 func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+	var diags diag.Diagnostics
 	vcdClient := meta.(*VCDClient)
 	vAppTemplate, err := findVAppTemplate(d, vcdClient, origin)
 	if err != nil {
@@ -226,11 +227,15 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 	}
 	d.SetId(vAppTemplate.VAppTemplate.ID)
 
-	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_catalog_vapp_template", vAppTemplate)
-	if diagErr != nil {
-		return diagErr
+	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_catalog_vapp_template", vAppTemplate)...)
+	if diags != nil && diags.HasError() {
+		return diags
 	}
 
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
+	}
 	return nil
 }
 

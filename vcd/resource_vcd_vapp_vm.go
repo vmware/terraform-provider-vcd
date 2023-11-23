@@ -2070,6 +2070,7 @@ func resourceVcdVAppVmRead(_ context.Context, d *schema.ResourceData, meta inter
 }
 
 func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+	var diags diag.Diagnostics
 	log.Printf("[DEBUG] [VM read] started with origin %s", origin)
 	vcdClient := meta.(*VCDClient)
 
@@ -2276,12 +2277,17 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 	dSet(d, "status", vm.VM.Status)
 	dSet(d, "status_text", statusText)
 
-	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_vapp_vm", vm)
-	if diagErr != nil {
-		return diagErr
+	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_vapp_vm", vm)...)
+	if diags != nil && diags.HasError() {
+		return diags
 	}
 
 	log.Printf("[DEBUG] [VM read] finished with origin %s", origin)
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
+	}
+
 	return nil
 }
 

@@ -369,6 +369,7 @@ func resourceVcdVdcCreate(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
 	vdcName := d.Get("name").(string)
 	log.Printf("[TRACE] VDC read initiated: %s", vdcName)
 
@@ -389,30 +390,35 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
-	diagErr := setOrgVdcData(d, vcdClient, adminVdc)
-	if diagErr != nil {
-		return diagErr
+	diags = append(diags, setOrgVdcData(d, vcdClient, adminVdc)...)
+	if diags != nil && diags.HasError() {
+		return diags
 	}
 
 	err = setEdgeClusterData(d, adminVdc, "vdc_org_vdc")
 	if err != nil {
-		return diag.FromErr(err)
+		return append(diags, diag.FromErr(err)...)
 	}
 	dSet(d, "enable_nsxv_distributed_firewall", false)
 	if adminVdc.IsNsxv() {
 		dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, adminVdc.AdminVdc.ID)
 		enabled, err := dfw.IsEnabled()
 		if err != nil {
-			return diag.Errorf("error retrieving NSX-V distributed firewall state for VDC '%s': %s", vdcName, err)
+			return append(diags, diag.Errorf("error retrieving NSX-V distributed firewall state for VDC '%s': %s", vdcName, err)...)
 		}
 		dSet(d, "enable_nsxv_distributed_firewall", enabled)
+	}
+
+	// This must be checked at the end as setOrgVdcData can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
 	}
 	return nil
 }
 
 // setOrgVdcData sets object state from *govcd.AdminVdc
 func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd.AdminVdc) diag.Diagnostics {
-
+	var diags diag.Diagnostics
 	dSet(d, "allocation_model", adminVdc.AdminVdc.AllocationModel)
 	if adminVdc.AdminVdc.ResourceGuaranteedCpu != nil {
 		dSet(d, "cpu_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedCpu)
@@ -505,13 +511,18 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 		return diag.FromErr(err)
 	}
 
-	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_org_vdc", adminVdc)
-	if diagErr != nil {
+	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_org_vdc", adminVdc)...)
+	if diags != nil && diags.HasError() {
 		log.Printf("[DEBUG] Unable to set VDC metadata")
-		return diagErr
+		return diags
 	}
 
 	log.Printf("[TRACE] vdc read completed: %#v", adminVdc.AdminVdc)
+
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
+	}
 	return nil
 }
 
