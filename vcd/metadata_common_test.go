@@ -608,13 +608,13 @@ func getMetadataEntryHcl(key, value, typedValue, userAccess, isSystem string) st
 		isSystemAttr = fmt.Sprintf("is_system   = \"%s\"", isSystem)
 	}
 	return fmt.Sprintf(`
-metadata_entry {
-	%s
-	%s
-	%s
-	%s
-	%s
-}
+  metadata_entry {
+    %s
+    %s
+    %s
+    %s
+    %s
+  }
 `, keyAttr, valueAttr, typeAttr, userAccAttr, isSystemAttr)
 }
 

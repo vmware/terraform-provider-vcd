@@ -28,10 +28,10 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 	// This output allows to perform some assertions on the ID inside a TypeSet,
 	// which is impossible to obtain otherwise.
 	outputHcl := `
-		output "metadata_id" {
-           value = tolist(` + resourceAddress + `.metadata_entry)[0].id
-        }
-	`
+output "metadata_id" {
+  value = tolist(` + resourceAddress + `.metadata_entry)[0].id
+}
+`
 	templateWithOutput := resourceTemplate + outputHcl
 
 	for extraParam, extraParamValue := range extraParams {
@@ -251,19 +251,19 @@ func getOpenApiMetadataTestingHcl(stringEntries, numberEntries, boolEntries, rea
 func getOpenApiMetadataEntryHcl(key, value, typedValue, domain, namespace, readonly, persistent string) string {
 	hclNamespace := ""
 	if namespace != "" {
-		hclNamespace = `namespace   = "` + namespace + `"`
+		hclNamespace = `namespace  = "` + namespace + `"`
 	}
 
 	return `
-		  metadata_entry {
-			key         = "` + key + `"
-			value       = "` + value + `"
-			type        = "` + typedValue + `"
-			domain      = "` + domain + `"
-            ` + hclNamespace + `
-			readonly    = ` + readonly + `
-            persistent  = ` + persistent + `
-		  }`
+  metadata_entry {
+    key        = "` + key + `"
+    value      = "` + value + `"
+	type       = "` + typedValue + `"
+	domain     = "` + domain + `"
+    ` + hclNamespace + `
+	readonly   = ` + readonly + `
+    persistent = ` + persistent + `
+  }`
 }
 
 // testCheckOpenApiMetadataEntrySetElemNestedAttrs asserts that a given metadata_entry has the expected input for the given resourceAddress.
