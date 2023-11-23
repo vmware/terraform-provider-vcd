@@ -198,13 +198,16 @@ by not modifying them.
 The `metadata_entry` is a set of metadata entries that have the following structure:
 
 * `key` - (Required) Key of this metadata entry.
-* `value` - (Required) Value of this metadata entry.
-* `type` - (Optional) Type of this metadata entry. One of: `StringEntry`, `NumberEntry`, `BoolEntry`. Defaults to `StringEntry`.
 * `namespace` - (Optional) Namespace of the metadata entry. Allows having multiple entries with same key in different namespaces.
+* `value` - (Required) Value of this metadata entry. It can be updated.
+* `type` - (Optional) Type of this metadata entry. One of: `StringEntry`, `NumberEntry`, `BoolEntry`. Defaults to `StringEntry`.
+  Updating this value forces a re-creation of the metadata entry.
 * `domain` - (Optional) Only meaningful for providers. Allows them to share entries with their tenants. Currently, accepted values are: `TENANT`, `PROVIDER`. Defaults to `TENANT`.
-* `readonly` - (Optional) `true` if the metadata entry is read only. Defaults to `false`.
+  Updating this value forces a re-creation of the metadata entry.
+* `readonly` - (Optional) `true` if the metadata entry is read only. Defaults to `false`.  Updating this value forces a re-creation of the metadata entry.
 * `persistent` - (Optional) `true` if the metadata is persistent. Persistent entries can be copied over on some entity operation
   (e.g. Creating a copy of a VDC, capturing a vApp to a template, instantiating a catalog item as a VM...). Defaults to `false`.
+  Updating this value forces a re-creation of the metadata entry.
 * `id` - (Computed) Read-only identifier for this metadata entry.
 
 The only attribute that supports updates for a given metadata entry is `value`. If you need to modify another attribute, such as `readonly` or
