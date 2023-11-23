@@ -210,8 +210,8 @@ The `metadata_entry` is a set of metadata entries that have the following struct
   Updating this value forces a re-creation of the metadata entry.
 * `id` - (Computed) Read-only identifier for this metadata entry.
 
-The only attribute that supports updates for a given metadata entry is `value`. If you need to modify another attribute, such as `readonly` or
-`domain`, please delete and re-create the metadata entry.
+The only attribute that supports updates-in-place for a given metadata entry is `value`. Updating any other value will re-create the
+metadata entry.
 
 Example:
 
