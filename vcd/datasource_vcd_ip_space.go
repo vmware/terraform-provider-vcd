@@ -124,6 +124,21 @@ func datasourceVcdIpSpace() *schema.Resource {
 				Computed:    true,
 				Description: "Flag exposing if route advertisement is enabled",
 			},
+			"default_firewall_rule_creation_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Flag exposing whether default firewall rule creation should be enabled (VCD 10.5.0+)",
+			},
+			"default_no_snat_rule_creation_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Flag whether NO SNAT rule creation should be enabled (VCD 10.5.0+)",
+			},
+			"default_snat_rule_creation_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Flag whether SNAT rule creation should be enabled (VCD 10.5.0+)",
+			},
 		},
 	}
 }
