@@ -133,6 +133,7 @@ var resourceMetadataApiRelation = map[string]string{
 	"vcd_vapp":                  "vApp",
 	"vcd_vapp_vm":               "vApp",
 	"vcd_vm":                    "vApp",
+	"vcd_rde":                   "entity",
 }
 
 // metadataEntryDatasourceSchema returns the schema associated to metadata_entry for a given data source.

@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -260,10 +261,15 @@ func getOpenApiMetadataEntryMap(metadataAttribute []interface{}) (map[string]typ
 
 // updateOpenApiMetadataInState updates metadata_entry in the Terraform state for the given receiver object.
 // This can be done as both are Computed, for compatibility reasons.
-func updateOpenApiMetadataInState(d *schema.ResourceData, receiverObject openApiMetadataCompatible) error {
+func updateOpenApiMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject openApiMetadataCompatible) diag.Diagnostics {
+	diagErr := checkIgnoredMetadataConflicts(d, vcdClient, resourceType)
+	if diagErr != nil {
+		return diagErr
+	}
+
 	allMetadata, err := receiverObject.GetMetadata()
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	metadata := make([]interface{}, len(allMetadata))
@@ -278,7 +284,7 @@ func updateOpenApiMetadataInState(d *schema.ResourceData, receiverObject openApi
 		case types.OpenApiMetadataStringEntry:
 			value = metadataEntryFromVcd.KeyValue.Value.Value.(string)
 		default:
-			return fmt.Errorf("not supported metadata type %s", metadataEntryFromVcd.KeyValue.Value.Type)
+			return diag.Errorf("not supported metadata type %s", metadataEntryFromVcd.KeyValue.Value.Type)
 		}
 
 		metadataEntry := map[string]interface{}{
@@ -295,7 +301,7 @@ func updateOpenApiMetadataInState(d *schema.ResourceData, receiverObject openApi
 	}
 
 	err = d.Set("metadata_entry", metadata)
-	return err
+	return diag.FromErr(err)
 }
 
 // convertOpenApiMetadataValue converts a metadata value from plain string to a correct typed value that can be sent

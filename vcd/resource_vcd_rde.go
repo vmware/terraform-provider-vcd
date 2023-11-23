@@ -234,9 +234,9 @@ func resourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interfac
 		dSet(d, "entity_in_sync", areJsonEqual)
 	}
 
-	err = updateOpenApiMetadataInState(d, rde)
-	if err != nil {
-		return diag.Errorf("could not set metadata for the Runtime Defined Entity: %s", err)
+	diagErr := updateOpenApiMetadataInState(d, vcdClient, "vcd_rde", rde)
+	if diagErr != nil {
+		return diagErr
 	}
 
 	d.SetId(rde.DefinedEntity.ID)
