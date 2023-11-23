@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"reflect"
 	"strconv"
 )
@@ -187,6 +188,7 @@ func getOpenApiMetadataOperations(oldMetadata []interface{}, newMetadata []inter
 		}
 	}
 
+	var metadataToCreate []types.OpenApiMetadataEntry
 	metadataToUpdateMap := map[string]types.OpenApiMetadataEntry{}
 	for newNamespacedKey, newEntry := range newMetadataEntries {
 		if oldEntry, ok := oldMetadataEntries[newNamespacedKey]; ok {
@@ -194,11 +196,15 @@ func getOpenApiMetadataOperations(oldMetadata []interface{}, newMetadata []inter
 				continue
 			}
 			if oldEntry.IsReadOnly != newEntry.IsReadOnly || oldEntry.IsPersistent != newEntry.IsPersistent ||
-				oldEntry.KeyValue.Namespace != newEntry.KeyValue.Namespace || oldEntry.KeyValue.Domain != newEntry.KeyValue.Domain {
-				return nil, nil, nil, fmt.Errorf("only value can be updated for the entry with namespace '%s' and key '%s'. "+
-					"Please delete it first and re-create if you need to change other properties", oldEntry.KeyValue.Namespace, oldEntry.KeyValue)
+				oldEntry.KeyValue.Namespace != newEntry.KeyValue.Namespace || oldEntry.KeyValue.Domain != newEntry.KeyValue.Domain ||
+				oldEntry.KeyValue.Value.Type != newEntry.KeyValue.Value.Type {
+				util.Logger.Printf("[DEBUG] entry with namespace '%s' and key '%s' is being deleted and re-created", oldEntry.KeyValue.Namespace, oldEntry.KeyValue.Key)
+				metadataToRemove = append(metadataToRemove, oldMetadataEntries[newNamespacedKey])
+				metadataToCreate = append(metadataToCreate, newMetadataEntries[newNamespacedKey])
+			} else {
+				metadataToUpdateMap[newNamespacedKey] = newEntry
 			}
-			metadataToUpdateMap[newNamespacedKey] = newEntry
+
 		}
 	}
 	var metadataToUpdate []types.OpenApiMetadataEntry
@@ -206,7 +212,6 @@ func getOpenApiMetadataOperations(oldMetadata []interface{}, newMetadata []inter
 		metadataToUpdate = append(metadataToUpdate, v)
 	}
 
-	var metadataToCreate []types.OpenApiMetadataEntry
 	for newNamespacedKey, newEntry := range newMetadataEntries {
 		_, alreadyExisting := oldMetadataEntries[newNamespacedKey]
 		_, beingUpdated := metadataToUpdateMap[newNamespacedKey]
