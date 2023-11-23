@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -64,10 +63,10 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 	updateHcl := templateFill(templateWithOutput, params)
 	debugPrintf("#[DEBUG] CONFIGURATION Update: %s", updateHcl)
 
-	params["FuncName"] = t.Name() + "ErrorUpdate"
-	params["Metadata"] = strings.NewReplacer("TENANT", "PROVIDER").Replace(params["Metadata"].(string))
-	errorUpdateHcl := templateFill("# skip-binary-test\n"+templateWithOutput, params)
-	debugPrintf("#[DEBUG] CONFIGURATION ErrorUpdate: %s", errorUpdateHcl)
+	params["FuncName"] = t.Name() + "UpdateForceRecreate"
+	params["Metadata"] = strings.NewReplacer("NumberEntry", "StringEntry").Replace(params["Metadata"].(string))
+	updateForceRecreateHcl := templateFill(templateWithOutput, params)
+	debugPrintf("#[DEBUG] CONFIGURATION UpdateForceRecreate: %s", updateForceRecreateHcl)
 
 	params["FuncName"] = t.Name() + "Delete"
 	params["Metadata"] = " "
@@ -185,8 +184,20 @@ func testOpenApiMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddres
 				),
 			},
 			{
-				Config:      errorUpdateHcl,
-				ExpectError: regexp.MustCompile("only value can be updated for the entry with"),
+				Config: updateForceRecreateHcl,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceAddress, "name", t.Name()),
+					resource.TestCheckResourceAttr(resourceAddress, "metadata_entry.#", "7"),
+					// Updated value, from number to string, should force a recreation of the entry:
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "numberKey1", "1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
+					// Not updated values:
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "stringKey1", "stringValueUpdated1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "readOnly1", "readOnly1", types.OpenApiMetadataStringEntry, "TENANT", "", "true", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "namespace", "namespace1", types.OpenApiMetadataStringEntry, "TENANT", "namespace1", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "namespace", "namespace2", types.OpenApiMetadataStringEntry, "TENANT", "namespace2", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "provider1", "provider1", types.OpenApiMetadataStringEntry, "PROVIDER", "", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceAddress, "persistent1", "persistent1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "true"),
+				),
 			},
 			{
 				Config: deleteHcl,
