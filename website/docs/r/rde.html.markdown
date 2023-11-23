@@ -193,6 +193,8 @@ resolved by anyone.
 a change in of one or more of them, but applying it will respect every non-changed metadata entry by not performing any modification on
 these.
 
+~> The provider configuration block `ignore_metadata_changes` is not compatible with metadata entries of `vcd_rde`.
+
 The `metadata_entry` is a set of metadata entries that have the following structure:
 
 * `key` - (Required) Key of this metadata entry.
