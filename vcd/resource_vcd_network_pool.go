@@ -353,7 +353,18 @@ func resourceNetworkPoolRead(ctx context.Context, d *schema.ResourceData, meta i
 
 func genericNetworkPoolRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	networkPool, err := vcdClient.GetNetworkPoolById(d.Id())
+	networkPoolName := d.Get("name").(string)
+	if d.Id() == "" && networkPoolName == "" {
+		return diag.Errorf("neither name or ID was provided for network pool")
+	}
+	var networkPool *govcd.NetworkPool
+	var err error
+	if networkPoolName == "" {
+		networkPool, err = vcdClient.GetNetworkPoolById(d.Id())
+	} else {
+		networkPool, err = vcdClient.GetNetworkPoolByName(networkPoolName)
+	}
+
 	if err != nil {
 		if origin == "datasource" {
 			return diag.FromErr(err)

@@ -119,7 +119,7 @@ func ifPossibleAddClusterId(t *testing.T, vcdClient *VCDClient, params StringMap
 	if err != nil {
 		t.Logf("\nWARNING: cluster id fetch failed, test will continue withouth cluster id. Error: %s", err)
 		// adding regular expr param to map to use in Assertion
-		params["EdgeClusterForAssert"] = regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)
+		params["EdgeClusterForAssert"] = getUuidRegex("", "$")
 		params["EdgeClusterId"] = ""
 		params["EdgeClusterKey"] = ""
 		params["equalsChar"] = ""
