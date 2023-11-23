@@ -226,14 +226,14 @@ resource "vcd_rde" "my-rde" {
     key      = "foo"
     type     = "StringEntry"
     value    = "bar"
-    domain   = "TENANT"
+    domain   = "TENANT" # will be also visible to an organization user
     readonly = true
   }
   metadata_entry {
     key        = "bar"
     type       = "NumberEntry"
     value      = "42"
-    domain     = "TENANT"
+    domain     = "PROVIDER" # will be only visible to the provider 
     persistent = true
   }
 }
