@@ -189,9 +189,9 @@ resolved by anyone.
 <a id="metadata"></a>
 ## Metadata
 
--> Due to Terraform limitations, `terraform plan` shows that all metadata entries will be deleted and re-created when performing
-a change in of one or more of them, but applying it will respect every non-changed metadata entry by not performing any modification on
-these.
+-> Due to Terraform limitations, when performing a change in any of the metadata entries, a `terraform plan` shows that
+all of them will be deleted and re-created. However, the succeeding `terraform apply` will respect the non-changed metadata entries 
+by not modifying them.
 
 ~> The provider configuration block `ignore_metadata_changes` is not compatible with metadata entries of `vcd_rde`.
 
