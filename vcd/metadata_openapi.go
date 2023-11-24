@@ -72,6 +72,7 @@ func openApiMetadataEntryResourceSchema(resourceType string) *schema.Schema {
 		Type:        schema.TypeSet,
 		Optional:    true,
 		Description: fmt.Sprintf("Metadata entries for the given %s", resourceType),
+		MaxItems:    50, // As per the documentation
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"id": {
