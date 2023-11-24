@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 	"reflect"
@@ -125,11 +126,10 @@ func openApiMetadataEntryResourceSchema(resourceType string) *schema.Schema {
 
 // openApiMetadataCompatible allows to consider all structs that implement OpenAPI metadata handling to be the same type
 type openApiMetadataCompatible interface {
-	GetMetadata() ([]*types.OpenApiMetadataEntry, error)
-	GetMetadataByKey(namespace, key string) (*types.OpenApiMetadataEntry, error)
-	AddMetadata(metadataEntry types.OpenApiMetadataEntry) (*types.OpenApiMetadataEntry, error)
-	UpdateMetadata(namespace, key string, value interface{}) (*types.OpenApiMetadataEntry, error)
-	DeleteMetadata(namespace, key string) error
+	GetMetadata() ([]*govcd.OpenApiMetadataEntry, error)
+	GetMetadataByKey(domain, namespace, key string) (*govcd.OpenApiMetadataEntry, error)
+	GetMetadataById(id string) (*govcd.OpenApiMetadataEntry, error)
+	AddMetadata(metadataEntry types.OpenApiMetadataEntry) (*govcd.OpenApiMetadataEntry, error)
 }
 
 // createOrUpdateOpenApiMetadataEntryInVcd creates or updates OpenAPI metadata entries in VCD for the given resource, only if the attribute
@@ -146,14 +146,22 @@ func createOrUpdateOpenApiMetadataEntryInVcd(d *schema.ResourceData, resource op
 	}
 
 	for _, entry := range metadataToDelete {
-		err = resource.DeleteMetadata(entry.KeyValue.Namespace, entry.KeyValue.Key)
+		toDelete, err := resource.GetMetadataById(entry.ID) // Refreshes ETags
+		if err != nil {
+			return fmt.Errorf("error reading metadata with namespace '%s' and key '%s': %s", entry.KeyValue.Namespace, entry.KeyValue.Key, err)
+		}
+		err = toDelete.Delete()
 		if err != nil {
 			return fmt.Errorf("error deleting metadata with namespace '%s' and key '%s': %s", entry.KeyValue.Namespace, entry.KeyValue.Key, err)
 		}
 	}
 
 	for _, entry := range metadataToUpdate {
-		_, err = resource.UpdateMetadata(entry.KeyValue.Namespace, entry.KeyValue.Key, entry.KeyValue.Value.Value)
+		toUpdate, err := resource.GetMetadataById(entry.ID) // Refreshes ETags
+		if err != nil {
+			return fmt.Errorf("error reading metadata with namespace '%s' and key '%s': %s", entry.KeyValue.Namespace, entry.KeyValue.Key, err)
+		}
+		err = toUpdate.Update(entry.KeyValue.Value.Value, entry.IsPersistent)
 		if err != nil {
 			return fmt.Errorf("error updating metadata with namespace '%s' and key '%s': %s", entry.KeyValue.Namespace, entry.KeyValue.Key, err)
 		}
@@ -277,26 +285,26 @@ func updateOpenApiMetadataInState(d *schema.ResourceData, receiverObject openApi
 	for i, metadataEntryFromVcd := range allMetadata {
 		// We need to set the correct type, otherwise saving the state will fail
 		value := ""
-		switch metadataEntryFromVcd.KeyValue.Value.Type {
+		switch metadataEntryFromVcd.MetadataEntry.KeyValue.Value.Type {
 		case types.OpenApiMetadataBooleanEntry:
-			value = fmt.Sprintf("%t", metadataEntryFromVcd.KeyValue.Value.Value.(bool))
+			value = fmt.Sprintf("%t", metadataEntryFromVcd.MetadataEntry.KeyValue.Value.Value.(bool))
 		case types.OpenApiMetadataNumberEntry:
-			value = fmt.Sprintf("%.0f", metadataEntryFromVcd.KeyValue.Value.Value.(float64))
+			value = fmt.Sprintf("%.0f", metadataEntryFromVcd.MetadataEntry.KeyValue.Value.Value.(float64))
 		case types.OpenApiMetadataStringEntry:
-			value = metadataEntryFromVcd.KeyValue.Value.Value.(string)
+			value = metadataEntryFromVcd.MetadataEntry.KeyValue.Value.Value.(string)
 		default:
-			return fmt.Errorf("not supported metadata type %s", metadataEntryFromVcd.KeyValue.Value.Type)
+			return fmt.Errorf("not supported metadata type %s", metadataEntryFromVcd.MetadataEntry.KeyValue.Value.Type)
 		}
 
 		metadataEntry := map[string]interface{}{
-			"id":         metadataEntryFromVcd.ID,
-			"key":        metadataEntryFromVcd.KeyValue.Key,
-			"readonly":   metadataEntryFromVcd.IsReadOnly,
-			"domain":     metadataEntryFromVcd.KeyValue.Domain,
-			"namespace":  metadataEntryFromVcd.KeyValue.Namespace,
-			"type":       metadataEntryFromVcd.KeyValue.Value.Type,
+			"id":         metadataEntryFromVcd.MetadataEntry.ID,
+			"key":        metadataEntryFromVcd.MetadataEntry.KeyValue.Key,
+			"readonly":   metadataEntryFromVcd.MetadataEntry.IsReadOnly,
+			"domain":     metadataEntryFromVcd.MetadataEntry.KeyValue.Domain,
+			"namespace":  metadataEntryFromVcd.MetadataEntry.KeyValue.Namespace,
+			"type":       metadataEntryFromVcd.MetadataEntry.KeyValue.Value.Type,
 			"value":      value,
-			"persistent": metadataEntryFromVcd.IsPersistent,
+			"persistent": metadataEntryFromVcd.MetadataEntry.IsPersistent,
 		}
 		metadata[i] = metadataEntry
 	}
