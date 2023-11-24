@@ -150,6 +150,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_global_default_segment_profile_template": datasourceVcdGlobalDefaultSegmentProfileTemplate(),     // 3.11
 	"vcd_org_vdc_nsxt_network_profile":                 datasourceVcdNsxtOrgVdcNetworkProfile(),                // 3.11
 	"vcd_nsxt_network_segment_profile":                 datasourceVcdNsxtOrgVdcNetworkSegmentProfileTemplate(), // 3.11
+	"vcd_vgpu_profile":                                 datasourceVcdVgpuProfile(),                             // 3.11
 }
 
 var globalResourceMap = map[string]*schema.Resource{
