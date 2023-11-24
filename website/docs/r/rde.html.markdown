@@ -205,13 +205,12 @@ The `metadata_entry` is a set of metadata entries that have the following struct
 * `domain` - (Optional) Only meaningful for providers. Allows them to share entries with their tenants. Currently, accepted values are: `TENANT`, `PROVIDER`. Defaults to `TENANT`.
   Updating this value forces a re-creation of the metadata entry.
 * `readonly` - (Optional) `true` if the metadata entry is read only. Defaults to `false`.  Updating this value forces a re-creation of the metadata entry.
-* `persistent` - (Optional) `true` if the metadata is persistent. Persistent entries can be copied over on some entity operation
-  (e.g. Creating a copy of a VDC, capturing a vApp to a template, instantiating a catalog item as a VM...). Defaults to `false`.
-  Updating this value forces a re-creation of the metadata entry.
+* `persistent` - (Optional) `true` if the metadata is persistent. Persistent entries can be copied over on some entity operation.
+  Right now it doesn't have any effect.
 * `id` - (Computed) Read-only identifier for this metadata entry.
 
-The only attribute that supports updates-in-place for a given metadata entry is `value`. Updating any other value will re-create the
-metadata entry.
+The only attributes that support updates-in-place for a given metadata entry is `value` and `persistent`.
+Updating any other value will re-create the metadata entry.
 
 Example:
 

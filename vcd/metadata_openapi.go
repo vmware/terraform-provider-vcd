@@ -203,15 +203,14 @@ func getOpenApiMetadataOperations(oldMetadata []interface{}, newMetadata []inter
 			if reflect.DeepEqual(oldEntry, newEntry) {
 				continue
 			}
-			// If a metadata property that is not "Value" is changed, it needs to be recreated
-			if oldEntry.IsReadOnly != newEntry.IsReadOnly || oldEntry.IsPersistent != newEntry.IsPersistent ||
-				oldEntry.KeyValue.Namespace != newEntry.KeyValue.Namespace || oldEntry.KeyValue.Domain != newEntry.KeyValue.Domain ||
-				oldEntry.KeyValue.Value.Type != newEntry.KeyValue.Value.Type {
+			// If a metadata property that is not "Value" or "IsPersistent" is changed, it needs to be recreated
+			if oldEntry.IsReadOnly != newEntry.IsReadOnly || oldEntry.KeyValue.Namespace != newEntry.KeyValue.Namespace ||
+				oldEntry.KeyValue.Domain != newEntry.KeyValue.Domain || oldEntry.KeyValue.Value.Type != newEntry.KeyValue.Value.Type {
 				util.Logger.Printf("[DEBUG] entry with namespace '%s' and key '%s' is being deleted and re-created", oldEntry.KeyValue.Namespace, oldEntry.KeyValue.Key)
 				metadataToRemove = append(metadataToRemove, oldMetadataEntries[newNamespacedKey])
 				metadataToCreate = append(metadataToCreate, newMetadataEntries[newNamespacedKey])
 			} else {
-				// Only "Value" is changed, it can be updated
+				// Only "Value" / "IsPersistent" is changed, it can be updated
 				metadataToUpdateMap[newNamespacedKey] = newEntry
 			}
 
