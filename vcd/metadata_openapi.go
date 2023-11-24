@@ -147,7 +147,7 @@ func createOrUpdateOpenApiMetadataEntryInVcd(d *schema.ResourceData, resource op
 	}
 
 	for _, entry := range metadataToDelete {
-		toDelete, err := resource.GetMetadataById(entry.ID) // Refreshes ETags
+		toDelete, err := resource.GetMetadataByKey(entry.KeyValue.Domain, entry.KeyValue.Namespace, entry.KeyValue.Key) // Refreshes ETags
 		if err != nil {
 			return fmt.Errorf("error reading metadata with namespace '%s' and key '%s': %s", entry.KeyValue.Namespace, entry.KeyValue.Key, err)
 		}
@@ -158,7 +158,7 @@ func createOrUpdateOpenApiMetadataEntryInVcd(d *schema.ResourceData, resource op
 	}
 
 	for _, entry := range metadataToUpdate {
-		toUpdate, err := resource.GetMetadataById(entry.ID) // Refreshes ETags
+		toUpdate, err := resource.GetMetadataByKey(entry.KeyValue.Domain, entry.KeyValue.Namespace, entry.KeyValue.Key) // Refreshes ETags
 		if err != nil {
 			return fmt.Errorf("error reading metadata with namespace '%s' and key '%s': %s", entry.KeyValue.Namespace, entry.KeyValue.Key, err)
 		}
