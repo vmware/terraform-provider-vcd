@@ -266,18 +266,17 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd
 	// As RDEs can have many instances with same name and RDE Type, we can't guarantee that we will read the one we want,
 	// but at least we try to filter a bit with things we know, like Organization.
 	var filteredRdes []*govcd.DefinedEntity
-	org, err := vcdClient.GetOrgFromResource(d)
-	if err != nil {
-		return nil, fmt.Errorf("could not retrieve the Organization of the RDE '%s': %s", name, err)
-	}
+	orgName := d.Get("org")
 	for _, rde := range rdes {
-		if rde.DefinedEntity.Org != nil && org.Org.ID == rde.DefinedEntity.Org.ID {
+		// If there's no Organization informed in the RDE, we cannot filter, hence we add it to the result anyway.
+		// If there's an Org in the RDE, it should match the information that the attribute has.
+		if rde.DefinedEntity.Org == nil || orgName == rde.DefinedEntity.Org.Name {
 			filteredRdes = append(filteredRdes, rde)
 		}
 	}
 
 	if len(filteredRdes) == 0 {
-		return nil, fmt.Errorf("no RDEs found with name '%s' and RDE Type ID '%s' in Org '%s': %s", name, rdeTypeId, org.Org.Name, govcd.ErrorEntityNotFound)
+		return nil, fmt.Errorf("no RDEs found with name '%s' and RDE Type ID '%s' in Org '%s': %s", name, rdeTypeId, orgName, govcd.ErrorEntityNotFound)
 	}
 
 	// If there is more than one RDE, we retrieve the IDs to give the user some feedback.
@@ -288,7 +287,7 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd
 		}
 	}
 
-	err = fmt.Errorf("there are %d RDEs with name '%s' and RDE Type ID '%s' in Org '%s': %v", len(filteredRdes), name, rdeTypeId, org.Org.Name, filteredRdesIds)
+	err = fmt.Errorf("there are %d RDEs with name '%s' and RDE Type ID '%s' in Org '%s': %v", len(filteredRdes), name, rdeTypeId, orgName, filteredRdesIds)
 	// We end early with the data source if there is more than one RDE found.
 	if origin == "datasource" && len(filteredRdes) > 1 {
 		return nil, err

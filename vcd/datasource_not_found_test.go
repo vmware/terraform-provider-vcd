@@ -124,6 +124,7 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			"vcd_nsxt_network_segment_profile",
 			"vcd_nsxt_segment_profile_template",
 			"vcd_nsxt_network_context_profile",
+			"vcd_nsxt_edgegateway_l2_vpn_tunnel",
 		}
 		dataSourcesRequiringAlbConfig := []string{
 			"vcd_nsxt_alb_cloud",
@@ -247,11 +248,11 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			return templateFields
 		}
 
+		// #nosec G101 -- not a credential
 		if (dataSourceName == "vcd_nsxt_edgegateway_bgp_configuration" || dataSourceName == "vcd_nsxt_alb_settings" ||
 			dataSourceName == "vcd_nsxt_edgegateway_rate_limiting" || dataSourceName == "vcd_nsxt_edgegateway_dhcp_forwarding" ||
 			dataSourceName == "vcd_nsxt_firewall" || dataSourceName == "vcd_nsxt_route_advertisement" ||
-			dataSourceName == "vcd_nsxt_edgegateway_dhcpv6") &&
-			mandatoryFields[fieldIndex] == "edge_gateway_id" {
+			dataSourceName == "vcd_nsxt_edgegateway_dhcpv6" || dataSourceName == "vcd_nsxt_edgegateway_dns") && mandatoryFields[fieldIndex] == "edge_gateway_id" {
 			// injecting fake Edge Gateway ID
 			templateFields = templateFields + `edge_gateway_id = "urn:vcloud:gateway:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
 			return templateFields

@@ -41,19 +41,19 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 	}
 
 	knownNetworkPool1 := testConfig.VCD.ProviderVdc.NetworkPool
-	if knownNetworkPool1 != "" {
+	if knownNetworkPool1 != "" && usingSysAdmin() {
 		lists = append(lists, listDef{name: "network_pool", resourceType: "vcd_network_pool", knownItem: knownNetworkPool1})
 	}
 	knownNetworkPool2 := testConfig.VCD.NsxtProviderVdc.NetworkPool
-	if knownNetworkPool2 != "" {
+	if knownNetworkPool2 != "" && usingSysAdmin() {
 		lists = append(lists, listDef{name: "nsxt_network_pool", resourceType: "vcd_network_pool", knownItem: knownNetworkPool2})
 	}
 	knownVcenter := testConfig.Networking.Vcenter
-	if knownVcenter != "" {
+	if knownVcenter != "" && usingSysAdmin() {
 		lists = append(lists, listDef{name: "port_groups", resourceType: "vcd_importable_port_group", parent: knownVcenter, knownItem: "*"})
 		lists = append(lists, listDef{name: "distributed_switchs", resourceType: "vcd_distributed_switch", parent: knownVcenter, knownItem: "*"})
 	}
-	if testConfig.Nsxt.Manager != "" {
+	if testConfig.Nsxt.Manager != "" && usingSysAdmin() {
 		lists = append(lists, listDef{name: "transport_zones", resourceType: "vcd_nsxt_transport_zone", parent: testConfig.Nsxt.Manager})
 	}
 	if testConfig.VCD.Org != "" {

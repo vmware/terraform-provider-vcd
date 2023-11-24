@@ -3,7 +3,6 @@
 package vcd
 
 import (
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -49,13 +48,13 @@ func TestAccVcdVmPlacementPolicy(t *testing.T) {
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(policyName, "id", regexp.MustCompile(`urn:vcloud:vdcComputePolicy:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(policyName, "id", getUuidRegex("urn:vcloud:vdcComputePolicy:", "$")),
 					resource.TestCheckResourceAttr(policyName, "name", params["PolicyName"].(string)),
 					resource.TestCheckResourceAttr(policyName, "description", params["Description"].(string)),
-					resource.TestMatchResourceAttr(policyName, "provider_vdc_id", regexp.MustCompile(`urn:vcloud:providervdc:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(policyName, "provider_vdc_id", getUuidRegex("urn:vcloud:providervdc:", "$")),
 					resource.TestCheckResourceAttr(policyName, "vm_group_ids.#", "1"),
 					resource.TestCheckResourceAttr(policyName, "logical_vm_group_ids.#", "0"),
-					resource.TestMatchResourceAttr(policyName, "vm_group_ids.0", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(policyName, "vm_group_ids.0", getUuidRegex("^", "$")),
 					resource.TestCheckNoResourceAttr(policyName, "vdc_id"),
 					resourceFieldsEqual(policyName, datasourcePolicyName, []string{"%"}), // Data source has extra attribute `vdc_id`
 
@@ -67,13 +66,13 @@ func TestAccVcdVmPlacementPolicy(t *testing.T) {
 			{
 				Config: configTextUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(policyName, "id", regexp.MustCompile(`urn:vcloud:vdcComputePolicy:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(policyName, "id", getUuidRegex("urn:vcloud:vdcComputePolicy:", "$")),
 					resource.TestCheckResourceAttr(policyName, "name", params["PolicyName"].(string)+"-update"),
 					resource.TestCheckResourceAttr(policyName, "description", params["Description"].(string)+"-update"),
-					resource.TestMatchResourceAttr(policyName, "provider_vdc_id", regexp.MustCompile(`urn:vcloud:providervdc:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(policyName, "provider_vdc_id", getUuidRegex("urn:vcloud:providervdc:", "$")),
 					resource.TestCheckResourceAttr(policyName, "vm_group_ids.#", "1"),
 					resource.TestCheckResourceAttr(policyName, "logical_vm_group_ids.#", "0"),
-					resource.TestMatchResourceAttr(policyName, "vm_group_ids.0", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(policyName, "vm_group_ids.0", getUuidRegex("^", "$")),
 					resource.TestCheckNoResourceAttr(policyName, "vdc_id"),
 					resourceFieldsEqual(policyName, datasourcePolicyName, []string{"%"}), // Data source has extra attribute `vdc_id`
 				),
@@ -196,13 +195,13 @@ func TestAccVcdVmPlacementPolicyInVdc(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					// System administrator
-					resource.TestMatchResourceAttr(datasourcePolicyName, "id", regexp.MustCompile(`urn:vcloud:vdcComputePolicy:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(datasourcePolicyName, "id", getUuidRegex("urn:vcloud:vdcComputePolicy:", "$")),
 					resource.TestCheckResourceAttr(datasourcePolicyName, "name", params["PolicyName"].(string)),
 					resource.TestCheckResourceAttr(datasourcePolicyName, "description", "foo"),
-					resource.TestMatchResourceAttr(datasourcePolicyName, "vdc_id", regexp.MustCompile(`urn:vcloud:vdc:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(datasourcePolicyName, "vdc_id", getUuidRegex("urn:vcloud:vdc:", "$")),
 					resource.TestCheckResourceAttr(datasourcePolicyName, "vm_group_ids.#", "1"),
 					resource.TestCheckResourceAttr(datasourcePolicyName, "logical_vm_group_ids.#", "0"),
-					resource.TestMatchResourceAttr(datasourcePolicyName, "vm_group_ids.0", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(datasourcePolicyName, "vm_group_ids.0", getUuidRegex("^", "$")),
 					resource.TestCheckNoResourceAttr(datasourcePolicyName, "provider_vdc_id"),
 					resourceFieldsEqual(policyName, datasourcePolicyName, []string{"%", "provider_vdc_id"}), // Resource doesn't have attribute `vdc_id` and we didn't use `provider_vdc_id` in data source
 

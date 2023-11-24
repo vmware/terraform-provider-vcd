@@ -4,7 +4,6 @@ package vcd
 
 import (
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -65,7 +64,7 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "status", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata."),
 					resource.TestMatchResourceAttr("vcd_vapp."+vappName, "href",
-						regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}`)),
+						getUuidRegex("", "")),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata."),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `guest_properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `guest_properties.guest.another.subkey`, "another-value"),
