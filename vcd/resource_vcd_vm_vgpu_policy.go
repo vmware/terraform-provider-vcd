@@ -10,19 +10,17 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 func resourceVcdVmVgpuPolicy() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVmSizingPolicyCreate,
-		DeleteContext: resourceVmSizingPolicyDelete,
-		ReadContext:   resourceVmSizingPolicyRead,
-		UpdateContext: resourceVmSizingPolicyUpdate,
-		Importer: &schema.ResourceImporter{
-			StateContext: resourceVmSizingPolicyImport,
-		},
+		CreateContext: resourceVcdVmVgpuPolicyCreate,
+		DeleteContext: resourceVcdVmVgpuPolicyDelete,
+		ReadContext:   resourceVcdVmVgpuPolicyRead,
+		UpdateContext: resourceVcdVmVgpuPolicyUpdate,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:     schema.TypeString,
@@ -47,7 +45,7 @@ func resourceVcdVmVgpuPolicy() *schema.Resource {
 						"count": {
 							Type:         schema.TypeInt,
 							Required:     true,
-							ValidateFunc: IsIntAndAtLeast(1),
+							ValidateFunc: validation.IntAtLeast(1),
 						},
 					},
 				},
@@ -57,6 +55,7 @@ func resourceVcdVmVgpuPolicy() *schema.Resource {
 				Optional: true,
 				MinItems: 0,
 				MaxItems: 1,
+				ForceNew: true,
 				Elem:     sizingPolicyCpu,
 			},
 			"memory": {
@@ -64,17 +63,13 @@ func resourceVcdVmVgpuPolicy() *schema.Resource {
 				Optional: true,
 				MinItems: 0,
 				MaxItems: 1,
+				ForceNew: true,
 				Elem:     sizingPolicyMemory,
 			},
 			"provider_vdc_scope": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem:     providerVdcScope,
-			},
-			"vm_group_scope": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     vmGroupScope,
 			},
 		},
 	}
@@ -89,25 +84,19 @@ var providerVdcScope = &schema.Resource{
 		"cluster_names": {
 			Type:     schema.TypeSet,
 			Required: true,
-			Elem:     schema.TypeString,
+			Elem: &schema.Schema{
+				MinItems: 1,
+				Type:     schema.TypeString,
+			},
+		},
+		"named_vm_group_id": {
+			Type:     schema.TypeString,
+			Optional: true,
 		},
 	},
 }
 
-var vmGroupScope = &schema.Resource{
-	Schema: map[string]*schema.Schema{
-		"provider_vdc_id": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"vm_group_name": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-	},
-}
-
-func resourceVmVgpuPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVmVgpuPolicyCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	policyName := d.Get("name").(string)
 	log.Printf("[TRACE] VM vGPU policy creation initiated: %s", policyName)
 
@@ -137,7 +126,7 @@ func resourceVmVgpuPolicyCreate(ctx context.Context, d *schema.ResourceData, met
 }
 
 // resourceVmSizingPolicyRead reads a resource VM Sizing Policy
-func resourceVmVgpuPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVmVgpuPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdVmSizingPolicyRead(ctx, d, meta)
 }
 
@@ -194,7 +183,7 @@ func genericVcdVgpuPolicyRead(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 // resourceVmVgpuPolicyUpdate function updates resource with found configurations changes
-func resourceVmVgpuPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVmVgpuPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	policyName := d.Get("name").(string)
 	log.Printf("[TRACE] VM sizing policy update initiated: %s", policyName)
 
@@ -223,7 +212,7 @@ func resourceVmVgpuPolicyUpdate(ctx context.Context, d *schema.ResourceData, met
 }
 
 // Deletes a VM vGPU policy
-func resourceVmVgpuPolicyDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVmVgpuPolicyDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	policyName := d.Get("name").(string)
 	log.Printf("[TRACE] VM sizing policy delete started: %s", policyName)
 
@@ -280,12 +269,16 @@ func getVgpuPolicyInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.Vd
 		return nil, err
 	}
 
+	clustersPart, vmGroupsPart, err := getVgpuClustersMap(d, vcdClient)
+	if err != nil {
+		return nil, fmt.Errorf("error getting vgpu clusters map: %s", err)
+	}
+
 	policy := &types.VdcComputePolicyV2{
 		VdcComputePolicy:     *params,
-		PolicyType:           "VcdVmPolicy",
-		IsVgpuPolicy:         true,
-		PvdcNamedVmGroupsMap: []types.PvdcNamedVmGroupsMap{},
-		PvdcVgpuClustersMap:  []types.PvdcVgpuClustersMap{},
+		PolicyType:           "VdcVmPolicy",
+		PvdcNamedVmGroupsMap: vmGroupsPart,
+		PvdcVgpuClustersMap:  clustersPart,
 		VgpuProfiles: []types.VgpuProfile{
 			*vgpuProfile,
 		},
@@ -307,39 +300,10 @@ func getVgpuProfile(vgpuProfile []interface{}, vcdClient *VCDClient) (*types.Vgp
 	return profile.VgpuProfile, nil
 }
 
-func getVgpuNamedVmGroups(d *schema.ResourceData, vcdClient *VCDClient) ([]types.PvdcNamedVmGroupsMap, error) {
-	vmGroupSet := d.Get("vm_group_scope").(*schema.Set)
-	vmGroups := make([]types.PvdcNamedVmGroupsMap, len(vmGroupSet.List()))
-	for rangeIndex, vmGroup := range vmGroupSet.List() {
-		vmGroupDefinition := vmGroup.(map[string]interface{})
-		groupName := vmGroupDefinition["vm_group_name"].(string)
-		pvdcId := vmGroupDefinition["provider_vdc_id"].(string)
-		group, err := vcdClient.GetVmGroupByNameAndProviderVdcUrn(groupName, pvdcId)
-		if err != nil {
-			return nil, err
-		}
-		oneVmGroup := types.PvdcNamedVmGroupsMap{
-			NamedVmGroups: []types.OpenApiReferences{
-				{
-					{
-						Name: group.VmGroup.Name,
-						ID:   group.VmGroup.ID,
-					},
-				},
-			},
-			Pvdc: types.OpenApiReference{
-				ID: pvdcId,
-			},
-		}
-		vmGroups[rangeIndex] = oneVmGroup
-	}
-
-	return vmGroups, nil
-}
-
-func getVgpuClustersMap(d *schema.ResourceData, vcdClient *VCDClient) ([]types.PvdcVgpuClustersMap, error) {
+func getVgpuClustersMap(d *schema.ResourceData, vcdClient *VCDClient) ([]types.PvdcVgpuClustersMap, []types.PvdcNamedVmGroupsMap, error) {
 	vgpuClusterSet := d.Get("provider_vdc_scope").(*schema.Set)
 	vgpuClusters := make([]types.PvdcVgpuClustersMap, len(vgpuClusterSet.List()))
+	var namedVmGroups []types.PvdcNamedVmGroupsMap
 	for rangeIndex, vgpuCluster := range vgpuClusterSet.List() {
 		vgpuClusterDefinition := vgpuCluster.(map[string]interface{})
 
@@ -349,28 +313,40 @@ func getVgpuClustersMap(d *schema.ResourceData, vcdClient *VCDClient) ([]types.P
 		clusterNames := convertSchemaSetToSliceOfStrings(clusterNameSet)
 		providerVdc, err := vcdClient.GetProviderVdcById(pvdcId)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		providerVdc.
-			resPools, err := vcdClient.GetAllResourcePools(nil)
-		if err != nil {
-			return nil, err
+		onePvdcCluster := types.PvdcVgpuClustersMap{
+			Clusters: clusterNames,
+			Pvdc: types.OpenApiReference{
+				ID:   pvdcId,
+				Name: providerVdc.ProviderVdc.Name,
+			},
 		}
-		oneVmGroup := types.PvdcNamedVmGroupsMap{
-			NamedVmGroups: []types.OpenApiReferences{
-				{
+
+		namedVmGroupId := vgpuClusterDefinition["named_vm_group_id"].(string)
+		if namedVmGroupId != "" {
+			vmGroup, err := vcdClient.GetVmGroupByNamedVmGroupIdAndProviderVdcUrn(namedVmGroupId, pvdcId)
+			if err != nil {
+				return nil, nil, err
+			}
+			namedVmGroups = append(namedVmGroups, types.PvdcNamedVmGroupsMap{
+				Pvdc: types.OpenApiReference{
+					ID:   pvdcId,
+					Name: providerVdc.ProviderVdc.Name,
+				},
+				NamedVmGroups: []types.OpenApiReferences{
 					{
-						Name: group.VmGroup.Name,
-						ID:   group.VmGroup.ID,
+						{
+							Name: vmGroup.VmGroup.Name,
+							ID:   "urn:vcloud:namedVmGroup:" + namedVmGroupId,
+						},
 					},
 				},
-			},
-			Pvdc: types.OpenApiReference{
-				ID: pvdcId,
-			},
+			})
+
 		}
-		vgpuClusters[rangeIndex] = oneVmGroup
+		vgpuClusters[rangeIndex] = onePvdcCluster
 	}
 
-	return vgpuClusters, nil
+	return vgpuClusters, namedVmGroups, nil
 }
