@@ -416,18 +416,20 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 					continue
 				}
 				// --------------------------------------------------------------
-				// L2 VPN Tunnels
+				// L2 VPN Tunnels (Only for SysAdmins)
 				// --------------------------------------------------------------
-				l2VpnTunnels, err := edgeGw.GetAllL2VpnTunnels(nil)
-				if err != nil {
-					return fmt.Errorf("error retrieving L2 VPN Tunnel list: %s", err)
-				}
-				for _, tunnel := range l2VpnTunnels {
-					toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, tunnel.NsxtL2VpnTunnel.Name, "vcd_nsxt_edgegateway_l2_vpn_tunnel", 3, verbose)
-					if toBeDeleted {
-						err := tunnel.Delete()
-						if err != nil {
-							return fmt.Errorf("error deleting L2 VPN Tunnel '%s': %s", tunnel.NsxtL2VpnTunnel.Name, err)
+				if govcdClient.Client.IsSysAdmin {
+					l2VpnTunnels, err := edgeGw.GetAllL2VpnTunnels(nil)
+					if err != nil {
+						return fmt.Errorf("error retrieving L2 VPN Tunnel list: %s", err)
+					}
+					for _, tunnel := range l2VpnTunnels {
+						toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, tunnel.NsxtL2VpnTunnel.Name, "vcd_nsxt_edgegateway_l2_vpn_tunnel", 3, verbose)
+						if toBeDeleted {
+							err := tunnel.Delete()
+							if err != nil {
+								return fmt.Errorf("error deleting L2 VPN Tunnel '%s': %s", tunnel.NsxtL2VpnTunnel.Name, err)
+							}
 						}
 					}
 				}

@@ -802,3 +802,241 @@ func testAccCheckVcdNsxtIpSpacesDestroy(ipSpaceName string) resource.TestCheckFu
 		return nil
 	}
 }
+
+func TestAccVcdIpSpaceGatewayServicesConfiguration(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	if checkVersion(testConfig.Provider.ApiVersion, "< 38.0") {
+		t.Skipf("This test tests VCD 10.5.0+ (API V38.0+) features. Skipping.")
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"TestName": t.Name(),
+		"Org":      testConfig.VCD.Org,
+
+		"Tags": "network nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "step1"
+	configText1 := templateFill(testAccVcdIpSpacePublicGatewayServicesStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccVcdIpSpacePublicGatewayServicesStep2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	params["FuncName"] = t.Name() + "step3"
+	configText3 := templateFill(testAccVcdIpSpacePublicGatewayServicesStep3, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdNsxtIpSpacesDestroy(params["TestName"].(string)),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "default_firewall_rule_creation_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "default_no_snat_rule_creation_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "default_snat_rule_creation_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "type", "PUBLIC"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "internal_scope.#", "1"),
+					resource.TestCheckTypeSetElemAttr("vcd_ip_space.space1", "internal_scope.*", "192.168.1.0/24"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "external_scope", "0.0.0.0/0"),
+
+					resource.TestCheckResourceAttr("vcd_ip_space.space2", "route_advertisement_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space2", "default_firewall_rule_creation_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space2", "default_no_snat_rule_creation_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space2", "default_snat_rule_creation_enabled", "false"),
+
+					resource.TestCheckResourceAttr("vcd_ip_space.space3", "route_advertisement_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space3", "default_firewall_rule_creation_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space3", "default_no_snat_rule_creation_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space3", "default_snat_rule_creation_enabled", "false"),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "default_firewall_rule_creation_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "default_no_snat_rule_creation_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "default_snat_rule_creation_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "type", "PUBLIC"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "internal_scope.#", "1"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "external_scope", "0.0.0.0/0"),
+
+					resource.TestCheckResourceAttr("vcd_ip_space.space2", "route_advertisement_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space2", "default_firewall_rule_creation_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space2", "default_no_snat_rule_creation_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space2", "default_snat_rule_creation_enabled", "false"),
+
+					resource.TestCheckResourceAttr("vcd_ip_space.space3", "route_advertisement_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space3", "default_firewall_rule_creation_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space3", "default_no_snat_rule_creation_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space3", "default_snat_rule_creation_enabled", "false"),
+				),
+			},
+			{
+				Config: configText3,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "route_advertisement_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "default_firewall_rule_creation_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "default_no_snat_rule_creation_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "default_snat_rule_creation_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "type", "PUBLIC"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "internal_scope.#", "1"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space1", "external_scope", "0.0.0.0/0"),
+
+					resource.TestCheckResourceAttr("vcd_ip_space.space2", "route_advertisement_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space2", "default_firewall_rule_creation_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space2", "default_no_snat_rule_creation_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space2", "default_snat_rule_creation_enabled", "false"),
+
+					resource.TestCheckResourceAttr("vcd_ip_space.space3", "route_advertisement_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space3", "default_firewall_rule_creation_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space3", "default_no_snat_rule_creation_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_ip_space.space3", "default_snat_rule_creation_enabled", "false"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdIpSpacePublicGatewayServicesStep1 = testAccVcdIpSpacePrivateShared + `
+resource "vcd_ip_space" "space1" {
+  name = "{{.TestName}}-public"
+  type = "PUBLIC"
+
+  internal_scope = ["192.168.1.0/24"]
+  external_scope = "0.0.0.0/0"
+
+  route_advertisement_enabled            = false
+  default_firewall_rule_creation_enabled = true
+  default_no_snat_rule_creation_enabled  = true
+  default_snat_rule_creation_enabled     = true
+}
+
+resource "vcd_ip_space" "space2" {
+  name = "{{.TestName}}-shared-svcs"
+  type = "SHARED_SERVICES"
+
+  internal_scope = ["192.168.2.0/24"]
+
+  route_advertisement_enabled            = false
+  default_firewall_rule_creation_enabled = true
+  default_no_snat_rule_creation_enabled  = false
+  default_snat_rule_creation_enabled     = false
+}
+
+resource "vcd_ip_space" "space3" {
+  name        = "{{.TestName}}-private"
+  description = "added description"
+  type        = "PRIVATE"
+  org_id      = data.vcd_org.org1.id
+
+  internal_scope = ["192.168.1.0/24","10.10.10.0/24", "11.11.11.0/24"]
+
+  route_advertisement_enabled            = false
+  default_firewall_rule_creation_enabled = true
+  default_no_snat_rule_creation_enabled  = false
+  default_snat_rule_creation_enabled     = false
+}
+`
+
+const testAccVcdIpSpacePublicGatewayServicesStep2 = testAccVcdIpSpacePrivateShared + `
+resource "vcd_ip_space" "space1" {
+  name = "{{.TestName}}-public"
+  type = "PUBLIC"
+
+  internal_scope = ["192.168.1.0/24"]
+  external_scope = "0.0.0.0/0"
+
+  route_advertisement_enabled            = true
+  default_firewall_rule_creation_enabled = false
+  default_no_snat_rule_creation_enabled  = false
+  default_snat_rule_creation_enabled     = false
+}
+
+resource "vcd_ip_space" "space2" {
+  name = "{{.TestName}}-shared-svcs"
+  type = "SHARED_SERVICES"
+
+  internal_scope = ["192.168.2.0/24"]
+
+  route_advertisement_enabled            = true
+  default_firewall_rule_creation_enabled = false
+  default_no_snat_rule_creation_enabled  = false
+  default_snat_rule_creation_enabled     = false
+}
+
+resource "vcd_ip_space" "space3" {
+  name        = "{{.TestName}}-private"
+  description = "added description"
+  type        = "PRIVATE"
+  org_id      = data.vcd_org.org1.id
+
+  internal_scope = ["192.168.1.0/24","10.10.10.0/24", "11.11.11.0/24"]
+
+  route_advertisement_enabled            = true
+  default_firewall_rule_creation_enabled = false
+  default_no_snat_rule_creation_enabled  = false
+  default_snat_rule_creation_enabled     = false
+}
+`
+
+const testAccVcdIpSpacePublicGatewayServicesStep3 = testAccVcdIpSpacePrivateShared + `
+resource "vcd_ip_space" "space1" {
+  name = "{{.TestName}}-public"
+  type = "PUBLIC"
+
+  internal_scope = ["192.168.1.0/24"]
+  external_scope = "0.0.0.0/0"
+
+  route_advertisement_enabled            = true
+  default_firewall_rule_creation_enabled = false
+  default_no_snat_rule_creation_enabled  = true
+  default_snat_rule_creation_enabled     = false
+}
+
+resource "vcd_ip_space" "space2" {
+  name = "{{.TestName}}-shared-svcs"
+  type = "SHARED_SERVICES"
+
+  internal_scope = ["192.168.2.0/24"]
+  external_scope = "0.0.0.0/0"
+
+  route_advertisement_enabled            = true
+  default_firewall_rule_creation_enabled = false
+  default_no_snat_rule_creation_enabled  = true
+  default_snat_rule_creation_enabled     = false
+}
+
+resource "vcd_ip_space" "space3" {
+  name        = "{{.TestName}}-private"
+  description = "added description"
+  type        = "PRIVATE"
+  org_id      = data.vcd_org.org1.id
+
+  internal_scope = ["192.168.1.0/24","10.10.10.0/24", "11.11.11.0/24"]
+  external_scope = "0.0.0.0/0"
+
+  route_advertisement_enabled            = true
+  default_firewall_rule_creation_enabled = false
+  default_no_snat_rule_creation_enabled  = true
+  default_snat_rule_creation_enabled     = false
+}
+`
