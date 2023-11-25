@@ -155,6 +155,11 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelCreate(ctx context.Context, d *schema.
 		return diag.Errorf("[L2 VPN Tunnel create] error creating L2 VPN Tunnel: %s", err)
 	}
 	d.SetId(tunnel.NsxtL2VpnTunnel.ID)
+	// There is a bug in versions up to 38.0, where the pre-shared key would be included in the
+	// requests
+	if vcdClient.Client.APIVCDMaxVersionIs(">=38.1") {
+		dSet(d, "pre_shared_key", tunnelConfig.PreSharedKey)
+	}
 
 	return resourceVcdNsxtEdgegatewayL2VpnTunnelRead(ctx, d, meta)
 }
@@ -191,7 +196,7 @@ func genericNsxtEdgegatewayL2VpnTunnelRead(_ context.Context, d *schema.Resource
 		log.Printf("[DEBUG] L2 VPN Tunnel no longer exists. Removing from tfstate")
 		return nil
 	}
-	err = readL2VpnTunnelToSchema(tunnelConfig.NsxtL2VpnTunnel, d)
+	err = readL2VpnTunnelToSchema(tunnelConfig.NsxtL2VpnTunnel, d, vcdClient)
 	if err != nil {
 		return diag.Errorf("[L2 VPN Tunnel read] error reading retrieved tunnel into schema: %s", err)
 	}
@@ -221,6 +226,12 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelUpdate(ctx context.Context, d *schema.
 	_, err = tunnel.Update(tunnelUpdatedConfig)
 	if err != nil {
 		return diag.Errorf("[L2 VPN Tunnel update] error updating L2 VPN Tunnel: %s", err)
+	}
+
+	// There is a bug in versions up to 38.0, where the pre-shared key would be included in the
+	// requests
+	if vcdClient.Client.APIVCDMaxVersionIs(">=38.1") {
+		dSet(d, "pre_shared_key", tunnelUpdatedConfig.PreSharedKey)
 	}
 
 	return resourceVcdNsxtEdgegatewayL2VpnTunnelRead(ctx, d, meta)
@@ -335,7 +346,7 @@ func readL2VpnTunnelFromSchema(d *schema.ResourceData) (*types.NsxtL2VpnTunnel, 
 	return tunnel, nil
 }
 
-func readL2VpnTunnelToSchema(tunnel *types.NsxtL2VpnTunnel, d *schema.ResourceData) error {
+func readL2VpnTunnelToSchema(tunnel *types.NsxtL2VpnTunnel, d *schema.ResourceData, vcdClient *VCDClient) error {
 	d.SetId(tunnel.ID)
 	dSet(d, "name", tunnel.Name)
 	dSet(d, "description", tunnel.Description)
@@ -348,7 +359,9 @@ func readL2VpnTunnelToSchema(tunnel *types.NsxtL2VpnTunnel, d *schema.ResourceDa
 		dSet(d, "tunnel_interface", tunnel.TunnelInterface)
 		dSet(d, "connector_initiation_mode", tunnel.ConnectorInitiationMode)
 		dSet(d, "peer_code", tunnel.PeerCode)
-		dSet(d, "pre_shared_key", tunnel.PreSharedKey)
+		if vcdClient.Client.APIVCDMaxVersionIs("<=38.0") {
+			dSet(d, "pre_shared_key", tunnel.PreSharedKey)
+		}
 	}
 
 	stretchedNetworkSlice := make([]interface{}, len(tunnel.StretchedNetworks))
