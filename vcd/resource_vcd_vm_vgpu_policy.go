@@ -23,53 +23,61 @@ func resourceVcdVmVgpuPolicy() *schema.Resource {
 		UpdateContext: resourceVcdVmVgpuPolicyUpdate,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The unique name of the vGPU policy.",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Description of the vGPU policy.",
 			},
 			"vgpu_profile": {
-				Type:     schema.TypeList,
-				Required: true,
-				MinItems: 1,
-				MaxItems: 1,
+				Type:        schema.TypeList,
+				Required:    true,
+				MinItems:    1,
+				MaxItems:    1,
+				Description: "Defines the vGPU profile configuration. Only one profile is allowed.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
-							Type:     schema.TypeString,
-							ForceNew: true,
-							Required: true,
+							Type:        schema.TypeString,
+							ForceNew:    true,
+							Required:    true,
+							Description: "The identifier of the vGPU profile.",
 						},
 						"count": {
 							Type:         schema.TypeInt,
 							Required:     true,
 							ValidateFunc: validation.IntAtLeast(1),
+							Description:  "Specifies the number of vGPU profiles. Must be at least 1.",
 						},
 					},
 				},
 			},
 			"cpu": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MinItems: 0,
-				MaxItems: 1,
-				ForceNew: true,
-				Elem:     sizingPolicyCpu,
+				Type:        schema.TypeList,
+				Optional:    true,
+				MinItems:    0,
+				MaxItems:    1,
+				ForceNew:    true,
+				Description: "Configuration options for CPU resources.",
+				Elem:        sizingPolicyCpu,
 			},
 			"memory": {
-				Type:     schema.TypeList,
-				Optional: true,
-				MinItems: 0,
-				MaxItems: 1,
-				ForceNew: true,
-				Elem:     sizingPolicyMemory,
+				Type:        schema.TypeList,
+				Optional:    true,
+				MinItems:    0,
+				MaxItems:    1,
+				ForceNew:    true,
+				Description: "Memory resource configuration settings.",
+				Elem:        sizingPolicyMemory,
 			},
 			"provider_vdc_scope": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem:     providerVdcScope,
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Defines the scope of the policy within provider virtual data centers.",
+				Elem:        providerVdcScope,
 			},
 		},
 	}
@@ -78,20 +86,23 @@ func resourceVcdVmVgpuPolicy() *schema.Resource {
 var providerVdcScope = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"provider_vdc_id": {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "Identifier for the provider virtual data center.",
 		},
 		"cluster_names": {
-			Type:     schema.TypeSet,
-			Required: true,
+			Type:        schema.TypeSet,
+			Required:    true,
+			Description: "Set of cluster names within the provider virtual data center.",
 			Elem: &schema.Schema{
 				MinItems: 1,
 				Type:     schema.TypeString,
 			},
 		},
 		"vm_group_id": {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Optional identifier for a VM group within the provider VDC scope.",
 		},
 	},
 }
@@ -111,18 +122,18 @@ func resourceVcdVmVgpuPolicyCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	log.Printf("[DEBUG] Creating VM sizing policy: %#v", params)
+	log.Printf("[DEBUG] Creating VM vGPU policy: %#v", params)
 
-	createdVmSizingPolicy, err := vcdClient.CreateVdcComputePolicyV2(params)
+	createdVmVgpuPolicy, err := vcdClient.CreateVdcComputePolicyV2(params)
 	if err != nil {
-		log.Printf("[DEBUG] Error VM sizing policy: %s", err)
-		return diag.Errorf("error VM sizing policy: %s", err)
+		log.Printf("[DEBUG] Error VM vGPU policy: %s", err)
+		return diag.Errorf("error VM vGPU policy: %s", err)
 	}
 
-	d.SetId(createdVmSizingPolicy.VdcComputePolicyV2.ID)
-	log.Printf("[TRACE] VM sizing policy created: %#v", createdVmSizingPolicy.VdcComputePolicyV2)
+	d.SetId(createdVmVgpuPolicy.VdcComputePolicyV2.ID)
+	log.Printf("[TRACE] VM vGPU policy created: %#v", createdVmVgpuPolicy.VdcComputePolicyV2)
 
-	return resourceVmSizingPolicyRead(ctx, d, meta)
+	return resourceVcdVmVgpuPolicyRead(ctx, d, meta)
 }
 
 // resourceVmSizingPolicyRead reads a resource VM Sizing Policy
@@ -130,7 +141,7 @@ func resourceVcdVmVgpuPolicyRead(ctx context.Context, d *schema.ResourceData, me
 	return genericVcdVgpuPolicyRead(ctx, d, meta)
 }
 
-// Fetches information about an existing VM sizing policy for a data definition
+// Fetches information about an existing VM vGPU policy for a data definition
 func genericVcdVgpuPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	policyName := d.Get("name").(string)
 	log.Printf("[TRACE] VM vGPU policy read initiated: %s", policyName)
@@ -176,7 +187,7 @@ func genericVcdVgpuPolicyRead(ctx context.Context, d *schema.ResourceData, meta 
 
 	// Fix coverity warning
 	if policy == nil {
-		return diag.Errorf("[genericVcdVgpuPolicyRead] error defining sizing policy")
+		return diag.Errorf("[genericVcdVgpuPolicyRead] error defining vGPU policy")
 	}
 	util.Logger.Printf("[TRACE] [get VM vGPU policy] Retrieved by %s\n", method)
 	return setVgpuPolicy(d, policy.VdcComputePolicyV2)
@@ -208,7 +219,7 @@ func resourceVcdVmVgpuPolicyUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	log.Printf("[TRACE] VM vGPU policy update completed: %s", policyName)
-	return resourceVmSizingPolicyRead(ctx, d, meta)
+	return resourceVcdVmVgpuPolicyRead(ctx, d, meta)
 }
 
 // Deletes a VM vGPU policy
@@ -316,7 +327,6 @@ func getVgpuProfile(vgpuProfile []interface{}, vcdClient *VCDClient) (*types.Vgp
 }
 
 func setVgpuPolicy(d *schema.ResourceData, vgpuPolicy *types.VdcComputePolicyV2) diag.Diagnostics {
-
 	var diags diag.Diagnostics
 	diags = append(diags, setVmSizingPolicy(nil, d, vgpuPolicy.VdcComputePolicy)...)
 

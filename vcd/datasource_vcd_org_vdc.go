@@ -209,6 +209,14 @@ func datasourceVcdOrgVdc() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"vm_vgpu_policy_ids": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Set of VM vGPU policy IDs",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"default_vm_sizing_policy_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
