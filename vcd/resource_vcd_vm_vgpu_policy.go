@@ -89,7 +89,7 @@ var providerVdcScope = &schema.Resource{
 				Type:     schema.TypeString,
 			},
 		},
-		"named_vm_group_id": {
+		"vm_group_id": {
 			Type:     schema.TypeString,
 			Optional: true,
 		},
@@ -127,27 +127,27 @@ func resourceVcdVmVgpuPolicyCreate(ctx context.Context, d *schema.ResourceData, 
 
 // resourceVmSizingPolicyRead reads a resource VM Sizing Policy
 func resourceVcdVmVgpuPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdVmSizingPolicyRead(ctx, d, meta)
+	return genericVcdVgpuPolicyRead(ctx, d, meta)
 }
 
 // Fetches information about an existing VM sizing policy for a data definition
 func genericVcdVgpuPolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	policyName := d.Get("name").(string)
-	log.Printf("[TRACE] VM sizing policy read initiated: %s", policyName)
+	log.Printf("[TRACE] VM vGPU policy read initiated: %s", policyName)
 
 	vcdClient := meta.(*VCDClient)
 
 	// The method variable stores the information about how we found the rule, for logging purposes
 	method := "id"
 
-	var policy *govcd.VdcComputePolicy
+	var policy *govcd.VdcComputePolicyV2
 	var err error
 	if d.Id() != "" {
-		policy, err = vcdClient.Client.GetVdcComputePolicyById(d.Id())
+		policy, err = vcdClient.GetVdcComputePolicyV2ById(d.Id())
 		if err != nil {
-			log.Printf("[DEBUG] Unable to find VM sizing policy %s. Removing from tfstate.", policyName)
+			log.Printf("[DEBUG] Unable to find VM vGPU policy %s. Removing from tfstate.", policyName)
 			d.SetId("")
-			return diag.Errorf("unable to find VM sizing policy %s, err: %s. Removing from tfstate", policyName, err)
+			return diag.Errorf("unable to find VM vGPU policy %s, err: %s. Removing from tfstate", policyName, err)
 		}
 	}
 
@@ -158,63 +158,63 @@ func genericVcdVgpuPolicyRead(ctx context.Context, d *schema.ResourceData, meta 
 		}
 		method = "name"
 		queryParams := url.Values{}
-		queryParams.Add("filter", fmt.Sprintf("name==%s;isSizingOnly==true", policyName))
-		filteredPoliciesByName, err := vcdClient.Client.GetAllVdcComputePolicies(queryParams)
+		queryParams.Add("filter", fmt.Sprintf("name==%s;isVgpuPolicy==true", policyName))
+		filteredPoliciesByName, err := vcdClient.GetAllVdcComputePoliciesV2(queryParams)
 		if err != nil {
-			log.Printf("[DEBUG] Unable to find VM sizing policy %s. Removing from tfstate.", policyName)
+			log.Printf("[DEBUG] Unable to find VM vGPU policy %s. Removing from tfstate.", policyName)
 			d.SetId("")
-			return diag.Errorf("unable to find VM sizing policy %s, err: %s. Removing from tfstate", policyName, err)
+			return diag.Errorf("unable to find VM vGPU policy %s, err: %s. Removing from tfstate", policyName, err)
 		}
 		if len(filteredPoliciesByName) != 1 {
-			log.Printf("[DEBUG] Unable to find VM sizing policy %s . Found Policies by name: %d. Removing from tfstate.", policyName, len(filteredPoliciesByName))
+			log.Printf("[DEBUG] Unable to find VM vGPU policy %s . Found Policies by name: %d. Removing from tfstate.", policyName, len(filteredPoliciesByName))
 			d.SetId("")
-			return diag.Errorf("[DEBUG] Unable to find VM sizing policy %s, err: %s. Found Policies by name: %d. Removing from tfstate", policyName, govcd.ErrorEntityNotFound, len(filteredPoliciesByName))
+			return diag.Errorf("[DEBUG] Unable to find VM vGPU policy %s, err: %s. Found Policies by name: %d. Removing from tfstate", policyName, govcd.ErrorEntityNotFound, len(filteredPoliciesByName))
 		}
 		policy = filteredPoliciesByName[0]
-		d.SetId(policy.VdcComputePolicy.ID)
+		d.SetId(policy.VdcComputePolicyV2.ID)
 	}
 
 	// Fix coverity warning
 	if policy == nil {
-		return diag.Errorf("[genericVcdVmSizingPolicyRead] error defining sizing policy")
+		return diag.Errorf("[genericVcdVgpuPolicyRead] error defining sizing policy")
 	}
-	util.Logger.Printf("[TRACE] [get VM sizing policy] Retrieved by %s\n", method)
-	return setVmSizingPolicy(ctx, d, *policy.VdcComputePolicy)
+	util.Logger.Printf("[TRACE] [get VM vGPU policy] Retrieved by %s\n", method)
+	return setVgpuPolicy(d, policy.VdcComputePolicyV2)
 }
 
 // resourceVmVgpuPolicyUpdate function updates resource with found configurations changes
 func resourceVcdVmVgpuPolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	policyName := d.Get("name").(string)
-	log.Printf("[TRACE] VM sizing policy update initiated: %s", policyName)
+	log.Printf("[TRACE] VM vGPU policy update initiated: %s", policyName)
 
 	vcdClient := meta.(*VCDClient)
 
-	policy, err := vcdClient.Client.GetVdcComputePolicyById(d.Id())
+	policy, err := vcdClient.GetVdcComputePolicyV2ById(d.Id())
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VM sizing policy %s", policyName)
-		return diag.Errorf("unable to find VM sizing policy %s, error:  %s", policyName, err)
+		log.Printf("[DEBUG] Unable to find VM vGPU policy %s", policyName)
+		return diag.Errorf("unable to find VM vGPU policy %s, error:  %s", policyName, err)
 	}
 
-	changedPolicy, err := getUpdatedVmSizingPolicyInput(d, policy)
+	changedPolicy, err := getUpdatedVgpuPolicyInput(d, vcdClient, policy)
 	if err != nil {
-		log.Printf("[DEBUG] Error updating VM sizing policy %s with error %s", policyName, err)
-		return diag.Errorf("error updating VM sizing policy %s, err: %s", policyName, err)
+		log.Printf("[DEBUG] Error updating VM vGPU policy %s with error %s", policyName, err)
+		return diag.Errorf("error updating VM vGPU policy %s, err: %s", policyName, err)
 	}
 
 	_, err = changedPolicy.Update()
 	if err != nil {
-		log.Printf("[DEBUG] Error updating VM sizing policy %s with error %s", policyName, err)
-		return diag.Errorf("error updating VM sizing policy %s, err: %s", policyName, err)
+		log.Printf("[DEBUG] Error updating VM vGPU policy %s with error %s", policyName, err)
+		return diag.Errorf("error updating VM vGPU policy %s, err: %s", policyName, err)
 	}
 
-	log.Printf("[TRACE] VM sizing policy update completed: %s", policyName)
+	log.Printf("[TRACE] VM vGPU policy update completed: %s", policyName)
 	return resourceVmSizingPolicyRead(ctx, d, meta)
 }
 
 // Deletes a VM vGPU policy
 func resourceVcdVmVgpuPolicyDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	policyName := d.Get("name").(string)
-	log.Printf("[TRACE] VM sizing policy delete started: %s", policyName)
+	log.Printf("[TRACE] VM vGPU policy delete started: %s", policyName)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -222,20 +222,20 @@ func resourceVcdVmVgpuPolicyDelete(_ context.Context, d *schema.ResourceData, me
 		return diag.Errorf("functionality requires System administrator privileges")
 	}
 
-	policy, err := vcdClient.Client.GetVdcComputePolicyById(d.Id())
+	policy, err := vcdClient.GetVdcComputePolicyV2ById(d.Id())
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VM sizing policy %s. Removing from tfstate", policyName)
+		log.Printf("[DEBUG] Unable to find VM vGPU policy %s. Removing from tfstate", policyName)
 		d.SetId("")
 		return nil
 	}
 
 	err = policy.Delete()
 	if err != nil {
-		log.Printf("[DEBUG] Error removing VM sizing policy %s, err: %s", policyName, err)
-		return diag.Errorf("error removing VM sizing policy %s, err: %s", policyName, err)
+		log.Printf("[DEBUG] Error removing VM vGPU policy %s, err: %s", policyName, err)
+		return diag.Errorf("error removing VM vGPU policy %s, err: %s", policyName, err)
 	}
 
-	log.Printf("[TRACE] VM sizing policy delete completed: %s", policyName)
+	log.Printf("[TRACE] VM vGPU policy delete completed: %s", policyName)
 	return nil
 }
 
@@ -269,7 +269,7 @@ func getVgpuPolicyInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.Vd
 		return nil, err
 	}
 
-	clustersPart, vmGroupsPart, err := getVgpuClustersMap(d, vcdClient)
+	clustersPart, vmGroupsPart, err := getVgpuClustersAndVmGroups(d, vcdClient)
 	if err != nil {
 		return nil, fmt.Errorf("error getting vgpu clusters map: %s", err)
 	}
@@ -287,6 +287,21 @@ func getVgpuPolicyInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.Vd
 	return policy, nil
 }
 
+func getUpdatedVgpuPolicyInput(d *schema.ResourceData, vcdClient *VCDClient, policy *govcd.VdcComputePolicyV2) (*govcd.VdcComputePolicyV2, error) {
+	policy.VdcComputePolicyV2.Name = d.Get("name").(string)
+	policy.VdcComputePolicyV2.Description = getStringAttributeAsPointer(d, "description")
+
+	clustersPart, vmGroupsPart, err := getVgpuClustersAndVmGroups(d, vcdClient)
+	if err != nil {
+		return nil, fmt.Errorf("error getting vgpu clusters map: %s", err)
+	}
+	policy.VdcComputePolicyV2.NamedVMGroups = nil
+	policy.VdcComputePolicyV2.PvdcVgpuClustersMap = clustersPart
+	policy.VdcComputePolicyV2.PvdcNamedVmGroupsMap = vmGroupsPart
+
+	return policy, nil
+}
+
 func getVgpuProfile(vgpuProfile []interface{}, vcdClient *VCDClient) (*types.VgpuProfile, error) {
 	profileMap := vgpuProfile[0].(map[string]interface{})
 	profileId := profileMap["id"].(string)
@@ -300,7 +315,63 @@ func getVgpuProfile(vgpuProfile []interface{}, vcdClient *VCDClient) (*types.Vgp
 	return profile.VgpuProfile, nil
 }
 
-func getVgpuClustersMap(d *schema.ResourceData, vcdClient *VCDClient) ([]types.PvdcVgpuClustersMap, []types.PvdcNamedVmGroupsMap, error) {
+func setVgpuPolicy(d *schema.ResourceData, vgpuPolicy *types.VdcComputePolicyV2) diag.Diagnostics {
+
+	var diags diag.Diagnostics
+	diags = append(diags, setVmSizingPolicy(nil, d, vgpuPolicy.VdcComputePolicy)...)
+
+	diags = append(diags, setVgpuProfile(d, vgpuPolicy.VgpuProfiles)...)
+
+	diags = append(diags, setPvdcClusterScope(d, vgpuPolicy)...)
+
+	if len(diags) != 0 {
+		return nil
+	}
+	return nil
+}
+
+func setVgpuProfile(d *schema.ResourceData, vgpuProfiles []types.VgpuProfile) diag.Diagnostics {
+	var vgpuProfileList []map[string]interface{}
+	vgpuProfileMap := make(map[string]interface{})
+
+	vgpuProfileMap["id"] = vgpuProfiles[0].Id
+	vgpuProfileMap["count"] = vgpuProfiles[0].Count
+
+	vgpuProfileList = append(vgpuProfileList, vgpuProfileMap)
+	err := d.Set("vgpu_profile", vgpuProfileList)
+	if err != nil {
+		return diag.Errorf("error setting vgpu profile: %s", err)
+	}
+
+	return nil
+}
+
+func setPvdcClusterScope(d *schema.ResourceData, vgpuPolicy *types.VdcComputePolicyV2) diag.Diagnostics {
+	pvdcClusters := make([]interface{}, len(vgpuPolicy.PvdcVgpuClustersMap))
+	for index, cluster := range vgpuPolicy.PvdcVgpuClustersMap {
+		singleScope := make(map[string]interface{})
+		singleScope["provider_vdc_id"] = cluster.Pvdc.ID
+		clusterSet := convertStringsToTypeSet(cluster.Clusters)
+		singleScope["clusters"] = clusterSet
+
+		for _, vmGroup := range vgpuPolicy.PvdcNamedVmGroupsMap {
+			if vmGroup.Pvdc.ID == cluster.Pvdc.ID {
+				singleScope["vm_group_id"] = vmGroup.NamedVmGroups[0][0].ID
+			}
+		}
+
+		pvdcClusters[index] = singleScope
+	}
+
+	err := d.Set("provider_vdc_scope", pvdcClusters)
+	if err != nil {
+		return diag.Errorf("error setting provider_vdc_scope: %s", err)
+	}
+
+	return nil
+}
+
+func getVgpuClustersAndVmGroups(d *schema.ResourceData, vcdClient *VCDClient) ([]types.PvdcVgpuClustersMap, []types.PvdcNamedVmGroupsMap, error) {
 	vgpuClusterSet := d.Get("provider_vdc_scope").(*schema.Set)
 	vgpuClusters := make([]types.PvdcVgpuClustersMap, len(vgpuClusterSet.List()))
 	var namedVmGroups []types.PvdcNamedVmGroupsMap
@@ -323,9 +394,9 @@ func getVgpuClustersMap(d *schema.ResourceData, vcdClient *VCDClient) ([]types.P
 			},
 		}
 
-		namedVmGroupId := vgpuClusterDefinition["named_vm_group_id"].(string)
-		if namedVmGroupId != "" {
-			vmGroup, err := vcdClient.GetVmGroupByNamedVmGroupIdAndProviderVdcUrn(namedVmGroupId, pvdcId)
+		vmGroupId := vgpuClusterDefinition["vm_group_id"].(string)
+		if vmGroupId != "" {
+			vmGroup, err := vcdClient.GetVmGroupById(vmGroupId)
 			if err != nil {
 				return nil, nil, err
 			}
@@ -338,7 +409,7 @@ func getVgpuClustersMap(d *schema.ResourceData, vcdClient *VCDClient) ([]types.P
 					{
 						{
 							Name: vmGroup.VmGroup.Name,
-							ID:   "urn:vcloud:namedVmGroup:" + namedVmGroupId,
+							ID:   "urn:vcloud:namedVmGroup:" + vmGroup.VmGroup.ID,
 						},
 					},
 				},
