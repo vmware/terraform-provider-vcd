@@ -2,8 +2,9 @@ package vcd
 
 import (
 	"context"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"log"
+
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -121,7 +122,7 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 			"guest_vlan_allowed": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "True if Network allows guest VLAN tagging",
+				Description: "True if network allows guest VLAN tagging",
 			},
 			"metadata": {
 				Type:        schema.TypeMap,

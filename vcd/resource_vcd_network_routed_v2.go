@@ -127,7 +127,7 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 			"guest_vlan_allowed": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "True if Network allows guest VLAN tagging",
+				Description: "True if network allows guest VLAN tagging",
 			},
 			"metadata": {
 				Type:          schema.TypeMap,
