@@ -241,6 +241,7 @@ The following arguments are supported:
 * `default_vm_sizing_policy_id` - (Deprecated; Optional, *v3.0+*, *VCD 10.2+*) ID of the default Compute Policy for this VDC. It can be a VM Sizing Policy, a VM Placement Policy or a vGPU Policy. Deprecated in favor of `default_compute_policy_id`.
 * `vm_sizing_policy_ids` - (Optional, *v3.0+*, *VCD 10.2+*) Set of IDs of VM Sizing policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
 * `vm_placement_policy_ids` - (Optional, *v3.8+*, *VCD 10.2+*) Set of IDs of VM Placement policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
+* `vm_vgpu_policy_ids` - (Optional, *v3.11+*, *VCD 10.4+*) Set of IDs of VM vGPU policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
 * `edge_cluster_id` - (Deprecated; Optional, *v3.8+*, *VCD 10.3+*) An ID of NSX-T Edge Cluster which
   should provide vApp Networking Services or DHCP for isolated networks. Can be looked up using
   `vcd_nsxt_edge_cluster` data source. This field is **deprecated** in favor of
