@@ -117,6 +117,11 @@ func resourceVcdNetworkIsolatedV2() *schema.Resource {
 				Optional:    true,
 				Description: "DNS suffix",
 			},
+			"guest_vlan_allowed": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "True if Network allows guest VLAN tagging",
+			},
 			"metadata": {
 				Type:          schema.TypeMap,
 				Optional:      true,
@@ -329,6 +334,7 @@ func setOpenApiOrgVdcIsolatedNetworkData(d *schema.ResourceData, orgVdcNetwork *
 	dSet(d, "dns2", orgVdcNetwork.Subnets.Values[0].DNSServer2)
 	dSet(d, "dns_suffix", orgVdcNetwork.Subnets.Values[0].DNSSuffix)
 	dSet(d, "is_shared", orgVdcNetwork.Shared)
+	dSet(d, "guest_vlan_allowed", orgVdcNetwork.GuestVlanTaggingAllowed)
 
 	// If any IP ranges are available
 	if len(orgVdcNetwork.Subnets.Values[0].IPRanges.Values) > 0 {
@@ -352,6 +358,7 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 	inheritedVdcField := vcdClient.Vdc
 	vdcField := d.Get("vdc").(string)
 	ownerIdField := d.Get("owner_id").(string)
+	guestVLANAllowed := d.Get("guest_vlan_allowed").(bool)
 
 	ownerId, err := getOwnerId(d, vcdClient, ownerIdField, vdcField, inheritedVdcField)
 	if err != nil {
@@ -363,9 +370,9 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vcdClient *VCDC
 		Description: d.Get("description").(string),
 		OwnerRef:    &types.OpenApiReference{ID: ownerId},
 
-		NetworkType: types.OrgVdcNetworkTypeIsolated,
-		Shared:      addrOf(d.Get("is_shared").(bool)),
-
+		NetworkType:             types.OrgVdcNetworkTypeIsolated,
+		Shared:                  addrOf(d.Get("is_shared").(bool)),
+		GuestVlanTaggingAllowed: &guestVLANAllowed,
 		Subnets: types.OrgVdcNetworkSubnets{
 			Values: []types.OrgVdcNetworkSubnetValues{
 				{

@@ -63,6 +63,7 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 						"start_address": "1.1.1.10",
 						"end_address":   "1.1.1.20",
 					}),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "guest_vlan_allowed", "false"),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 				),
 			},
@@ -84,6 +85,7 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 						"start_address": "1.1.1.30",
 						"end_address":   "1.1.1.40",
 					}),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "guest_vlan_allowed", "true"),
 					resource.TestCheckNoResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKey"].(string)),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKeyUpdated"].(string), params["MetadataValueUpdated"].(string)),
 				),
@@ -105,6 +107,7 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "gateway", "1.1.1.1"),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "prefix_length", "24"),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "static_ip_pool.#", "0"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "guest_vlan_allowed", "false"),
 				),
 			},
 		},
@@ -122,12 +125,13 @@ resource "vcd_network_isolated_v2" "net1" {
 
   gateway       = "1.1.1.1"
   prefix_length = 24
-
+  guest_vlan_allowed = false
+  
   static_ip_pool {
-	start_address = "1.1.1.10"
-	end_address   = "1.1.1.20"
+    start_address = "1.1.1.10"
+    end_address   = "1.1.1.20"
   }
-
+	
   metadata = {
     {{.MetadataKey}} = "{{.MetadataValue}}"
   }
@@ -138,20 +142,21 @@ const testAccVcdNetworkIsolatedV2NsxtStep2 = `
 resource "vcd_network_isolated_v2" "net1" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
-  
+
   name        = "{{.NetworkName}}"
   description = "updated NSX-T isolated network test"
 
   gateway       = "1.1.1.1"
   prefix_length = 24
-
+  guest_vlan_allowed = true
+  
   static_ip_pool {
-	start_address = "1.1.1.10"
-	end_address   = "1.1.1.20"
+    start_address = "1.1.1.10"
+    end_address   = "1.1.1.20"
   }
 
   static_ip_pool {
-	start_address = "1.1.1.30"
+    start_address = "1.1.1.30"
 	end_address   = "1.1.1.40"
   }
 

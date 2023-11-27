@@ -304,3 +304,5 @@ vcd.ResourceSchema-vcd_ip_space_ip_allocation.tf v3.10.0 "Added new field 'value
 vcd.TestAccVcdStandaloneVmCustomizationSettings.tf v3.10.0 "auto_generate_password defaults to true since API v37.0"
 vcd.TestAccVcdVAppVm_Clone.tf v3.10.0 "VCD 10.5.1 autogenerates metadata that raises inconsistent final plans. Fixed by PR 1146"
 vcd.ResourceSchema-vcd_ip_space.tf v3.10.0 "New fields for NAT and Firewall rule auto creation"
+vcd.ResourceSchema-vcd_network_routed_v2.tf v3.10.0 "New field 'guest_vlan_allowed'"
+vcd.ResourceSchema-vcd_network_isolated_v2.tf v3.10.0 "New field 'guest_vlan_allowed'"
