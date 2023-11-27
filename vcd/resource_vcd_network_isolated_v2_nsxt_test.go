@@ -63,7 +63,7 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 						"start_address": "1.1.1.10",
 						"end_address":   "1.1.1.20",
 					}),
-					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "guest_vlan_allowed", "false"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "guest_vlan_allowed", "true"),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 				),
 			},
@@ -85,7 +85,7 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 						"start_address": "1.1.1.30",
 						"end_address":   "1.1.1.40",
 					}),
-					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "guest_vlan_allowed", "true"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "guest_vlan_allowed", "false"),
 					resource.TestCheckNoResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKey"].(string)),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "metadata."+params["MetadataKeyUpdated"].(string), params["MetadataValueUpdated"].(string)),
 				),
@@ -123,9 +123,9 @@ resource "vcd_network_isolated_v2" "net1" {
   name        = "nsxt-isolated-test-initial"
   description = "NSX-T isolated network test"
 
-  gateway       = "1.1.1.1"
-  prefix_length = 24
-  guest_vlan_allowed = false
+  gateway            = "1.1.1.1"
+  prefix_length      = 24
+  guest_vlan_allowed = true
   
   static_ip_pool {
     start_address = "1.1.1.10"
@@ -146,9 +146,9 @@ resource "vcd_network_isolated_v2" "net1" {
   name        = "{{.NetworkName}}"
   description = "updated NSX-T isolated network test"
 
-  gateway       = "1.1.1.1"
-  prefix_length = 24
-  guest_vlan_allowed = true
+  gateway            = "1.1.1.1"
+  prefix_length      = 24
+  guest_vlan_allowed = false
   
   static_ip_pool {
     start_address = "1.1.1.10"
