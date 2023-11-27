@@ -570,6 +570,23 @@ data "vcd_rde" "test_rde_ds" {
 }
 `
 
+func TestAccVcdRdeMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (openApiMetadataCompatible, error) {
+		rde, err := vcdClient.GetRdeById(id)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve RDE '%s': %s", id, err)
+		}
+		return rde, nil
+	}
+
+	testOpenApiMetadataEntryIgnore(t,
+		testAccCheckVcdRdeMetadata, "vcd_rde.test_rde",
+		testAccCheckVcdRdeMetadataDatasource, "data.vcd_rde.test_rde_ds",
+		getObjectById, StringMap{})
+}
+
 // TestAccVcdRdeTenantMetadata tests that a tenant user cannot read metadata that was created in the RDE with domain = "PROVIDER".
 // It will only be able to read those entries with domain = "TENANT".
 func TestAccVcdRdeTenantMetadata(t *testing.T) {
