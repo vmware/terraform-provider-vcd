@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/vmware/go-vcloud-director/v2/util"
@@ -21,6 +22,9 @@ func resourceVcdVmVgpuPolicy() *schema.Resource {
 		DeleteContext: resourceVcdVmVgpuPolicyDelete,
 		ReadContext:   resourceVcdVmVgpuPolicyRead,
 		UpdateContext: resourceVcdVmVgpuPolicyUpdate,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceVcdVmVgpuPolicyImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
@@ -92,7 +96,8 @@ var providerVdcScope = &schema.Resource{
 		},
 		"cluster_names": {
 			Type:        schema.TypeSet,
-			Required:    true,
+			Optional:    true,
+			Computed:    true,
 			Description: "Set of cluster names within the provider virtual data center.",
 			Elem: &schema.Schema{
 				MinItems: 1,
@@ -362,7 +367,7 @@ func setPvdcClusterScope(d *schema.ResourceData, vgpuPolicy *types.VdcComputePol
 		singleScope := make(map[string]interface{})
 		singleScope["provider_vdc_id"] = cluster.Pvdc.ID
 		clusterSet := convertStringsToTypeSet(cluster.Clusters)
-		singleScope["clusters"] = clusterSet
+		singleScope["cluster_names"] = clusterSet
 
 		for _, vmGroup := range vgpuPolicy.PvdcNamedVmGroupsMap {
 			if vmGroup.Pvdc.ID == cluster.Pvdc.ID {
@@ -396,6 +401,39 @@ func getVgpuClustersAndVmGroups(d *schema.ResourceData, vcdClient *VCDClient) ([
 		if err != nil {
 			return nil, nil, err
 		}
+
+		// Helper function so the cluster names field isn't mandatory. If none are provided, VCD chooses one by default
+		if len(clusterNames) == 0 {
+			vgpuProfile, err := vcdClient.GetVgpuProfileById(d.Get("vgpu_profile.0.id").(string))
+			if err != nil {
+				return nil, nil, err
+			}
+
+			queryParams := url.Values{}
+			queryParams.Add("filter", fmt.Sprintf("(vgpuProfileName==%s;name==%s)", vgpuProfile.VgpuProfile.Name, providerVdc.ProviderVdc.Name))
+			vcenters, err := vcdClient.GetAllVCenters(nil)
+			if err != nil {
+				return nil, nil, err
+			}
+			var resourcePools []*govcd.ResourcePool
+			for _, vcenter := range vcenters {
+				rps, err := vcenter.GetAllResourcePools(queryParams)
+				if err != nil {
+					return nil, nil, err
+				}
+				resourcePools = append(resourcePools, rps...)
+			}
+			if len(resourcePools) == 0 {
+				return nil, nil, fmt.Errorf("no resource pools for the provider vdc were found")
+			}
+
+			if len(resourcePools) >= 2 {
+				return nil, nil, fmt.Errorf("more than one resource pool for the provider vdc name was found")
+			}
+
+			clusterNames = append(clusterNames, resourcePools[0].ResourcePool.ClusterMoref)
+		}
+
 		onePvdcCluster := types.PvdcVgpuClustersMap{
 			Clusters: clusterNames,
 			Pvdc: types.OpenApiReference{
@@ -430,4 +468,50 @@ func getVgpuClustersAndVmGroups(d *schema.ResourceData, vcdClient *VCDClient) ([
 	}
 
 	return vgpuClusters, namedVmGroups, nil
+}
+
+var errHelpVmVgpuPolicyImport = fmt.Errorf(`resource id must be specified in one of these formats:
+'vm-vgpu-policy-name', 'vm-vgpu-policy-id' or 'list@' to get a list of VM vgpu policies with their IDs`)
+
+func resourceVcdVmVgpuPolicyImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+
+	log.Printf("[DEBUG] importing VM vGPU policy resource with provided id %s", d.Id())
+
+	if len(resourceURI) != 1 {
+		return nil, errHelpVmVgpuPolicyImport
+	}
+	if strings.Contains(d.Id(), "list@") {
+		return listComputePoliciesForImport(meta, "vcd_vm_vgpu_policy", "vgpu")
+	} else {
+		policyId := resourceURI[0]
+		return getVmVgpuPolicy(d, meta, policyId)
+	}
+}
+
+func getVmVgpuPolicy(d *schema.ResourceData, meta interface{}, policyId string) ([]*schema.ResourceData, error) {
+	vcdClient := meta.(*VCDClient)
+
+	var computePolicy *govcd.VdcComputePolicyV2
+	var err error
+	computePolicy, err = vcdClient.GetVdcComputePolicyV2ById(policyId)
+	if err != nil {
+		queryParams := url.Values{}
+		queryParams.Add("filter", fmt.Sprintf("name==%s;isVgpuPolicy==true", policyId))
+		computePolicies, err := vcdClient.GetAllVdcComputePoliciesV2(queryParams)
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find VM vGPU Policy %s", policyId)
+			return nil, fmt.Errorf("unable to find VM vGPU Policy %s, err: %s", policyId, err)
+		}
+		if len(computePolicies) != 1 {
+			log.Printf("[DEBUG] Unable to find unique VM vGPU Policy %s", policyId)
+			return nil, fmt.Errorf("unable to find unique VM vGPU Policy %s, err: %s", policyId, err)
+		}
+		computePolicy = computePolicies[0]
+	}
+
+	dSet(d, "name", computePolicy.VdcComputePolicyV2.Name)
+	d.SetId(computePolicy.VdcComputePolicyV2.ID)
+
+	return []*schema.ResourceData{d}, nil
 }
