@@ -19,18 +19,23 @@ for route advertisement.
 ## Example Usage
 
 ```hcl
-data "vcd_nsxt_edgegateway" "existing" {
-  org = "my-org"
-  vdc = "nsxt-vdc"
-
-  name = "nsxt-gw"
+data "vcd_vdc_group" "g1" {
+  org  = "my-org"
+  name = "my-vdc-group"
 }
 
-data "vcd_nsxt_alb_settings" "test" {
-  org = "my-org"
-  vdc = "nsxt-vdc"
+data "vcd_nsxt_edgegateway" "testing" {
+  org      = "my-org"
+  owner_id = data.vcd_vdc_group.g1.id
 
-  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  name = "my-edge-gateway"
+}
+
+data "vcd_nsxt_edgegateway_bgp_ip_prefix_list" "testing" {
+  org             = "my-org"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
+
+  name = "my-bgp-prefix-list"
 }
 ```
 
