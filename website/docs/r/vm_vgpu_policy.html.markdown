@@ -3,14 +3,14 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_vm_vgpu_policy"
 sidebar_current: "docs-vcd-resource-vm-vgpu-policy"
 description: |-
-  Provides a resource to manage vGPU policies for virtual machines in VMware vCloud Director.
+  Provides a resource to manage vGPU policies for virtual machines in VMware Cloud Director.
 ---
 
 # vcd\_vm\_vgpu\_policy
 
 Supported in provider *3.11* and VCD *10.4.0+*.
 
-Provides a resource to manage vGPU policies for virtual machines in VMware vCloud Director.
+Provides a resource to manage vGPU policies for virtual machines in VMware Cloud Director.
 
 ## Example Usage
 
@@ -50,6 +50,22 @@ resource "vcd_vm_vgpu_policy" "example_vgpu_policy" {
     size_in_mb            = "3200"
     limit_in_mb           = "2800"
     reservation_guarantee = "0.3"
+  }
+
+  provider_vdc_scope {
+    provider_vdc_id = data.vcd_provider_vdc.example_provider_vdc.id
+    cluster_names   = ["cluster1"]
+    vm_group_id     = data.vcd_vm_group.vm_group_example.id
+  }
+}
+
+resource "vcd_vm_vgpu_policy" "example_vgpu_policy_without_sizing" {
+  name        = "example-vgpu-policy-without-sizing"
+  description = "An example vGPU policy configuration"
+
+  vgpu_profile {
+    id    = data.vcd_vgpu_profile.example_vgpu_profile.id
+    count = 1
   }
 
   provider_vdc_scope {

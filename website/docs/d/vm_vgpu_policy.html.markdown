@@ -3,14 +3,14 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_vm_vgpu_policy"
 sidebar_current: "docs-vcd-datasource-vm-vgpu-policy"
 description: |-
-  Provides a datasource to read vGPU policies in VMware vCloud Director.
+  Provides a datasource to read vGPU policies in VMware Cloud Director.
 ---
 
 # vcd\_vm\_vgpu\_policy
 
 Supported in provider *3.11* and VCD *10.4.0+*.
 
-Provides a datasource to read vGPU policies in VMware vCloud Director.
+Provides a datasource to read vGPU policies in VMware Cloud Director.
 
 ## Example Usage
 
