@@ -23,19 +23,10 @@ variable "cluster_author_password" {
   sensitive   = true
 }
 
-variable "administrator_org" {
-  description = "The VCD administrator organization (Example: 'System')"
+variable "cluster_author_token_file" {
+  description = "The file where the API Token for the CSE Cluster author will be stored"
   type        = string
-  default     = "System"
-}
-
-# ------------------------------------------------
-# CSE configuration
-# ------------------------------------------------
-variable "capvcd_rde_version" {
-  type        = string
-  description = "Version of the CAPVCD Runtime Defined Entity Type"
-  default     = "1.1.0"
+  default     = "cse_cluster_author_token.json"
 }
 
 # ------------------------------------------------
@@ -60,11 +51,6 @@ variable "cluster_vdc" {
 
 variable "cluster_routed_network" {
   description = "The routed network used for the Kubernetes cluster"
-}
-
-variable "cluster_author_api_token" {
-  description = "API token of the Kubernetes cluster author"
-  sensitive   = true
 }
 
 variable "ssh_public_key" {
@@ -131,8 +117,8 @@ variable "tkgm_catalog" {
   description = "The TKGm Catalog used to pick the OVAs to create the Kubernetes cluster"
 }
 
-variable "tkgm_ova" {
-  description = "The TKGm OVA to create the Kubernetes cluster"
+variable "tkgm_ova_name" {
+  description = "The TKGm OVA name, to create the Kubernetes cluster"
 }
 
 variable "pod_cidr" {

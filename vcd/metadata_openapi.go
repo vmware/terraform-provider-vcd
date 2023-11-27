@@ -5,6 +5,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 	"reflect"
@@ -72,6 +73,7 @@ func openApiMetadataEntryResourceSchema(resourceType string) *schema.Schema {
 		Type:        schema.TypeSet,
 		Optional:    true,
 		Description: fmt.Sprintf("Metadata entries for the given %s", resourceType),
+		MaxItems:    50, // As per the documentation
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"id": {
@@ -126,11 +128,10 @@ func openApiMetadataEntryResourceSchema(resourceType string) *schema.Schema {
 
 // openApiMetadataCompatible allows to consider all structs that implement OpenAPI metadata handling to be the same type
 type openApiMetadataCompatible interface {
-	GetMetadata() ([]*types.OpenApiMetadataEntry, error)
-	GetMetadataByKey(namespace, key string) (*types.OpenApiMetadataEntry, error)
-	AddMetadata(metadataEntry types.OpenApiMetadataEntry) (*types.OpenApiMetadataEntry, error)
-	UpdateMetadata(namespace, key string, value interface{}) (*types.OpenApiMetadataEntry, error)
-	DeleteMetadata(namespace, key string) error
+	GetMetadata() ([]*govcd.OpenApiMetadataEntry, error)
+	GetMetadataByKey(domain, namespace, key string) (*govcd.OpenApiMetadataEntry, error)
+	GetMetadataById(id string) (*govcd.OpenApiMetadataEntry, error)
+	AddMetadata(metadataEntry types.OpenApiMetadataEntry) (*govcd.OpenApiMetadataEntry, error)
 }
 
 // createOrUpdateOpenApiMetadataEntryInVcd creates or updates OpenAPI metadata entries in VCD for the given resource, only if the attribute
@@ -147,14 +148,22 @@ func createOrUpdateOpenApiMetadataEntryInVcd(d *schema.ResourceData, resource op
 	}
 
 	for _, entry := range metadataToDelete {
-		err = resource.DeleteMetadata(entry.KeyValue.Namespace, entry.KeyValue.Key)
+		toDelete, err := resource.GetMetadataByKey(entry.KeyValue.Domain, entry.KeyValue.Namespace, entry.KeyValue.Key) // Refreshes ETags
+		if err != nil {
+			return fmt.Errorf("error reading metadata with namespace '%s' and key '%s': %s", entry.KeyValue.Namespace, entry.KeyValue.Key, err)
+		}
+		err = toDelete.Delete()
 		if err != nil {
 			return fmt.Errorf("error deleting metadata with namespace '%s' and key '%s': %s", entry.KeyValue.Namespace, entry.KeyValue.Key, err)
 		}
 	}
 
 	for _, entry := range metadataToUpdate {
-		_, err = resource.UpdateMetadata(entry.KeyValue.Namespace, entry.KeyValue.Key, entry.KeyValue.Value.Value)
+		toUpdate, err := resource.GetMetadataByKey(entry.KeyValue.Domain, entry.KeyValue.Namespace, entry.KeyValue.Key) // Refreshes ETags
+		if err != nil {
+			return fmt.Errorf("error reading metadata with namespace '%s' and key '%s': %s", entry.KeyValue.Namespace, entry.KeyValue.Key, err)
+		}
+		err = toUpdate.Update(entry.KeyValue.Value.Value, entry.IsPersistent)
 		if err != nil {
 			return fmt.Errorf("error updating metadata with namespace '%s' and key '%s': %s", entry.KeyValue.Namespace, entry.KeyValue.Key, err)
 		}
@@ -195,15 +204,14 @@ func getOpenApiMetadataOperations(oldMetadata []interface{}, newMetadata []inter
 			if reflect.DeepEqual(oldEntry, newEntry) {
 				continue
 			}
-			// If a metadata property that is not "Value" is changed, it needs to be recreated
-			if oldEntry.IsReadOnly != newEntry.IsReadOnly || oldEntry.IsPersistent != newEntry.IsPersistent ||
-				oldEntry.KeyValue.Namespace != newEntry.KeyValue.Namespace || oldEntry.KeyValue.Domain != newEntry.KeyValue.Domain ||
-				oldEntry.KeyValue.Value.Type != newEntry.KeyValue.Value.Type {
+			// If a metadata property that is not "Value" or "IsPersistent" is changed, it needs to be recreated
+			if oldEntry.IsReadOnly != newEntry.IsReadOnly || oldEntry.KeyValue.Namespace != newEntry.KeyValue.Namespace ||
+				oldEntry.KeyValue.Domain != newEntry.KeyValue.Domain || oldEntry.KeyValue.Value.Type != newEntry.KeyValue.Value.Type {
 				util.Logger.Printf("[DEBUG] entry with namespace '%s' and key '%s' is being deleted and re-created", oldEntry.KeyValue.Namespace, oldEntry.KeyValue.Key)
 				metadataToRemove = append(metadataToRemove, oldMetadataEntries[newNamespacedKey])
 				metadataToCreate = append(metadataToCreate, newMetadataEntries[newNamespacedKey])
 			} else {
-				// Only "Value" is changed, it can be updated
+				// Only "Value" / "IsPersistent" is changed, it can be updated
 				metadataToUpdateMap[newNamespacedKey] = newEntry
 			}
 
@@ -269,46 +277,46 @@ func getOpenApiMetadataEntryMap(metadataAttribute []interface{}) (map[string]typ
 // updateOpenApiMetadataInState updates metadata_entry in the Terraform state for the given receiver object.
 // This can be done as both are Computed, for compatibility reasons.
 func updateOpenApiMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject openApiMetadataCompatible) diag.Diagnostics {
-	diagErr := checkIgnoredMetadataConflicts(d, vcdClient, resourceType)
-	if diagErr != nil {
-		return diagErr
+	diags := checkIgnoredMetadataConflicts(d, vcdClient, resourceType)
+	if diags != nil && diags.HasError() {
+		return diags
 	}
 
 	allMetadata, err := receiverObject.GetMetadata()
 	if err != nil {
-		return diag.FromErr(err)
+		return append(diags, diag.FromErr(err)...)
 	}
 
 	metadata := make([]interface{}, len(allMetadata))
 	for i, metadataEntryFromVcd := range allMetadata {
 		// We need to set the correct type, otherwise saving the state will fail
 		value := ""
-		switch metadataEntryFromVcd.KeyValue.Value.Type {
+		switch metadataEntryFromVcd.MetadataEntry.KeyValue.Value.Type {
 		case types.OpenApiMetadataBooleanEntry:
-			value = fmt.Sprintf("%t", metadataEntryFromVcd.KeyValue.Value.Value.(bool))
+			value = fmt.Sprintf("%t", metadataEntryFromVcd.MetadataEntry.KeyValue.Value.Value.(bool))
 		case types.OpenApiMetadataNumberEntry:
-			value = fmt.Sprintf("%.0f", metadataEntryFromVcd.KeyValue.Value.Value.(float64))
+			value = fmt.Sprintf("%.0f", metadataEntryFromVcd.MetadataEntry.KeyValue.Value.Value.(float64))
 		case types.OpenApiMetadataStringEntry:
-			value = metadataEntryFromVcd.KeyValue.Value.Value.(string)
+			value = metadataEntryFromVcd.MetadataEntry.KeyValue.Value.Value.(string)
 		default:
-			return diag.Errorf("not supported metadata type %s", metadataEntryFromVcd.KeyValue.Value.Type)
+			return append(diags, diag.Errorf("not supported metadata type %s", metadataEntryFromVcd.MetadataEntry.KeyValue.Value.Type)...)
 		}
 
 		metadataEntry := map[string]interface{}{
-			"id":         metadataEntryFromVcd.ID,
-			"key":        metadataEntryFromVcd.KeyValue.Key,
-			"readonly":   metadataEntryFromVcd.IsReadOnly,
-			"domain":     metadataEntryFromVcd.KeyValue.Domain,
-			"namespace":  metadataEntryFromVcd.KeyValue.Namespace,
-			"type":       metadataEntryFromVcd.KeyValue.Value.Type,
+			"id":         metadataEntryFromVcd.MetadataEntry.ID,
+			"key":        metadataEntryFromVcd.MetadataEntry.KeyValue.Key,
+			"readonly":   metadataEntryFromVcd.MetadataEntry.IsReadOnly,
+			"domain":     metadataEntryFromVcd.MetadataEntry.KeyValue.Domain,
+			"namespace":  metadataEntryFromVcd.MetadataEntry.KeyValue.Namespace,
+			"type":       metadataEntryFromVcd.MetadataEntry.KeyValue.Value.Type,
 			"value":      value,
-			"persistent": metadataEntryFromVcd.IsPersistent,
+			"persistent": metadataEntryFromVcd.MetadataEntry.IsPersistent,
 		}
 		metadata[i] = metadataEntry
 	}
 
 	err = d.Set("metadata_entry", metadata)
-	return diag.FromErr(err)
+	return append(diags, diag.FromErr(err)...)
 }
 
 // convertOpenApiMetadataValue converts a metadata value from plain string to a correct typed value that can be sent
