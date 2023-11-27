@@ -195,7 +195,7 @@ func genericVcdVgpuPolicyRead(ctx context.Context, d *schema.ResourceData, meta 
 		return diag.Errorf("[genericVcdVgpuPolicyRead] error defining vGPU policy")
 	}
 	util.Logger.Printf("[TRACE] [get VM vGPU policy] Retrieved by %s\n", method)
-	return setVgpuPolicy(d, policy.VdcComputePolicyV2)
+	return setVgpuPolicy(ctx, d, policy.VdcComputePolicyV2)
 }
 
 // resourceVmVgpuPolicyUpdate function updates resource with found configurations changes
@@ -331,9 +331,9 @@ func getVgpuProfile(vgpuProfile []interface{}, vcdClient *VCDClient) (*types.Vgp
 	return profile.VgpuProfile, nil
 }
 
-func setVgpuPolicy(d *schema.ResourceData, vgpuPolicy *types.VdcComputePolicyV2) diag.Diagnostics {
+func setVgpuPolicy(ctx context.Context, d *schema.ResourceData, vgpuPolicy *types.VdcComputePolicyV2) diag.Diagnostics {
 	var diags diag.Diagnostics
-	diags = append(diags, setVmSizingPolicy(nil, d, vgpuPolicy.VdcComputePolicy)...)
+	diags = append(diags, setVmSizingPolicy(ctx, d, vgpuPolicy.VdcComputePolicy)...)
 
 	diags = append(diags, setVgpuProfile(d, vgpuPolicy.VgpuProfiles)...)
 
