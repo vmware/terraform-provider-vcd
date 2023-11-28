@@ -84,12 +84,16 @@ func datasourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interf
 		dSet(d, "owner_user_id", rde.DefinedEntity.Owner.ID)
 	}
 
-	diagErr := updateOpenApiMetadataInState(d, vcdClient, "vcd_rde", rde)
-	if diagErr != nil {
-		return diagErr
+	diags := updateOpenApiMetadataInState(d, vcdClient, "vcd_rde", rde)
+	if diags != nil && diags.HasError() {
+		return diags
 	}
 
 	d.SetId(rde.DefinedEntity.ID)
+
+	if len(diags) > 0 {
+		return diags
+	}
 
 	return nil
 }
