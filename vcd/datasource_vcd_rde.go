@@ -52,6 +52,7 @@ func datasourceVcdRde() *schema.Resource {
 				Description: "Specifies whether the entity is correctly resolved or not. One of PRE_CREATED, RESOLVED or RESOLUTION_ERROR",
 				Computed:    true,
 			},
+			"metadata_entry": openApiMetadataEntryDatasourceSchema("Runtime Defined Entity"),
 		},
 	}
 }
@@ -81,6 +82,11 @@ func datasourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interf
 	}
 	if rde.DefinedEntity.Owner != nil {
 		dSet(d, "owner_user_id", rde.DefinedEntity.Owner.ID)
+	}
+
+	err = updateOpenApiMetadataInState(d, rde)
+	if err != nil {
+		return diag.Errorf("could not set metadata for the Runtime Defined Entity: %s", err)
 	}
 
 	d.SetId(rde.DefinedEntity.ID)
