@@ -1254,7 +1254,7 @@ resource "vcd_external_network_v2" "ext-net-nsxt-t0" {
 }
 
 resource "vcd_external_network_v2" "segment-backed" {
-  name = "{{.TestName}}"
+  name = "{{.TestName}}-2"
 
   nsxt_network {
     nsxt_manager_id   = data.vcd_nsxt_manager.main.id
@@ -1278,7 +1278,7 @@ resource "vcd_external_network_v2" "segment-backed" {
 }
 
 resource "vcd_external_network_v2" "segment-backed2" {
-  name = "{{.TestName}}-2"
+  name = "{{.TestName}}-3"
 
   nsxt_network {
     nsxt_manager_id   = data.vcd_nsxt_manager.main.id
