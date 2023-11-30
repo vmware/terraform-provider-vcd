@@ -228,12 +228,6 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelUpdate(ctx context.Context, d *schema.
 		return diag.Errorf("[L2 VPN Tunnel update] error updating L2 VPN Tunnel: %s", err)
 	}
 
-	// There is a bug in versions up to 38.0, where the pre-shared key would be included in the
-	// requests
-	if vcdClient.Client.APIVCDMaxVersionIs(">=38.1") {
-		dSet(d, "pre_shared_key", tunnelUpdatedConfig.PreSharedKey)
-	}
-
 	return resourceVcdNsxtEdgegatewayL2VpnTunnelRead(ctx, d, meta)
 }
 
@@ -359,9 +353,6 @@ func readL2VpnTunnelToSchema(tunnel *types.NsxtL2VpnTunnel, d *schema.ResourceDa
 		dSet(d, "tunnel_interface", tunnel.TunnelInterface)
 		dSet(d, "connector_initiation_mode", tunnel.ConnectorInitiationMode)
 		dSet(d, "peer_code", tunnel.PeerCode)
-		if vcdClient.Client.APIVCDMaxVersionIs("<=38.0") {
-			dSet(d, "pre_shared_key", tunnel.PreSharedKey)
-		}
 	}
 
 	stretchedNetworkSlice := make([]interface{}, len(tunnel.StretchedNetworks))

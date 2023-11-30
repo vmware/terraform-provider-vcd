@@ -49,7 +49,6 @@ resource "vcd_vm_vgpu_policy" "example_vgpu_policy" {
     shares                = "1580"
     size_in_mb            = "3200"
     limit_in_mb           = "2800"
-    reservation_guarantee = "0.3"
   }
 
   provider_vdc_scope {
@@ -58,7 +57,11 @@ resource "vcd_vm_vgpu_policy" "example_vgpu_policy" {
     vm_group_id     = data.vcd_vm_group.vm_group_example.id
   }
 }
+```
 
+## Example usage (without a sizing policy)
+
+```hcl
 resource "vcd_vm_vgpu_policy" "example_vgpu_policy_without_sizing" {
   name        = "example-vgpu-policy-without-sizing"
   description = "An example vGPU policy configuration"

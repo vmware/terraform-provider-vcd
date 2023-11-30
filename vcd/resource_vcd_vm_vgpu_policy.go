@@ -97,7 +97,6 @@ var providerVdcScope = &schema.Resource{
 		"cluster_names": {
 			Type:        schema.TypeSet,
 			Optional:    true,
-			Computed:    true,
 			Description: "Set of cluster names within the provider virtual data center.",
 			Elem: &schema.Schema{
 				MinItems: 1,
@@ -371,7 +370,7 @@ func setPvdcClusterScope(d *schema.ResourceData, vgpuPolicy *types.VdcComputePol
 
 		for _, vmGroup := range vgpuPolicy.PvdcNamedVmGroupsMap {
 			if vmGroup.Pvdc.ID == cluster.Pvdc.ID {
-				singleScope["vm_group_id"] = vmGroup.NamedVmGroups[0][0].ID
+				singleScope["vm_group_id"] = extractUuid(vmGroup.NamedVmGroups[0][0].ID)
 			}
 		}
 
@@ -400,38 +399,6 @@ func getVgpuClustersAndVmGroups(d *schema.ResourceData, vcdClient *VCDClient) ([
 		providerVdc, err := vcdClient.GetProviderVdcById(pvdcId)
 		if err != nil {
 			return nil, nil, err
-		}
-
-		// Helper function so the cluster names field isn't mandatory. If none are provided, VCD chooses one by default
-		if len(clusterNames) == 0 {
-			vgpuProfile, err := vcdClient.GetVgpuProfileById(d.Get("vgpu_profile.0.id").(string))
-			if err != nil {
-				return nil, nil, err
-			}
-
-			queryParams := url.Values{}
-			queryParams.Add("filter", fmt.Sprintf("(vgpuProfileName==%s;name==%s)", vgpuProfile.VgpuProfile.Name, providerVdc.ProviderVdc.Name))
-			vcenters, err := vcdClient.GetAllVCenters(nil)
-			if err != nil {
-				return nil, nil, err
-			}
-			var resourcePools []*govcd.ResourcePool
-			for _, vcenter := range vcenters {
-				rps, err := vcenter.GetAllResourcePools(queryParams)
-				if err != nil {
-					return nil, nil, err
-				}
-				resourcePools = append(resourcePools, rps...)
-			}
-			if len(resourcePools) == 0 {
-				return nil, nil, fmt.Errorf("no resource pools for the provider vdc were found")
-			}
-
-			if len(resourcePools) >= 2 {
-				return nil, nil, fmt.Errorf("more than one resource pool for the provider vdc name was found")
-			}
-
-			clusterNames = append(clusterNames, resourcePools[0].ResourcePool.ClusterMoref)
 		}
 
 		onePvdcCluster := types.PvdcVgpuClustersMap{
@@ -505,7 +472,7 @@ func getVmVgpuPolicy(d *schema.ResourceData, meta interface{}, policyId string) 
 		}
 		if len(computePolicies) != 1 {
 			log.Printf("[DEBUG] Unable to find unique VM vGPU Policy %s", policyId)
-			return nil, fmt.Errorf("unable to find unique VM vGPU Policy %s, err: %s", policyId, err)
+			return nil, fmt.Errorf("unable to find unique VM vGPU Policy with the name %s", policyId)
 		}
 		computePolicy = computePolicies[0]
 	}
