@@ -155,11 +155,6 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelCreate(ctx context.Context, d *schema.
 		return diag.Errorf("[L2 VPN Tunnel create] error creating L2 VPN Tunnel: %s", err)
 	}
 	d.SetId(tunnel.NsxtL2VpnTunnel.ID)
-	// There is a bug in versions up to 38.0, where the pre-shared key would be included in the
-	// requests
-	if vcdClient.Client.APIVCDMaxVersionIs(">=38.1") {
-		dSet(d, "pre_shared_key", tunnelConfig.PreSharedKey)
-	}
 
 	return resourceVcdNsxtEdgegatewayL2VpnTunnelRead(ctx, d, meta)
 }
