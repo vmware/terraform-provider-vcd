@@ -271,6 +271,10 @@ func resourceVcdNetworkRoutedV2Read(_ context.Context, d *schema.ResourceData, m
 		return diags
 	}
 
+	if len(diags) > 0 {
+		return diags
+	}
+
 	return nil
 }
 

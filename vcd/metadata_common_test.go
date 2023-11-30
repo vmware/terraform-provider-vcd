@@ -339,7 +339,7 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 // - Step 3: Add a data source that fetches the created resource.
 //
 // The different ignore_metadata_changes sub-tests check what happens if the filter matches or doesn't match the metadata entry
-// added in Pre-Step 2. If it doesn't match, Terraform will delete it from VCD. If it matches, it gets ignored as it doesn't exist.
+// added in Pre-Step 2. If it doesn't match, Terraform will delete it from VCD. If it matches, it gets ignored as if it didn't exist.
 func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, retrieveObjectById func(*VCDClient, string) (metadataCompatible, error), extraParams StringMap) {
 	preTestChecks(t)
 	resourceType := strings.Split(resourceAddress, ".")[0]
