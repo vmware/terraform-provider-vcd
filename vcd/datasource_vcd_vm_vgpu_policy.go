@@ -12,12 +12,14 @@ func datasourceVcdVmVgpuPolicy() *schema.Resource {
 		ReadContext: datasourceVcdVmVgpuPolicyRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The unique name of the vGPU policy.",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Description of the vGPU policy.",
 			},
 			"vgpu_profile": {
 				Type:        schema.TypeList,
@@ -33,7 +35,7 @@ func datasourceVcdVmVgpuPolicy() *schema.Resource {
 						"count": {
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Description: "Specifies the number of vGPU profiles. ",
+							Description: "Specifies the number of vGPU profiles.",
 						},
 					},
 				},

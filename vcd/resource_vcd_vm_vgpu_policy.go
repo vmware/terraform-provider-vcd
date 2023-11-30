@@ -339,7 +339,7 @@ func setVgpuPolicy(ctx context.Context, d *schema.ResourceData, vgpuPolicy *type
 	diags = append(diags, setPvdcClusterScope(d, vgpuPolicy)...)
 
 	if len(diags) != 0 {
-		return nil
+		return diags
 	}
 	return nil
 }
