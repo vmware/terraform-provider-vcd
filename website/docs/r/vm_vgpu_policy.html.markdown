@@ -86,8 +86,10 @@ The following arguments are supported:
 * `name` - (Required) The unique name assigned to the vGPU policy for a virtual machine.
 * `description` - (Optional) A brief description of the vGPU policy.
 * `vgpu_profile` - (Required) Defines the vGPU profile ID and count. 
-* `cpu` - (Optional) Configuration options for CPU resources. See [cpu] for more details.
-* `memory` - (Optional) Memory resource configuration settings. See [memory] for more details.
+* `cpu` - (Optional) Configuration options for CPU resources. If this is set, 
+  a VM created with this policy can't specify a custom sizing policy. See [cpu] for more details.
+* `memory` - (Optional) Memory resource configuration settings. If this is set, 
+  a VM created with this policy can't specify a custom sizing policy. See [memory] for more details.
 * `provider_vdc_scope` - (Optional) Defines the scope of the policy within 
   provider virtual data centers. If not provided, applies to all the current ant future PVDCs.
   See [`provider_vdc_scope`](#provider-vdc-scope) for more details.
