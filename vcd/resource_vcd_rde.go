@@ -270,12 +270,14 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd
 	// As RDEs can have many instances with same name and RDE Type, we can't guarantee that we will read the one we want,
 	// but at least we try to filter a bit with things we know, like Organization.
 	var filteredRdes []*govcd.DefinedEntity
-	orgName := d.Get("org")
-	for _, rde := range rdes {
-		// If there's no Organization informed in the RDE, we cannot filter, hence we add it to the result anyway.
-		// If there's an Org in the RDE, it should match the information that the attribute has.
-		if rde.DefinedEntity.Org == nil || orgName == rde.DefinedEntity.Org.Name {
-			filteredRdes = append(filteredRdes, rde)
+	orgName, hasOrg := d.GetOk("org")
+	if hasOrg {
+		for _, rde := range rdes {
+			// If there's no Organization informed in the RDE, we cannot filter, hence we add it to the result anyway.
+			// If there's an Org in the RDE, it should match the information that the attribute has.
+			if rde.DefinedEntity.Org == nil || orgName == rde.DefinedEntity.Org.Name {
+				filteredRdes = append(filteredRdes, rde)
+			}
 		}
 	}
 
