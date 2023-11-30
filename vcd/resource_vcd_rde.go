@@ -279,6 +279,8 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd
 				filteredRdes = append(filteredRdes, rde)
 			}
 		}
+	} else {
+		filteredRdes = rdes
 	}
 
 	if len(filteredRdes) == 0 {
