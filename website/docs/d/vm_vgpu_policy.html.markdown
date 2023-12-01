@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_vm\_vgpu\_policy
 
-Supported in provider *3.11* and VCD *10.4.0+*.
+Experimental in provider *3.11*.
 
 Provides a data source to read vGPU policies in VMware Cloud Director.
 
