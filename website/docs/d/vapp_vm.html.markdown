@@ -119,7 +119,7 @@ The following arguments are supported:
 * `status` - (*v3.8+*) The vApp status as a numeric code.
 * `status_text` - (*v3.8+*) The vApp status as text.
 * `security_tags` - (*v3.9+*) Set of security tags assigned to this VM.
-* `inherited_metadata` - (*v3.11+*) A map that contains read-only metadata that is automatically added by VCD and provides
+* `inherited_metadata` - (*v3.11+*; *VCD 10.5.1+*) A map that contains read-only metadata that is automatically added by VCD (10.5.1+) and provides
   details on the origin of the VM (e.g. `vm.origin.id`, `vm.origin.name`, `vm.origin.type`).
 
 
