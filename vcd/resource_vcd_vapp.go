@@ -111,7 +111,7 @@ func resourceVcdVApp() *schema.Resource {
 			"inherited_metadata": {
 				Type:        schema.TypeMap,
 				Computed:    true,
-				Description: "A map that contains metadata that is automatically added by VCD and provides details on the origin of the vApp",
+				Description: "A map that contains metadata that is automatically added by VCD (10.5.1+) and provides details on the origin of the vApp",
 			},
 		},
 	}
