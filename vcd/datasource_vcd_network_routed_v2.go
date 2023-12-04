@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -120,6 +121,11 @@ func datasourceVcdNetworkRoutedV2() *schema.Resource {
 				Computed:    true,
 				Description: "IP ranges used for static pool allocation in the network",
 				Elem:        networkV2IpRangeComputed,
+			},
+			"guest_vlan_allowed": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if network allows guest VLAN tagging",
 			},
 			"metadata": {
 				Type:        schema.TypeMap,

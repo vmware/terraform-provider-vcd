@@ -123,6 +123,11 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 				Optional:    true,
 				Description: "DNS suffix",
 			},
+			"guest_vlan_allowed": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "True if network allows guest VLAN tagging",
+			},
 			"metadata": {
 				Type:          schema.TypeMap,
 				Optional:      true,
@@ -346,6 +351,11 @@ func setOpenApiOrgVdcRoutedNetworkData(d *schema.ResourceData, orgVdcNetwork *ty
 	dSet(d, "description", orgVdcNetwork.Description)
 	dSet(d, "owner_id", orgVdcNetwork.OwnerRef.ID)
 	dSet(d, "vdc", orgVdcNetwork.OwnerRef.Name)
+	if orgVdcNetwork.GuestVlanTaggingAllowed != nil {
+		dSet(d, "guest_vlan_allowed", *orgVdcNetwork.GuestVlanTaggingAllowed)
+	} else {
+		dSet(d, "guest_vlan_allowed", false)
+	}
 
 	if orgVdcNetwork.Connection != nil {
 		dSet(d, "edge_gateway_id", orgVdcNetwork.Connection.RouterRef.ID)
@@ -394,9 +404,11 @@ func getOpenApiOrgVdcRoutedNetworkType(d *schema.ResourceData, vcdClient *VCDCli
 	}
 
 	orgVdcNetworkConfig := &types.OpenApiOrgVdcNetwork{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		OwnerRef:    &types.OpenApiReference{ID: anyEdgeGateway.EdgeGateway.OwnerRef.ID},
+		Name:                    d.Get("name").(string),
+		Description:             d.Get("description").(string),
+		OwnerRef:                &types.OpenApiReference{ID: anyEdgeGateway.EdgeGateway.OwnerRef.ID},
+		GuestVlanTaggingAllowed: addrOf(d.Get("guest_vlan_allowed").(bool)),
+
 		NetworkType: types.OrgVdcNetworkTypeRouted,
 
 		// Connection is used for "routed" network
