@@ -15,6 +15,10 @@ Provides a resource to manage vGPU policies for virtual machines in VMware Cloud
 ## Example Usage
 
 ```hcl
+data "vcd_org" "example_org" {
+  name ="test_org"
+}
+
 data "vcd_vgpu_profile" "example_vgpu_profile" {
   name = "grid_a100-10c"
 }
@@ -56,6 +60,47 @@ resource "vcd_vm_vgpu_policy" "example_vgpu_policy" {
     cluster_names   = ["cluster1"]
     vm_group_id     = data.vcd_vm_group.vm_group_example.id
   }
+}
+
+resource "vcd_org_vdc" "example_org_vdc" {
+  org               = data.vcd_org.example_org.name
+  name              = "test-org-vdc"
+  provider_vdc_name = data.vcd_provider_vdc.example_provider_vdc.name
+  allocation_model  = "Flex"
+  delete_force      = true
+
+  compute_capacity {
+    cpu {
+      allocated = 2048
+    }
+    memory {
+      allocated = 2048
+    }
+  }
+  storage_profile {
+    name    = "*"
+    limit   = 10240
+    default = true
+  }
+  elasticity                 = true
+  include_vm_memory_overhead = true
+  default_compute_policy_id  = vcd_vm_vgpu_policy.example_vgpu_policy.id
+  vm_vgpu_policy_ids         = [vcd_vm_vgpu_policy.example_vgpu_policy.id]
+}
+
+resource "vcd_vm" "test_vm" {
+  org         = data.vcd_org.example_org.name
+  vdc         = vcd_org_vdc.example_org_vdc.name
+  name        = "terraform-provider-vm"
+
+  computer_name       = "emptyVM"
+  memory              = 2048
+  cpus                = 2
+  cpu_cores           = 1
+  power_on            = false
+  os_type             = "sles11_64Guest"
+  hardware_version    = "vmx-19"
+  placement_policy_id = vcd_vm_vgpu_policy.example_vgpu_policy.id
 }
 ```
 
