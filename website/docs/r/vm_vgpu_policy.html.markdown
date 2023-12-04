@@ -10,6 +10,8 @@ description: |-
 
 Experimental in provider *3.11*.
 
+-> **Note:** This resource requires system administrator privileges.
+
 Provides a resource to manage vGPU policies for virtual machines in VMware Cloud Director.
 
 ## Example Usage
