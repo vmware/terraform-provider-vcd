@@ -170,7 +170,7 @@ func TestAccVcdNsxtEdgeL2VpnTunnel(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdNsxtEdgeGatewayObject(params["EdgeGw"].(string), params["ServerTunnelName"].(string)),
-				ImportStateVerifyIgnore: []string{"org"},
+				ImportStateVerifyIgnore: []string{"org", "pre_shared_key"},
 			},
 		},
 	})

@@ -191,7 +191,7 @@ func genericNsxtEdgegatewayL2VpnTunnelRead(_ context.Context, d *schema.Resource
 		log.Printf("[DEBUG] L2 VPN Tunnel no longer exists. Removing from tfstate")
 		return nil
 	}
-	err = readL2VpnTunnelToSchema(tunnelConfig.NsxtL2VpnTunnel, d)
+	err = readL2VpnTunnelToSchema(tunnelConfig.NsxtL2VpnTunnel, d, vcdClient)
 	if err != nil {
 		return diag.Errorf("[L2 VPN Tunnel read] error reading retrieved tunnel into schema: %s", err)
 	}
@@ -335,7 +335,7 @@ func readL2VpnTunnelFromSchema(d *schema.ResourceData) (*types.NsxtL2VpnTunnel, 
 	return tunnel, nil
 }
 
-func readL2VpnTunnelToSchema(tunnel *types.NsxtL2VpnTunnel, d *schema.ResourceData) error {
+func readL2VpnTunnelToSchema(tunnel *types.NsxtL2VpnTunnel, d *schema.ResourceData, vcdClient *VCDClient) error {
 	d.SetId(tunnel.ID)
 	dSet(d, "name", tunnel.Name)
 	dSet(d, "description", tunnel.Description)
@@ -348,7 +348,6 @@ func readL2VpnTunnelToSchema(tunnel *types.NsxtL2VpnTunnel, d *schema.ResourceDa
 		dSet(d, "tunnel_interface", tunnel.TunnelInterface)
 		dSet(d, "connector_initiation_mode", tunnel.ConnectorInitiationMode)
 		dSet(d, "peer_code", tunnel.PeerCode)
-		dSet(d, "pre_shared_key", tunnel.PreSharedKey)
 	}
 
 	stretchedNetworkSlice := make([]interface{}, len(tunnel.StretchedNetworks))
