@@ -501,7 +501,7 @@ example for usage details.
   using `vcd_org_vdc.vm_sizing_policy_ids` (and `vcd_org_vdc.default_compute_policy_id` to make it default).
   In this case, if the sizing policy is not set, it will pick the VDC default on creation. It must be set explicitly
   if one wants to update it to another policy (the VM requires at least one Compute Policy), and needs to be set to `""` to be removed.
-* `placement_policy_id` (Optional; *v3.8+*) VM placement policy or [vGPU policy][vgpu-policy] ID. To be used, it needs to be assigned to [Org VDC](/providers/vmware/vcd/latest/docs/resources/org_vdc)
+* `placement_policy_id` (Optional; *v3.8+*) VM placement policy or [vGPU policy][vgpu-policy] (*v3.11+*) ID. To be used, it needs to be assigned to [Org VDC](/providers/vmware/vcd/latest/docs/resources/org_vdc)
   using `vcd_org_vdc.vm_placement_policy_ids` or `vcd_org_vdc.vm_vgpu_policy_ids` (and optionally `vcd_org_vdc.default_compute_policy_id` to make it default).
   In this case, if the placement policy is not set, it will pick the VDC default on creation. It must be set explicitly
   if one wants to update it to another policy (the VM requires at least one Compute Policy), and needs to be set to `""` to be removed.
