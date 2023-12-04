@@ -193,8 +193,6 @@ resolved by anyone.
 all of them will be deleted and re-created. However, the succeeding `terraform apply` will respect the non-changed metadata entries 
 by not modifying them.
 
-~> The provider configuration block `ignore_metadata_changes` is not compatible with metadata entries of `vcd_rde`.
-
 The `metadata_entry` is a set of metadata entries that have the following structure:
 
 * `key` - (Required) Key of this metadata entry.

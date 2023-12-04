@@ -190,6 +190,7 @@ func getCatalogFromResource(catalogName string, d *schema.ResourceData, meta int
 
 func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var (
+		diags                 diag.Diagnostics
 		vcdClient             = meta.(*VCDClient)
 		catalog               *govcd.AdminCatalog
 		err                   error
@@ -257,9 +258,14 @@ func datasourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta in
 		return diag.FromErr(err)
 	}
 
-	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_catalog", catalog)
-	if diagErr != nil {
-		return diagErr
+	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_catalog", catalog)...)
+	if diags != nil && diags.HasError() {
+		return diags
+	}
+
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
 	}
 
 	return nil

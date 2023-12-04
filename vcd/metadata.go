@@ -133,6 +133,7 @@ var resourceMetadataApiRelation = map[string]string{
 	"vcd_vapp":                  "vApp",
 	"vcd_vapp_vm":               "vApp",
 	"vcd_vm":                    "vApp",
+	"vcd_rde":                   "entity",
 }
 
 // metadataEntryDatasourceSchema returns the schema associated to metadata_entry for a given data source.
@@ -358,7 +359,7 @@ func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient,
 					Severity: severity,
 					Summary:  "Found a conflict between 'ignore_metadata_changes' and 'metadata_entry'",
 					Detail: fmt.Sprintf("There is an 'ignored_metadata' block: %s\n"+
-						"and there is a 'metadata_entry' with key '%s' and value '%s' in your Terraform configuration that matches the criteria, hence it will be ignored.\n"+
+						"and there is a 'metadata_entry' with key '%s' and value '%s' in your Terraform configuration or state that matches such criteria, hence it will be ignored.\n"+
 						"This will cause the entry to be present in Terraform state but it won't have any effect in VCD, causing an inconsistency.\n"+
 						"Please use a more fine-grained 'ignore_metadata_changes' configuration or change your metadata entry.", ignoredMetadata, newEntry["key"].(string), newEntry["value"].(string)),
 					AttributePath: cty.Path{},
@@ -373,6 +374,7 @@ func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient,
 // This can be done as both are Computed, for compatibility reasons.
 // TODO: Remove this function once "metadata" attribute is deleted in a future major release.
 func updateMetadataInStateDeprecated(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject metadataCompatible) diag.Diagnostics {
+	var diags diag.Diagnostics
 
 	// We temporarily remove the ignored metadata filter to retrieve the deprecated metadata contents,
 	// which should not be affected by it.
@@ -405,9 +407,14 @@ func updateMetadataInStateDeprecated(d *schema.ResourceData, vcdClient *VCDClien
 	}
 
 	// We get metadata again with the original metadata ignore filtering
-	diagErr := updateMetadataInState(d, vcdClient, resourceType, receiverObject)
-	if diagErr != nil {
-		return diagErr
+	diags = append(diags, updateMetadataInState(d, vcdClient, resourceType, receiverObject)...)
+	if diags != nil && diags.HasError() {
+		return diags
+	}
+
+	// This must be checked at the end as updateMetadataInState can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
 	}
 
 	return nil
@@ -415,14 +422,14 @@ func updateMetadataInStateDeprecated(d *schema.ResourceData, vcdClient *VCDClien
 
 // updateMetadataInState updates ONLY metadata_entry in the Terraform state for the given receiver object.
 func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject metadataCompatible) diag.Diagnostics {
-	diagErr := checkIgnoredMetadataConflicts(d, vcdClient, resourceType)
-	if diagErr != nil {
-		return diagErr
+	diags := checkIgnoredMetadataConflicts(d, vcdClient, resourceType)
+	if diags != nil && diags.HasError() {
+		return diags
 	}
 
 	metadata, err := receiverObject.GetMetadata()
 	if err != nil {
-		return diag.Errorf("error getting metadata to save in state: %s", err)
+		return append(diags, diag.Errorf("error getting metadata to save in state: %s", err)...)
 	}
 
 	// VMs can have special metadata automatically set by VCD that require to be filtered out and
@@ -431,13 +438,16 @@ func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourc
 		inheritedMetadataBlock := filterAndGetVcdInheritedMetadata(metadata)
 		err = d.Set("inherited_metadata", inheritedMetadataBlock)
 		if err != nil {
-			return diag.Errorf("could not set 'inherited_metadata' attribute: %s", err)
+			return append(diags, diag.Errorf("could not set 'inherited_metadata' attribute: %s", err)...)
 		}
 	}
 
 	err = setMetadataEntryInState(d, metadata.MetadataEntry)
 	if err != nil {
-		return diag.Errorf("error setting metadata entry in state: %s", err)
+		return append(diags, diag.Errorf("error setting metadata entry in state: %s", err)...)
+	}
+	if len(diags) > 0 {
+		return diags
 	}
 	return nil
 }
