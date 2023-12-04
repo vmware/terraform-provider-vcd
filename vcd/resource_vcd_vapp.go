@@ -111,7 +111,7 @@ func resourceVcdVApp() *schema.Resource {
 			"inherited_metadata": {
 				Type:        schema.TypeMap,
 				Computed:    true,
-				Description: "A map that contains metadata that is automatically added by VCD and provides details on the origin of the vApp",
+				Description: "A map that contains metadata that is automatically added by VCD (10.5.1+) and provides details on the origin of the vApp",
 			},
 		},
 	}
@@ -261,6 +261,7 @@ func resourceVcdVAppRead(_ context.Context, d *schema.ResourceData, meta interfa
 }
 
 func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+	var diags diag.Diagnostics
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -321,11 +322,15 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	dSet(d, "description", vapp.VApp.Description)
 	d.SetId(vapp.VApp.ID)
 
-	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_vapp", vapp)
-	if diagErr != nil {
-		return diagErr
+	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_vapp", vapp)...)
+	if diags != nil && diags.HasError() {
+		return diags
 	}
 
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
+	}
 	return nil
 }
 

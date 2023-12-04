@@ -231,6 +231,7 @@ func updatePublishToExternalOrgSettings(d *schema.ResourceData, adminCatalog *go
 }
 
 func resourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
 	log.Printf("[TRACE] Catalog read initiated")
 
 	vcdClient := meta.(*VCDClient)
@@ -288,12 +289,17 @@ func resourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta inte
 	dSet(d, "href", adminCatalog.AdminCatalog.HREF)
 	d.SetId(adminCatalog.AdminCatalog.ID)
 
-	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_catalog", adminCatalog)
-	if diagErr != nil {
-		log.Printf("[DEBUG] Unable to update catalog metadata: %s", err)
-		return diagErr
+	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_catalog", adminCatalog)...)
+	if diags != nil && diags.HasError() {
+		log.Printf("[DEBUG] Unable to update catalog metadata: %v", diags)
+		return diags
 	}
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
+
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
+	}
 	return nil
 }
 

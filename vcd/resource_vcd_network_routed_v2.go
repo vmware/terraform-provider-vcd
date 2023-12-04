@@ -3,7 +3,6 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -262,20 +261,23 @@ func resourceVcdNetworkRoutedV2Read(_ context.Context, d *schema.ResourceData, m
 
 	// Metadata is not supported when the network is in a VDC Group, although it is still present in the entity.
 	// Hence, we skip the read to preserve its value in state.
-	var diagErr diag.Diagnostics
+	var diags diag.Diagnostics
 	if !govcd.OwnerIsVdcGroup(orgNetwork.OpenApiOrgVdcNetwork.OwnerRef.ID) {
-		diagErr = updateMetadataInStateDeprecated(d, vcdClient, "vcd_network_routed_v2", orgNetwork)
+		diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_network_routed_v2", orgNetwork)...)
 	} else if _, ok := d.GetOk("metadata"); !ok {
 		// If it's a VDC Group and metadata is not set, we explicitly compute it to empty. Otherwise, its value should
 		// be preserved as it is still present in the entity.
 		err = d.Set("metadata", StringMap{})
 		if err != nil {
-			diagErr = diag.FromErr(err)
+			diags = append(diags, diag.FromErr(err)...)
 		}
 	}
-	if diagErr != nil {
-		log.Printf("[DEBUG] Unable to set routed network v2 metadata: %s", err)
-		return diagErr
+	if diags != nil && diags.HasError() {
+		return diags
+	}
+
+	if len(diags) > 0 {
+		return diags
 	}
 
 	return nil

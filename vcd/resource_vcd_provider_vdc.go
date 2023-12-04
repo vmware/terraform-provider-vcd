@@ -343,6 +343,7 @@ func resourceVcdProviderVdcRead(ctx context.Context, d *schema.ResourceData, met
 }
 
 func genericResourceVcdProviderVdcRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+	var diags diag.Diagnostics
 	vcdClient := meta.(*VCDClient)
 
 	providerVdcName := d.Get("name").(string)
@@ -476,12 +477,17 @@ func genericResourceVcdProviderVdcRead(ctx context.Context, d *schema.ResourceDa
 		dSet(d, "vcenter_id", extendedProviderVdc.VMWProviderVdc.VimServer[0].ID)
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_provider_vdc", providerVdc)
-	if diagErr != nil {
-		return diagErr
+	diags = append(diags, updateMetadataInState(d, vcdClient, "vcd_provider_vdc", providerVdc)...)
+	if diags != nil && diags.HasError() {
+		return diags
 	}
 
 	d.SetId(providerVdc.ProviderVdc.ID)
+
+	// This must be checked at the end as updateMetadataInState can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
+	}
 	return nil
 }
 

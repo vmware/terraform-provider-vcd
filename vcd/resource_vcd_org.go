@@ -445,6 +445,8 @@ func resourceOrgUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 
 // setOrgData sets the data into the resource, taking it from the provided adminOrg
 func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.AdminOrg) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	dSet(d, "name", adminOrg.AdminOrg.Name)
 	dSet(d, "full_name", adminOrg.AdminOrg.FullName)
 	dSet(d, "description", adminOrg.AdminOrg.Description)
@@ -543,17 +545,22 @@ func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.Ad
 		}
 	}
 
-	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_org", adminOrg)
-	if diagErr != nil {
+	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_org", adminOrg)...)
+	if diags != nil && diags.HasError() {
 		log.Printf("[DEBUG] Unable to set Org metadata")
-		return diagErr
+		return diags
 	}
 
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
+	}
 	return nil
 }
 
 // Retrieves an Org resource from VCD
 func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
 	vcdClient := m.(*VCDClient)
 
 	orgName, _, err := getOrgNames(d)
@@ -587,9 +594,14 @@ func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) d
 	log.Printf("[TRACE] Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
 
-	diagErr := setOrgData(d, vcdClient, adminOrg)
-	if diagErr != nil {
-		return diagErr
+	diags = append(diags, setOrgData(d, vcdClient, adminOrg)...)
+	if diags != nil && diags.HasError() {
+		return diags
+	}
+
+	// This must be checked at the end as setOrgData can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
 	}
 	return nil
 }
@@ -610,9 +622,9 @@ func resourceVcdOrgImport(ctx context.Context, d *schema.ResourceData, meta inte
 		return nil, fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	diagErr := setOrgData(d, vcdClient, adminOrg)
-	if diagErr != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("error setting Org data: %v", diagErr)
+	diags := setOrgData(d, vcdClient, adminOrg)
+	if diags != nil && diags.HasError() {
+		return []*schema.ResourceData{}, fmt.Errorf("error setting Org data: %v", diags)
 	}
 
 	d.SetId(adminOrg.AdminOrg.ID)
