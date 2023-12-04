@@ -339,7 +339,7 @@ func testMetadataEntryCRUD(t *testing.T, resourceTemplate, resourceAddress, data
 // - Step 3: Add a data source that fetches the created resource.
 //
 // The different ignore_metadata_changes sub-tests check what happens if the filter matches or doesn't match the metadata entry
-// added in Pre-Step 2. If it doesn't match, Terraform will delete it from VCD. If it match, it gets ignored as it doesn't exist.
+// added in Pre-Step 2. If it doesn't match, Terraform will delete it from VCD. If it matches, it gets ignored as if it didn't exist.
 func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, datasourceTemplate, datasourceAddress string, retrieveObjectById func(*VCDClient, string) (metadataCompatible, error), extraParams StringMap) {
 	preTestChecks(t)
 	resourceType := strings.Split(resourceAddress, ".")[0]
@@ -457,7 +457,7 @@ func testMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddress, da
 					Config: step3,
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttr(datasourceAddress, "metadata_entry.#", "1"),
-						testCheckMetadataEntrySetElemNestedAttrs(1, datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
+						testCheckMetadataEntrySetElemNestedAttrs(1, resourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
 						testCheckMetadataEntrySetElemNestedAttrs(1, datasourceAddress, "stringKey1", "stringValue1", types.MetadataStringValue, types.MetadataReadWriteVisibility, "false"),
 						resource.TestCheckResourceAttrPair(datasourceAddress, "id", resourceAddress, "id"),
 						resource.TestCheckResourceAttrPair(datasourceAddress, "metadata_entry.#", resourceAddress, "metadata_entry.#"),
@@ -608,13 +608,13 @@ func getMetadataEntryHcl(key, value, typedValue, userAccess, isSystem string) st
 		isSystemAttr = fmt.Sprintf("is_system   = \"%s\"", isSystem)
 	}
 	return fmt.Sprintf(`
-metadata_entry {
-	%s
-	%s
-	%s
-	%s
-	%s
-}
+  metadata_entry {
+    %s
+    %s
+    %s
+    %s
+    %s
+  }
 `, keyAttr, valueAttr, typeAttr, userAccAttr, isSystemAttr)
 }
 

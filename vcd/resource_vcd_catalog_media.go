@@ -227,6 +227,7 @@ func resourceVcdMediaRead(_ context.Context, d *schema.ResourceData, meta interf
 }
 
 func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+	var diags diag.Diagnostics
 	vcdClient := meta.(*VCDClient)
 
 	var catalog *govcd.Catalog
@@ -319,10 +320,15 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 			}
 		}
 	}
-	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_catalog_media", media)
-	if diagErr != nil {
-		log.Printf("[DEBUG] Unable to update media item metadata: %s", err)
-		return diagErr
+	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_catalog_media", media)...)
+	if diags != nil && diags.HasError() {
+		log.Printf("[DEBUG] Unable to update media item metadata: %v", diags)
+		return diags
+	}
+
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
 	}
 	return nil
 }

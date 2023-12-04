@@ -158,6 +158,7 @@ func resourceVcdNetworkDirectRead(ctx context.Context, d *schema.ResourceData, m
 }
 
 func genericVcdNetworkDirectRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+	var diags diag.Diagnostics
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -206,12 +207,16 @@ func genericVcdNetworkDirectRead(_ context.Context, d *schema.ResourceData, meta
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 	d.SetId(network.OrgVDCNetwork.ID)
 
-	diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_network_direct", network)
-	if diagErr != nil {
-		log.Printf("[DEBUG] Unable to set direct network metadata: %s", err)
-		return diagErr
+	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_network_direct", network)...)
+	if diags != nil && diags.HasError() {
+		log.Printf("[DEBUG] Unable to set direct network metadata: %v", diags)
+		return diags
 	}
 
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
+	}
 	return nil
 }
 

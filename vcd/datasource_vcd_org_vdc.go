@@ -259,9 +259,9 @@ func datasourceVcdOrgVdcRead(_ context.Context, d *schema.ResourceData, meta int
 
 	d.SetId(adminVdc.AdminVdc.ID)
 
-	diagErr := setOrgVdcData(d, vcdClient, adminVdc)
-	if diagErr != nil {
-		return diagErr
+	diags := setOrgVdcData(d, vcdClient, adminVdc)
+	if diags != nil && diags.HasError() {
+		return diags
 	}
 
 	err = setEdgeClusterData(d, adminVdc, "data.vcd_org_vdc")
@@ -274,9 +274,14 @@ func datasourceVcdOrgVdcRead(_ context.Context, d *schema.ResourceData, meta int
 		dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, adminVdc.AdminVdc.ID)
 		enabled, err := dfw.IsEnabled()
 		if err != nil {
-			return diag.Errorf("error retrieving NSX-V distributed firewall state for VDC '%s': %s", vdcName, err)
+			return append(diags, diag.Errorf("error retrieving NSX-V distributed firewall state for VDC '%s': %s", vdcName, err)...)
 		}
 		dSet(d, "enable_nsxv_distributed_firewall", enabled)
+	}
+
+	// This must be checked at the end as setOrgVdcData can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
 	}
 	return nil
 }

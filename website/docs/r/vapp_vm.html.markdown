@@ -521,7 +521,7 @@ example for usage details.
 * `vm_type` - (*3.2+*) Type of the VM (either `vcd_vapp_vm` or `vcd_vm`).
 * `status` - (*v3.8+*) The vApp status as a numeric code.
 * `status_text` - (*v3.8+*) The vApp status as text.
-* `inherited_metadata` - (*v3.11+*) A map that contains read-only metadata that is automatically added by VCD and provides
+* `inherited_metadata` - (*v3.11+*; *VCD 10.5.1+*) A map that contains read-only metadata that is automatically added by VCD (10.5.1+) and provides
   details on the origin of the VM (e.g. `vm.origin.id`, `vm.origin.name`, `vm.origin.type`).
 
 <a id="disk"></a>

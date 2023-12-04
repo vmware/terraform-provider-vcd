@@ -102,6 +102,7 @@ func resourceVcdRde() *schema.Resource {
 				Description: "If true, `computed_entity` is equal to either `input_entity` or the contents of `input_entity_url`",
 				Computed:    true,
 			},
+			"metadata_entry": openApiMetadataEntryResourceSchema("Runtime Defined Entity"),
 		},
 	}
 }
@@ -147,6 +148,11 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		if err != nil {
 			return diag.Errorf("could not resolve the Runtime Defined Entity '%s' of type '%s' in Organization '%s': %s", name, rdeTypeId, org.Org.Name, err)
 		}
+	}
+
+	err = createOrUpdateOpenApiMetadataEntryInVcd(d, rde)
+	if err != nil {
+		return diag.Errorf("could not create metadata for the Runtime Defined Entity: %s", err)
 	}
 
 	return resourceVcdRdeRead(ctx, d, meta)
@@ -228,7 +234,16 @@ func resourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interfac
 		dSet(d, "entity_in_sync", areJsonEqual)
 	}
 
+	diags := updateOpenApiMetadataInState(d, vcdClient, "vcd_rde", rde)
+	if diags != nil && diags.HasError() {
+		return diags
+	}
+
 	d.SetId(rde.DefinedEntity.ID)
+
+	if len(diags) > 0 {
+		return diags
+	}
 
 	return nil
 }
@@ -255,13 +270,17 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd
 	// As RDEs can have many instances with same name and RDE Type, we can't guarantee that we will read the one we want,
 	// but at least we try to filter a bit with things we know, like Organization.
 	var filteredRdes []*govcd.DefinedEntity
-	orgName := d.Get("org")
-	for _, rde := range rdes {
-		// If there's no Organization informed in the RDE, we cannot filter, hence we add it to the result anyway.
-		// If there's an Org in the RDE, it should match the information that the attribute has.
-		if rde.DefinedEntity.Org == nil || orgName == rde.DefinedEntity.Org.Name {
-			filteredRdes = append(filteredRdes, rde)
+	orgName, hasOrg := d.GetOk("org")
+	if hasOrg {
+		for _, rde := range rdes {
+			// If there's no Organization informed in the RDE, we cannot filter, hence we add it to the result anyway.
+			// If there's an Org in the RDE, it should match the information that the attribute has.
+			if rde.DefinedEntity.Org == nil || orgName == rde.DefinedEntity.Org.Name {
+				filteredRdes = append(filteredRdes, rde)
+			}
 		}
+	} else {
+		filteredRdes = rdes
 	}
 
 	if len(filteredRdes) == 0 {
@@ -317,6 +336,11 @@ func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		if err != nil {
 			return diag.Errorf("could not resolve the Runtime Defined Entity '%s' with ID '%s': %s", rde.DefinedEntity.Name, rde.DefinedEntity.ID, err)
 		}
+	}
+
+	err = createOrUpdateOpenApiMetadataEntryInVcd(d, rde)
+	if err != nil {
+		return diag.Errorf("could not create metadata for the Runtime Defined Entity: %s", err)
 	}
 
 	return resourceVcdRdeRead(ctx, d, meta)

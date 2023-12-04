@@ -2,11 +2,10 @@ package vcd
 
 import (
 	"context"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 func datasourceVcdNetworkIsolatedV2() *schema.Resource {
@@ -118,6 +117,11 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 				Description: "IP ranges used for static pool allocation in the network",
 				Elem:        networkV2IpRangeComputed,
 			},
+			"guest_vlan_allowed": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if network allows guest VLAN tagging",
+			},
 			"metadata": {
 				Type:        schema.TypeMap,
 				Computed:    true,
@@ -130,6 +134,7 @@ func datasourceVcdNetworkIsolatedV2() *schema.Resource {
 }
 
 func datasourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetOrgFromResource(d)
@@ -203,11 +208,15 @@ func datasourceVcdNetworkIsolatedV2Read(_ context.Context, d *schema.ResourceDat
 
 	// Metadata is not supported when the network is in a VDC Group
 	if !govcd.OwnerIsVdcGroup(network.OpenApiOrgVdcNetwork.OwnerRef.ID) {
-		diagErr := updateMetadataInStateDeprecated(d, vcdClient, "vcd_network_isolated_v2", network)
-		if diagErr != nil {
-			log.Printf("[DEBUG] Unable to set isolated network v2 metadata: %s", err)
-			return diagErr
+		diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_network_isolated_v2", network)...)
+		if diags != nil && diags.HasError() {
+			return diags
 		}
+	}
+
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
 	}
 
 	return nil
