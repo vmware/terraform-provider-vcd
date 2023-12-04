@@ -16,7 +16,7 @@ Provides a resource to manage vGPU policies for virtual machines in VMware Cloud
 
 ```hcl
 data "vcd_org" "example_org" {
-  name ="test_org"
+  name = "test_org"
 }
 
 data "vcd_vgpu_profile" "example_vgpu_profile" {
@@ -50,9 +50,9 @@ resource "vcd_vm_vgpu_policy" "example_vgpu_policy" {
   }
 
   memory {
-    shares                = "1580"
-    size_in_mb            = "3200"
-    limit_in_mb           = "2800"
+    shares      = "1580"
+    size_in_mb  = "3200"
+    limit_in_mb = "2800"
   }
 
   provider_vdc_scope {
@@ -77,11 +77,13 @@ resource "vcd_org_vdc" "example_org_vdc" {
       allocated = 2048
     }
   }
+
   storage_profile {
     name    = "*"
     limit   = 10240
     default = true
   }
+
   elasticity                 = true
   include_vm_memory_overhead = true
   default_compute_policy_id  = vcd_vm_vgpu_policy.example_vgpu_policy.id
@@ -89,9 +91,9 @@ resource "vcd_org_vdc" "example_org_vdc" {
 }
 
 resource "vcd_vm" "test_vm" {
-  org         = data.vcd_org.example_org.name
-  vdc         = vcd_org_vdc.example_org_vdc.name
-  name        = "terraform-provider-vm"
+  org  = data.vcd_org.example_org.name
+  vdc  = vcd_org_vdc.example_org_vdc.name
+  name = "terraform-provider-vm"
 
   computer_name       = "emptyVM"
   memory              = 2048
