@@ -101,7 +101,7 @@ func (v *vdcPlacementPolicyOrgUserPrerequisites) setup() {
 		AllocationModel: "AllocationPool",
 
 		ComputeCapacity: []*types.ComputeCapacity{
-			&types.ComputeCapacity{
+			{
 				CPU: &types.CapacityWithUsage{
 					Units:     "MHz",
 					Allocated: 1024,
@@ -114,7 +114,7 @@ func (v *vdcPlacementPolicyOrgUserPrerequisites) setup() {
 				},
 			},
 		},
-		VdcStorageProfile: []*types.VdcStorageProfileConfiguration{&types.VdcStorageProfileConfiguration{
+		VdcStorageProfile: []*types.VdcStorageProfileConfiguration{{
 			Enabled: addrOf(true),
 			Units:   "MB",
 			Limit:   1024,
@@ -164,10 +164,10 @@ func (v *vdcPlacementPolicyOrgUserPrerequisites) setup() {
 	newComputePolicyHref, _ := vcdClient.Client.OpenApiBuildEndpoint(types.OpenApiPathVersion2_0_0, types.OpenApiEndpointVdcComputePolicies, createdPlacementPolicy.VdcComputePolicyV2.ID)
 	cpReferences := types.VdcComputePolicyReferences{
 		VdcComputePolicyReference: []*types.Reference{
-			&types.Reference{ // Default one, must persist in VDC
+			{ // Default one, must persist in VDC
 				HREF: existingComputePolicyHref.String(),
 			},
-			&types.Reference{
+			{
 				HREF: newComputePolicyHref.String(),
 				ID:   createdPlacementPolicy.VdcComputePolicyV2.ID,
 				Name: createdPlacementPolicy.VdcComputePolicyV2.Name,
