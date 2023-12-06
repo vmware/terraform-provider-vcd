@@ -12,9 +12,9 @@ import (
 
 // vdcPlacementPolicyOrgUserPrerequisites helps to facilitate prerequisite buildup and teardown so that Org user can test placement policy data source
 // It creates and cleans up the following:
-// * VDC Placement Policy
-// * Org VDC with placement policy assigned
-
+// * VM Placement Policy
+// * Org VDC
+// * Assign the new VM Placement Policy to VDC
 type vdcPlacementPolicyOrgUserPrerequisites struct {
 	// t testing struct must be injected here because Terraform acceptance test framework does not accept and function
 	// parameters
@@ -35,16 +35,6 @@ func (v *vdcPlacementPolicyOrgUserPrerequisites) setup() {
 		t.Logf("error retrieving Org: %s", err)
 	}
 
-	// Lookup Provider VDC
-	// results, err := vcdClient.QueryWithNotEncodedParams(nil, map[string]string{
-	// 	"type":   "providerVdc",
-	// 	"filter": fmt.Sprintf("name==%s", testConfig.VCD.NsxtProviderVdc.Name),
-	// })
-	// if err != nil || len(results.Results.VMWProviderVdcRecord) == 0 {
-	// 	t.Logf("error retrieving Provider VDC: %s", err)
-	// }
-	// providerVdcHref := results.Results.VMWProviderVdcRecord[0].HREF
-
 	pVdc, err := vcdClient.GetProviderVdcByName(testConfig.VCD.NsxtProviderVdc.Name)
 	if err != nil {
 		t.Logf("error retrieving Provider VDC: %s", err)
@@ -55,12 +45,6 @@ func (v *vdcPlacementPolicyOrgUserPrerequisites) setup() {
 	if err != nil {
 		t.Logf("error retrieving Storage Profile: %s", err)
 	}
-
-	// Lookup Network Pool
-	// np, err := vcdClient.GetNetworkPoolByName(testConfig.VCD.NsxtProviderVdc.NetworkPool)
-	// if err != nil {
-	// 	t.Logf("error retrieving Network Pool: %s", err)
-	// }
 
 	networkPools, err := govcd.QueryNetworkPoolByName(vcdClient.VCDClient, testConfig.VCD.NsxtProviderVdc.NetworkPool)
 	if err != nil || len(networkPools) < 1 {

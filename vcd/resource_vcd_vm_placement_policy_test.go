@@ -201,15 +201,6 @@ func TestAccVcdVmPlacementPolicyInVdc(t *testing.T) {
 					resource.TestMatchResourceAttr(datasourcePolicyName, "vm_group_ids.0", getUuidRegex("^", "$")),
 					resource.TestCheckNoResourceAttr(datasourcePolicyName, "provider_vdc_id"),
 					resourceFieldsEqual(policyName, datasourcePolicyName, []string{"%", "provider_vdc_id"}), // Resource doesn't have attribute `vdc_id` and we didn't use `provider_vdc_id` in data source
-
-					// // Tenant user
-					// resource.TestCheckResourceAttrPair(datasourcePolicyNameTenantUser, "id", datasourcePolicyName, "id"),
-					// resource.TestCheckResourceAttrPair(datasourcePolicyNameTenantUser, "name", datasourcePolicyName, "name"),
-					// resource.TestCheckResourceAttrPair(datasourcePolicyNameTenantUser, "description", datasourcePolicyName, "description"),
-					// resource.TestCheckResourceAttrPair(datasourcePolicyNameTenantUser, "vdc_id", datasourcePolicyName, "vdc_id"),
-					// resource.TestCheckResourceAttr(datasourcePolicyNameTenantUser, "vm_group_ids.#", "0"),
-					// resource.TestCheckResourceAttr(datasourcePolicyNameTenantUser, "logical_vm_group_ids.#", "0"),
-					// resource.TestCheckNoResourceAttr(datasourcePolicyNameTenantUser, "provider_vdc_id"),
 				),
 			},
 		},
@@ -308,10 +299,8 @@ func TestAccVcdVmPlacementPolicyInVdcTenant(t *testing.T) {
 		"VdcId":               systemPrerequisites.vdc.Vdc.ID,
 	}
 	testParamsNotEmpty(t, params)
-	// policyName := "vcd_vm_placement_policy." + params["PolicyName"].(string)
 
 	configText := templateFill(testAccVcdVmPlacementPolicyInVdcTenant, params)
-
 	debugPrintf("#[DEBUG] CONFIGURATION - creation: %s", configText)
 
 	resource.Test(t, resource.TestCase{
