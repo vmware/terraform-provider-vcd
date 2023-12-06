@@ -255,29 +255,6 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 	lists = append(lists, listDef{name: "library_certificate", resourceType: "vcd_library_certificate"})
 
 	lists = append(lists,
-		// List with import
-		// Looking for TestVm inside TestVapp
-		// Expect to create an import file
-		listDef{
-			name:         "testVm",
-			resourceType: "vcd_vapp_vm",
-			parent:       "TestVapp",
-			knownItem:    "TestVm",
-			vdc:          testConfig.VCD.Vdc,
-			listMode:     "import",
-			importFile:   true,
-		},
-		// List with import
-		// Looking for standalone VM ldap-server
-		// Expect to create an import file
-		listDef{
-			name:         "ldap-server",
-			resourceType: "vcd_vm",
-			knownItem:    "ldap-server",
-			vdc:          testConfig.Nsxt.Vdc,
-			listMode:     "import",
-			importFile:   true,
-		},
 		// Filtering for regexp: "vApp"
 		// looking for "Catalog Author"
 		// Expect NOT to find it
@@ -309,6 +286,35 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 			excludeItem:  false,
 		},
 	)
+
+	if !vcdShortTest { // Do not build files for binary tests
+		lists = append(lists,
+			// List with import
+			// Looking for TestVm inside TestVapp
+			// Expect to create an import file
+			listDef{
+				name:         "testVm",
+				resourceType: "vcd_vapp_vm",
+				parent:       "TestVapp",
+				knownItem:    "TestVm",
+				vdc:          testConfig.VCD.Vdc,
+				listMode:     "import",
+				importFile:   true,
+			},
+			// List with import
+			// Looking for standalone VM ldap-server
+			// Expect to create an import file
+			listDef{
+				name:         "ldap-server",
+				resourceType: "vcd_vm",
+				knownItem:    "ldap-server",
+				vdc:          testConfig.Nsxt.Vdc,
+				listMode:     "import",
+				importFile:   true,
+			},
+		)
+	}
+
 	for _, def := range lists {
 		t.Run(def.name+"-"+def.resourceType, func(t *testing.T) { runResourceInfoTest(def, t) })
 	}
