@@ -135,7 +135,6 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelCreate(ctx context.Context, d *schema.
 	if err != nil {
 		return diag.Errorf("[L2 VPN Tunnel create] %s", err)
 	}
-
 	defer unlock()
 
 	orgName := d.Get("org").(string)
@@ -201,6 +200,12 @@ func genericNsxtEdgegatewayL2VpnTunnelRead(_ context.Context, d *schema.Resource
 func resourceVcdNsxtEdgegatewayL2VpnTunnelUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
+	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
+	if err != nil {
+		return diag.Errorf("[L2 VPN Tunnel update] %s", err)
+	}
+	defer unlock()
+
 	orgName := d.Get("org").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, edgeGatewayId)
@@ -228,6 +233,12 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelUpdate(ctx context.Context, d *schema.
 
 func resourceVcdNsxtEdgegatewayL2VpnTunnelDestroy(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+
+	unlock, err := vcdClient.lockParentVdcGroupOrEdgeGateway(d)
+	if err != nil {
+		return diag.Errorf("[L2 VPN Tunnel destroy] %s", err)
+	}
+	defer unlock()
 
 	orgName := d.Get("org").(string)
 	edgeGatewayId := d.Get("edge_gateway_id").(string)
