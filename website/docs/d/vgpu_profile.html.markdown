@@ -10,6 +10,8 @@ description: |-
 
 Supported in provider *3.11* and VCD *10.4.0+*.
 
+-> **Note:** This data source requires system administrator privileges.
+
 Provides a datasource to read vGPU profiles in VMware Cloud Director.
 
 ## Example Usage
