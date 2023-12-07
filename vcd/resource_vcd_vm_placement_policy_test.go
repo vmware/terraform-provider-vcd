@@ -270,6 +270,9 @@ data "vcd_vm_placement_policy" "data-{{.PolicyName}}" {
 }
 `
 
+// TestAccVcdVmPlacementPolicyInVdcTenant complements TestAccVcdVmPlacementPolicyInVdc and uses SDK
+// connection to build up prerequisites with System user so that this test can run in both System
+// and Org user modes.
 func TestAccVcdVmPlacementPolicyInVdcTenant(t *testing.T) {
 	preTestChecks(t)
 
