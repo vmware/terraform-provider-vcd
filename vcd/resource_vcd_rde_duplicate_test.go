@@ -19,6 +19,7 @@ func TestAccVcdRdeDuplicate(t *testing.T) {
 		"Version":    "1.0.0",
 		"Vendor":     "vendor",
 		"Name":       t.Name(),
+		"Org":        testConfig.VCD.Org,
 		"SchemaPath": getCurrentDir() + "/../test-resources/rde_type.json",
 		"EntityPath": getCurrentDir() + "/../test-resources/rde_instance.json",
 	}
@@ -133,6 +134,7 @@ resource "vcd_rde" "rde1_system" {
 # This one depends on the rights bundle as it will be
 # created in the tenant that is configured in the provider block
 resource "vcd_rde" "rde2_tenant" {
+  org          = "{{.Org}}"
   rde_type_id  = vcd_rde_type.rde_type.id
   name         = "{{.Name}}"
   resolve      = true
@@ -142,6 +144,7 @@ resource "vcd_rde" "rde2_tenant" {
 }
 
 resource "vcd_rde" "rde3_tenant" {
+  org          = "{{.Org}}"
   rde_type_id  = vcd_rde.rde2_tenant.rde_type_id
   name         = vcd_rde.rde2_tenant.name
   resolve      = vcd_rde.rde2_tenant.resolve
@@ -161,6 +164,7 @@ data "vcd_rde" "fetch_rde_system" {
 const testAccVcdRdeDuplicateStep3 = testAccVcdRdeDuplicateStep2 + `
 # skip-binary-test: Using a data source that references a resource created in same config
 data "vcd_rde" "fetch_rde_tenant" {
+  org          = "{{.Org}}"
   rde_type_id = vcd_rde.rde2_tenant.rde_type_id
   name        = vcd_rde.rde2_tenant.name
 }
