@@ -5,15 +5,16 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"os"
-	"strconv"
-	"strings"
-	"testing"
 )
 
 // testOpenApiMetadataEntryCRUD executes a test that asserts CRUD operation behaviours of "metadata_entry" attribute in the given HCL
@@ -315,6 +316,15 @@ func testOpenApiMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddr
 	testParamsNotEmpty(t, params)
 	step1 := templateFill(resourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 1: %s", step1)
+
+	// Steps 2 and 3 introduce conflicting configs (attempting to set metadata, that is specified in
+	// `ignore_metadata_changes`). Binary tests cannot pass without the additional manipulation in
+	// SDK that this test does
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	params["FuncName"] = t.Name() + "-Step2"
 	params["Metadata"] = getOpenApiMetadataTestingHcl(1, 0, 0, 0, 0, 0, 0)
 	step2 := templateFill(resourceTemplate, params)
@@ -322,11 +332,6 @@ func testOpenApiMetadataEntryIgnore(t *testing.T, resourceTemplate, resourceAddr
 	params["FuncName"] = t.Name() + "-Step3"
 	step3 := templateFill(resourceTemplate+datasourceTemplate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 3: %s", step3)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	// We will cache the ID of the created resource after Step 1, so it can be used afterward.
 	cachedId := testCachedFieldValue{}
