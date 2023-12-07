@@ -164,7 +164,7 @@ data "vcd_rde" "fetch_rde_system" {
 const testAccVcdRdeDuplicateStep3 = testAccVcdRdeDuplicateStep2 + `
 # skip-binary-test: Using a data source that references a resource created in same config
 data "vcd_rde" "fetch_rde_tenant" {
-  org          = "{{.Org}}"
+  org         = "{{.Org}}"
   rde_type_id = vcd_rde.rde2_tenant.rde_type_id
   name        = vcd_rde.rde2_tenant.name
 }
