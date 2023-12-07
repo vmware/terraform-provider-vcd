@@ -22,6 +22,7 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 		"CatalogMediaName": TestAccVcdCatalogMedia,
 		"Description":      TestAccVcdCatalogMediaDescription,
 		"MediaPath":        testConfig.Media.MediaPath,
+		"MediaPath2":       getCurrentDir() + "/resource_vcd_catalog_media.go",
 		"UploadPieceSize":  testConfig.Media.UploadPieceSize,
 		"UploadProgress":   testConfig.Media.UploadProgress,
 		"Tags":             "catalog",
@@ -206,7 +207,7 @@ resource "vcd_catalog_media"  "text_file" {
 
   name                 = "{{.CatalogMediaName}}-2"
   description          = "{{.Description}} 2"
-  media_path           = "resource_vcd_catalog_media.go"
+  media_path           = "{{.MediaPath2}}"
   upload_any_file      = true
   upload_piece_size    = {{.UploadPieceSize}}
   show_upload_progress = {{.UploadProgress}}
@@ -269,7 +270,7 @@ resource "vcd_catalog_media"  "text_file" {
 
   name                 = "{{.CatalogMediaName}}-2-update"
   description          = "{{.Description}} 2 update"
-  media_path           = "resource_vcd_catalog_media.go"
+  media_path           = "{{.MediaPath2}}"
   upload_any_file      = true
   upload_piece_size    = {{.UploadPieceSize}}
   show_upload_progress = {{.UploadProgress}}

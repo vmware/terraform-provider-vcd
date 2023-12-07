@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -156,17 +157,14 @@ data "vcd_vm_placement_policy" "data-{{.PolicyName}}" {
 }
 `
 
-// TestAccVcdVmPlacementPolicyInVdc tests fetching a VM Placement Policy using the `vdc_id` instead of Provider VDC,
-// both with System Administrator and a tenant/org user.
+// TestAccVcdVmPlacementPolicyInVdc tests fetching a VM Placement Policy using the `vdc_id` instead
+// of Provider VDC, with System Administrator.
 func TestAccVcdVmPlacementPolicyInVdc(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"OrgName":                   testConfig.VCD.Org,
-		"VcdUrl":                    testConfig.Provider.Url,
-		"OrgUser":                   testConfig.TestEnvBuild.OrgUser,
-		"OrgUserPassword":           testConfig.TestEnvBuild.OrgUserPassword,
 		"VdcName":                   t.Name(),
 		"PolicyName":                t.Name(),
 		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
@@ -177,7 +175,6 @@ func TestAccVcdVmPlacementPolicyInVdc(t *testing.T) {
 	testParamsNotEmpty(t, params)
 	policyName := "vcd_vm_placement_policy." + params["PolicyName"].(string)
 	datasourcePolicyName := "data.vcd_vm_placement_policy.data-" + params["PolicyName"].(string)
-	datasourcePolicyNameTenantUser := datasourcePolicyName + "-tenant"
 	configText := templateFill(testAccCheckVmPlacementPolicyFromVdcId, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION - creation: %s", configText)
@@ -204,15 +201,6 @@ func TestAccVcdVmPlacementPolicyInVdc(t *testing.T) {
 					resource.TestMatchResourceAttr(datasourcePolicyName, "vm_group_ids.0", getUuidRegex("^", "$")),
 					resource.TestCheckNoResourceAttr(datasourcePolicyName, "provider_vdc_id"),
 					resourceFieldsEqual(policyName, datasourcePolicyName, []string{"%", "provider_vdc_id"}), // Resource doesn't have attribute `vdc_id` and we didn't use `provider_vdc_id` in data source
-
-					// Tenant user
-					resource.TestCheckResourceAttrPair(datasourcePolicyNameTenantUser, "id", datasourcePolicyName, "id"),
-					resource.TestCheckResourceAttrPair(datasourcePolicyNameTenantUser, "name", datasourcePolicyName, "name"),
-					resource.TestCheckResourceAttrPair(datasourcePolicyNameTenantUser, "description", datasourcePolicyName, "description"),
-					resource.TestCheckResourceAttrPair(datasourcePolicyNameTenantUser, "vdc_id", datasourcePolicyName, "vdc_id"),
-					resource.TestCheckResourceAttr(datasourcePolicyNameTenantUser, "vm_group_ids.#", "0"),
-					resource.TestCheckResourceAttr(datasourcePolicyNameTenantUser, "logical_vm_group_ids.#", "0"),
-					resource.TestCheckNoResourceAttr(datasourcePolicyNameTenantUser, "provider_vdc_id"),
 				),
 			},
 		},
@@ -276,31 +264,69 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 `
 
 const testAccCheckVmPlacementPolicyFromVdcId = testAccCheckVmPlacementPolicyFromVdcId_prereqs + `
-provider "vcd" {
-  alias                = "orguser"
-  user                 = "{{.OrgUser}}"
-  password             = "{{.OrgUserPassword}}"
-  auth_type            = "integrated"
-  url                  = "{{.VcdUrl}}"
-  sysorg               = vcd_org_vdc.{{.VdcName}}.org
-  org                  = vcd_org_vdc.{{.VdcName}}.org
-  vdc                  = vcd_org_vdc.{{.VdcName}}.name
-  allow_unverified_ssl = "true"
-  max_retry_timeout    = 600
-  logging              = true
-  logging_file         = "go-vcloud-director-org.log"
-}
-
 data "vcd_vm_placement_policy" "data-{{.PolicyName}}" {
   name   = vcd_vm_placement_policy.{{.PolicyName}}.name
   vdc_id = vcd_org_vdc.{{.VdcName}}.id
 }
+`
 
-data "vcd_vm_placement_policy" "data-{{.PolicyName}}-tenant" {
-  provider = vcd.orguser # Using tenant user
+// TestAccVcdVmPlacementPolicyInVdcTenant complements TestAccVcdVmPlacementPolicyInVdc and uses SDK
+// connection to build up prerequisites with System user so that this test can run in both System
+// and Org user modes.
+func TestAccVcdVmPlacementPolicyInVdcTenant(t *testing.T) {
+	preTestChecks(t)
 
-  name     = vcd_vm_placement_policy.{{.PolicyName}}.name
-  vdc_id   = vcd_org_vdc.{{.VdcName}}.id
+	// This test cannot run in Short mode because it uses go-vcloud-director SDK to setup prerequisites
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	vcdClient := createSystemTemporaryVCDConnection()
+
+	// Setup prerequisites using temporary admin version and defer cleanup
+	systemPrerequisites := &vdcPlacementPolicyOrgUserPrerequisites{t: t, vcdClient: vcdClient}
+	fmt.Println("## Setting up prerequisites using System user")
+	systemPrerequisites.setup()
+	fmt.Println("## Running Terraform test")
+
+	defer func() {
+		fmt.Println("## Cleaning up prerequisites")
+		systemPrerequisites.teardown()
+		fmt.Println("## Finished cleaning up prerequisites")
+	}()
+
+	var params = StringMap{
+		// These fields come from prerequisite builder
+		"PlacementPolicyName": systemPrerequisites.placementPolicy.VdcComputePolicyV2.Name,
+		"VdcId":               systemPrerequisites.vdc.Vdc.ID,
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccVcdVmPlacementPolicyInVdcTenant, params)
+	debugPrintf("#[DEBUG] CONFIGURATION - creation: %s", configText)
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("data.vcd_vm_placement_policy.tenant", "id", systemPrerequisites.placementPolicy.VdcComputePolicyV2.ID),
+					resource.TestCheckResourceAttr("data.vcd_vm_placement_policy.tenant", "vdc_id", systemPrerequisites.vdc.Vdc.ID),
+					resource.TestCheckResourceAttr("data.vcd_vm_placement_policy.tenant", "logical_vm_group_ids.#", "0"),
+					resource.TestCheckNoResourceAttr("data.vcd_vm_placement_policy.tenant", "provider_vdc_id"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdVmPlacementPolicyInVdcTenant = `
+data "vcd_vm_placement_policy" "tenant" {
+  name     = "{{.PlacementPolicyName}}"
+  vdc_id   = "{{.VdcId}}"
 }
 `
 
