@@ -696,7 +696,7 @@ resource "vcd_rde" "test_rde" {
 `
 
 const testAccCheckVcdRdeMetadataTenantDatasource = `
-# skip-binary: This requires manual publishing of rights
+# skip-binary-test: This requires manual publishing of rights
 data "vcd_rde" "test_rde_ds" {
   provider = {{.ProviderVcdOrg1}}
 
