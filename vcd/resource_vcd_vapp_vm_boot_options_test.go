@@ -377,6 +377,7 @@ resource "vcd_vm" "{{.VMWithTemplateName}}" {
 `
 
 const testAccCheckVcdVAppVmBootOptionsStep1 = testSharedBootOptions + `
+# skip-binary-test - Can't set boot_options and firmware when creating a VM instantiated from a vApp template
 resource "vcd_vapp_vm" "{{.VappVMWithTemplateName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -469,6 +470,7 @@ resource "vcd_vm" "{{.VMWithTemplateName}}" {
 `
 
 const testAccCheckVcdVAppVmBootOptionsStep2 = testSharedBootOptions + `
+# skip-binary-test - Can't set boot_options and firmware when creating a VM instantiated from a vApp template
 resource "vcd_vapp_vm" "{{.VappVMWithTemplateName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
