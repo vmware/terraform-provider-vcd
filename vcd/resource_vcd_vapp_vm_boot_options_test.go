@@ -281,6 +281,7 @@ data "vcd_catalog_vapp_template" "{{.VappTemplateName}}" {
 `
 
 const testAccCheckVcdVAppVmBootOptions = testSharedBootOptions + `
+"# skip-binary-test: enter_bios_setup_on_next_boot automatically resets to 'false' after boot and causes inconsistent plan"
 resource "vcd_vapp_vm" "{{.VappVMWithTemplateName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
