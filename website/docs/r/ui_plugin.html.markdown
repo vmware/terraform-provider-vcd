@@ -61,8 +61,12 @@ The following arguments are supported:
 * `enabled` - (Required) Whether the UI Plugin will be enabled (`true`) or not (`false`)
 * `tenant_ids` - (Optional) The identifiers of the [Organizations](/providers/vmware/vcd/latest/docs/data-sources/org)
   that will be able to use the UI Plugin if enabled. If not set, it doesn't publish to any Organization.
-* `provider_scoped` - (Optional) **Can only be set on updates**. Changes the scope of the UI Plugin for System providers.
-* `tenant_scoped` - (Optional) **Can only be set on updates**. Changes the scope of the UI Plugin for Organization users.
+* `provider_scoped` - (Optional) **Can only be set on updates**, the initial value is taken from the JSON manifest.
+  Changes the scope of the UI Plugin for System providers. It should be set to `true` when the UI Plugin is published to the System organization, to prevent
+  unwanted updates-in-place.
+* `tenant_scoped` - (Optional) **Can only be set on updates**, the initial value is taken from the JSON manifest.
+  Changes the scope of the UI Plugin for Organization users. It should be set to `true` when the UI Plugin is published to any organization, to prevent
+  unwanted updates-in-place.
 
 ## Attribute Reference
 
