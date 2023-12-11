@@ -396,6 +396,8 @@ resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
 
   sync_on_refresh = true
   {{.SyncWhat}}
+
+  depends_on = [ vcd_catalog.test-publisher, vcd_catalog_media.test-media, vcd_catalog_vapp_template.test-vt ]
 }
 `
 
