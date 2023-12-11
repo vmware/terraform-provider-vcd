@@ -40,6 +40,7 @@ func TestAccVcdUiPlugin(t *testing.T) {
 		"ProviderScoped": " ",
 		"TenantScoped":   " ",
 		"FuncName":       t.Name(),
+		"SkipBinary":     " ",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -50,12 +51,16 @@ func TestAccVcdUiPlugin(t *testing.T) {
 	params["FuncName"] = t.Name() + "Step3"
 	params["Enabled"] = "false"
 	params["TenantIds"] = " "
+	params["ProviderScoped"] = "provider_scoped = false"
+	params["TenantScoped"] = "tenant_scoped = false"
+	params["SkipBinary"] = "# skip-binary-test - On create, it takes manifest.json values for scope, so can't set both to false"
 	step3Config := templateFill(testAccVcdUiPlugin, params)
 	params["FuncName"] = t.Name() + "Step4"
 	params["Enabled"] = "true"
 	params["TenantIds"] = "tenant_ids = [data.vcd_org.org1.id, data.vcd_org.org2.id]"
-	params["ProviderScoped"] = "provider_scoped = false"
-	params["TenantScoped"] = "tenant_scoped = false"
+	params["ProviderScoped"] = "provider_scoped = true"
+	params["TenantScoped"] = "tenant_scoped = true"
+	params["SkipBinary"] = " "
 	step4Config := templateFill(testAccVcdUiPlugin, params)
 	params["FuncName"] = t.Name() + "Step7"
 	params["SkipBinary"] = "# skip-binary-test"
@@ -119,8 +124,8 @@ func TestAccVcdUiPlugin(t *testing.T) {
 				Config: step3Config,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testCheckResourceCommonUIPluginAsserts(resourceName),
-					resource.TestCheckResourceAttr(resourceName, "provider_scoped", "true"),
-					resource.TestCheckResourceAttr(resourceName, "tenant_scoped", "true"),
+					resource.TestCheckResourceAttr(resourceName, "provider_scoped", "false"),
+					resource.TestCheckResourceAttr(resourceName, "tenant_scoped", "false"),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceName, "tenant_ids.#", "0"),
 				),
@@ -130,8 +135,8 @@ func TestAccVcdUiPlugin(t *testing.T) {
 				Config: step4Config,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testCheckResourceCommonUIPluginAsserts(resourceName),
-					resource.TestCheckResourceAttr(resourceName, "provider_scoped", "false"),
-					resource.TestCheckResourceAttr(resourceName, "tenant_scoped", "false"),
+					resource.TestCheckResourceAttr(resourceName, "provider_scoped", "true"),
+					resource.TestCheckResourceAttr(resourceName, "tenant_scoped", "true"),
 					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceName, "tenant_ids.#", "2"),
 				),
@@ -170,6 +175,8 @@ func TestAccVcdUiPlugin(t *testing.T) {
 }
 
 const testAccVcdUiPlugin = `
+{{.SkipBinary}}
+
 data "vcd_org" "org1" {
   name = "{{.Org1}}"
 }
@@ -189,7 +196,6 @@ resource "vcd_ui_plugin" "plugin" {
 `
 
 const testAccVcdUiPluginDS = `
-# skip-binary-test - Data source referencing the same resource
 data "vcd_ui_plugin" "pluginDS" {
   vendor  = "VMware"
   name    = "Test Plugin"
