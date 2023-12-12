@@ -1,1 +1,1 @@
-* * **New Resource:** `vcd_network_pool` to create and manage network pools [GH-1115]
+* **New Resource:** `vcd_network_pool` to create and manage network pools [GH-1115]
