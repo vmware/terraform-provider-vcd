@@ -1,6 +1,7 @@
 ## 3.11.0 (December 12, 2023)
 
 ### FEATURES
+* Add support for VMware Cloud Director **10.5.1**
 * Add support for **Container Service Extension v4.1** by updating both the installation and the cluster management
   guides ([#1063](https://github.com/vmware/terraform-provider-vcd/pull/1063), [#1139](https://github.com/vmware/terraform-provider-vcd/pull/1139))
 * New guide `Importing resources` on how to import resources with new experimental [Terraform import blocks](https://developer.hashicorp.com/terraform/language/import) ([#1104](https://github.com/vmware/terraform-provider-vcd/pull/1104))
