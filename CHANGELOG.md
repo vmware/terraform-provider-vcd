@@ -4,11 +4,7 @@
 * Add support for VMware Cloud Director **10.5.1**
 * Add support for **Container Service Extension v4.1** by updating both the installation and the cluster management
   guides ([#1063](https://github.com/vmware/terraform-provider-vcd/pull/1063), [#1139](https://github.com/vmware/terraform-provider-vcd/pull/1139))
-* New guide `Importing resources` on how to import resources with new experimental [Terraform import blocks](https://developer.hashicorp.com/terraform/language/import) ([#1104](https://github.com/vmware/terraform-provider-vcd/pull/1104))
-* New example `Importing catalog contents` showing how to import shared catalogs ([#1104](https://github.com/vmware/terraform-provider-vcd/pull/1104))
-* New example `Importing cloned vApps` showing how to import vApps and VMs from cloned vApps ([#1104](https://github.com/vmware/terraform-provider-vcd/pull/1104))
 * **New Resource:** `vcd_network_pool` to create and manage network pools ([#1115](https://github.com/vmware/terraform-provider-vcd/pull/1115))
-* **New Data Source:** `vcd_rde_behavior_invocation` to invoke a Behavior of a given RDE ([#1117](https://github.com/vmware/terraform-provider-vcd/pull/1117), [#1136](https://github.com/vmware/terraform-provider-vcd/pull/1136))
 * **New Data Source:** `vcd_nsxt_segment_ip_discovery_profile` to read NSX-T IP Discovery Segment Profiles ([#1120](https://github.com/vmware/terraform-provider-vcd/pull/1120))
 * **New Data Source:** `vcd_nsxt_segment_mac_discovery_profile` to read NSX-T MAC Discovery Segment Profiles ([#1120](https://github.com/vmware/terraform-provider-vcd/pull/1120))
 * **New Data Source:** `vcd_nsxt_segment_spoof_guard_profile` to read NSX-T Spoof Guard Profiles ([#1120](https://github.com/vmware/terraform-provider-vcd/pull/1120))
@@ -26,8 +22,6 @@
 * **New Data Source:** `vcd_nsxt_edgegateway_l2_vpn_tunnel` to read Edge Gateway L2 VPN Tunnel sessions ([#1061](https://github.com/vmware/terraform-provider-vcd/pull/1061))
 * **New Resource:** `vcd_nsxt_edgegateway_dns` to manage Edge Gateway DNS forwarder configuration ([#1154](https://github.com/vmware/terraform-provider-vcd/pull/1154))
 * **New Data Source:** `vcd_nsxt_edgegateway_dns` to read Edge Gateway DNS forwarder configuration ([#1154](https://github.com/vmware/terraform-provider-vcd/pull/1154))
-* **New Resource:** `vcd_vm_vgpu_policy` to manage VM vGPU compute policy configuration ([#1167](https://github.com/vmware/terraform-provider-vcd/pull/1167))
-* **New Data Source:** `vcd_vm_vgpu_policy` to read VM vGPU compute policies ([#1167](https://github.com/vmware/terraform-provider-vcd/pull/1167))
 
 ### EXPERIMENTAL FEATURES
 * New guide `Importing resources` on how to import resources with new experimental [Terraform import blocks](https://developer.hashicorp.com/terraform/language/import) ([#1104](https://github.com/vmware/terraform-provider-vcd/pull/1104))
