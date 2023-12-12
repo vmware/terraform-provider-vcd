@@ -7,7 +7,7 @@
 * New guide `Importing resources` on how to import resources with new experimental [Terraform import blocks](https://developer.hashicorp.com/terraform/language/import) ([#1104](https://github.com/vmware/terraform-provider-vcd/pull/1104))
 * New example `Importing catalog contents` showing how to import shared catalogs ([#1104](https://github.com/vmware/terraform-provider-vcd/pull/1104))
 * New example `Importing cloned vApps` showing how to import vApps and VMs from cloned vApps ([#1104](https://github.com/vmware/terraform-provider-vcd/pull/1104))
-* * **New Resource:** `vcd_network_pool` to create and manage network pools ([#1115](https://github.com/vmware/terraform-provider-vcd/pull/1115))
+* **New Resource:** `vcd_network_pool` to create and manage network pools ([#1115](https://github.com/vmware/terraform-provider-vcd/pull/1115))
 * **New Data Source:** `vcd_rde_behavior_invocation` to invoke a Behavior of a given RDE ([#1117](https://github.com/vmware/terraform-provider-vcd/pull/1117), [#1136](https://github.com/vmware/terraform-provider-vcd/pull/1136))
 * **New Data Source:** `vcd_nsxt_segment_ip_discovery_profile` to read NSX-T IP Discovery Segment Profiles ([#1120](https://github.com/vmware/terraform-provider-vcd/pull/1120))
 * **New Data Source:** `vcd_nsxt_segment_mac_discovery_profile` to read NSX-T MAC Discovery Segment Profiles ([#1120](https://github.com/vmware/terraform-provider-vcd/pull/1120))
