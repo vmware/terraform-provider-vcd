@@ -157,7 +157,7 @@ resource "vcd_rde" "k8s_cluster_instance" {
 # Some useful outputs to monitor TKGm cluster creation process.
 locals {
   k8s_cluster_computed       = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)
-  being_deleted              = tobool(jsondecode(vcd_rde.k8s_cluster_instance.input_entity)["spec"]["vcdKe"]["markForDelete"]) || tobool(vcd_rde.k8s_cluster_instance.input_entity["spec"]["vcdKe"]["forceDelete"])
+  being_deleted              = tobool(jsondecode(vcd_rde.k8s_cluster_instance.input_entity)["spec"]["vcdKe"]["markForDelete"]) || tobool(jsondecode(vcd_rde.k8s_cluster_instance.input_entity)["spec"]["vcdKe"]["forceDelete"])
   has_status                 = lookup(local.k8s_cluster_computed, "status", null) != null
 }
 
