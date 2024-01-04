@@ -5,6 +5,7 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -16,11 +17,24 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 		UpdateContext: resourceVcdCseKubernetesUpdate,
 		DeleteContext: resourceVcdCseKubernetesDelete,
 		Schema: map[string]*schema.Schema{
+			"runtime": {
+				Type:         schema.TypeString,
+				Default:      "tkg",
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice([]string{"tkg"}, false), // May add others in future releases of CSE
+				Description:  "The Kubernetes runtime for the cluster. Only 'tkg' (Tanzu Kubernetes Grid) is supported",
+			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "The name of the Kubernetes cluster",
+			},
+			"ova_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "The ID of the vApp Template that corresponds to a Kubernetes template OVA",
 			},
 			"capvcd_rde_type_id": {
 				Type:        schema.TypeString,
@@ -73,11 +87,145 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 					return nil
 				},
 			},
-			"worker_machine_count": {
-				Type:         schema.TypeInt,
-				Required:     true,
-				Description:  "The number of worker nodes, where the workloads are run",
-				ValidateFunc: IsIntAndAtLeast(1),
+			"control_plane_disk_size": {
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Disk size for the control plane nodes",
+			},
+			"control_plane_sizing_policy_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "",
+			},
+			"control_plane_placement_policy_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "",
+			},
+			"control_plane_storage_profile": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "",
+			},
+			"worker_pool": {
+				Type:     schema.TypeSet,
+				Required: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Required: true,
+							Type:     schema.TypeString,
+
+							Description: "Network type to use: 'vapp', 'org' or 'none'. Use 'vapp' for vApp network, 'org' to attach Org VDC network. 'none' for empty NIC.",
+						},
+						"machine_count": {
+							Optional:     true,
+							Type:         schema.TypeString,
+							ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
+							Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+						},
+						"disk_size": {
+							Optional:     true,
+							Type:         schema.TypeString,
+							ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
+							Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+						},
+						"sizing_policy_id": {
+							Optional:     true,
+							Type:         schema.TypeString,
+							ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
+							Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+						},
+						"placement_policy_id": {
+							Optional:     true,
+							Type:         schema.TypeString,
+							ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
+							Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+						},
+						"vgpu_policy_id": {
+							Optional:    true,
+							Type:        schema.TypeString,
+							Description: "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+						},
+						"storage_profile": {
+							Optional:    true,
+							Type:        schema.TypeString,
+							Description: "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+						},
+					},
+				},
+			},
+			"storage_class": {
+				Type:     schema.TypeList,
+				MaxItems: 1,
+				Required: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"storage_profile": {
+							Required:    true,
+							Type:        schema.TypeString,
+							Description: "Network type to use: 'vapp', 'org' or 'none'. Use 'vapp' for vApp network, 'org' to attach Org VDC network. 'none' for empty NIC.",
+						},
+						"name": {
+							Optional:     true,
+							Type:         schema.TypeString,
+							ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
+							Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+						},
+						"reclaim_policy": {
+							Optional:     true,
+							Type:         schema.TypeString,
+							ValidateFunc: validation.StringInSlice([]string{"delete", "retain"}, false),
+							Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+						},
+						"filesystem": {
+							Optional:     true,
+							Type:         schema.TypeString,
+							ValidateFunc: validation.StringInSlice([]string{"ext4", "xfs"}, false),
+							Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+						},
+					},
+				},
+			},
+			"pods_cidr": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "",
+			},
+			"services_cidr": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "",
+			},
+			"control_plane_ip": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "",
+			},
+			"virtual_ip_subnet": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "",
+			},
+			"autorepair_on_errors": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "",
+			},
+			"node_healthcheck": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "",
+			},
+			"state": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "",
+			},
+			"raw_cluster_rde": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "",
 			},
 		},
 	}
@@ -125,11 +273,23 @@ func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, met
 	if err != nil {
 		return diag.Errorf("could not read Kubernetes cluster with ID '%s': %s", d.Id(), err)
 	}
+	jsonEntity, err := jsonToCompactString(rde.DefinedEntity.Entity)
+	if err != nil {
+		return diag.Errorf("could not save the cluster '%s' raw RDE contents into state: %s", rde.DefinedEntity.ID, err)
+	}
+	dSet(d, "raw_rde", jsonEntity)
+
 	status, ok := rde.DefinedEntity.Entity["status"].(map[string]interface{})
 	if !ok {
 		return diag.Errorf("could not read the status of the Kubernetes cluster with ID '%s'", d.Id())
 	}
-	dSet(d, "asd", status[""])
+
+	vcdKe, ok := status["vcdKe"].(map[string]interface{})
+	if !ok {
+		return diag.Errorf("could not read the status.vcdKe of the Kubernetes cluster with ID '%s'", d.Id())
+	}
+
+	dSet(d, "state", vcdKe["state"])
 
 	return nil
 }
