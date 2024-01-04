@@ -262,6 +262,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_network_pool":                                 resourceVcdNetworkPool(),                             // 3.11
 	"vcd_nsxt_edgegateway_dns":                         resourceVcdNsxtEdgeGatewayDns(),                      // 3.11
 	"vcd_vm_vgpu_policy":                               resourceVcdVmVgpuPolicy(),                            // 3.11
+	"vcd_cse_kubernetes_cluster":                       resourceVcdCseKubernetesCluster(),                    // 3.12
 }
 
 // Provider returns a terraform.ResourceProvider.
