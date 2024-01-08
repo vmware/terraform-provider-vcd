@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"time"
 )
 
 ////go:embed cse/4.2/capvcd.tmpl
@@ -101,10 +102,11 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							},
 						},
 						"disk_size": {
-							Type:        schema.TypeInt,
-							Required:    true,
-							ForceNew:    true,
-							Description: "Disk size for the control plane nodes",
+							Type:         schema.TypeInt,
+							Required:     true,
+							ForceNew:     true,
+							ValidateFunc: IsIntAndAtLeast(20),
+							Description:  "Disk size for the control plane nodes",
 						},
 						"sizing_policy_id": {
 							Type:        schema.TypeString,
@@ -307,16 +309,16 @@ func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, met
 
 	status, ok := rde.DefinedEntity.Entity["status"].(map[string]interface{})
 	if !ok {
-		return diag.Errorf("could not read the status of the Kubernetes cluster with ID '%s'", d.Id())
+		return diag.Errorf("could not read the 'status' JSON object of the Kubernetes cluster with ID '%s'", d.Id())
 	}
 
 	vcdKe, ok := status["vcdKe"].(map[string]interface{})
 	if !ok {
-		return diag.Errorf("could not read the status.vcdKe of the Kubernetes cluster with ID '%s'", d.Id())
+		return diag.Errorf("could not read the 'status.vcdKe' JSON object of the Kubernetes cluster with ID '%s'", d.Id())
 	}
 
 	dSet(d, "state", vcdKe["state"])
-
+	d.SetId(rde.DefinedEntity.ID)
 	return nil
 }
 
@@ -324,7 +326,43 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
+// resourceVcdCseKubernetesDelete deletes a CSE Kubernetes cluster. To delete a Kubernetes cluster, one must send
+// the flags "markForDelete" and "forceDelete" back to true, so the CSE Server is able to delete all cluster elements
+// and perform a cleanup. Hence, this function sends these properties and waits for deletion.
 func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	vcdClient := meta.(*VCDClient)
+
+	rde, err := vcdClient.GetRdeById(d.Id())
+	if err != nil {
+		return diag.Errorf("could not retrieve the Kubernetes cluster with ID '%s': %s", d.Id(), err)
+	}
+
+	spec, ok := rde.DefinedEntity.Entity["spec"].(map[string]interface{})
+	if !ok {
+		return diag.Errorf("could not delete the cluster, JSON object 'spec' is not correct in the RDE")
+	}
+
+	spec["markForDelete"] = true
+	spec["forceDelete"] = true
+	rde.DefinedEntity.Entity["spec"] = spec
+
+	err = rde.Update(*rde.DefinedEntity)
+	if err != nil {
+		return diag.Errorf("could not delete the cluster '%s': %s", rde.DefinedEntity.ID, err)
+	}
+
+	// TODO: Add a timeout
+	deletionComplete := false
+	for !deletionComplete {
+		_, err = vcdClient.GetRdeById(d.Id())
+		if err != nil {
+			if govcd.IsNotFound(err) {
+				deletionComplete = true
+			}
+			return diag.Errorf("could not check whether the cluster '%s' is deleted: %s", d.Id(), err)
+		}
+		time.Sleep(30 * time.Second)
+	}
 	return nil
 }
 
