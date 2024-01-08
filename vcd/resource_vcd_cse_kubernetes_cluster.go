@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	_ "embed"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -9,6 +10,12 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
+
+////go:embed cse/4.2/capvcd.tmpl
+//var capvcdTemplate string
+
+////go:embed cse/4.2/default_storage_class.tmpl
+//var defaultStorageClass string
 
 func resourceVcdCseKubernetesCluster() *schema.Resource {
 	return &schema.Resource{
@@ -45,7 +52,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Description: "The name of organization that will own this Runtime Defined Entity, optional if defined at provider " +
+				Description: "The name of organization that will own this Kubernetes cluster, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc_id": {
@@ -72,85 +79,109 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				ForceNew:    true,
 				Description: "The SSH public key used to login into the cluster nodes",
 			},
-			"control_plane_machine_count": {
-				Type:        schema.TypeInt,
-				Required:    true,
-				Description: "The number of nodes that the control plane has. Must be an odd number and higher than 0",
-				ValidateDiagFunc: func(v interface{}, path cty.Path) diag.Diagnostics {
-					value, ok := v.(int)
-					if !ok {
-						return diag.Errorf("could not parse int value '%v' for control plane nodes", v)
-					}
-					if value < 1 || value%2 == 0 {
-						return diag.Errorf("number of control plane nodes must be odd and higher than 0, but it was '%d'", value)
-					}
-					return nil
+			"control_plane": {
+				Type:     schema.TypeList,
+				MaxItems: 1,
+				Required: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"machine_count": {
+							Type:        schema.TypeInt,
+							Required:    true,
+							Description: "The number of nodes that the control plane has. Must be an odd number and higher than 0",
+							ValidateDiagFunc: func(v interface{}, path cty.Path) diag.Diagnostics {
+								value, ok := v.(int)
+								if !ok {
+									return diag.Errorf("could not parse int value '%v' for control plane nodes", v)
+								}
+								if value < 1 || value%2 == 0 {
+									return diag.Errorf("number of control plane nodes must be odd and higher than 0, but it was '%d'", value)
+								}
+								return nil
+							},
+						},
+						"disk_size": {
+							Type:        schema.TypeInt,
+							Required:    true,
+							ForceNew:    true,
+							Description: "Disk size for the control plane nodes",
+						},
+						"sizing_policy_id": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    true,
+							Description: "VM Sizing policy for the control plane nodes",
+						},
+						"placement_policy_id": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    true,
+							Description: "VM Placement policy for the control plane nodes",
+						},
+						"storage_profile": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    true,
+							Description: "Storage profile for the control plane nodes",
+						},
+						"ip": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    true,
+							Description: "IP for the control plane",
+						},
+					},
 				},
 			},
-			"control_plane_disk_size": {
-				Type:        schema.TypeInt,
-				Required:    true,
-				Description: "Disk size for the control plane nodes",
-			},
-			"control_plane_sizing_policy_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "",
-			},
-			"control_plane_placement_policy_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "",
-			},
-			"control_plane_storage_profile": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "",
-			},
-			"worker_pool": {
+			"node_pool": {
 				Type:     schema.TypeSet,
 				Required: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"name": {
-							Required: true,
-							Type:     schema.TypeString,
-
-							Description: "Network type to use: 'vapp', 'org' or 'none'. Use 'vapp' for vApp network, 'org' to attach Org VDC network. 'none' for empty NIC.",
-						},
 						"machine_count": {
-							Optional:     true,
-							Type:         schema.TypeString,
-							ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
-							Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+							Type:        schema.TypeInt,
+							Required:    true,
+							Description: "The number of nodes that the control plane has. Must be an odd number and higher than 0",
+							ValidateDiagFunc: func(v interface{}, path cty.Path) diag.Diagnostics {
+								value, ok := v.(int)
+								if !ok {
+									return diag.Errorf("could not parse int value '%v' for control plane nodes", v)
+								}
+								if value < 1 || value%2 == 0 {
+									return diag.Errorf("number of control plane nodes must be odd and higher than 0, but it was '%d'", value)
+								}
+								return nil
+							},
 						},
 						"disk_size": {
-							Optional:     true,
-							Type:         schema.TypeString,
-							ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
-							Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+							Type:        schema.TypeInt,
+							Required:    true,
+							ForceNew:    true,
+							Description: "Disk size for the control plane nodes",
 						},
 						"sizing_policy_id": {
-							Optional:     true,
-							Type:         schema.TypeString,
-							ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
-							Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    true,
+							Description: "VM Sizing policy for the control plane nodes",
 						},
 						"placement_policy_id": {
-							Optional:     true,
-							Type:         schema.TypeString,
-							ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
-							Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    true,
+							Description: "VM Placement policy for the control plane nodes",
 						},
 						"vgpu_policy_id": {
-							Optional:    true,
 							Type:        schema.TypeString,
-							Description: "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+							Optional:    true,
+							ForceNew:    true,
+							Description: "vGPU policy for the control plane nodes",
 						},
 						"storage_profile": {
-							Optional:    true,
 							Type:        schema.TypeString,
-							Description: "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+							Optional:    true,
+							ForceNew:    true,
+							Description: "Storage profile for the control plane nodes",
 						},
 					},
 				},
@@ -197,22 +228,17 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Required:    true,
 				Description: "",
 			},
-			"control_plane_ip": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "",
-			},
 			"virtual_ip_subnet": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "",
 			},
-			"autorepair_on_errors": {
+			"auto_repair_on_errors": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "",
 			},
-			"node_healthcheck": {
+			"node_health_check": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "",
