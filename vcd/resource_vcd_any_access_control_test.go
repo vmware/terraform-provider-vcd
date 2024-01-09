@@ -5,6 +5,7 @@ package vcd
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -27,9 +28,14 @@ func TestAccVcdAnyAccessControlGroups(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
+	params["SkipTest"] = "# skip-binary-test: LDAP preconfiguration "
 	params["FuncName"] = t.Name() + "step1"
-	configText := templateFill(testAccVcdAnyAccessControlGroupsLdapStep1, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	configText1 := templateFill(testAccVcdAnyAccessControlGroupsLdap, params)
+
+	delete(params, "SkipTest")
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccVcdAnyAccessControlGroupsLdapStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -44,7 +50,12 @@ func TestAccVcdAnyAccessControlGroups(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: configText,
+				Config: configText1,
+			},
+			{
+				// Sleeping a few seconds to prevent flaky error "LDAP context not initialized. Error connecting to LDAP."
+				PreConfig: func() { time.Sleep(time.Second * 5) },
+				Config:    configText2,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_org_vdc_access_control.test", "id"),
 				),
@@ -54,6 +65,7 @@ func TestAccVcdAnyAccessControlGroups(t *testing.T) {
 }
 
 const testAccVcdAnyAccessControlGroupsLdap = `
+{{.SkipTest}}
 data "vcd_org" "test-org" {
   name = "{{.Org}}"
 }
