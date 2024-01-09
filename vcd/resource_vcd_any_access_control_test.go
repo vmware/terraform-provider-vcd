@@ -5,7 +5,6 @@ package vcd
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -23,19 +22,15 @@ func TestAccVcdAnyAccessControlGroups(t *testing.T) {
 		"Org":          testConfig.VCD.Org,
 		"Vdc":          testConfig.Nsxt.Vdc,
 		"Catalog":      testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"MediaPath":    testConfig.Media.MediaPath,
 		"TestName":     t.Name(),
 		"LdapServerIp": testConfig.Networking.LdapServer,
 	}
 	testParamsNotEmpty(t, params)
 
-	params["SkipTest"] = "# skip-binary-test: LDAP preconfiguration "
 	params["FuncName"] = t.Name() + "step1"
-	configText1 := templateFill(testAccVcdAnyAccessControlGroupsLdap, params)
-
-	params["SkipTest"] = ""
-	params["FuncName"] = t.Name() + "step2"
-	configText2 := templateFill(testAccVcdAnyAccessControlGroupsLdapStep1, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText2)
+	configText := templateFill(testAccVcdAnyAccessControlGroupsLdapStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -49,13 +44,8 @@ func TestAccVcdAnyAccessControlGroups(t *testing.T) {
 			testAccCheckVappAccessControlDestroy(testConfig.VCD.Org, testConfig.Nsxt.Vdc, []string{t.Name()}),
 		),
 		Steps: []resource.TestStep{
-			{ // Setup LDAP configuration in a separate step so that it can initialize before usage
-				Config: configText1,
-			},
 			{
-				// Sleeping a few seconds to prevent flaky error "LDAP context not initialized. Error connecting to LDAP."
-				PreConfig: func() { time.Sleep(time.Second * 5) },
-				Config:    configText2,
+				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_org_vdc_access_control.test", "id"),
 				),
@@ -65,7 +55,6 @@ func TestAccVcdAnyAccessControlGroups(t *testing.T) {
 }
 
 const testAccVcdAnyAccessControlGroupsLdap = `
-{{.SkipTest}}
 data "vcd_org" "test-org" {
   name = "{{.Org}}"
 }
@@ -107,6 +96,20 @@ resource "vcd_org_ldap" "test-config" {
   }
 }
 
+data "vcd_catalog" "test" {
+  org  = "{{.Org}}"
+  name = "{{.Catalog}}"
+}
+
+# This media item is uploaded here to cause delay after LDAP
+# is configured, but before using it
+resource "vcd_catalog_media"  "iso" {
+  catalog_id = data.vcd_catalog.test.id
+
+  name       = "{{.TestName}}"
+  media_path = "{{.MediaPath}}"
+}
+
 resource "vcd_org_group" "admin_staff" {
   org = "{{.Org}}"
 
@@ -114,7 +117,7 @@ resource "vcd_org_group" "admin_staff" {
   name          = "admin_staff"
   role          = "Organization Administrator"
 
-  depends_on = [vcd_org_ldap.test-config]
+  depends_on = [vcd_org_ldap.test-config, vcd_catalog_media.iso]
 }
 
 resource "vcd_org_group" "ship_crew" {
@@ -124,7 +127,7 @@ resource "vcd_org_group" "ship_crew" {
   name          = "ship_crew"
   role          = "Organization Administrator"
 
-  depends_on = [vcd_org_ldap.test-config]
+  depends_on = [vcd_org_ldap.test-config, vcd_catalog_media.iso]
 }
 `
 
@@ -143,11 +146,6 @@ resource "vcd_org_vdc_access_control" "test" {
     group_id     = vcd_org_group.ship_crew.id
     access_level = "ReadOnly"
   }
-}
-
-data "vcd_catalog" "test" {
-  org  = "{{.Org}}"
-  name = "{{.Catalog}}"
 }
 
 resource "vcd_catalog_access_control" "AC-users-and-orgs" {
