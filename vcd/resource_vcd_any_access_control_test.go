@@ -32,7 +32,7 @@ func TestAccVcdAnyAccessControlGroups(t *testing.T) {
 	params["FuncName"] = t.Name() + "step1"
 	configText1 := templateFill(testAccVcdAnyAccessControlGroupsLdap, params)
 
-	delete(params, "SkipTest")
+	params["SkipTest"] = ""
 	params["FuncName"] = t.Name() + "step2"
 	configText2 := templateFill(testAccVcdAnyAccessControlGroupsLdapStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText2)
@@ -49,7 +49,7 @@ func TestAccVcdAnyAccessControlGroups(t *testing.T) {
 			testAccCheckVappAccessControlDestroy(testConfig.VCD.Org, testConfig.Nsxt.Vdc, []string{t.Name()}),
 		),
 		Steps: []resource.TestStep{
-			{
+			{ // Setup LDAP configuration in a separate step so that it can initialize before usage
 				Config: configText1,
 			},
 			{
