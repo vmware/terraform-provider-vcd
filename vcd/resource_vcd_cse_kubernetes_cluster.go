@@ -1,22 +1,26 @@
 package vcd
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
+	"encoding/json"
+	"fmt"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"text/template"
 	"time"
 )
 
-////go:embed cse/4.2/capvcd.tmpl
-//var capvcdTemplate string
+//go:embed cse/4.2/capvcd.tmpl
+var capvcdTemplate string
 
-////go:embed cse/4.2/default_storage_class.tmpl
-//var defaultStorageClass string
+//go:embed cse/4.2/default_storage_class.tmpl
+var defaultStorageClass string
 
 func resourceVcdCseKubernetesCluster() *schema.Resource {
 	return &schema.Resource{
@@ -191,31 +195,30 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 			"storage_class": {
 				Type:     schema.TypeList,
 				MaxItems: 1,
-				Required: true,
+				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"storage_profile": {
+						"storage_profile_id": {
 							Required:    true,
 							Type:        schema.TypeString,
-							Description: "Network type to use: 'vapp', 'org' or 'none'. Use 'vapp' for vApp network, 'org' to attach Org VDC network. 'none' for empty NIC.",
+							Description: "ID of the storage profile to use for the storage class",
 						},
 						"name": {
-							Optional:     true,
-							Type:         schema.TypeString,
-							ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
-							Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+							Required:    true,
+							Type:        schema.TypeString,
+							Description: "Name to give to this storage class",
 						},
 						"reclaim_policy": {
-							Optional:     true,
+							Required:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: validation.StringInSlice([]string{"delete", "retain"}, false),
-							Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+							Description:  "'delete' deletes the volume when the PersistentVolumeClaim is deleted. 'retain' does not, and the volume can be manually reclaimed",
 						},
 						"filesystem": {
-							Optional:     true,
+							Required:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: validation.StringInSlice([]string{"ext4", "xfs"}, false),
-							Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+							Description:  "Filesystem of the storage class, can be either 'ext4' or 'xfs'",
 						},
 					},
 				},
@@ -282,16 +285,85 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 		return diag.Errorf("could not create Kubernetes cluster with name '%s', error validating the payload: %s", name, err)
 	}
 
+	entityMap, err := getCseKubernetesClusterEntityMap(d, vcdClient, "create")
+	if err != nil {
+		return diag.Errorf("could not create Kubernetes cluster with name '%s': %s", name, err)
+	}
+
 	_, err = rdeType.CreateRde(types.DefinedEntity{
 		EntityType: rdeType.DefinedEntityType.ID,
 		Name:       name,
-		Entity:     nil,
+		Entity:     entityMap,
 	}, &tenantContext)
 	if err != nil {
 		return diag.Errorf("could not create Kubernetes cluster with name '%s': %s", name, err)
 	}
 
 	return resourceVcdCseKubernetesRead(ctx, d, meta)
+}
+
+func getCseKubernetesClusterEntityMap(d *schema.ResourceData, vcdClient *VCDClient, operation string) (StringMap, error) {
+	name := d.Get("name").(string)
+
+	_, isStorageClassSet := d.GetOk("storage_class")
+	storageClass := "{}"
+	if isStorageClassSet {
+		storageProfileId := d.Get("storage_class.0.storage_profile_id").(string)
+		storageProfile, err := vcdClient.GetStorageProfileById(storageProfileId)
+		if err != nil {
+			return nil, fmt.Errorf("could not get a Storage Profile with ID '%s': %s", storageProfileId, err)
+		}
+		storageClassEmpty := template.Must(template.New(name + "_StorageClass").Parse(defaultStorageClass))
+		storageClassName := d.Get("storage_class.0.name").(string)
+		reclaimPolicy := d.Get("storage_class.0.reclaim_policy").(string)
+		filesystem := d.Get("storage_class.0.filesystem").(string)
+
+		buf := &bytes.Buffer{}
+		if err := storageClassEmpty.Execute(buf, map[string]string{
+			"FileSystem":     filesystem,
+			"Name":           storageClassName,
+			"StorageProfile": storageProfile.ID,
+			"ReclaimPolicy":  reclaimPolicy,
+		}); err != nil {
+			return nil, fmt.Errorf("could not generate a correct storage class JSON block: %s", err)
+		}
+		storageClass = buf.String()
+	}
+	deleteFlag := "false"
+	forceDelete := "false"
+	if operation == "delete" {
+		deleteFlag = "true"
+		forceDelete = "true"
+	}
+
+	capvcdEmpty := template.Must(template.New(name).Parse(capvcdTemplate))
+	buf := &bytes.Buffer{}
+	if err := capvcdEmpty.Execute(buf, map[string]string{
+		"Name":                       name,
+		"Org":                        "",
+		"VcdUrl":                     vcdClient.Client.VCDHREF.String(),
+		"Vdc":                        "",
+		"Delete":                     deleteFlag,
+		"ForceDelete":                forceDelete,
+		"AutoRepairOnErrors":         "",
+		"DefaultStorageClassOptions": storageClass,
+		"ApiToken":                   "",
+		"CapiYaml":                   getCapiYamlPlaintext(d, vcdClient),
+	}); err != nil {
+		return nil, fmt.Errorf("could not generate a correct CAPVCD JSON: %s", err)
+	}
+
+	result := map[string]interface{}{}
+	err := json.Unmarshal(buf.Bytes(), &result)
+	if err != nil {
+		return nil, fmt.Errorf("could not generate a correct CAPVCD JSON: %s", err)
+	}
+
+	return result, nil
+}
+
+func getCapiYamlPlaintext(d *schema.ResourceData, client *VCDClient) string {
+	return ""
 }
 
 func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -307,12 +379,12 @@ func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, met
 	}
 	dSet(d, "raw_rde", jsonEntity)
 
-	status, ok := rde.DefinedEntity.Entity["status"].(map[string]interface{})
+	status, ok := rde.DefinedEntity.Entity["status"].(StringMap)
 	if !ok {
 		return diag.Errorf("could not read the 'status' JSON object of the Kubernetes cluster with ID '%s'", d.Id())
 	}
 
-	vcdKe, ok := status["vcdKe"].(map[string]interface{})
+	vcdKe, ok := status["vcdKe"].(StringMap)
 	if !ok {
 		return diag.Errorf("could not read the 'status.vcdKe' JSON object of the Kubernetes cluster with ID '%s'", d.Id())
 	}
@@ -337,7 +409,7 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 		return diag.Errorf("could not retrieve the Kubernetes cluster with ID '%s': %s", d.Id(), err)
 	}
 
-	spec, ok := rde.DefinedEntity.Entity["spec"].(map[string]interface{})
+	spec, ok := rde.DefinedEntity.Entity["spec"].(StringMap)
 	if !ok {
 		return diag.Errorf("could not delete the cluster, JSON object 'spec' is not correct in the RDE")
 	}
