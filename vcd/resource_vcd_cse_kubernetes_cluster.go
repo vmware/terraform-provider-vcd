@@ -226,7 +226,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 			"pods_cidr": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "",
+				Description: "CIDR that the pods will use",
 			},
 			"services_cidr": {
 				Type:        schema.TypeString,
@@ -329,32 +329,41 @@ func getCseKubernetesClusterEntityMap(d *schema.ResourceData, vcdClient *VCDClie
 		}
 		storageClass = buf.String()
 	}
-	deleteFlag := "false"
-	forceDelete := "false"
-	if operation == "delete" {
-		deleteFlag = "true"
-		forceDelete = "true"
+
+	orgName, err := vcdClient.GetOrgNameFromResource(d)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve the Organization name to build the cluster JSON payload: %s", err)
+	}
+	org, err := vcdClient.GetOrg(orgName)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve the Organization '%s' to build the cluster JSON payload: %s", orgName, err)
+	}
+
+	vdcId := d.Get("vdc_id").(string)
+	vdc, err := org.GetVDCById(vdcId, true)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve the VDC '%s' to build the cluster JSON payload: %s", vdcId, err)
 	}
 
 	capvcdEmpty := template.Must(template.New(name).Parse(capvcdTemplate))
 	buf := &bytes.Buffer{}
 	if err := capvcdEmpty.Execute(buf, map[string]string{
 		"Name":                       name,
-		"Org":                        "",
+		"Org":                        orgName,
 		"VcdUrl":                     vcdClient.Client.VCDHREF.String(),
-		"Vdc":                        "",
-		"Delete":                     deleteFlag,
-		"ForceDelete":                forceDelete,
-		"AutoRepairOnErrors":         "",
+		"Vdc":                        vdc.Vdc.Name,
+		"Delete":                     "false",
+		"ForceDelete":                "false",
+		"AutoRepairOnErrors":         d.Get("auto_repair_on_errors").(string),
 		"DefaultStorageClassOptions": storageClass,
-		"ApiToken":                   "",
+		"ApiToken":                   d.Get("api_token").(string),
 		"CapiYaml":                   getCapiYamlPlaintext(d, vcdClient),
 	}); err != nil {
 		return nil, fmt.Errorf("could not generate a correct CAPVCD JSON: %s", err)
 	}
 
 	result := map[string]interface{}{}
-	err := json.Unmarshal(buf.Bytes(), &result)
+	err = json.Unmarshal(buf.Bytes(), &result)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate a correct CAPVCD JSON: %s", err)
 	}
