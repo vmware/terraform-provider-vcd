@@ -153,7 +153,7 @@ resource "vcd_rde" "k8s_cluster_instance" {
     auto_repair_on_errors = var.auto_repair_on_errors
   })
 
-  # Careful, updating "input_entity" will make the cluster unstable if not done correctly.
+  # Be careful, updating "input_entity" will make the cluster unstable if not done correctly.
   # CSE requires sending back the cluster status that is saved into the "computed_entity" attribute once it is created.
   # Read more: https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_cluster_management#updating-a-kubernetes-cluster
   # You can remove this lifecycle constraint once the "input_entity" JSON contains the cluster status and other generated attributes that were not present

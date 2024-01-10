@@ -312,7 +312,7 @@ the RDE contents (which is reflected in the `computed_entity` attribute) that we
 If this information is not sent back, **the cluster will be broken**.
 
 To apply a correct update, we need to take the most recent state of the TKGm cluster, which is reflected in the contents of
-the `computed_entity` attribute. You can leverage using this output for that matter:
+the `computed_entity` attribute. You can leverage this output for that purpose:
 
 ```hcl
 output "computed_k8s_cluster" {
@@ -327,7 +327,7 @@ terraform output -json computed_k8s_cluster > computed_cluster.json
 ```
 
 Before applying an update, please verify that the cluster is in `provisioned` state, otherwise it can't be updated. In the examples,
-there is an output that shows this information:
+there is an `output` that shows this information:
 
 ```shell
 terraform output computed_k8s_cluster_status
