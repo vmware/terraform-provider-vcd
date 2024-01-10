@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"net/url"
 	"text/template"
 	"time"
 )
@@ -92,7 +93,8 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"machine_count": {
 							Type:        schema.TypeInt,
-							Required:    true,
+							Optional:    true,
+							Default:     3, // As suggested in UI
 							Description: "The number of nodes that the control plane has. Must be an odd number and higher than 0",
 							ValidateDiagFunc: func(v interface{}, path cty.Path) diag.Diagnostics {
 								value, ok := v.(int)
@@ -107,7 +109,8 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 						},
 						"disk_size": {
 							Type:         schema.TypeInt,
-							Required:     true,
+							Optional:     true,
+							Default:      20, // As suggested in UI
 							ForceNew:     true,
 							ValidateFunc: IsIntAndAtLeast(20),
 							Description:  "Disk size for the control plane nodes",
@@ -145,23 +148,16 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"machine_count": {
-							Type:        schema.TypeInt,
-							Required:    true,
-							Description: "The number of nodes that the control plane has. Must be an odd number and higher than 0",
-							ValidateDiagFunc: func(v interface{}, path cty.Path) diag.Diagnostics {
-								value, ok := v.(int)
-								if !ok {
-									return diag.Errorf("could not parse int value '%v' for control plane nodes", v)
-								}
-								if value < 1 || value%2 == 0 {
-									return diag.Errorf("number of control plane nodes must be odd and higher than 0, but it was '%d'", value)
-								}
-								return nil
-							},
+							Type:         schema.TypeInt,
+							Optional:     true,
+							Default:      1, // As suggested in UI
+							Description:  "The number of nodes that this node pool has. Must be higher than 0",
+							ValidateFunc: IsIntAndAtLeast(1),
 						},
 						"disk_size": {
 							Type:        schema.TypeInt,
-							Required:    true,
+							Optional:    true,
+							Default:     20, // As suggested in UI
 							ForceNew:    true,
 							Description: "Disk size for the control plane nodes",
 						},
@@ -225,38 +221,40 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 			},
 			"pods_cidr": {
 				Type:        schema.TypeString,
-				Required:    true,
-				Description: "CIDR that the pods will use",
+				Optional:    true,
+				Default:     "100.96.0.0/11", // As suggested in UI
+				Description: "CIDR that the Kubernetes pods will use",
 			},
 			"services_cidr": {
 				Type:        schema.TypeString,
-				Required:    true,
-				Description: "",
+				Optional:    true,
+				Default:     "100.64.0.0/13", // As suggested in UI
+				Description: "CIDR that the Kubernetes services will use",
 			},
 			"virtual_ip_subnet": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "",
+				Description: "Virtual IP subnet for the cluster",
 			},
 			"auto_repair_on_errors": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "",
+				Description: "If errors occur before the Kubernetes cluster becomes available, and this argument is 'true', CSE Server will automatically attempt to repair the cluster",
 			},
 			"node_health_check": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "",
+				Description: "After the Kubernetes cluster becomes available, nodes that become unhealthy will be remediated according to unhealthy node conditions and remediation rules",
 			},
 			"state": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "The state of the cluster, can be 'provisioning', 'provisioned' or 'error'. Useful to check whether the Kubernetes cluster is in a stable status",
 			},
-			"raw_cluster_rde": {
+			"raw_cluster_rde_json": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "The raw JSON that describes the cluster configuration inside the Runtime Defined Entity",
 			},
 		},
 	}
@@ -264,55 +262,37 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 
 func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	name := d.Get("name").(string)
 
-	capvcdRdeTypeId := d.Get("capvcd_rde_type_id").(string)
-	rdeType, err := vcdClient.GetRdeTypeById(capvcdRdeTypeId)
+	clusterDetails, err := createClusterInfoDto(d, vcdClient)
 	if err != nil {
-		return diag.Errorf("could not create Kubernetes cluster with name '%s', could not retrieve CAPVCD RDE Type with ID '%s': %s", name, capvcdRdeTypeId, err)
+		return diag.Errorf("could not create Kubernetes cluster with name '%s': %s", clusterDetails.Name, err)
 	}
 
-	tenantContext := govcd.TenantContext{}
-	org, err := vcdClient.GetOrgFromResource(d)
+	entityMap, err := getCseKubernetesClusterEntityMap(d, clusterDetails)
 	if err != nil {
-		return diag.Errorf("could not create Kubernetes cluster with name '%s', error retrieving Org: %s", name, err)
-	}
-	tenantContext.OrgId = org.Org.ID
-	tenantContext.OrgName = org.Org.Name
-
-	err = validateCseKubernetesCluster(d)
-	if err != nil {
-		return diag.Errorf("could not create Kubernetes cluster with name '%s', error validating the payload: %s", name, err)
+		return diag.Errorf("could not create Kubernetes cluster with name '%s': %s", clusterDetails.Name, err)
 	}
 
-	entityMap, err := getCseKubernetesClusterEntityMap(d, vcdClient, "create")
-	if err != nil {
-		return diag.Errorf("could not create Kubernetes cluster with name '%s': %s", name, err)
-	}
-
-	_, err = rdeType.CreateRde(types.DefinedEntity{
-		EntityType: rdeType.DefinedEntityType.ID,
-		Name:       name,
+	_, err = clusterDetails.RdeType.CreateRde(types.DefinedEntity{
+		EntityType: clusterDetails.RdeType.DefinedEntityType.ID,
+		Name:       clusterDetails.Name,
 		Entity:     entityMap,
-	}, &tenantContext)
+	}, &govcd.TenantContext{
+		OrgId:   clusterDetails.Org.AdminOrg.ID,
+		OrgName: clusterDetails.Org.AdminOrg.Name,
+	})
 	if err != nil {
-		return diag.Errorf("could not create Kubernetes cluster with name '%s': %s", name, err)
+		return diag.Errorf("could not create Kubernetes cluster with name '%s': %s", clusterDetails.Name, err)
 	}
 
 	return resourceVcdCseKubernetesRead(ctx, d, meta)
 }
 
-func getCseKubernetesClusterEntityMap(d *schema.ResourceData, vcdClient *VCDClient, operation string) (StringMap, error) {
+func getCseKubernetesClusterEntityMap(d *schema.ResourceData, clusterDetails *clusterInfoDto) (StringMap, error) {
 	name := d.Get("name").(string)
 
-	_, isStorageClassSet := d.GetOk("storage_class")
 	storageClass := "{}"
-	if isStorageClassSet {
-		storageProfileId := d.Get("storage_class.0.storage_profile_id").(string)
-		storageProfile, err := vcdClient.GetStorageProfileById(storageProfileId)
-		if err != nil {
-			return nil, fmt.Errorf("could not get a Storage Profile with ID '%s': %s", storageProfileId, err)
-		}
+	if clusterDetails.StorageProfile != nil {
 		storageClassEmpty := template.Must(template.New(name + "_StorageClass").Parse(defaultStorageClass))
 		storageClassName := d.Get("storage_class.0.name").(string)
 		reclaimPolicy := d.Get("storage_class.0.reclaim_policy").(string)
@@ -322,7 +302,7 @@ func getCseKubernetesClusterEntityMap(d *schema.ResourceData, vcdClient *VCDClie
 		if err := storageClassEmpty.Execute(buf, map[string]string{
 			"FileSystem":     filesystem,
 			"Name":           storageClassName,
-			"StorageProfile": storageProfile.ID,
+			"StorageProfile": clusterDetails.StorageProfile.Name,
 			"ReclaimPolicy":  reclaimPolicy,
 		}); err != nil {
 			return nil, fmt.Errorf("could not generate a correct storage class JSON block: %s", err)
@@ -330,40 +310,25 @@ func getCseKubernetesClusterEntityMap(d *schema.ResourceData, vcdClient *VCDClie
 		storageClass = buf.String()
 	}
 
-	orgName, err := vcdClient.GetOrgNameFromResource(d)
-	if err != nil {
-		return nil, fmt.Errorf("could not retrieve the Organization name to build the cluster JSON payload: %s", err)
-	}
-	org, err := vcdClient.GetOrg(orgName)
-	if err != nil {
-		return nil, fmt.Errorf("could not retrieve the Organization '%s' to build the cluster JSON payload: %s", orgName, err)
-	}
-
-	vdcId := d.Get("vdc_id").(string)
-	vdc, err := org.GetVDCById(vdcId, true)
-	if err != nil {
-		return nil, fmt.Errorf("could not retrieve the VDC '%s' to build the cluster JSON payload: %s", vdcId, err)
-	}
-
 	capvcdEmpty := template.Must(template.New(name).Parse(capvcdTemplate))
 	buf := &bytes.Buffer{}
 	if err := capvcdEmpty.Execute(buf, map[string]string{
 		"Name":                       name,
-		"Org":                        orgName,
-		"VcdUrl":                     vcdClient.Client.VCDHREF.String(),
-		"Vdc":                        vdc.Vdc.Name,
+		"Org":                        clusterDetails.Org.AdminOrg.Name,
+		"VcdUrl":                     clusterDetails.VcdUrl.String(),
+		"Vdc":                        clusterDetails.Vdc.Vdc.Name,
 		"Delete":                     "false",
 		"ForceDelete":                "false",
 		"AutoRepairOnErrors":         d.Get("auto_repair_on_errors").(string),
 		"DefaultStorageClassOptions": storageClass,
 		"ApiToken":                   d.Get("api_token").(string),
-		"CapiYaml":                   getCapiYamlPlaintext(d, vcdClient),
+		"CapiYaml":                   getCapiYamlPlaintext(d, clusterDetails),
 	}); err != nil {
 		return nil, fmt.Errorf("could not generate a correct CAPVCD JSON: %s", err)
 	}
 
 	result := map[string]interface{}{}
-	err = json.Unmarshal(buf.Bytes(), &result)
+	err := json.Unmarshal(buf.Bytes(), &result)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate a correct CAPVCD JSON: %s", err)
 	}
@@ -371,7 +336,7 @@ func getCseKubernetesClusterEntityMap(d *schema.ResourceData, vcdClient *VCDClie
 	return result, nil
 }
 
-func getCapiYamlPlaintext(d *schema.ResourceData, client *VCDClient) string {
+func getCapiYamlPlaintext(d *schema.ResourceData, clusterDetails *clusterInfoDto) string {
 	return ""
 }
 
@@ -386,7 +351,7 @@ func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, met
 	if err != nil {
 		return diag.Errorf("could not save the cluster '%s' raw RDE contents into state: %s", rde.DefinedEntity.ID, err)
 	}
-	dSet(d, "raw_rde", jsonEntity)
+	dSet(d, "raw_cluster_rde_json", jsonEntity)
 
 	status, ok := rde.DefinedEntity.Entity["status"].(StringMap)
 	if !ok {
@@ -447,6 +412,71 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func validateCseKubernetesCluster(d *schema.ResourceData) error {
-	return nil
+// clusterInfoDto is a helper struct that contains all the required elements to successfully create and manage
+// a Kubernetes cluster using CSE.
+type clusterInfoDto struct {
+	Name           string
+	VcdUrl         url.URL
+	Org            *govcd.AdminOrg
+	Vdc            *govcd.Vdc
+	VAppTemplate   *govcd.VAppTemplate
+	Network        *govcd.OrgVDCNetwork
+	RdeType        *govcd.DefinedEntityType
+	StorageProfile *types.VdcStorageProfile
+}
+
+// createClusterInfoDto creates and returns a clusterInfoDto object by obtaining all the required information
+// from th input Terraform resource data.
+func createClusterInfoDto(d *schema.ResourceData, vcdClient *VCDClient) (*clusterInfoDto, error) {
+	result := &clusterInfoDto{}
+
+	name := d.Get("name").(string)
+	result.Name = name
+
+	org, err := vcdClient.GetAdminOrgFromResource(d)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve the cluster Organization: %s", err)
+	}
+	result.Org = org
+
+	vdcId := d.Get("vdc_id").(string)
+	vdc, err := org.GetVDCById(vdcId, true)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve the VDC with ID '%s': %s", vdcId, err)
+	}
+	result.Vdc = vdc
+
+	vAppTemplateId := d.Get("ova_id").(string)
+	vAppTemplate, err := vcdClient.GetVAppTemplateById(vAppTemplateId)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve the Kubernetes OVA with ID '%s': %s", vAppTemplateId, err)
+	}
+	result.VAppTemplate = vAppTemplate
+
+	networkId := d.Get("network_id").(string)
+	network, err := vdc.GetOrgVdcNetworkById(networkId, true)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve the Org VDC Network with ID '%s': %s", networkId, err)
+	}
+	result.Network = network
+
+	rdeTypeId := d.Get("capvcd_rde_type_id").(string)
+	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve RDE Type with ID '%s': %s", rdeTypeId, err)
+	}
+	result.RdeType = rdeType
+
+	var storageProfile *types.VdcStorageProfile
+	if _, isStorageClassSet := d.GetOk("storage_class"); isStorageClassSet {
+		storageProfileId := d.Get("storage_class.0.storage_profile_id").(string)
+		storageProfile, err = vcdClient.GetStorageProfileById(storageProfileId)
+		if err != nil {
+			return nil, fmt.Errorf("could not get a Storage Profile with ID '%s': %s", storageProfileId, err)
+		}
+	}
+	result.StorageProfile = storageProfile
+
+	result.VcdUrl = vcdClient.VCDClient.Client.VCDHREF
+	return result, nil
 }
