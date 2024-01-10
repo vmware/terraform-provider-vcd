@@ -307,13 +307,57 @@ We can perform a Terraform update to resize a TKGm cluster, for example. In orde
 [`vcd_rde`][rde] resource works. We should read [its documentation][rde_input_vs_computed] to better understand how updates work
 in this specific case.
 
-To apply a correct update, we need to take the most recent state of the TKGm cluster, which is reflected in the contents of
-the `computed_entity` attribute. Copy the value of this attribute, edit the properties that we would like to modify, and place the
-final result inside `input_entity`. Now the changes can be applied with `terraform apply`.
-
 ~> Do **NOT** use the initial `input_entity` contents to perform an update, as the CSE Server puts vital information in
 the RDE contents (which is reflected in the `computed_entity` attribute) that were not in the first JSON payload.
 If this information is not sent back, **the cluster will be broken**.
+
+To apply a correct update, we need to take the most recent state of the TKGm cluster, which is reflected in the contents of
+the `computed_entity` attribute. You can leverage this output for that purpose:
+
+```hcl
+output "computed_k8s_cluster" {
+  value = vcd_rde.k8s_cluster_instance.computed_entity # References the created cluster
+}
+```
+
+And obtain the required data with the command:
+
+```shell
+terraform output -json computed_k8s_cluster > computed_cluster.json
+```
+
+Before applying an update, please verify that the cluster is in `provisioned` state, otherwise it can't be updated. In the examples,
+there is an `output` that shows this information:
+
+```shell
+terraform output computed_k8s_cluster_status
+```
+
+Open the created `computed_cluster.json` file and copy the whole `"status"` object from the JSON.
+This status is vital to avoid losing information of the cluster on updates, so you need to put it back
+in the file that serves as RDE input in `input_entity`, which is `tkgmcluster.json.template` in the examples.
+
+This file should look like this once updated:
+
+```
+{
+  "apiVersion": "capvcd.vmware.com/v1.1",
+  "kind": "CAPVCDCluster",
+  "name": "${name}",
+  "metadata": {
+     ...omitted
+  },
+  "spec": {
+    "vcdKe": {
+      ...omitted
+    },
+    "capiYaml": ${capi_yaml}
+  },
+  "status": { ... } <-- The object from the 'computed_entity' attribute that we need
+}
+```
+
+After that, you can perform the update of the cluster with `terraform apply`.
 
 Upgradeable items:
 
@@ -321,7 +365,7 @@ Upgradeable items:
 * Number of worker nodes. Remember this must be higher than 0.
 * Number of control plane nodes. Remember this must be an odd number and higher than 0.
 
-### Upgrade a cluster to CSE v4.1
+## Upgrade a cluster to CSE v4.1
 
 To upgrade a cluster from CSE v4.0 to v4.1, first of all you need to change the RDE Type that the TKGm cluster `vcd_rde` uses:
 

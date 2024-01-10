@@ -6,7 +6,7 @@ description: |-
   Provides the capability of fetching the RDE Type Behavior Access Levels from VMware Cloud Director.
 ---
 
-# vcd\_rde\_type\_behavior
+# vcd\_rde\_type\_behavior\_acl
 
 Provides the capability of fetching the RDE Type Behavior Access Levels from VMware Cloud Director.
 
