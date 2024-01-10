@@ -1,0 +1,217 @@
+# This file was downloaded from https://raw.githubusercontent.com/vmware/cluster-api-provider-cloud-director/main/templates/cluster-template-v1.25.7.yaml
+# Only the commented lines were added manually.
+
+# The MachineHealthCheck was added manually. You can add this section if you want automatic health checks in your
+# Kubernetes clusters.
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  name: {{.ClusterName}}
+  namespace: {{.TargetNamespace}}
+  labels:
+    clusterctl.cluster.x-k8s.io: ""
+    clusterctl.cluster.x-k8s.io/move: ""
+spec:
+  clusterName: {{.ClusterName}}
+  maxUnhealthy: {{.MaxUnhealthyNodePercentage}}%
+  nodeStartupTimeout: {{.NodeStartupTimeout}}s
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: {{.ClusterName}}
+  unhealthyConditions:
+    - type: Ready
+      status: Unknown
+      timeout: {{.NodeUnknownTimeout}}s
+    - type: Ready
+      status: "False"
+      timeout: {{.NodeNotReadyTimeout}}s
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: {{.ClusterName}}
+  namespace: {{.TargetNamespace}}
+  labels: # The labels section was added manually, this is REQUIRED for the cluster to work
+    cluster-role.tkg.tanzu.vmware.com/management: ""
+    tanzuKubernetesRelease: {{.TkrVersion}}
+    tkg.tanzu.vmware.com/cluster-name: {{.ClusterName}}
+  annotations: # The annotations section was added manually, this is REQUIRED for the cluster to work
+    TKGVERSION: {{.TkgVersion}}
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+        - {{.PodCidr}}
+    serviceDomain: cluster.local
+    services:
+      cidrBlocks:
+        - {{.ServiceCidr}}
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: {{.ClusterName}}-control-plane
+    namespace: {{.TargetNamespace}}
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+    kind: VCDCluster
+    name: {{.ClusterName}}
+    namespace: {{.TargetNamespace}}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: capi-user-credentials
+  namespace: {{.TargetNamespace}}
+type: Opaque
+data:
+  username: "{{.UsernameB64}}"
+  password: ""
+  refreshToken: "{{.ApiTokenB64}}"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: VCDCluster
+metadata:
+  name: {{.ClusterName}}
+  namespace: {{.TargetNamespace}}
+spec:
+  site: {{.VcdSite}}
+  org: {{.Org}}
+  ovdc: {{.OrgVdc}}
+  ovdcNetwork: {{.OrgVdcNetwork}}
+  useAsManagementCluster: false
+  userContext:
+    secretRef:
+      name: capi-user-credentials
+      namespace: {{.TargetNamespace}}
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: VCDMachineTemplate
+metadata:
+  name: {{.ClusterName}}-control-plane
+  namespace: {{.TargetNamespace}}
+spec:
+  template:
+    spec:
+      catalog: {{.Catalog}}
+      template: {{.VAppTemplateName}}
+      sizingPolicy: {{.ControlPlaneSizingPolicy}}
+      placementPolicy: {{.ControlPlanePlacementPolicy}}
+      storageProfile: "{{.ControlPlaneStorageProfile}}"
+      diskSize: {{.ControlPlaneDiskSize}}
+      enableNvidiaGPU: false
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: {{.ClusterName}}-control-plane
+  namespace: {{.TargetNamespace}}
+spec:
+  kubeadmConfigSpec:
+    preKubeadmCommands: # preKubeadmCommands was added manually
+      - mv /etc/ssl/certs/custom_certificate_*.crt
+        /usr/local/share/ca-certificates && update-ca-certificates
+    clusterConfiguration:
+      apiServer:
+        certSANs:
+          - localhost
+          - 127.0.0.1
+      controllerManager: # controllerManager was added manually
+        extraArgs:
+          enable-hostpath-provisioner: "true"
+      dns:
+        imageRepository: {{.ContainerRegistryUrl}}/tkg
+        imageTag: v1.9.3_vmware.8
+      etcd:
+        local:
+          imageRepository: {{.ContainerRegistryUrl}}/tkg
+          imageTag: v3.5.6_vmware.9
+      imageRepository: {{.ContainerRegistryUrl}}/tkg
+    users:
+      - name: root
+        sshAuthorizedKeys:
+          - "{{.SshPublicKey}}"
+    initConfiguration:
+      nodeRegistration:
+        criSocket: /run/containerd/containerd.sock
+        kubeletExtraArgs:
+          eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          cloud-provider: external
+    joinConfiguration:
+      nodeRegistration:
+        criSocket: /run/containerd/containerd.sock
+        kubeletExtraArgs:
+          eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          cloud-provider: external
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+      kind: VCDMachineTemplate
+      name: {{.ClusterName}}-control-plane
+      namespace: {{.TargetNamespace}}
+  replicas: {{.ControlPlaneMachineCount}}
+  version: v1.25.7+vmware.2
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: VCDMachineTemplate
+metadata:
+  name: {{.ClusterName}}-md-0
+  namespace: {{.TargetNamespace}}
+spec:
+  template:
+    spec:
+      catalog: {{.Catalog}}
+      template: {{.VAppTemplateName}}
+      sizingPolicy: {{.NodePool0SizingPolicy}}
+      placementPolicy: {{.NodePool0PlacementPolicy}}
+      storageProfile: "{{.NodePool0StorageProfile}}"
+      diskSize: {{.NodePool0DiskSize}}
+      enableNvidiaGPU: false
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: {{.ClusterName}}-md-0
+  namespace: {{.TargetNamespace}}
+spec:
+  template:
+    spec:
+      users:
+        - name: root
+          sshAuthorizedKeys:
+            - "{{.SshPublicKey}}"
+      useExperimentalRetryJoin: true # Added manually
+      preKubeadmCommands: # Added manually
+        - mv /etc/ssl/certs/custom_certificate_*.crt
+          /usr/local/share/ca-certificates && update-ca-certificates
+      joinConfiguration:
+        nodeRegistration:
+          criSocket: /run/containerd/containerd.sock
+          kubeletExtraArgs:
+            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+            cloud-provider: external
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: {{.ClusterName}}-md-0
+  namespace: {{.TargetNamespace}}
+spec:
+  clusterName: {{.ClusterName}}
+  replicas: {{.NodePool0MachineCount}}
+  selector:
+    matchLabels: null
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: {{.ClusterName}}-md-0
+          namespace: {{.TargetNamespace}}
+      clusterName: {{.ClusterName}}
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+        kind: VCDMachineTemplate
+        name: {{.ClusterName}}-md-0
+        namespace: {{.TargetNamespace}}
+      version: v1.25.7+vmware.2

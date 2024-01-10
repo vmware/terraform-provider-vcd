@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/go-cty/cty"
@@ -22,6 +23,9 @@ var capvcdTemplate string
 
 //go:embed cse/4.2/default_storage_class.tmpl
 var defaultStorageClass string
+
+//go:embed cse/4.2/capi_yaml.tmpl
+var capiYaml string
 
 func resourceVcdCseKubernetesCluster() *schema.Resource {
 	return &schema.Resource{
@@ -73,11 +77,17 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				ForceNew:    true,
 				Description: "The ID of the network that the Kubernetes cluster will use",
 			},
-			"api_token": {
+			"owner": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The API token used to create and manage the cluster. The owner must have the 'Kubernetes Cluster Author' role",
+				Description: "The user that creates the cluster and owns the API token specified in 'api_token'. It must have the 'Kubernetes Cluster Author' role",
+			},
+			"api_token_file": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "A file that stores the API token used to create and manage the cluster, owned by the user specified in 'owner'",
 			},
 			"ssh_public_key": {
 				Type:        schema.TypeString,
@@ -145,6 +155,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 			"node_pool": {
 				Type:     schema.TypeSet,
 				Required: true,
+				MinItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"machine_count": {
@@ -179,7 +190,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							ForceNew:    true,
 							Description: "vGPU policy for the control plane nodes",
 						},
-						"storage_profile": {
+						"storage_profile_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							ForceNew:    true,
@@ -263,7 +274,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	clusterDetails, err := createClusterInfoDto(d, vcdClient)
+	clusterDetails, err := createClusterInfoDto(d, vcdClient, "1.1.0")
 	if err != nil {
 		return diag.Errorf("could not create Kubernetes cluster with name '%s': %s", clusterDetails.Name, err)
 	}
@@ -289,11 +300,13 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 }
 
 func getCseKubernetesClusterEntityMap(d *schema.ResourceData, clusterDetails *clusterInfoDto) (StringMap, error) {
-	name := d.Get("name").(string)
-
+	capiYamlRendered, err := getCapiYamlPlaintext(d, clusterDetails)
+	if err != nil {
+		return nil, err
+	}
 	storageClass := "{}"
-	if clusterDetails.StorageProfile != nil {
-		storageClassEmpty := template.Must(template.New(name + "_StorageClass").Parse(defaultStorageClass))
+	if clusterDetails.StorageProfileName != "" {
+		storageClassEmpty := template.Must(template.New(clusterDetails.Name + "_StorageClass").Parse(defaultStorageClass))
 		storageClassName := d.Get("storage_class.0.name").(string)
 		reclaimPolicy := d.Get("storage_class.0.reclaim_policy").(string)
 		filesystem := d.Get("storage_class.0.filesystem").(string)
@@ -302,7 +315,7 @@ func getCseKubernetesClusterEntityMap(d *schema.ResourceData, clusterDetails *cl
 		if err := storageClassEmpty.Execute(buf, map[string]string{
 			"FileSystem":     filesystem,
 			"Name":           storageClassName,
-			"StorageProfile": clusterDetails.StorageProfile.Name,
+			"StorageProfile": clusterDetails.StorageProfileName,
 			"ReclaimPolicy":  reclaimPolicy,
 		}); err != nil {
 			return nil, fmt.Errorf("could not generate a correct storage class JSON block: %s", err)
@@ -310,25 +323,25 @@ func getCseKubernetesClusterEntityMap(d *schema.ResourceData, clusterDetails *cl
 		storageClass = buf.String()
 	}
 
-	capvcdEmpty := template.Must(template.New(name).Parse(capvcdTemplate))
+	capvcdEmpty := template.Must(template.New(clusterDetails.Name).Parse(capvcdTemplate))
 	buf := &bytes.Buffer{}
 	if err := capvcdEmpty.Execute(buf, map[string]string{
-		"Name":                       name,
+		"Name":                       clusterDetails.Name,
 		"Org":                        clusterDetails.Org.AdminOrg.Name,
 		"VcdUrl":                     clusterDetails.VcdUrl.String(),
-		"Vdc":                        clusterDetails.Vdc.Vdc.Name,
+		"Vdc":                        clusterDetails.VdcName,
 		"Delete":                     "false",
 		"ForceDelete":                "false",
 		"AutoRepairOnErrors":         d.Get("auto_repair_on_errors").(string),
 		"DefaultStorageClassOptions": storageClass,
 		"ApiToken":                   d.Get("api_token").(string),
-		"CapiYaml":                   getCapiYamlPlaintext(d, clusterDetails),
+		"CapiYaml":                   capiYamlRendered,
 	}); err != nil {
 		return nil, fmt.Errorf("could not generate a correct CAPVCD JSON: %s", err)
 	}
 
 	result := map[string]interface{}{}
-	err := json.Unmarshal(buf.Bytes(), &result)
+	err = json.Unmarshal(buf.Bytes(), &result)
 	if err != nil {
 		return nil, fmt.Errorf("could not generate a correct CAPVCD JSON: %s", err)
 	}
@@ -336,8 +349,50 @@ func getCseKubernetesClusterEntityMap(d *schema.ResourceData, clusterDetails *cl
 	return result, nil
 }
 
-func getCapiYamlPlaintext(d *schema.ResourceData, clusterDetails *clusterInfoDto) string {
-	return ""
+func getCapiYamlPlaintext(d *schema.ResourceData, clusterDetails *clusterInfoDto) (string, error) {
+	capiYamlEmpty := template.Must(template.New(clusterDetails.Name + "_CapiYaml").Parse(capiYaml))
+
+	buf := &bytes.Buffer{}
+	args := map[string]string{
+		"ClusterName":                 clusterDetails.Name,
+		"TargetNamespace":             clusterDetails.Name + "-ns",
+		"MaxUnhealthyNodePercentage":  clusterDetails.VCDKEConfig.MaxUnhealthyNodesPercentage,
+		"NodeStartupTimeout":          clusterDetails.VCDKEConfig.NodeStartupTimeout,
+		"NodeNotReadyTimeout":         clusterDetails.VCDKEConfig.NodeNotReadyTimeout,
+		"TkrVersion":                  clusterDetails.TkrVersion,
+		"TkgVersion":                  clusterDetails.TkgVersion,
+		"PodCidr":                     d.Get("pods_cidr").(string),
+		"ServiceCidr":                 d.Get("service_cidr").(string),
+		"UsernameB64":                 base64.StdEncoding.EncodeToString([]byte(d.Get("owner").(string))),
+		"ApiTokenB64":                 base64.StdEncoding.EncodeToString([]byte(d.Get("api_token").(string))),
+		"VcdSite":                     clusterDetails.VcdUrl.String(),
+		"Org":                         clusterDetails.Org.AdminOrg.Name,
+		"OrgVdc":                      clusterDetails.VdcName,
+		"OrgVdcNetwork":               clusterDetails.NetworkName,
+		"CatalogName":                 clusterDetails.CatalogName,
+		"VAppTemplateName":            clusterDetails.OvaName,
+		"ControlPlaneSizingPolicy":    d.Get("control_plane.0.sizing_policy").(string),
+		"ControlPlanePlacementPolicy": d.Get("control_plane.0.placement_policy").(string),
+		"ControlPlaneStorageProfile":  d.Get("control_plane.0.storage_profile").(string),
+		"ControlPlaneDiskSize":        d.Get("control_plane.0.sizing_policy").(string),
+		"ControlPlaneMachineCount":    d.Get("control_plane.0.machine_count").(string),
+		"ContainerRegistryUrl":        clusterDetails.VCDKEConfig.ContainerRegistryUrl,
+		"SshPublicKey":                d.Get("ssh_public_key").(string),
+	}
+	for i, nodePoolRaw := range d.Get("node_pool").(*schema.Set).List() {
+		nodePool := nodePoolRaw.(map[string]interface{})
+		args[fmt.Sprintf("NodePool%dDiskSize", i)] = nodePool["disk_size"].(string)
+		args[fmt.Sprintf("NodePool%dMachineCount", i)] = nodePool["machine_count"].(string)
+		args[fmt.Sprintf("NodePool%dStorageProfile", i)] = nodePool["storage_profile"].(string)
+		args[fmt.Sprintf("NodePool%dPlacementPolicy", i)] = nodePool["placement_policy"].(string)
+		args[fmt.Sprintf("NodePool%dSizingPolicy", i)] = nodePool["sizing_policy"].(string)
+		args[fmt.Sprintf("NodePool%dMachineCount", i)] = nodePool["machine_count"].(string)
+	}
+
+	if err := capiYamlEmpty.Execute(buf, args); err != nil {
+		return "", fmt.Errorf("could not generate a correct CAPI YAML: %s", err)
+	}
+	return buf.String(), nil
 }
 
 func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -415,19 +470,29 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 // clusterInfoDto is a helper struct that contains all the required elements to successfully create and manage
 // a Kubernetes cluster using CSE.
 type clusterInfoDto struct {
-	Name           string
-	VcdUrl         url.URL
-	Org            *govcd.AdminOrg
-	Vdc            *govcd.Vdc
-	VAppTemplate   *govcd.VAppTemplate
-	Network        *govcd.OrgVDCNetwork
-	RdeType        *govcd.DefinedEntityType
-	StorageProfile *types.VdcStorageProfile
+	Name               string
+	VcdUrl             url.URL
+	Org                *govcd.AdminOrg
+	VdcName            string
+	OvaName            string
+	CatalogName        string
+	NetworkName        string
+	RdeType            *govcd.DefinedEntityType
+	StorageProfileName string
+	VCDKEConfig        struct {
+		MaxUnhealthyNodesPercentage string
+		NodeStartupTimeout          string
+		NodeNotReadyTimeout         string
+		NodeUnknownTimeout          string
+		ContainerRegistryUrl        string
+	}
+	TkgVersion string
+	TkrVersion string
 }
 
 // createClusterInfoDto creates and returns a clusterInfoDto object by obtaining all the required information
 // from th input Terraform resource data.
-func createClusterInfoDto(d *schema.ResourceData, vcdClient *VCDClient) (*clusterInfoDto, error) {
+func createClusterInfoDto(d *schema.ResourceData, vcdClient *VCDClient, vcdKeConfigVersion string) (*clusterInfoDto, error) {
 	result := &clusterInfoDto{}
 
 	name := d.Get("name").(string)
@@ -444,21 +509,29 @@ func createClusterInfoDto(d *schema.ResourceData, vcdClient *VCDClient) (*cluste
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve the VDC with ID '%s': %s", vdcId, err)
 	}
-	result.Vdc = vdc
+	result.VdcName = vdc.Vdc.Name
 
 	vAppTemplateId := d.Get("ova_id").(string)
 	vAppTemplate, err := vcdClient.GetVAppTemplateById(vAppTemplateId)
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve the Kubernetes OVA with ID '%s': %s", vAppTemplateId, err)
 	}
-	result.VAppTemplate = vAppTemplate
+	result.OvaName = vAppTemplate.VAppTemplate.Name
+	result.TkgVersion = ""
+	result.TkrVersion = ""
+
+	catalogName, err := vAppTemplate.GetCatalogName()
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve the CatalogName of the OVA '%s': %s", vAppTemplateId, err)
+	}
+	result.CatalogName = catalogName
 
 	networkId := d.Get("network_id").(string)
 	network, err := vdc.GetOrgVdcNetworkById(networkId, true)
 	if err != nil {
-		return nil, fmt.Errorf("could not retrieve the Org VDC Network with ID '%s': %s", networkId, err)
+		return nil, fmt.Errorf("could not retrieve the Org VDC NetworkName with ID '%s': %s", networkId, err)
 	}
-	result.Network = network
+	result.NetworkName = network.OrgVDCNetwork.Name
 
 	rdeTypeId := d.Get("capvcd_rde_type_id").(string)
 	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
@@ -467,15 +540,56 @@ func createClusterInfoDto(d *schema.ResourceData, vcdClient *VCDClient) (*cluste
 	}
 	result.RdeType = rdeType
 
-	var storageProfile *types.VdcStorageProfile
+	storageProfileName := ""
 	if _, isStorageClassSet := d.GetOk("storage_class"); isStorageClassSet {
 		storageProfileId := d.Get("storage_class.0.storage_profile_id").(string)
-		storageProfile, err = vcdClient.GetStorageProfileById(storageProfileId)
+		storageProfile, err := vcdClient.GetStorageProfileById(storageProfileId)
 		if err != nil {
 			return nil, fmt.Errorf("could not get a Storage Profile with ID '%s': %s", storageProfileId, err)
 		}
+		storageProfileName = storageProfile.Name
 	}
-	result.StorageProfile = storageProfile
+	result.StorageProfileName = storageProfileName
+
+	rdes, err := vcdClient.GetRdesByName("vmware", "VCDKEConfig", vcdKeConfigVersion, "VCDKEConfig")
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve VCDKEConfig RDE: %s", err)
+	}
+	if len(rdes) != 1 {
+		return nil, fmt.Errorf("expected exactly one VCDKEConfig RDE but got %d", len(rdes))
+	}
+	vcdKeConfig := rdes[0].DefinedEntity.Entity
+	if _, ok := vcdKeConfig["profiles"]; !ok {
+		return nil, fmt.Errorf("expected array 'profiles' in VCDKEConfig, but it is nil")
+	}
+	if _, ok := vcdKeConfig["profiles"].([]map[string]interface{}); !ok {
+		return nil, fmt.Errorf("expected array 'profiles' in VCDKEConfig, but it is not an array")
+	}
+	if len(vcdKeConfig["profiles"].([]map[string]interface{})) != 1 {
+		return nil, fmt.Errorf("expected exactly one 'profiles' item in VCDKEConfig, but it has %d", len(vcdKeConfig["profiles"].([]map[string]interface{})))
+	}
+	if _, ok := vcdKeConfig["profiles"].([]map[string]interface{})[0]["K8Config"]; !ok {
+		return nil, fmt.Errorf("expected item 'profiles[0].K8Config' in VCDKEConfig, but it is nil")
+	}
+	if _, ok := vcdKeConfig["profiles"].([]map[string]interface{})[0]["K8Config"].(map[string]interface{}); !ok {
+		return nil, fmt.Errorf("expected an object 'profiles[0].K8Config' in VCDKEConfig, but it is not an object")
+	}
+	if _, ok := vcdKeConfig["profiles"].([]map[string]interface{})[0]["K8Config"].(map[string]interface{})["mhc"]; !ok {
+		return nil, fmt.Errorf("expected item 'profiles[0].K8Config.mhc' in VCDKEConfig, but it is nil")
+	}
+	if _, ok := vcdKeConfig["profiles"].([]map[string]interface{})[0]["K8Config"].(map[string]interface{})["mhc"].(map[string]interface{}); !ok {
+		return nil, fmt.Errorf("expected an object 'profiles[0].K8Config.mhc' in VCDKEConfig, but it is not an object")
+	}
+	mhc := vcdKeConfig["profiles"].([]map[string]interface{})[0]["K8Config"].(map[string]interface{})["mhc"].(map[string]interface{})
+	result.VCDKEConfig.MaxUnhealthyNodesPercentage = mhc["maxUnhealthyNodes"].(string)
+	result.VCDKEConfig.NodeStartupTimeout = mhc["nodeStartupTimeout"].(string)
+	result.VCDKEConfig.NodeNotReadyTimeout = mhc["nodeNotReadyTimeout"].(string)
+	result.VCDKEConfig.NodeUnknownTimeout = mhc["nodeUnknownTimeout"].(string)
+
+	if _, ok := vcdKeConfig["profiles"].([]map[string]interface{})[0]["containerRegistryUrl"]; !ok {
+		return nil, fmt.Errorf("expected item 'profiles[0].containerRegistryUrl' in VCDKEConfig, but it is nil")
+	}
+	result.VCDKEConfig.ContainerRegistryUrl = vcdKeConfig["profiles"].([]map[string]interface{})[0]["containerRegistryUrl"].(string)
 
 	result.VcdUrl = vcdClient.VCDClient.Client.VCDHREF
 	return result, nil

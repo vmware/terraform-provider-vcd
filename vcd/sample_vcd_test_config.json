@@ -225,5 +225,17 @@
     "VCD_SKIP_TEMPLATE_WRITING": "",
     "VCD_ADD_PROVIDER": "",
     "REMOVE_ORG_VDC_FROM_TEMPLATE": ""
+  },
+  "cse" :{
+    "//" : "Only needed to test Container Service Extension specific resources",
+    "org" : "tenant_org",
+    "vdc": "tenant_vdc",
+    "routedNetwork": "tenant_net_routed",
+    "edgeGateway": "tenant_edgegateway",
+    "ovaCatalog": "tkgm_catalog",
+    "ovaName": "",
+    "capVcdVersion": "1.2.0",
+    "owner": "cluster_author",
+    "apiTokenFile": "",
   }
 }

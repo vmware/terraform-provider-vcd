@@ -231,6 +231,17 @@ type TestConfig struct {
 		OrgUserPassword              string `json:"orgUserPassword"`              // Password for the Org User to be created within the organization
 	} `json:"testEnvBuild"`
 	EnvVariables map[string]string `json:"envVariables,omitempty"`
+	Cse          struct {
+		Org           string `json:"org,omitempty"`
+		Vdc           string `json:"vdc,omitempty"`
+		OvaCatalog    string `json:"ovaCatalog,omitempty"`
+		OvaName       string `json:"ovaName,omitempty"`
+		CapVcdVersion string `json:"capVcdVersion,omitempty"`
+		RoutedNetwork string `json:"routedNetwork,omitempty"`
+		EdgeGateway   string `json:"edgeGateway,omitempty"`
+		Owner         string `json:"owner,omitempty"`
+		ApiTokenFile  string `json:"apiTokenFile,omitempty"`
+	} `json:"cse,omitempty"`
 }
 
 // names for created resources for all the tests
@@ -960,7 +971,7 @@ func importStateIdTopHierarchy(objectName string) resource.ImportStateIdFunc {
 	}
 }
 
-// Used by all entities that depend on Org (such as Catalog, OrgUser)
+// Used by all entities that depend on Org (such as CatalogName, OrgUser)
 // If the orgName is empty, it uses the default Org from testConfig
 func importStateIdOrgObject(orgName string, objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
@@ -1037,7 +1048,7 @@ func importStateIdNsxtManagerObject(objectName string) resource.ImportStateIdFun
 	}
 }
 
-// Used by all entities that depend on Org + Catalog (such as catalog item, media item)
+// Used by all entities that depend on Org + CatalogName (such as catalog item, media item)
 func importStateIdOrgCatalogObject(objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
 		if testConfig.VCD.Org == "" || testConfig.VCD.Catalog.Name == "" || objectName == "" {
