@@ -1,0 +1,153 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: "{{.ClusterName}}"
+  namespace: "{{.TargetNamespace}}"
+  labels:
+    cluster-role.tkg.tanzu.vmware.com/management: ""
+    tanzuKubernetesRelease: "{{.TkrVersion}}"
+    tkg.tanzu.vmware.com/cluster-name: "{{.ClusterName}}"
+  annotations:
+    osInfo: "ubuntu,20.04,amd64",
+    TKGVERSION: "{{.TkgVersion}}"
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+        - "{{.PodCidr}}"
+    serviceDomain: cluster.local
+    services:
+      cidrBlocks:
+        - "{{.ServiceCidr}}"
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: "{{.ClusterName}}-control-plane"
+    namespace: "{{.TargetNamespace}}"
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+    kind: VCDCluster
+    name: "{{.ClusterName}}"
+    namespace: "{{.TargetNamespace}}"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: capi-user-credentials
+  namespace: {{.TargetNamespace}}
+type: Opaque
+data:
+  username: "{{.UsernameB64}}"
+  refreshToken: "{{.ApiTokenB64}}"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: VCDCluster
+metadata:
+  name: "{{.ClusterName}}"
+  namespace: "{{.TargetNamespace}}"
+spec:
+  site: "{{.VcdSite}}"
+  org: "{{.Org}}"
+  ovdc: "{{.OrgVdc}}"
+  ovdcNetwork: "{{.OrgVdcNetwork}}"
+  {{- if .ControlPlaneEndpoint}}
+  controlPlaneEndpoint:
+    host: "{{.ControlPlaneEndpoint}}"
+    port: 6443
+  {{- end}}
+  {{- if .VirtualIpSubnet}}
+  loadBalancerConfigSpec:
+    vipSubnet: "{{.VirtualIpSubnet}}"
+  {{- end}}
+  useAsManagementCluster: false
+  userContext:
+    secretRef:
+      name: capi-user-credentials
+      namespace: "{{.TargetNamespace}}"
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: VCDMachineTemplate
+metadata:
+  name: "{{.ClusterName}}-control-plane"
+  namespace: "{{.TargetNamespace}}"
+spec:
+  template:
+    spec:
+      catalog: "{{.Catalog}}"
+      template: "{{.VAppTemplateName}}"
+      sizingPolicy: "{{.ControlPlaneSizingPolicy}}"
+      placementPolicy: "{{.ControlPlanePlacementPolicy}}"
+      storageProfile: "{{.ControlPlaneStorageProfile}}"
+      diskSize: {{.ControlPlaneDiskSize}}
+---
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: "{{.ClusterName}}-control-plane"
+  namespace: "{{.TargetNamespace}}"
+spec:
+  kubeadmConfigSpec:
+    preKubeadmCommands:
+      - mv /etc/ssl/certs/custom_certificate_*.crt /usr/local/share/ca-certificates && update-ca-certificates
+    clusterConfiguration:
+      apiServer:
+        certSANs:
+          - localhost
+          - 127.0.0.1
+      controllerManager:
+        extraArgs:
+          enable-hostpath-provisioner: "true"
+      dns:
+        imageRepository: "{{.ContainerRegistryUrl}}"
+        imageTag: "{{.DnsVersion}}"
+      etcd:
+        local:
+          imageRepository: "{{.ContainerRegistryUrl}}"
+          imageTag: "{{.EtcdVersion}}"
+      imageRepository: "{{.ContainerRegistryUrl}}"
+    users:
+      - name: root
+        sshAuthorizedKeys:
+          - "{{.SshPublicKey}}"
+    initConfiguration:
+      nodeRegistration:
+        criSocket: /run/containerd/containerd.sock
+        kubeletExtraArgs:
+          eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          cloud-provider: external
+    joinConfiguration:
+      nodeRegistration:
+        criSocket: /run/containerd/containerd.sock
+        kubeletExtraArgs:
+          eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+          cloud-provider: external
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+      kind: VCDMachineTemplate
+      name: "{{.ClusterName}}-control-plane"
+      namespace: "{{.TargetNamespace}}"
+  replicas: {{.ControlPlaneMachineCount}}
+  version: "{{.KubernetesVersion}}"
+---
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+kind: KubeadmConfigTemplate
+metadata:
+  name: "{{.ClusterName}}-kct"
+  namespace: "{{.TargetNamespace}}"
+spec:
+  template:
+    spec:
+      users:
+        - name: root
+          sshAuthorizedKeys:
+            - "{{.SshPublicKey}}"
+      useExperimentalRetryJoin: true
+      preKubeadmCommands: # Added manually
+        - mv /etc/ssl/certs/custom_certificate_*.crt /usr/local/share/ca-certificates && update-ca-certificates
+      joinConfiguration:
+        nodeRegistration:
+          criSocket: /run/containerd/containerd.sock
+          kubeletExtraArgs:
+            eviction-hard: nodefs.available<0%,nodefs.inodesFree<0%,imagefs.available<0%
+            cloud-provider: external

@@ -1,0 +1,41 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+kind: VCDMachineTemplate
+metadata:
+  name: "{{.NodePoolName}}"
+  namespace: "{{.TargetNamespace}}"
+spec:
+  template:
+    spec:
+      catalog: "{{.Catalog}}"
+      template: "{{.VAppTemplate}}"
+      sizingPolicy: "{{.NodePoolSizingPolicy}}"
+      placementPolicy: "{{.NodePoolPlacementPolicy}}"
+      storageProfile: "{{.NodePoolStorageProfile}}"
+      diskSize: "{{.NodePoolDiskSize}}"
+      enableNvidiaGPU: "{{.NodePoolEnableGpu}}"
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: "{{.NodePoolName}}"
+  namespace: "{{.TargetNamespace}}"
+spec:
+  clusterName: "{{.ClusterName}}"
+  replicas: {{.NodePoolMachineCount}}
+  selector:
+    matchLabels: null
+  template:
+    spec:
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: "{{.ClusterName}}-kct"
+          namespace: "{{.TargetNamespace}}"
+      clusterName: "{{.ClusterName}}"
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
+        kind: VCDMachineTemplate
+        name: "{{.NodePoolName}}"
+        namespace: "{{.TargetNamespace}}"
+      version: "{{.KubernetesVersion}}"
