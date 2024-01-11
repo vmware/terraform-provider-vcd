@@ -20,8 +20,6 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 		"EdgeGateway":   testConfig.Cse.EdgeGateway,
 		"Network":       testConfig.Cse.RoutedNetwork,
 		"CapVcdVersion": testConfig.Cse.CapVcdVersion,
-		"Owner":         testConfig.Cse.Owner,
-		"ApiToken":      testConfig.Cse.ApiTokenFile,
 	}
 	testParamsNotEmpty(t, params)
 
@@ -57,12 +55,6 @@ data "vcd_catalog_vapp_template" "tkg_ova" {
   name       = "{{.OvaName}}"
 }
 
-data "vcd_rde_type" "capvcdcluster_type" {
-  vendor  = "vmware"
-  nss     = "capvcdCluster"
-  version = "{{.CapVcdVersion}}"
-}
-
 data "vcd_org_vdc" "vdc" {
   org  = data.vcd_catalog.tkg_catalog.org
   name = "{{.Vdc}}"
@@ -89,23 +81,23 @@ data "vcd_storage_profile" "sp" {
   name = "*"
 }
 
+resource "vcd_api_token" "token" {
+  name             = "{{.Name}}"
+  file_name        = "{{.Name}}.json"
+  allow_token_file = true
+}
+
 resource "vcd_cse_kubernetes_cluster" "my_cluster" {
+  runtime            = "tkg"
   name               = "{{.Name}}"
   ova_id             = data.vcd_catalog_vapp_template.tkg_ova.id
-  capvcd_rde_type_id = data.vcd_rde_type.capvcdcluster_type.id
   org                = "{{.Org}}"
   vdc_id             = data.vcd_org_vdc.vdc.id
   network_id         = data.vcd_network_routed_v2.routed.id
-  owner              = "{{.Owner}}"
-  api_token_file	 = "{{.ApiTokenFile}}"
+  owner              = "administrator"
+  api_token_file	 = vcd_api_token.token.file_name
 
   control_plane {
-    machine_count    = 1
-    disk_size        = 20
-    sizing_policy_id = data.vcd_vm_sizing_policy.tkg_small.id
-  }
-
-  node_pool {
     machine_count      = 1
     disk_size          = 20
     sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id
@@ -129,8 +121,8 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
   }
 
   storage_class {
+	name               = "sc-1"
 	storage_profile_id = data.vcd_storage_profile.sp.id
-    name               = "sc-1"
     reclaim_policy     = "delete"
     filesystem         = "ext4"
   }

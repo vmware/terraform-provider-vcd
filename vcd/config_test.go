@@ -239,8 +239,6 @@ type TestConfig struct {
 		CapVcdVersion string `json:"capVcdVersion,omitempty"`
 		RoutedNetwork string `json:"routedNetwork,omitempty"`
 		EdgeGateway   string `json:"edgeGateway,omitempty"`
-		Owner         string `json:"owner,omitempty"`
-		ApiTokenFile  string `json:"apiTokenFile,omitempty"`
 	} `json:"cse,omitempty"`
 }
 

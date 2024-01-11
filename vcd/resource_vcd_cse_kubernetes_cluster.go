@@ -61,11 +61,6 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				ForceNew:    true,
 				Description: "The ID of the vApp Template that corresponds to a Kubernetes template OVA",
 			},
-			"capvcd_rde_type_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The CAPVCD RDE Type ID",
-			},
 			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -156,7 +151,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							ForceNew:    true,
 							Description: "VM Placement policy for the control plane nodes",
 						},
-						"storage_profile": {
+						"storage_profile_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							ForceNew:    true,
@@ -298,7 +293,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	clusterDetails, err := createClusterInfoDto(d, vcdClient, "1.1.0")
+	clusterDetails, err := createClusterInfoDto(d, vcdClient, "1.1.0", "1.2.0")
 	if err != nil {
 		return diag.Errorf("could not create Kubernetes cluster with name '%s': %s", clusterDetails.Name, err)
 	}
@@ -648,7 +643,7 @@ var tkgMap = map[string]tkgVersion{
 
 // createClusterInfoDto creates and returns a clusterInfoDto object by obtaining all the required information
 // from the Terraform resource data and the target VCD.
-func createClusterInfoDto(d *schema.ResourceData, vcdClient *VCDClient, vcdKeConfigVersion string) (*clusterInfoDto, error) {
+func createClusterInfoDto(d *schema.ResourceData, vcdClient *VCDClient, vcdKeConfigVersion, capvcdClusterVersion string) (*clusterInfoDto, error) {
 	result := &clusterInfoDto{}
 	result.UrnToNamesCache = map[string]string{"": ""} // Initialize with a "zero" entry, used when there's no ID set in the Terraform schema
 
@@ -696,10 +691,9 @@ func createClusterInfoDto(d *schema.ResourceData, vcdClient *VCDClient, vcdKeCon
 	}
 	result.NetworkName = network.OrgVDCNetwork.Name
 
-	rdeTypeId := d.Get("capvcd_rde_type_id").(string)
-	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
+	rdeType, err := vcdClient.GetRdeType("vmware", "capvcdCluster", capvcdClusterVersion)
 	if err != nil {
-		return nil, fmt.Errorf("could not retrieve RDE Type with ID '%s': %s", rdeTypeId, err)
+		return nil, fmt.Errorf("could not retrieve RDE Type vmware:capvcdCluster:'%s': %s", capvcdClusterVersion, err)
 	}
 	result.RdeType = rdeType
 
@@ -788,7 +782,7 @@ func createClusterInfoDto(d *schema.ResourceData, vcdClient *VCDClient, vcdKeCon
 
 	rdes, err := vcdClient.GetRdesByName("vmware", "VCDKEConfig", vcdKeConfigVersion, "VCDKEConfig")
 	if err != nil {
-		return nil, fmt.Errorf("could not retrieve VCDKEConfig RDE: %s", err)
+		return nil, fmt.Errorf("could not retrieve VCDKEConfig RDE with version %s: %s", vcdKeConfigVersion, err)
 	}
 	if len(rdes) != 1 {
 		return nil, fmt.Errorf("expected exactly one VCDKEConfig RDE but got %d", len(rdes))

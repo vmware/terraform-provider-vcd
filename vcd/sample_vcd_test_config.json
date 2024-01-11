@@ -235,7 +235,5 @@
     "ovaCatalog": "tkgm_catalog",
     "ovaName": "",
     "capVcdVersion": "1.2.0",
-    "owner": "cluster_author",
-    "apiTokenFile": "",
   }
 }
