@@ -151,22 +151,6 @@ spec:
   replicas: {{.ControlPlaneMachineCount}}
   version: v1.25.7+vmware.2
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
-kind: VCDMachineTemplate
-metadata:
-  name: {{.ClusterName}}-md-0
-  namespace: {{.TargetNamespace}}
-spec:
-  template:
-    spec:
-      catalog: {{.Catalog}}
-      template: {{.VAppTemplateName}}
-      sizingPolicy: {{.NodePool0SizingPolicy}}
-      placementPolicy: {{.NodePool0PlacementPolicy}}
-      storageProfile: "{{.NodePool0StorageProfile}}"
-      diskSize: {{.NodePool0DiskSize}}
-      enableNvidiaGPU: false
----
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
