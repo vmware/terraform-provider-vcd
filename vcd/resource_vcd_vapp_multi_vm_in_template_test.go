@@ -89,6 +89,12 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 						"vcd_vapp_vm."+vmName2, "network.0.ip", "10.10.102.162"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName2, "power_on", "true"),
+				),
+			},
+			{
+				// Ensures the vApp is powered off
+				Config: configText2,
+				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName2, "metadata.vm_metadata", "VM Metadata."),
 					testMatchResourceAttrWhenVersionMatches(
@@ -98,10 +104,6 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 					testMatchResourceAttrWhenVersionMatches(
 						"vcd_vapp_vm."+vmName2, "inherited_metadata.vm.origin.type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
 				),
-			},
-			{
-				// Ensures the vApp is powered off
-				Config: configText2,
 			},
 		},
 	})
