@@ -228,12 +228,12 @@
   },
   "cse" :{
     "//" : "Only needed to test Container Service Extension specific resources",
-    "org" : "tenant_org",
+    "solutionsOrg" : "solutions_org",
+    "tenantOrg" : "tenant_org",
     "vdc": "tenant_vdc",
     "routedNetwork": "tenant_net_routed",
     "edgeGateway": "tenant_edgegateway",
     "ovaCatalog": "tkgm_catalog",
-    "ovaName": "",
-    "capVcdVersion": "1.2.0",
+    "ovaName": ""
   }
 }

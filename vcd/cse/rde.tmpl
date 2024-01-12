@@ -14,11 +14,18 @@
       "markForDelete": {{.Delete}},
       "forceDelete": {{.ForceDelete}},
       "autoRepairOnErrors": {{.AutoRepairOnErrors}},
-      "defaultStorageClassOptions": {{.DefaultStorageClassOptions}}
+      {{- if .DefaultStorageClassName }}
+      "defaultStorageClassOptions": {
+          "filesystem": "{{.DefaultStorageClassFileSystem}}",
+          "k8sStorageClassName": "{{.DefaultStorageClassName}}",
+          "vcdStorageProfileName": "{{.DefaultStorageClassStorageProfile}}",
+          "useDeleteReclaimPolicy": "{{.DefaultStorageClassReclaimPolicy}}"
+      },
+      {{- end }}
       "secure": {
-        "apiToken": "${.ApiToken}"
+        "apiToken": "{{.ApiToken}}"
       }
     },
-    "capiYaml": {{.CapiYaml}}
+    "capiYaml": "{{.CapiYaml}}"
   }
 }

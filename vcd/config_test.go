@@ -1,4 +1,4 @@
-//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || uiPlugin || providerVdc || ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || uiPlugin || providerVdc || cse || ALL
 
 package vcd
 
@@ -232,7 +232,8 @@ type TestConfig struct {
 	} `json:"testEnvBuild"`
 	EnvVariables map[string]string `json:"envVariables,omitempty"`
 	Cse          struct {
-		Org           string `json:"org,omitempty"`
+		SolutionsOrg  string `json:"solutionsOrg,omitempty"`
+		TenantOrg     string `json:"tenantOrg,omitempty"`
 		Vdc           string `json:"vdc,omitempty"`
 		OvaCatalog    string `json:"ovaCatalog,omitempty"`
 		OvaName       string `json:"ovaName,omitempty"`

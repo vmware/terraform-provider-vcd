@@ -1,8 +1,9 @@
-//go:build cse
+//go:build cse || ALL
 
 package vcd
 
 import (
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -11,15 +12,20 @@ import (
 func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	preTestChecks(t)
 
+	if cse := os.Getenv("TEST_VCD_CSE"); cse == "" {
+		t.Skip("CSE tests deactivated, skipping " + t.Name())
+	}
+
 	var params = StringMap{
-		"Name":          t.Name(),
-		"OvaCatalog":    testConfig.Cse.OvaCatalog,
-		"OvaName":       testConfig.Cse.OvaName,
-		"Org":           testConfig.Cse.Org,
-		"Vdc":           testConfig.Cse.Vdc,
-		"EdgeGateway":   testConfig.Cse.EdgeGateway,
-		"Network":       testConfig.Cse.RoutedNetwork,
-		"CapVcdVersion": testConfig.Cse.CapVcdVersion,
+		"Name":         t.Name(),
+		"OvaCatalog":   testConfig.Cse.OvaCatalog,
+		"OvaName":      testConfig.Cse.OvaName,
+		"SolutionsOrg": testConfig.Cse.SolutionsOrg,
+		"TenantOrg":    testConfig.Cse.TenantOrg,
+		"Vdc":          testConfig.Cse.Vdc,
+		"EdgeGateway":  testConfig.Cse.EdgeGateway,
+		"Network":      testConfig.Cse.RoutedNetwork,
+		"TokenFile":    getCurrentDir() + t.Name() + ".json",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -45,7 +51,7 @@ const testAccVcdCseKubernetesCluster = `
 # skip-binary-test - This one requires a very special setup
 
 data "vcd_catalog" "tkg_catalog" {
-  org  = "{{.Org}}"
+  org  = "{{.SolutionsOrg}}"
   name = "{{.OvaCatalog}}"
 }
 
@@ -56,13 +62,14 @@ data "vcd_catalog_vapp_template" "tkg_ova" {
 }
 
 data "vcd_org_vdc" "vdc" {
-  org  = data.vcd_catalog.tkg_catalog.org
+  org  = "{{.TenantOrg}}"
   name = "{{.Vdc}}"
 }
 
 data "vcd_nsxt_edgegateway" "egw" {
-  org  = data.vcd_org_vdc.vdc.org
-  name = "{{.EdgeGateway}}"
+  org      = data.vcd_org_vdc.vdc.org
+  owner_id = data.vcd_org_vdc.vdc.id
+  name     = "{{.EdgeGateway}}"
 }
 
 data "vcd_network_routed_v2" "routed" {
@@ -82,19 +89,19 @@ data "vcd_storage_profile" "sp" {
 }
 
 resource "vcd_api_token" "token" {
-  name             = "{{.Name}}"
-  file_name        = "{{.Name}}.json"
+  name             = "{{.Name}}41"
+  file_name        = "{{.TokenFile}}"
   allow_token_file = true
 }
 
 resource "vcd_cse_kubernetes_cluster" "my_cluster" {
+  cse_version        = "4.2"
   runtime            = "tkg"
   name               = "{{.Name}}"
   ova_id             = data.vcd_catalog_vapp_template.tkg_ova.id
-  org                = "{{.Org}}"
+  org                = data.vcd_org_vdc.vdc.org
   vdc_id             = data.vcd_org_vdc.vdc.id
   network_id         = data.vcd_network_routed_v2.routed.id
-  owner              = "administrator"
   api_token_file	 = vcd_api_token.token.file_name
 
   control_plane {
@@ -120,7 +127,7 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
     storage_profile_id = data.vcd_storage_profile.sp.id
   }
 
-  storage_class {
+  default_storage_class {
 	name               = "sc-1"
 	storage_profile_id = data.vcd_storage_profile.sp.id
     reclaim_policy     = "delete"
@@ -132,5 +139,6 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
 
   auto_repair_on_errors = true
   node_health_check     = true
+  delete_timeout_seconds = 10
 }
 `

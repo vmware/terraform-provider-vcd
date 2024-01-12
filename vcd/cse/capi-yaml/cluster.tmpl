@@ -8,7 +8,7 @@ metadata:
     tanzuKubernetesRelease: "{{.TkrVersion}}"
     tkg.tanzu.vmware.com/cluster-name: "{{.ClusterName}}"
   annotations:
-    osInfo: "ubuntu,20.04,amd64",
+    osInfo: "ubuntu,20.04,amd64"
     TKGVERSION: "{{.TkgVersion}}"
 spec:
   clusterNetwork:
@@ -29,6 +29,31 @@ spec:
     kind: VCDCluster
     name: "{{.ClusterName}}"
     namespace: "{{.TargetNamespace}}"
+{{- if .MaxUnhealthyNodePercentage }}
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  name: "{{.ClusterName}}"
+  namespace: "{{.TargetNamespace}}"
+  labels:
+    clusterctl.cluster.x-k8s.io: ""
+    clusterctl.cluster.x-k8s.io/move: ""
+spec:
+  clusterName: "{{.ClusterName}}"
+  maxUnhealthy: "{{.MaxUnhealthyNodePercentage}}"
+  nodeStartupTimeout: "{{.NodeStartupTimeout}}"
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: "{{.ClusterName}}"
+  unhealthyConditions:
+    - type: Ready
+      status: Unknown
+      timeout: "{{.NodeUnknownTimeout}}"
+    - type: Ready
+      status: "False"
+      timeout: "{{.NodeNotReadyTimeout}}"
+{{- end }}
 ---
 apiVersion: v1
 kind: Secret
@@ -74,7 +99,7 @@ spec:
   template:
     spec:
       catalog: "{{.Catalog}}"
-      template: "{{.VAppTemplateName}}"
+      template: "{{.VAppTemplate}}"
       sizingPolicy: "{{.ControlPlaneSizingPolicy}}"
       placementPolicy: "{{.ControlPlanePlacementPolicy}}"
       storageProfile: "{{.ControlPlaneStorageProfile}}"
@@ -143,7 +168,7 @@ spec:
           sshAuthorizedKeys:
             - "{{.SshPublicKey}}"
       useExperimentalRetryJoin: true
-      preKubeadmCommands: # Added manually
+      preKubeadmCommands:
         - mv /etc/ssl/certs/custom_certificate_*.crt /usr/local/share/ca-certificates && update-ca-certificates
       joinConfiguration:
         nodeRegistration:

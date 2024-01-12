@@ -13,6 +13,17 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
+// getKeys retrieves all the keys from the given map and returns them as a slice
+func getKeys[K comparable, V any](input map[K]V) []K {
+	result := make([]K, len(input))
+	i := 0
+	for k := range input {
+		result[i] = k
+		i++
+	}
+	return result
+}
+
 func expandIPRange(configured []interface{}) (types.IPRanges, error) {
 	ipRange := make([]*types.IPRange, 0, len(configured))
 
