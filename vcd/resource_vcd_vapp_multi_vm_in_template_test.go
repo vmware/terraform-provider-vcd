@@ -3,9 +3,12 @@
 package vcd
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
@@ -62,6 +65,44 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 		return
 	}
 
+	// this data is used to capture VM HREF after step 1 and then wait until metadata is available
+	// before metadata is available as we have seen delays before it is available
+	vmHref := &testCachedFieldValue{}
+	vcdClient := createTemporaryVCDConnection(false)
+	waitForMetadata := func() {
+		vm, err := vcdClient.Client.GetVMByHref(vmHref.fieldValue)
+		if err != nil {
+			fmt.Printf("### error retrieving VM to wait for metadata %s", err)
+		}
+
+		numRetries := 10
+		sleepLength := 2 * time.Second
+		var metadataFound bool
+
+		fmt.Printf("# Waiting for metadata ")
+		for a := 0; a < numRetries; a++ {
+			fmt.Printf(".")
+
+			originId, err := vm.GetMetadataByKey("vm.origin.id", true)
+			if err != nil {
+				fmt.Printf("\n### error retrieving metadata 'vm.origin.id' %s\n", err)
+			}
+
+			if originId.TypedValue.Value != "" {
+				fmt.Printf("\n Found.\n")
+				spew.Dump(originId)
+				metadataFound = true
+				break
+			}
+
+			time.Sleep(sleepLength)
+		}
+
+		if !metadataFound {
+			fmt.Printf("\n### failed waiting for metadata after %d tries with sleep time %s\n", numRetries, sleepLength.String())
+		}
+	}
+
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -89,11 +130,13 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 						"vcd_vapp_vm."+vmName2, "network.0.ip", "10.10.102.162"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName2, "power_on", "true"),
+					vmHref.cacheTestResourceFieldValue("vcd_vapp_vm."+vmName, "href"),
 				),
 			},
 			{
 				// Ensures the vApp is powered off
-				Config: configText2,
+				Config:    configText2,
+				PreConfig: waitForMetadata,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName2, "metadata.vm_metadata", "VM Metadata."),
