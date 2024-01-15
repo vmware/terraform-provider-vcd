@@ -351,11 +351,10 @@ func resourceVcdCseKubernetesRead(ctx context.Context, d *schema.ResourceData, m
 	vcdClient := meta.(*VCDClient)
 	_, _, capvcdBehaviorVersion := getCseRdeTypeVersions(d)
 
-	var status interface{}
 	var rde *govcd.DefinedEntity
-
 	// TODO: Add timeout
-	for status == nil {
+	state := "provisioning"
+	for state == "provisioning" || state == "" {
 		// The ID must be already set for the read to be successful. We can't rely on GetRdesByName as there can be
 		// many clusters with the same name and RDE Type.
 		var err error
@@ -364,30 +363,42 @@ func resourceVcdCseKubernetesRead(ctx context.Context, d *schema.ResourceData, m
 			return diag.Errorf("could not read Kubernetes cluster with ID '%s': %s", d.Id(), err)
 		}
 
-		status = rde.DefinedEntity.Entity["status"]
-		time.Sleep(10 * time.Second)
+		state, _ = traverseMapAndGet[string](rde.DefinedEntity.Entity, "status.vcdKe.state")
+		time.Sleep(60 * time.Second)
 	}
 	if rde == nil {
+		// Should never reach this return
 		return diag.Errorf("could not read Kubernetes cluster with ID '%s': object is nil", d.Id())
-	}
-	vcdKe, ok := status.(map[string]interface{})["vcdKe"]
-	if !ok {
-		return diag.Errorf("could not read the 'status.vcdKe' JSON object of the Kubernetes cluster with ID '%s'", d.Id())
 	}
 
 	// TODO: Add timeout
-	for vcdKe.(map[string]interface{})["state"] != nil && vcdKe.(map[string]interface{})["state"].(string) != "provisioned" {
-		if d.Get("auto_repair_on_errors").(bool) && vcdKe.(map[string]interface{})["state"].(string) == "error" {
-			return diag.Errorf("cluster creation finished with errors")
+	for state != "provisioned" {
+		if state == "error" && !d.Get("auto_repair_on_errors").(bool) {
+			return diag.Errorf("cluster is in state '%s' and auto_repair_on_errors=false", state)
 		}
-		time.Sleep(30 * time.Second)
-	}
-	dSet(d, "state", vcdKe.(map[string]interface{})["state"])
+		rde, err := vcdClient.GetRdeById(d.Id())
+		if err != nil {
+			return diag.Errorf("could not read Kubernetes cluster with ID '%s': %s", d.Id(), err)
+		}
 
-	_, err := rde.InvokeBehavior(fmt.Sprintf("urn:vcloud:behavior-interface:getFullEntity:cse:capvcd:%s", capvcdBehaviorVersion), types.BehaviorInvocation{})
+		state, _ = traverseMapAndGet[string](rde.DefinedEntity.Entity, "status.vcdKe.state")
+		time.Sleep(10 * time.Second)
+	}
+
+	dSet(d, "state", state)
+
+	// This can only be done if the cluster is in 'provisioned' state
+	invocationResult := map[string]interface{}{}
+	err := rde.InvokeBehaviorAndMarshal(fmt.Sprintf("urn:vcloud:behavior-interface:getFullEntity:cse:capvcd:%s", capvcdBehaviorVersion), types.BehaviorInvocation{}, invocationResult)
 	if err != nil {
 		return diag.Errorf("could not retrieve Kubeconfig: %s", err)
 	}
+
+	kubeconfig, err := traverseMapAndGet[string](invocationResult, "entity.status.capvcd.private.kubeConfig")
+	if err != nil {
+		return diag.Errorf("could not retrieve Kubeconfig: %s", err)
+	}
+	dSet(d, "kubeconfig", kubeconfig)
 
 	// This must be the last step, so it has the most possible elements
 	jsonEntity, err := jsonToCompactString(rde.DefinedEntity.Entity)

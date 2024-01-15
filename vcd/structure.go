@@ -24,9 +24,11 @@ func getKeys[K comparable, V any](input map[K]V) []K {
 	return result
 }
 
-// traverseMapAndGet traverses the input, which is map of maps, following the introduced path that should be
-// in the syntax "keyA.keyB.keyC...". It obtains the value of type ResultType (generic one) that is inside
-// the last requested subpath ("keyC" in the example).
+// traverseMapAndGet traverses the input interface{}, which should be a map of maps, by following the path specified as
+// "keyA.keyB.keyC.keyD", doing something similar to, visually speaking, map["keyA"]["keyB"]["keyC"]["keyD"], or in other words,
+// it goes inside every inner map, which are inside the initial map, until the given path is finished.
+// The final value, "keyD" in the same example, should be of type ResultType, which is a generic type requested during the call
+// to this function.
 func traverseMapAndGet[ResultType any](input interface{}, path string) (ResultType, error) {
 	var nothing ResultType
 	if input == nil {

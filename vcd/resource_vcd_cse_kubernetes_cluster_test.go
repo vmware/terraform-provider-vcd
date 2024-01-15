@@ -90,7 +90,7 @@ data "vcd_storage_profile" "sp" {
 }
 
 resource "vcd_api_token" "token" {
-  name             = "{{.Name}}63"
+  name             = "{{.Name}}65"
   file_name        = "{{.TokenFile}}"
   allow_token_file = true
 }
