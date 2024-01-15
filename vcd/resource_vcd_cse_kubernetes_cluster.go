@@ -30,10 +30,9 @@ var cseClusterYamlTemplate string
 //go:embed cse/capi-yaml/node_pool.tmpl
 var cseNodePoolTemplate string
 
-// Map of CSE version -> [VCDKEConfig RDE Type version, CAPVCD RDE Type version]
+// Map of CSE version -> [VCDKEConfig RDE Type version, CAPVCD RDE Type version, CAPVCD Behavior version]
 var cseVersions = map[string][]string{
-	"4.1": {"1.1.0", "1.2.0"},
-	"4.2": {"1.1.0", "1.2.0"},
+	"4.2": {"1.1.0", "1.2.0", "1.0.0"},
 }
 
 func resourceVcdCseKubernetesCluster() *schema.Resource {
@@ -288,8 +287,8 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Type:             schema.TypeInt,
 				Optional:         true,
 				Default:          120,
-				Description:      "The time, in seconds, to wait for the cluster to be deleted when it is marked for deletion",
-				ValidateDiagFunc: minimumValue(10, "timeout must be at least 10 seconds"),
+				Description:      "The time, in seconds, to wait for the cluster to be deleted when it is marked for deletion. 0 means wait indefinitely",
+				ValidateDiagFunc: minimumValue(0, "timeout must be at least 0 (unlimited)"),
 			},
 			"state": {
 				Type:        schema.TypeString,
@@ -311,14 +310,14 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 }
 
 // getCseRdeTypeVersions gets the RDE Type versions. First returned parameter is VCDKEConfig, second is CAPVCDCluster
-func getCseRdeTypeVersions(d *schema.ResourceData) (string, string) {
+func getCseRdeTypeVersions(d *schema.ResourceData) (string, string, string) {
 	versions := cseVersions[d.Get("cse_version").(string)]
-	return versions[0], versions[1]
+	return versions[0], versions[1], versions[2]
 }
 
 func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	vcdKeConfigRdeTypeVersion, capvcdClusterRdeTypeVersion := getCseRdeTypeVersions(d)
+	vcdKeConfigRdeTypeVersion, capvcdClusterRdeTypeVersion, _ := getCseRdeTypeVersions(d)
 
 	clusterDetails, err := createClusterInfoDto(d, vcdClient, vcdKeConfigRdeTypeVersion, capvcdClusterRdeTypeVersion)
 	if err != nil {
@@ -350,6 +349,8 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 
 func resourceVcdCseKubernetesRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+	_, _, capvcdBehaviorVersion := getCseRdeTypeVersions(d)
+
 	var status interface{}
 	var rde *govcd.DefinedEntity
 
@@ -374,9 +375,19 @@ func resourceVcdCseKubernetesRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.Errorf("could not read the 'status.vcdKe' JSON object of the Kubernetes cluster with ID '%s'", d.Id())
 	}
 
-	// TODO: Kubeconfig, invoke behavior and so
-
+	// TODO: Add timeout
+	for vcdKe.(map[string]interface{})["state"] != nil && vcdKe.(map[string]interface{})["state"].(string) != "provisioned" {
+		if d.Get("auto_repair_on_errors").(bool) && vcdKe.(map[string]interface{})["state"].(string) == "error" {
+			return diag.Errorf("cluster creation finished with errors")
+		}
+		time.Sleep(30 * time.Second)
+	}
 	dSet(d, "state", vcdKe.(map[string]interface{})["state"])
+
+	_, err := rde.InvokeBehavior(fmt.Sprintf("urn:vcloud:behavior-interface:getFullEntity:cse:capvcd:%s", capvcdBehaviorVersion), types.BehaviorInvocation{})
+	if err != nil {
+		return diag.Errorf("could not retrieve Kubeconfig: %s", err)
+	}
 
 	// This must be the last step, so it has the most possible elements
 	jsonEntity, err := jsonToCompactString(rde.DefinedEntity.Entity)
@@ -413,29 +424,18 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 			if err != nil {
 				return nil, fmt.Errorf("could not retrieve the Kubernetes cluster with ID '%s': %s", d.Id(), err)
 			}
-			spec, ok := rde.DefinedEntity.Entity["spec"].(map[string]interface{})
-			if !ok {
-				return nil, fmt.Errorf("JSON object 'spec' is not correct in the RDE")
-			}
 
-			spec["markForDelete"] = true
-			spec["forceDelete"] = true
-			rde.DefinedEntity.Entity["spec"] = spec
+			vcdKe, err := navigateMap[map[string]interface{}](rde.DefinedEntity.Entity, "spec.vcdKe")
+			if err != nil {
+				return nil, fmt.Errorf("JSON object 'spec.vcdKe' is not correct in the RDE")
+			}
+			vcdKe["markForDelete"] = true
+			vcdKe["forceDelete"] = true
+			rde.DefinedEntity.Entity["spec"].(map[string]interface{})["vcdKe"] = vcdKe
 
 			err = rde.Update(*rde.DefinedEntity)
 			if err != nil {
 				return nil, err
-			}
-			rde, err = vcdClient.GetRdeById(d.Id())
-			if err != nil {
-				return nil, fmt.Errorf("could not retrieve the Kubernetes cluster with ID '%s': %s", d.Id(), err)
-			}
-			spec, ok = rde.DefinedEntity.Entity["spec"].(map[string]interface{})
-			if !ok {
-				return nil, fmt.Errorf("JSON object 'spec' is not correct in the RDE")
-			}
-			if !spec["markForDelete"].(bool) && !spec["forceDelete"].(bool) {
-				return nil, fmt.Errorf("the cluster with ID '%s' was not marked for deletion correctly", d.Id())
 			}
 			return nil, nil
 		},
@@ -452,10 +452,11 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 			_, err := vcdClient.GetRdeById(d.Id())
 			if err != nil {
 				if govcd.IsNotFound(err) {
-					return nil, nil // All is correct, the cluster RDE is gone so the cluster is deleted
+					return nil, nil // All is correct, the cluster RDE is gone, so it is deleted
 				}
 				return nil, fmt.Errorf("the cluster with ID '%s' is still present in VCD but it is unreadable: %s", d.Id(), err)
 			}
+
 			return nil, fmt.Errorf("the cluster with ID '%s' is marked for deletion but still present in VCD", d.Id())
 		},
 	)
