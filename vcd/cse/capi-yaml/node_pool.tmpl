@@ -12,7 +12,7 @@ spec:
       placementPolicy: "{{.NodePoolPlacementPolicy}}"
       storageProfile: "{{.NodePoolStorageProfile}}"
       diskSize: "{{.NodePoolDiskSize}}"
-      enableNvidiaGPU: "{{.NodePoolEnableGpu}}"
+      enableNvidiaGPU: {{.NodePoolEnableGpu}}
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment

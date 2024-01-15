@@ -185,6 +185,24 @@ func minimumValue(min int, errorMessage string) schema.SchemaValidateDiagFunc {
 	}
 }
 
+// matchRegex returns a SchemaValidateDiagFunc that tests whether the provided value matches the regular expression
+func matchRegex(regex, errorMessage string) schema.SchemaValidateDiagFunc {
+	return func(v interface{}, path cty.Path) diag.Diagnostics {
+		value, ok := v.(string)
+		if !ok {
+			return diag.Errorf("could not parse string value '%v'", v)
+		}
+		r, err := regexp.Compile(regex)
+		if err != nil {
+			return diag.Errorf("could not compile regular expression '%s'", regex)
+		}
+		if !r.MatchString(value) {
+			return diag.Errorf("%s", errorMessage)
+		}
+		return nil
+	}
+}
+
 // IsFloatAndBetween returns a SchemaValidateFunc which tests if the provided value convertable to
 // float64 and is between min and max (inclusive).
 func IsFloatAndBetween(min, max float64) schema.SchemaValidateFunc {

@@ -19,7 +19,7 @@
           "filesystem": "{{.DefaultStorageClassFileSystem}}",
           "k8sStorageClassName": "{{.DefaultStorageClassName}}",
           "vcdStorageProfileName": "{{.DefaultStorageClassStorageProfile}}",
-          "useDeleteReclaimPolicy": "{{.DefaultStorageClassReclaimPolicy}}"
+          "useDeleteReclaimPolicy": {{.DefaultStorageClassUseDeleteReclaimPolicy}}
       },
       {{- end }}
       "secure": {

@@ -22,7 +22,7 @@ spec:
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
-    name: "{{.ClusterName}}-control-plane"
+    name: "{{.ClusterName}}-control-plane-node-pool"
     namespace: "{{.TargetNamespace}}"
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
@@ -93,7 +93,7 @@ spec:
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: VCDMachineTemplate
 metadata:
-  name: "{{.ClusterName}}-control-plane"
+  name: "{{.ClusterName}}-control-plane-node-pool"
   namespace: "{{.TargetNamespace}}"
 spec:
   template:
@@ -108,7 +108,7 @@ spec:
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
-  name: "{{.ClusterName}}-control-plane"
+  name: "{{.ClusterName}}-control-plane-node-pool"
   namespace: "{{.TargetNamespace}}"
 spec:
   kubeadmConfigSpec:
@@ -150,7 +150,7 @@ spec:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
       kind: VCDMachineTemplate
-      name: "{{.ClusterName}}-control-plane"
+      name: "{{.ClusterName}}-control-plane-node-pool"
       namespace: "{{.TargetNamespace}}"
   replicas: {{.ControlPlaneMachineCount}}
   version: "{{.KubernetesVersion}}"

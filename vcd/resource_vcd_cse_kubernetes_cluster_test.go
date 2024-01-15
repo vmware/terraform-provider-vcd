@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -17,7 +18,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	}
 
 	var params = StringMap{
-		"Name":         t.Name(),
+		"Name":         strings.ToLower(t.Name()),
 		"OvaCatalog":   testConfig.Cse.OvaCatalog,
 		"OvaName":      testConfig.Cse.OvaName,
 		"SolutionsOrg": testConfig.Cse.SolutionsOrg,
@@ -89,7 +90,7 @@ data "vcd_storage_profile" "sp" {
 }
 
 resource "vcd_api_token" "token" {
-  name             = "{{.Name}}41"
+  name             = "{{.Name}}62"
   file_name        = "{{.TokenFile}}"
   allow_token_file = true
 }
@@ -106,7 +107,7 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
 
   control_plane {
     machine_count      = 1
-    disk_size          = 20
+    disk_size_gi       = 20
     sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id
     storage_profile_id = data.vcd_storage_profile.sp.id
   }
@@ -114,7 +115,7 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
   node_pool {
     name               = "node-pool-1"
     machine_count      = 1
-    disk_size          = 20
+    disk_size_gi       = 20
     sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id
     storage_profile_id = data.vcd_storage_profile.sp.id
   }
@@ -122,7 +123,7 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
   node_pool {
     name               = "node-pool-2"
     machine_count      = 1
-    disk_size          = 20
+    disk_size_gi       = 20
     sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id
     storage_profile_id = data.vcd_storage_profile.sp.id
   }
@@ -137,8 +138,7 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
   pods_cidr     = "100.10.0.0/11"
   services_cidr = "100.90.0.0/11"
 
-  auto_repair_on_errors = true
-  node_health_check     = true
-  delete_timeout_seconds = 10
+  auto_repair_on_errors = false
+  node_health_check     = false
 }
 `

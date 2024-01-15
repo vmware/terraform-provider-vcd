@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"net/url"
 	"strconv"
 	"strings"
 	"text/template"
@@ -64,7 +63,8 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "The name of the Kubernetes cluster",
-				// TODO: Add validate func: must match regex("^[a-z][a-z0-9-]{0,29}[a-z0-9]$")
+				ValidateDiagFunc: matchRegex(`^[a-z](?:[a-z0-9-]{0,29}[a-z0-9])?$`, "name must contain only lowercase alphanumeric characters or '-',"+
+					"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters"),
 			},
 			"ova_id": {
 				Type:        schema.TypeString,
@@ -131,13 +131,13 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 								return nil
 							},
 						},
-						"disk_size": {
+						"disk_size_gi": {
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Default:          20, // As suggested in UI
 							ForceNew:         true,
-							ValidateDiagFunc: minimumValue(20, "disk size must be at least 20G"),
-							Description:      "Disk size for the control plane nodes",
+							ValidateDiagFunc: minimumValue(20, "disk size in Gibibytes must be at least 20"),
+							Description:      "Disk size, in Gibibytes, for the control plane nodes. Must be at least 20",
 						},
 						"sizing_policy_id": {
 							Type:        schema.TypeString,
@@ -177,7 +177,8 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "The name of this node pool",
-							// TODO: Add validate func: must match regex("^[a-z][a-z0-9-]{0,29}[a-z0-9]$")
+							ValidateDiagFunc: matchRegex(`^[a-z](?:[a-z0-9-]{0,29}[a-z0-9])?$`, "name must contain only lowercase alphanumeric characters or '-',"+
+								"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters"),
 						},
 						"machine_count": {
 							Type:             schema.TypeInt,
@@ -186,13 +187,13 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Description:      "The number of nodes that this node pool has. Must be higher than 0",
 							ValidateDiagFunc: minimumValue(1, "number of nodes must be higher than 0"),
 						},
-						"disk_size": {
+						"disk_size_gi": {
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Default:          20, // As suggested in UI
 							ForceNew:         true,
-							Description:      "Disk size for the control plane nodes",
-							ValidateDiagFunc: minimumValue(20, "disk size must be at least 20G"),
+							Description:      "Disk size, in Gibibytes, for the control plane nodes",
+							ValidateDiagFunc: minimumValue(20, "disk size in Gibibytes must be at least 20"),
 						},
 						"sizing_policy_id": {
 							Type:        schema.TypeString,
@@ -236,7 +237,8 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Required:    true,
 							Type:        schema.TypeString,
 							Description: "Name to give to this storage class",
-							// TODO: Add validate func: must match regex("^[a-z][a-z0-9-]{0,29}[a-z0-9]$")
+							ValidateDiagFunc: matchRegex(`^[a-z](?:[a-z0-9-]{0,29}[a-z0-9])?$`, "name must contain only lowercase alphanumeric characters or '-',"+
+								"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters"),
 						},
 						"reclaim_policy": {
 							Required:     true,
@@ -341,7 +343,7 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 	}
 
 	// We need to set the ID here to be able to distinguish this cluster from all the others that may have the same name and RDE Type.
-	// We could use some other ways of filtering, but ID is the best and most accurate way.
+	// We could use some other ways of filtering, but ID is the best and most accurate.
 	d.SetId(rde.DefinedEntity.ID)
 	return resourceVcdCseKubernetesRead(ctx, d, meta)
 }
@@ -361,29 +363,29 @@ func resourceVcdCseKubernetesRead(ctx context.Context, d *schema.ResourceData, m
 			return diag.Errorf("could not read Kubernetes cluster with ID '%s': %s", d.Id(), err)
 		}
 
-		status = rde.DefinedEntity.Entity
+		status = rde.DefinedEntity.Entity["status"]
 		time.Sleep(10 * time.Second)
 	}
 	if rde == nil {
 		return diag.Errorf("could not read Kubernetes cluster with ID '%s': object is nil", d.Id())
 	}
-
-	jsonEntity, err := jsonToCompactString(rde.DefinedEntity.Entity)
-	if err != nil {
-		return diag.Errorf("could not save the cluster '%s' raw RDE contents into state: %s", rde.DefinedEntity.ID, err)
-	}
-	dSet(d, "raw_cluster_rde_json", jsonEntity)
-
-	vcdKe, ok := status.(map[string]interface{})["vcdKe"].(map[string]interface{}) // FIXME: Can be Nil pointer
+	vcdKe, ok := status.(map[string]interface{})["vcdKe"]
 	if !ok {
 		return diag.Errorf("could not read the 'status.vcdKe' JSON object of the Kubernetes cluster with ID '%s'", d.Id())
 	}
 
 	// TODO: Kubeconfig, invoke behavior and so
 
-	dSet(d, "state", vcdKe["state"])
-	d.SetId(rde.DefinedEntity.ID) // ID is already there, but just for completeness/readability
+	dSet(d, "state", vcdKe.(map[string]interface{})["state"])
 
+	// This must be the last step, so it has the most possible elements
+	jsonEntity, err := jsonToCompactString(rde.DefinedEntity.Entity)
+	if err != nil {
+		return diag.Errorf("could not save the cluster '%s' raw RDE contents into state: %s", rde.DefinedEntity.ID, err)
+	}
+	dSet(d, "raw_cluster_rde_json", jsonEntity)
+
+	d.SetId(rde.DefinedEntity.ID) // ID is already there, but just for completeness/readability
 	return nil
 }
 
@@ -398,47 +400,67 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	rde, err := vcdClient.GetRdeById(d.Id())
-	if err != nil {
-		return diag.Errorf("could not retrieve the Kubernetes cluster with ID '%s': %s", d.Id(), err)
-	}
-
-	spec, ok := rde.DefinedEntity.Entity["spec"].(map[string]interface{})
-	if !ok {
-		return diag.Errorf("could not delete the cluster, JSON object 'spec' is not correct in the RDE")
-	}
-
-	spec["markForDelete"] = true
-	spec["forceDelete"] = true
-	rde.DefinedEntity.Entity["spec"] = spec
-
-	err = rde.Update(*rde.DefinedEntity)
-	if err != nil {
-		return diag.Errorf("could not mark the cluster '%s' for deletion: %s", rde.DefinedEntity.ID, err)
-	}
-
-	timeout := float64(d.Get("delete_timeout_seconds").(int))
-	start := time.Now()
-	elapsed := time.Since(start)
-	for {
-		rde, err = vcdClient.GetRdeById(d.Id())
-		if err != nil {
-			if govcd.IsNotFound(err) {
-				break // This means the cluster is completely deleted
+	// We need to do this operation with retries due to the mutex mechanism VCD has (ETags).
+	// We may hit an error if CSE Server is doing any operation in the background and we attempt to mark the cluster for deletion,
+	// so we need to insist several times.
+	_, err := runWithRetry(
+		fmt.Sprintf("marking the cluster %s for deletion", d.Get("name").(string)),
+		"error marking the cluster for deletion",
+		30*time.Second,
+		nil,
+		func() (any, error) {
+			rde, err := vcdClient.GetRdeById(d.Id())
+			if err != nil {
+				return nil, fmt.Errorf("could not retrieve the Kubernetes cluster with ID '%s': %s", d.Id(), err)
 			}
-			return diag.Errorf("could not check whether the cluster '%s' is deleted: %s", d.Id(), err)
-		}
-		if elapsed.Minutes() > timeout {
-			// TODO: Improve the message by saying whether it is marked for deletion or not
-			return diag.Errorf("timeout of %.0f seconds reached. The cluster was not deleted in time, please try again", timeout)
-		}
-		// TODO: Check if it's marked for deletion already to avoid re-calling
-		err = rde.Update(*rde.DefinedEntity)
-		if err != nil {
-			return diag.Errorf("could not mark the cluster '%s' for deletion: %s", rde.DefinedEntity.ID, err)
-		}
-		time.Sleep(30 * time.Second)
-		elapsed += time.Since(start)
+			spec, ok := rde.DefinedEntity.Entity["spec"].(map[string]interface{})
+			if !ok {
+				return nil, fmt.Errorf("JSON object 'spec' is not correct in the RDE")
+			}
+
+			spec["markForDelete"] = true
+			spec["forceDelete"] = true
+			rde.DefinedEntity.Entity["spec"] = spec
+
+			err = rde.Update(*rde.DefinedEntity)
+			if err != nil {
+				return nil, err
+			}
+			rde, err = vcdClient.GetRdeById(d.Id())
+			if err != nil {
+				return nil, fmt.Errorf("could not retrieve the Kubernetes cluster with ID '%s': %s", d.Id(), err)
+			}
+			spec, ok = rde.DefinedEntity.Entity["spec"].(map[string]interface{})
+			if !ok {
+				return nil, fmt.Errorf("JSON object 'spec' is not correct in the RDE")
+			}
+			if !spec["markForDelete"].(bool) && !spec["forceDelete"].(bool) {
+				return nil, fmt.Errorf("the cluster with ID '%s' was not marked for deletion correctly", d.Id())
+			}
+			return nil, nil
+		},
+	)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	_, err = runWithRetry(
+		fmt.Sprintf("checking the cluster %s is correctly marked for deletion", d.Get("name").(string)),
+		"error completing the deletion of the cluster",
+		time.Duration(d.Get("delete_timeout_seconds").(int))*time.Second,
+		nil,
+		func() (any, error) {
+			_, err := vcdClient.GetRdeById(d.Id())
+			if err != nil {
+				if govcd.IsNotFound(err) {
+					return nil, nil // All is correct, the cluster RDE is gone so the cluster is deleted
+				}
+				return nil, fmt.Errorf("the cluster with ID '%s' is still present in VCD but it is unreadable: %s", d.Id(), err)
+			}
+			return nil, fmt.Errorf("the cluster with ID '%s' is marked for deletion but still present in VCD", d.Id())
+		},
+	)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 	return nil
 }
@@ -454,7 +476,7 @@ func getCseKubernetesClusterEntityMap(d *schema.ResourceData, clusterDetails *cl
 	args := map[string]string{
 		"Name":               clusterDetails.Name,
 		"Org":                clusterDetails.Org.AdminOrg.Name,
-		"VcdUrl":             clusterDetails.VcdUrl.String(),
+		"VcdUrl":             clusterDetails.VcdUrl,
 		"Vdc":                clusterDetails.VdcName,
 		"Delete":             "false",
 		"ForceDelete":        "false",
@@ -466,7 +488,11 @@ func getCseKubernetesClusterEntityMap(d *schema.ResourceData, clusterDetails *cl
 	if _, isStorageClassSet := d.GetOk("default_storage_class"); isStorageClassSet {
 		args["DefaultStorageClassStorageProfile"] = clusterDetails.UrnToNamesCache[d.Get("default_storage_class.0.storage_profile_id").(string)]
 		args["DefaultStorageClassName"] = d.Get("default_storage_class.0.name").(string)
-		args["DefaultStorageClassReclaimPolicy"] = d.Get("default_storage_class.0.reclaim_policy").(string)
+		if d.Get("default_storage_class.0.reclaim_policy").(string) == "delete" {
+			args["DefaultStorageClassUseDeleteReclaimPolicy"] = "true"
+		} else {
+			args["DefaultStorageClassUseDeleteReclaimPolicy"] = "false"
+		}
 		args["DefaultStorageClassFileSystem"] = d.Get("default_storage_class.0.filesystem").(string)
 	}
 
@@ -481,8 +507,6 @@ func getCseKubernetesClusterEntityMap(d *schema.ResourceData, clusterDetails *cl
 	if err != nil {
 		return nil, fmt.Errorf("could not generate a correct CAPVCD JSON: %s", err)
 	}
-
-	fmt.Printf("%v", result)
 
 	return result.(map[string]interface{}), nil
 }
@@ -510,7 +534,7 @@ func generateCapiYaml(d *schema.ResourceData, clusterDetails *clusterInfoDto) (s
 		"ApiTokenB64":                 base64.StdEncoding.EncodeToString([]byte(clusterDetails.ApiToken)),
 		"PodCidr":                     d.Get("pods_cidr").(string),
 		"ServiceCidr":                 d.Get("services_cidr").(string),
-		"VcdSite":                     clusterDetails.VcdUrl.String(),
+		"VcdSite":                     clusterDetails.VcdUrl,
 		"Org":                         clusterDetails.Org.AdminOrg.Name,
 		"OrgVdc":                      clusterDetails.VdcName,
 		"OrgVdcNetwork":               clusterDetails.NetworkName,
@@ -519,7 +543,7 @@ func generateCapiYaml(d *schema.ResourceData, clusterDetails *clusterInfoDto) (s
 		"ControlPlaneSizingPolicy":    clusterDetails.UrnToNamesCache[d.Get("control_plane.0.sizing_policy_id").(string)],
 		"ControlPlanePlacementPolicy": clusterDetails.UrnToNamesCache[d.Get("control_plane.0.placement_policy_id").(string)],
 		"ControlPlaneStorageProfile":  clusterDetails.UrnToNamesCache[d.Get("control_plane.0.storage_profile_id").(string)],
-		"ControlPlaneDiskSize":        strconv.Itoa(d.Get("control_plane.0.disk_size").(int)),
+		"ControlPlaneDiskSize":        fmt.Sprintf("%dGi", d.Get("control_plane.0.disk_size_gi").(int)),
 		"ControlPlaneMachineCount":    strconv.Itoa(d.Get("control_plane.0.machine_count").(int)),
 		"DnsVersion":                  clusterDetails.TkgVersion.CoreDns,
 		"EtcdVersion":                 clusterDetails.TkgVersion.Etcd,
@@ -536,10 +560,10 @@ func generateCapiYaml(d *schema.ResourceData, clusterDetails *clusterInfoDto) (s
 	}
 
 	if d.Get("node_health_check").(bool) {
-		args["MaxUnhealthyNodePercentage"] = fmt.Sprintf("%s%%%%", clusterDetails.VCDKEConfig.MaxUnhealthyNodesPercentage) // With the 'percentage' suffix, it is doubled to render the template correctly
-		args["NodeStartupTimeout"] = fmt.Sprintf("%ss", clusterDetails.VCDKEConfig.NodeStartupTimeout)                     // With the 'second' suffix
-		args["NodeUnknownTimeout"] = fmt.Sprintf("%ss", clusterDetails.VCDKEConfig.NodeUnknownTimeout)                     // With the 'second' suffix
-		args["NodeNotReadyTimeout"] = fmt.Sprintf("%ss", clusterDetails.VCDKEConfig.NodeNotReadyTimeout)                   // With the 'second' suffix
+		args["MaxUnhealthyNodePercentage"] = fmt.Sprintf("%s%%", clusterDetails.VCDKEConfig.MaxUnhealthyNodesPercentage) // With the 'percentage' suffix, it is doubled to render the template correctly
+		args["NodeStartupTimeout"] = fmt.Sprintf("%ss", clusterDetails.VCDKEConfig.NodeStartupTimeout)                   // With the 'second' suffix
+		args["NodeUnknownTimeout"] = fmt.Sprintf("%ss", clusterDetails.VCDKEConfig.NodeUnknownTimeout)                   // With the 'second' suffix
+		args["NodeNotReadyTimeout"] = fmt.Sprintf("%ss", clusterDetails.VCDKEConfig.NodeNotReadyTimeout)                 // With the 'second' suffix
 	}
 
 	if err := capiYamlEmpty.Execute(buf, args); err != nil {
@@ -591,7 +615,7 @@ func generateNodePoolYaml(d *schema.ResourceData, clusterDetails *clusterInfoDto
 			"NodePoolSizingPolicy":    clusterDetails.UrnToNamesCache[nodePool["sizing_policy_id"].(string)],
 			"NodePoolPlacementPolicy": clusterDetails.UrnToNamesCache[placementPolicyId.(string)],
 			"NodePoolStorageProfile":  clusterDetails.UrnToNamesCache[nodePool["storage_profile_id"].(string)],
-			"NodePoolDiskSize":        strconv.Itoa(nodePool["disk_size"].(int)),
+			"NodePoolDiskSize":        fmt.Sprintf("%dGi", nodePool["disk_size_gi"].(int)),
 			"NodePoolEnableGpu":       strconv.FormatBool(vpguPolicyId != ""),
 			"NodePoolMachineCount":    strconv.Itoa(nodePool["machine_count"].(int)),
 			"KubernetesVersion":       clusterDetails.TkgVersion.KubernetesVersion,
@@ -608,7 +632,7 @@ func generateNodePoolYaml(d *schema.ResourceData, clusterDetails *clusterInfoDto
 // a Kubernetes cluster using CSE.
 type clusterInfoDto struct {
 	Name            string
-	VcdUrl          url.URL
+	VcdUrl          string
 	Org             *govcd.AdminOrg
 	VdcName         string
 	OvaName         string
@@ -871,6 +895,6 @@ func createClusterInfoDto(d *schema.ResourceData, vcdClient *VCDClient, vcdKeCon
 	}
 	result.ApiToken = apiToken.RefreshToken
 
-	result.VcdUrl = vcdClient.VCDClient.Client.VCDHREF
+	result.VcdUrl = strings.Replace(vcdClient.VCDClient.Client.VCDHREF.String(), "/api", "", 1)
 	return result, nil
 }
