@@ -425,9 +425,9 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 				return nil, fmt.Errorf("could not retrieve the Kubernetes cluster with ID '%s': %s", d.Id(), err)
 			}
 
-			vcdKe, err := navigateMap[map[string]interface{}](rde.DefinedEntity.Entity, "spec.vcdKe")
+			vcdKe, err := traverseMapAndGet[map[string]interface{}](rde.DefinedEntity.Entity, "spec.vcdKe")
 			if err != nil {
-				return nil, fmt.Errorf("JSON object 'spec.vcdKe' is not correct in the RDE")
+				return nil, fmt.Errorf("JSON object 'spec.vcdKe' is not correct in the RDE: %s", err)
 			}
 			vcdKe["markForDelete"] = true
 			vcdKe["forceDelete"] = true

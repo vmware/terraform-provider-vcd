@@ -166,8 +166,8 @@ func Test_areMarshaledJsonEqual(t *testing.T) {
 	}
 }
 
-// Test_navigateMap tests navigateMap function
-func Test_navigateMap(t *testing.T) {
+// Test_traverseMapAndGet tests traverseMapAndGet function
+func Test_traverseMapAndGet(t *testing.T) {
 	type args struct {
 		input interface{}
 		path  string
@@ -286,21 +286,21 @@ func Test_navigateMap(t *testing.T) {
 			var got interface{}
 			var err error
 			if tt.wantType == "string" {
-				got, err = navigateMap[string](tt.args.input, tt.args.path)
+				got, err = traverseMapAndGet[string](tt.args.input, tt.args.path)
 			} else if tt.wantType == "map" {
-				got, err = navigateMap[map[string]interface{}](tt.args.input, tt.args.path)
+				got, err = traverseMapAndGet[map[string]interface{}](tt.args.input, tt.args.path)
 			} else {
 				t.Fatalf("wantType type not used in this test")
 			}
 
 			if err != nil {
 				if tt.wantErr != err.Error() {
-					t.Errorf("navigateMap() error = %v, wantErr = %v", err, tt.wantErr)
+					t.Errorf("traverseMapAndGet() error = %v, wantErr = %v", err, tt.wantErr)
 				}
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("navigateMap() got = %v, want %v", got, tt.want)
+				t.Errorf("traverseMapAndGet() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

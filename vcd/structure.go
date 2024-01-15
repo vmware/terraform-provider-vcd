@@ -24,9 +24,10 @@ func getKeys[K comparable, V any](input map[K]V) []K {
 	return result
 }
 
-// navigateMap traverses the input, which is map of maps, following the introduced path that should be
-// in the syntax "keyA.keyB.keyC..."
-func navigateMap[ResultType any](input interface{}, path string) (ResultType, error) {
+// traverseMapAndGet traverses the input, which is map of maps, following the introduced path that should be
+// in the syntax "keyA.keyB.keyC...". It obtains the value of type ResultType (generic one) that is inside
+// the last requested subpath ("keyC" in the example).
+func traverseMapAndGet[ResultType any](input interface{}, path string) (ResultType, error) {
 	var nothing ResultType
 	if input == nil {
 		return nothing, fmt.Errorf("the input is nil")
