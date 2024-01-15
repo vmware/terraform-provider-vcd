@@ -5,6 +5,7 @@ package vcd
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -66,10 +67,15 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 	}
 
 	// this data is used to capture VM HREF after step 1 and then wait until metadata is available
-	// before metadata is available as we have seen delays before it is available
+	// as we have seen delays before it is available
 	vmHref := &testCachedFieldValue{}
 	vcdClient := createTemporaryVCDConnection(false)
 	waitForMetadata := func() {
+		// VCD versions < 10.5.1 do not have inherited metadata and there is nothing to wait
+		if vcdClient.Client.APIVCDMaxVersionIs("< 38.1") {
+			return
+		}
+
 		vm, err := vcdClient.Client.GetVMByHref(vmHref.fieldValue)
 		if err != nil {
 			fmt.Printf("### error retrieving VM to wait for metadata %s", err)
@@ -83,14 +89,14 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 		for a := 0; a < numRetries; a++ {
 			fmt.Printf(".")
 
-			originId, err := vm.GetMetadataByKey("vm.origin.id", true)
-			if err != nil {
+			originMetadata, err := vm.GetMetadataByKey("vm.origin.id", true)
+			if err != nil && !strings.Contains(err.Error(), "403") {
 				fmt.Printf("\n### error retrieving metadata 'vm.origin.id' %s\n", err)
 			}
 
-			if originId.TypedValue.Value != "" {
-				fmt.Printf("\n Found.\n")
-				spew.Dump(originId)
+			if originMetadata != nil && originMetadata.TypedValue != nil && originMetadata.TypedValue.Value != "" {
+				fmt.Printf(" Found.\n")
+				spew.Dump(originMetadata)
 				metadataFound = true
 				break
 			}
@@ -130,7 +136,7 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 						"vcd_vapp_vm."+vmName2, "network.0.ip", "10.10.102.162"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName2, "power_on", "true"),
-					vmHref.cacheTestResourceFieldValue("vcd_vapp_vm."+vmName, "href"),
+					vmHref.cacheTestResourceFieldValue("vcd_vapp_vm."+vmName2, "href"),
 				),
 			},
 			{
@@ -138,14 +144,10 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 				Config:    configText2,
 				PreConfig: waitForMetadata,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmName2, "metadata.vm_metadata", "VM Metadata."),
-					testMatchResourceAttrWhenVersionMatches(
-						"vcd_vapp_vm."+vmName2, "inherited_metadata.vm.origin.id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
-					testCheckResourceAttrSetWhenVersionMatches(
-						"vcd_vapp_vm."+vmName2, "inherited_metadata.vm.origin.name", ">= 38.1"),
-					testMatchResourceAttrWhenVersionMatches(
-						"vcd_vapp_vm."+vmName2, "inherited_metadata.vm.origin.type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName2, "metadata.vm_metadata", "VM Metadata."),
+					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+vmName2, "inherited_metadata.vm.origin.id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
+					testCheckResourceAttrSetWhenVersionMatches("vcd_vapp_vm."+vmName2, "inherited_metadata.vm.origin.name", ">= 38.1"),
+					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+vmName2, "inherited_metadata.vm.origin.type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
 				),
 			},
 		},
