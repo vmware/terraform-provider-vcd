@@ -411,7 +411,7 @@ func waitForClusterState(vcdClient *VCDClient, d *schema.ResourceData, rdeId str
 	return "", fmt.Errorf("timeout of %d minutes reached, latest cluster state obtained was '%s'", timeout, currentState)
 }
 
-func resourceVcdCseKubernetesRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	var diags diag.Diagnostics
 	_, _, capvcdBehaviorVersion := getCseRdeTypeVersions(d)
@@ -447,7 +447,7 @@ func resourceVcdCseKubernetesRead(ctx context.Context, d *schema.ResourceData, m
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Warning,
 			Summary:  "Kubernetes cluster not in 'provisioned' state",
-			Detail:   fmt.Sprintf("Kubernetes cluster with ID is in '%s' state, won't be able to read/refresh the Kubeconfig", d.Id()),
+			Detail:   fmt.Sprintf("Kubernetes cluster with ID is in '%s' state, won't be able to read/refresh the Kubeconfig nor make updates", d.Id()),
 		})
 	}
 
