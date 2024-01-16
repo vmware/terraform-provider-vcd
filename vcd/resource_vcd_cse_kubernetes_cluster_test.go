@@ -90,7 +90,7 @@ data "vcd_storage_profile" "sp" {
 }
 
 resource "vcd_api_token" "token" {
-  name             = "{{.Name}}65"
+  name             = "{{.Name}}66"
   file_name        = "{{.TokenFile}}"
   allow_token_file = true
 }
@@ -137,5 +137,8 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
 
   auto_repair_on_errors = false
   node_health_check     = false
+
+  create_timeout_minutes = 0
+  delete_timeout_minutes = 0
 }
 `

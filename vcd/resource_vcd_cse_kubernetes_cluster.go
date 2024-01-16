@@ -290,14 +290,14 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Optional:         true,
 				Default:          60,
 				Description:      "The time, in minutes, to wait for the cluster to be completely created, with a ready-to-use Kubeconfig. 0 means wait indefinitely",
-				ValidateDiagFunc: minimumValue(0, "timeout must be at least 0 (unlimited)"),
+				ValidateDiagFunc: minimumValue(0, "timeout must be at least 0 (no timeout)"),
 			},
 			"delete_timeout_minutes": {
 				Type:             schema.TypeInt,
 				Optional:         true,
 				Default:          10,
 				Description:      "The time, in minutes, to wait for the cluster to be deleted when it is marked for deletion. 0 means wait indefinitely",
-				ValidateDiagFunc: minimumValue(0, "timeout must be at least 0 (unlimited)"),
+				ValidateDiagFunc: minimumValue(0, "timeout must be at least 0 (no timeout)"),
 			},
 			"state": {
 				Type:        schema.TypeString,
@@ -318,7 +318,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 	}
 }
 
-// getCseRdeTypeVersions gets the RDE Type versions. First returned parameter is VCDKEConfig, second is CAPVCDCluster
+// getCseRdeTypeVersions gets the RDE Type versions. First returned parameter is VCDKEConfig, second is CAPVCDCluster, third is CAPVCD Behavior version
 func getCseRdeTypeVersions(d *schema.ResourceData) (string, string, string) {
 	versions := cseVersions[d.Get("cse_version").(string)]
 	return versions[0], versions[1], versions[2]
@@ -351,7 +351,7 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 	}
 
 	// We need to set the ID here to be able to distinguish this cluster from all the others that may have the same name and RDE Type.
-	// We could use some other ways of filtering, but ID is the best and most accurate.
+	// We could use some other ways of filtering, but ID is the only accurate.
 	d.SetId(rde.DefinedEntity.ID)
 
 	_, err = waitForClusterState(vcdClient, d, rde.DefinedEntity.ID, "provisioned", "error")
@@ -371,7 +371,7 @@ func waitForClusterState(vcdClient *VCDClient, d *schema.ResourceData, rdeId str
 	currentState := ""
 
 	start := time.Now()
-	for elapsed <= time.Duration(timeout) || timeout == 0 { // If the user specifies create_timeout_minutes=0, we wait forever
+	for elapsed <= time.Duration(timeout)*time.Minute || timeout == 0 { // If the user specifies create_timeout_minutes=0, we wait forever
 		rde, err := vcdClient.GetRdeById(rdeId)
 		if err != nil {
 			return "", err
@@ -394,7 +394,7 @@ func waitForClusterState(vcdClient *VCDClient, d *schema.ResourceData, rdeId str
 		time.Sleep(50 * time.Second)
 		elapsed = time.Since(start)
 	}
-	return "", fmt.Errorf("timeout of %d seconds reached, latest cluster state obtained was '%s'", timeout, currentState)
+	return "", fmt.Errorf("timeout of %d minutes reached, latest cluster state obtained was '%s'", timeout, currentState)
 }
 
 func resourceVcdCseKubernetesRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
