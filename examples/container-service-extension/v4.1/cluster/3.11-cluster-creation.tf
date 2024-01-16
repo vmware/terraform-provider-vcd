@@ -152,12 +152,21 @@ resource "vcd_rde" "k8s_cluster_instance" {
     force_delete          = false # Make this true to forcefully delete the cluster
     auto_repair_on_errors = var.auto_repair_on_errors
   })
+
+  # Be careful, as updating "input_entity" will make the cluster unstable if not done correctly.
+  # CSE requires sending back the cluster status that is saved into the "computed_entity" attribute once it is created.
+  # Read more: https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_cluster_management#updating-a-kubernetes-cluster
+  # You can remove this lifecycle constraint once the "input_entity" JSON contains the cluster status and other generated attributes that were not present
+  # in the initial payload.
+  lifecycle {
+    ignore_changes = [ input_entity ]
+  }
 }
 
 # Some useful outputs to monitor TKGm cluster creation process.
 locals {
   k8s_cluster_computed       = jsondecode(vcd_rde.k8s_cluster_instance.computed_entity)
-  being_deleted              = tobool(jsondecode(vcd_rde.k8s_cluster_instance.input_entity)["spec"]["vcdKe"]["markForDelete"]) || tobool(local.k8s_cluster_computed["spec"]["vcdKe"]["forceDelete"])
+  being_deleted              = tobool(jsondecode(vcd_rde.k8s_cluster_instance.input_entity)["spec"]["vcdKe"]["markForDelete"]) || tobool(jsondecode(vcd_rde.k8s_cluster_instance.input_entity)["spec"]["vcdKe"]["forceDelete"])
   has_status                 = lookup(local.k8s_cluster_computed, "status", null) != null
 }
 

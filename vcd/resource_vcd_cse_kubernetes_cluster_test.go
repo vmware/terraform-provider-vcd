@@ -135,9 +135,6 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
     filesystem         = "ext4"
   }
 
-  pods_cidr     = "100.10.0.0/11"
-  services_cidr = "100.90.0.0/11"
-
   auto_repair_on_errors = false
   node_health_check     = false
 }
