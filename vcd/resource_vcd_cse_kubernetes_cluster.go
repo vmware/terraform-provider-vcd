@@ -309,6 +309,11 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Computed:    true,
 				Description: "The contents of the kubeconfig of the Kubernetes cluster, only available when 'state=provisioned'",
 			},
+			"latest_event": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The latest event that occurred in the lifetime of the cluster",
+			},
 			"raw_cluster_rde_json": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -391,6 +396,13 @@ func waitForClusterState(vcdClient *VCDClient, d *schema.ResourceData, rdeId str
 				}
 			}
 		}
+		eventSet, _ := traverseMapAndGet[[]interface{}](rde.DefinedEntity.Entity, "status.vcdKe.eventSet")
+		if len(eventSet) > 1 && eventSet[len(eventSet)-1] != nil {
+			latestEvent, _ := traverseMapAndGet[string](eventSet[len(eventSet)-1], "additionalDetails.Detailed Event")
+			if latestEvent != "" {
+				fmt.Printf("[DEBUG] waiting for cluster to be in one of these states: %v. Latest event: '%s'", statesToWaitFor, latestEvent)
+			}
+		}
 
 		elapsed = time.Since(start)
 		time.Sleep(50 * time.Second)
@@ -423,12 +435,12 @@ func resourceVcdCseKubernetesRead(ctx context.Context, d *schema.ResourceData, m
 		invocationResult := map[string]interface{}{}
 		err := rde.InvokeBehaviorAndMarshal(fmt.Sprintf("urn:vcloud:behavior-interface:getFullEntity:cse:capvcd:%s", capvcdBehaviorVersion), types.BehaviorInvocation{}, invocationResult)
 		if err != nil {
-			return diag.Errorf("could not retrieve Kubeconfig: %s", err)
+			return diag.Errorf("could not invoke the behavior to obtain the Kubeconfig for the Kubernetes cluster with ID '%s': %s", d.Id(), err)
 		}
 
 		kubeconfig, err := traverseMapAndGet[string](invocationResult, "entity.status.capvcd.private.kubeConfig")
 		if err != nil {
-			return diag.Errorf("could not retrieve Kubeconfig: %s", err)
+			return diag.Errorf("could not retrieve Kubeconfig for Kubernetes cluster with ID '%s': %s", d.Id(), err)
 		}
 		dSet(d, "kubeconfig", kubeconfig)
 	} else {
@@ -439,7 +451,6 @@ func resourceVcdCseKubernetesRead(ctx context.Context, d *schema.ResourceData, m
 		})
 	}
 
-	// This must be the last step, so it has the most possible elements
 	jsonEntity, err := jsonToCompactString(rde.DefinedEntity.Entity)
 	if err != nil {
 		diags = append(diags, diag.Errorf("could not save the cluster '%s' raw RDE contents into 'raw_cluster_rde_json' attribute: %s", rde.DefinedEntity.ID, err)...)
@@ -448,6 +459,17 @@ func resourceVcdCseKubernetesRead(ctx context.Context, d *schema.ResourceData, m
 		return diags
 	}
 	dSet(d, "raw_cluster_rde_json", jsonEntity)
+
+	// This must be the last step, so it is really the last event
+	eventSet, err := traverseMapAndGet[[]interface{}](rde.DefinedEntity.Entity, "status.vcdKe.eventSet")
+	if err != nil {
+		return diag.Errorf("could not retrieve the event set of the Kubernetes cluster with ID '%s': %s", d.Id(), err)
+	}
+	latestEvent, err := traverseMapAndGet[string](eventSet[len(eventSet)-1], "additionalDetails.Detailed Event")
+	if err != nil {
+		return diag.Errorf("could not retrieve the latest event of the Kubernetes cluster with ID '%s': %s", d.Id(), err)
+	}
+	dSet(d, "latest_event", latestEvent)
 
 	d.SetId(rde.DefinedEntity.ID) // ID is already there, but just for completeness/readability
 	return nil
@@ -511,32 +533,30 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("could not update Kubernetes cluster with ID '%s': %s", d.Id(), err)
 	}
 
-	return diag.Errorf("not implemented")
+	return resourceVcdCseKubernetesRead(ctx, d, meta)
 }
 
 // resourceVcdCseKubernetesDelete deletes a CSE Kubernetes cluster. To delete a Kubernetes cluster, one must send
 // the flags "markForDelete" and "forceDelete" back to true, so the CSE Server is able to delete all cluster elements
-// and perform a cleanup. Hence, this function sends these properties and waits for deletion.
+// and perform a cleanup. Hence, this function sends an update of just these two properties and waits for the cluster RDE
+// to be gone.
 func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+	vcdKe := map[string]interface{}{}
 
-	// We need to do this operation with retries due to the mutex mechanism VCD has (ETags).
-	// We may hit an error if CSE Server is doing any operation in the background and we attempt to mark the cluster for deletion,
-	// so we need to insist several times.
 	var elapsed time.Duration
 	timeout := d.Get("delete_timeout_minutes").(int)
-
 	start := time.Now()
-	for elapsed <= time.Duration(timeout)*time.Minute || timeout == 0 { // If the user specifies create_timeout_minutes=0, we wait forever
+	for elapsed <= time.Duration(timeout)*time.Minute || timeout == 0 { // If the user specifies delete_timeout_minutes=0, we wait forever
 		rde, err := vcdClient.GetRdeById(d.Id())
 		if err != nil {
 			if govcd.IsNotFound(err) {
-				break // The RDE is gone, so the process is completed and there's nothing more to do
+				return nil // The RDE is gone, so the process is completed and there's nothing more to do
 			}
 			return diag.Errorf("could not retrieve the Kubernetes cluster with ID '%s': %s", d.Id(), err)
 		}
 
-		vcdKe, err := traverseMapAndGet[map[string]interface{}](rde.DefinedEntity.Entity, "spec.vcdKe")
+		vcdKe, err = traverseMapAndGet[map[string]interface{}](rde.DefinedEntity.Entity, "spec.vcdKe")
 		if err != nil {
 			return diag.Errorf("JSON object 'spec.vcdKe' is not correct in the RDE '%s': %s", d.Id(), err)
 		}
@@ -558,7 +578,12 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 		time.Sleep(30 * time.Second)
 		elapsed = time.Since(start)
 	}
-	return nil
+
+	// We give a hint to the user whenever possible
+	if len(vcdKe) >= 2 && vcdKe["markForDelete"].(bool) && vcdKe["forceDelete"].(bool) {
+		return diag.Errorf("timeout of %d minutes reached, the cluster was successfully marked for deletion but was not removed in time", timeout)
+	}
+	return diag.Errorf("timeout of %d minutes reached, the cluster was not marked for deletion, please try again", timeout)
 }
 
 // getCseKubernetesClusterEntityMap gets the payload for the RDE that manages the Kubernetes cluster, so it
@@ -818,6 +843,7 @@ func createClusterInfoDto(d *schema.ResourceData, vcdClient *VCDClient, vcdKeCon
 		return nil, fmt.Errorf("could not retrieve the Kubernetes OVA with ID '%s': %s", vAppTemplateId, err)
 	}
 	result.OvaName = vAppTemplate.VAppTemplate.Name
+	// TODO: Validate that it is a Kubernetes ova
 
 	// Searches for the TKG components versions in the tkgMap with the OVA name details
 

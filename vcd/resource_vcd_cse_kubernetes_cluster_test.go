@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"os"
 	"strings"
 	"testing"
@@ -17,6 +18,8 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 		t.Skip("CSE tests deactivated, skipping " + t.Name())
 	}
 
+	tokenFilename := getCurrentDir() + t.Name() + ".json"
+
 	var params = StringMap{
 		"Name":         strings.ToLower(t.Name()),
 		"OvaCatalog":   testConfig.Cse.OvaCatalog,
@@ -26,7 +29,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 		"Vdc":          testConfig.Cse.Vdc,
 		"EdgeGateway":  testConfig.Cse.EdgeGateway,
 		"Network":      testConfig.Cse.RoutedNetwork,
-		"TokenFile":    getCurrentDir() + t.Name() + ".json",
+		"TokenFile":    tokenFilename,
 	}
 	testParamsNotEmpty(t, params)
 
@@ -38,6 +41,16 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	}
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
+		CheckDestroy: func(state *terraform.State) error {
+			// Clean the API Token file
+			if fileExists(tokenFilename) {
+				err := os.Remove(tokenFilename)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		},
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
@@ -90,7 +103,7 @@ data "vcd_storage_profile" "sp" {
 }
 
 resource "vcd_api_token" "token" {
-  name             = "{{.Name}}66"
+  name             = "{{.Name}}71"
   file_name        = "{{.TokenFile}}"
   allow_token_file = true
 }

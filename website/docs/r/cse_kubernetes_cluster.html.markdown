@@ -200,6 +200,7 @@ The following attributes are available for consumption as computed attributes:
 * `kubeconfig` - The ready-to-use Kubeconfig file **contents** as a raw string. Only available when `state=provisioned`
 * `raw_cluster_rde_json` - The raw JSON representation of this Kubernetes cluster inside the [RDE](/providers/vmware/vcd/latest/docs/resources/rde)
   that CSE uses to operate the cluster
+* `latest_event` - The latest event that occurred in the lifetime of the cluster
 
 ## Importing
 
