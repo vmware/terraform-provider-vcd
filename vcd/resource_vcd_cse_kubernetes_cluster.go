@@ -379,20 +379,22 @@ func waitForClusterState(vcdClient *VCDClient, d *schema.ResourceData, rdeId str
 		currentState, err = traverseMapAndGet[string](rde.DefinedEntity.Entity, "status.vcdKe.state")
 		if err != nil {
 			util.Logger.Printf("[DEBUG] Failed getting cluster state: %s", err)
-			time.Sleep(50 * time.Second)
-			continue
-		}
-		for _, stateToWaitFor := range statesToWaitFor {
-			if currentState == "error" && stateToWaitFor == "error" && d.Get("auto_repair_on_errors").(bool) {
-				// We do nothing, just keep waiting for the cluster to auto-recover and hopefully be in another currentState before timeout
-				break
+			// We ignore this error, as eventually the state should be populated
+		} else {
+			for _, stateToWaitFor := range statesToWaitFor {
+				if currentState == "error" && stateToWaitFor == "error" && d.Get("auto_repair_on_errors").(bool) {
+					// We do nothing, just keep waiting for the cluster to auto-recover and hopefully be in another currentState before timeout
+					break
+				}
+				if currentState == stateToWaitFor {
+					return currentState, nil
+				}
 			}
-			if currentState == stateToWaitFor {
-				return currentState, nil
-			}
 		}
-		time.Sleep(50 * time.Second)
+
 		elapsed = time.Since(start)
+		time.Sleep(50 * time.Second)
+
 	}
 	return "", fmt.Errorf("timeout of %d minutes reached, latest cluster state obtained was '%s'", timeout, currentState)
 }
@@ -521,54 +523,40 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 	// We need to do this operation with retries due to the mutex mechanism VCD has (ETags).
 	// We may hit an error if CSE Server is doing any operation in the background and we attempt to mark the cluster for deletion,
 	// so we need to insist several times.
-	_, err := runWithRetry(
-		fmt.Sprintf("marking the cluster %s for deletion", d.Get("name").(string)),
-		"error marking the cluster for deletion",
-		30*time.Second,
-		nil,
-		func() (any, error) {
-			rde, err := vcdClient.GetRdeById(d.Id())
-			if err != nil {
-				return nil, fmt.Errorf("could not retrieve the Kubernetes cluster with ID '%s': %s", d.Id(), err)
-			}
+	var elapsed time.Duration
+	timeout := d.Get("delete_timeout_minutes").(int)
 
-			vcdKe, err := traverseMapAndGet[map[string]interface{}](rde.DefinedEntity.Entity, "spec.vcdKe")
-			if err != nil {
-				return nil, fmt.Errorf("JSON object 'spec.vcdKe' is not correct in the RDE: %s", err)
+	start := time.Now()
+	for elapsed <= time.Duration(timeout)*time.Minute || timeout == 0 { // If the user specifies create_timeout_minutes=0, we wait forever
+		rde, err := vcdClient.GetRdeById(d.Id())
+		if err != nil {
+			if govcd.IsNotFound(err) {
+				break // The RDE is gone, so the process is completed and there's nothing more to do
 			}
+			return diag.Errorf("could not retrieve the Kubernetes cluster with ID '%s': %s", d.Id(), err)
+		}
+
+		vcdKe, err := traverseMapAndGet[map[string]interface{}](rde.DefinedEntity.Entity, "spec.vcdKe")
+		if err != nil {
+			return diag.Errorf("JSON object 'spec.vcdKe' is not correct in the RDE '%s': %s", d.Id(), err)
+		}
+
+		if !vcdKe["markForDelete"].(bool) || !vcdKe["forceDelete"].(bool) {
+			// Mark the cluster for deletion
 			vcdKe["markForDelete"] = true
 			vcdKe["forceDelete"] = true
 			rde.DefinedEntity.Entity["spec"].(map[string]interface{})["vcdKe"] = vcdKe
-
 			err = rde.Update(*rde.DefinedEntity)
 			if err != nil {
-				return nil, err
-			}
-			return nil, nil
-		},
-	)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	_, err = runWithRetry(
-		fmt.Sprintf("checking the cluster %s is correctly marked for deletion", d.Get("name").(string)),
-		"error completing the deletion of the cluster",
-		time.Duration(d.Get("delete_timeout_minutes").(int))*time.Minute,
-		nil,
-		func() (any, error) {
-			_, err := vcdClient.GetRdeById(d.Id())
-			if err != nil {
-				if govcd.IsNotFound(err) {
-					return nil, nil // All is correct, the cluster RDE is gone, so it is deleted
+				if strings.Contains(strings.ToLower(err.Error()), "etag") {
+					continue // We ignore any ETag error. This just means a clash between CSE Server and Terraform, we just try again
 				}
-				return nil, fmt.Errorf("the cluster with ID '%s' is still present in VCD but it is unreadable: %s", d.Id(), err)
+				return diag.Errorf("could not mark the Kubernetes cluster with ID '%s' to be deleted: %s", d.Id(), err)
 			}
+		}
 
-			return nil, fmt.Errorf("the cluster with ID '%s' is marked for deletion but still present in VCD", d.Id())
-		},
-	)
-	if err != nil {
-		return diag.FromErr(err)
+		time.Sleep(30 * time.Second)
+		elapsed = time.Since(start)
 	}
 	return nil
 }
