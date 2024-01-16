@@ -3,7 +3,7 @@
 package vcd
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -19,6 +19,15 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	}
 
 	tokenFilename := getCurrentDir() + t.Name() + ".json"
+	defer func() {
+		// Clean the API Token file
+		if fileExists(tokenFilename) {
+			err := os.Remove(tokenFilename)
+			if err != nil {
+				fmt.Printf("could not delete API token file '%s', please delete it manually", tokenFilename)
+			}
+		}
+	}()
 
 	var params = StringMap{
 		"Name":         strings.ToLower(t.Name()),
@@ -41,16 +50,6 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	}
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy: func(state *terraform.State) error {
-			// Clean the API Token file
-			if fileExists(tokenFilename) {
-				err := os.Remove(tokenFilename)
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		},
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
