@@ -10,7 +10,7 @@ description: |-
 
 ~> **This guide is DEPRECATED since v3.12+**. You should use the resource
 [`vcd_cse_kubernetes_cluster`](/providers/vmware/vcd/latest/docs/resources/cse_kubernetes_cluster)
-present in the VCD Provider since v3.12.0 to provision and manage Kubernetes clusters in a VCD appliance where Container Service Extension is installed
+to provision and manage Kubernetes clusters in a VCD appliance where Container Service Extension is installed
 and running.
 
 ## About
