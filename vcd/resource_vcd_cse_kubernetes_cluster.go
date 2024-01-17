@@ -826,25 +826,23 @@ func getClusterCreateDto(d *schema.ResourceData, vcdClient *VCDClient) (*createC
 		if _, ok := d.GetOk(configBlockAttr); !ok {
 			continue // Some blocks are optional, this is managed by the schema constraints
 		}
-
 		// The node_pool is a Set, but the others are already Lists
-		configBlockAsSet, isASet := d.Get(configBlockAttr).(*schema.Set)
-		var setOrListConfigBlock []interface{}
-		if isASet {
-			setOrListConfigBlock = configBlockAsSet.List()
+		var configBlockAsList []interface{}
+		if _, isASet := d.Get(configBlockAttr).(*schema.Set); isASet {
+			configBlockAsList = d.Get(configBlockAttr).(*schema.Set).List()
 		} else {
-			setOrListConfigBlock = d.Get(configBlockAttr).([]interface{})
+			configBlockAsList = d.Get(configBlockAttr).([]interface{})
 		}
 
-		// For every block, we check the inner attributes to retrieve their corresponding object names,
+		// For every existing block/list, we check the inner attributes to retrieve their corresponding object names,
 		// like Storage Profile names and Compute Policy names. If the ID is already registered, we skip it.
-		for _, configBlockRaw := range setOrListConfigBlock {
+		for _, configBlockRaw := range configBlockAsList {
 			configBlock := configBlockRaw.(map[string]interface{})
 			if id, ok := configBlock["storage_profile_id"]; ok {
 				if _, alreadyPresent := result.UrnToNamesCache[id.(string)]; !alreadyPresent {
 					storageProfile, err := vcdClient.GetStorageProfileById(id.(string))
 					if err != nil {
-						return nil, fmt.Errorf("could not get a Storage Profile with ID '%s': %s", id, err)
+						return nil, fmt.Errorf("could not get Storage Profile with ID '%s': %s", id, err)
 					}
 					result.UrnToNamesCache[id.(string)] = storageProfile.Name
 				}
@@ -860,7 +858,7 @@ func getClusterCreateDto(d *schema.ResourceData, vcdClient *VCDClient) (*createC
 				}
 				computePolicy, err := vcdClient.GetVdcComputePolicyV2ById(id.(string))
 				if err != nil {
-					return nil, fmt.Errorf("could not get a Compute Policy with ID '%s': %s", id, err)
+					return nil, fmt.Errorf("could not get Compute Policy with ID '%s': %s", id, err)
 				}
 				result.UrnToNamesCache[id.(string)] = computePolicy.VdcComputePolicyV2.Name
 			}
