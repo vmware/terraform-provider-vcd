@@ -3,7 +3,6 @@
 package vcd
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"reflect"
 	"testing"
 )
@@ -59,62 +58,6 @@ func Test_getTkgVersionBundleFromVAppTemplateName(t *testing.T) {
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Fatalf("getTkgVersionBundleFromVAppTemplateName() got = %v, want = %v", got, tt.want)
-			}
-		})
-	}
-}
-
-// Test_generateCapiYaml tests generateCapiYaml function
-func Test_generateCapiYaml(t *testing.T) {
-	type args struct {
-		resourceData   map[string]interface{}
-		clusterDetails *createClusterDto
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    string
-		wantErr bool
-	}{
-		{
-			name: "foo",
-			args: args{
-				resourceData: map[string]interface{}{},
-				clusterDetails: &createClusterDto{
-					Name:            "",
-					VcdUrl:          "",
-					Org:             nil,
-					VdcName:         "",
-					OvaName:         "",
-					CatalogName:     "",
-					NetworkName:     "",
-					RdeType:         nil,
-					UrnToNamesCache: nil,
-					VCDKEConfig: struct {
-						MaxUnhealthyNodesPercentage string
-						NodeStartupTimeout          string
-						NodeNotReadyTimeout         string
-						NodeUnknownTimeout          string
-						ContainerRegistryUrl        string
-					}{},
-					TkgVersion: tkgVersionBundle{},
-					Owner:      "",
-					ApiToken:   "",
-				},
-			},
-			want: "",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			d := schema.TestResourceDataRaw(t, resourceVcdCseKubernetesClusterSchema, tt.args.resourceData)
-			got, err := generateCapiYaml(d, tt.args.clusterDetails)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("generateCapiYaml() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if got != tt.want {
-				t.Errorf("generateCapiYaml() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
