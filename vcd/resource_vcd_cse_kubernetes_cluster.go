@@ -359,18 +359,21 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 	// We could use some other ways of filtering, but ID is the only accurate.
 	d.SetId(rde.DefinedEntity.ID)
 
-	_, err = waitForClusterState(vcdClient, d, rde.DefinedEntity.ID, "provisioned", "error")
+	state, err := waitUntilClusterIsProvisioned(vcdClient, d, rde.DefinedEntity.ID)
 	if err != nil {
 		return diag.Errorf("Kubernetes cluster creation finished with errors: %s", err)
+	}
+	if state != "provisioned" {
+		return diag.Errorf("Kubernetes cluster creation failed, cluster is not in 'provisioned' state, but '%s'", state)
 	}
 
 	return resourceVcdCseKubernetesRead(ctx, d, meta)
 }
 
-// waitForClusterState waits for the Kubernetes cluster to be in one of the specified states, either indefinitely (if "create_timeout_minutes=0")
+// waitUntilClusterIsProvisioned waits for the Kubernetes cluster to be in "provisioned" state, either indefinitely (if "create_timeout_minutes=0")
 // or until this timeout is reached. If one of the states is "error", this function also checks whether "auto_repair_on_errors=true" to keep
 // waiting.
-func waitForClusterState(vcdClient *VCDClient, d *schema.ResourceData, rdeId string, statesToWaitFor ...string) (string, error) {
+func waitUntilClusterIsProvisioned(vcdClient *VCDClient, d *schema.ResourceData, rdeId string) (string, error) {
 	var elapsed time.Duration
 	timeout := d.Get("create_timeout_minutes").(int)
 	currentState := ""
@@ -386,21 +389,33 @@ func waitForClusterState(vcdClient *VCDClient, d *schema.ResourceData, rdeId str
 			util.Logger.Printf("[DEBUG] Failed getting cluster state: %s", err)
 			// We ignore this error, as eventually the state should be populated
 		} else {
-			for _, stateToWaitFor := range statesToWaitFor {
-				if currentState == "error" && stateToWaitFor == "error" && d.Get("auto_repair_on_errors").(bool) {
-					// We do nothing, just keep waiting for the cluster to auto-recover and hopefully be in another currentState before timeout
-					break
-				}
-				if currentState == stateToWaitFor {
-					return currentState, nil
+
+			// Add some traceability in the logs and Terraform output about the progress of the cluster provisioning
+			eventSet, err := traverseMapAndGet[[]interface{}](rde.DefinedEntity.Entity, "status.vcdKe.eventSet")
+			if err == nil {
+				latestEvent, err := traverseMapAndGet[string](eventSet[len(eventSet)-1], "additionalDetails.Detailed Event")
+				if err != nil {
+					util.Logger.Printf("[DEBUG] waiting for cluster to be provisioned. Latest event: '%s'", latestEvent)
 				}
 			}
-		}
-		eventSet, _ := traverseMapAndGet[[]interface{}](rde.DefinedEntity.Entity, "status.vcdKe.eventSet")
-		if len(eventSet) > 1 && eventSet[len(eventSet)-1] != nil {
-			latestEvent, _ := traverseMapAndGet[string](eventSet[len(eventSet)-1], "additionalDetails.Detailed Event")
-			if latestEvent != "" {
-				fmt.Printf("[DEBUG] waiting for cluster to be in one of these states: %v. Latest event: '%s'", statesToWaitFor, latestEvent)
+
+			switch currentState {
+			case "provisioned":
+				return currentState, nil
+			case "error":
+				// We just finish if auto-recovery is disabled, otherwise we just let CSE fixing things in background
+				if !d.Get("auto_repair_on_errors").(bool) {
+					// Try to give feedback about what went wrong, which is located in a set of events in the RDE payload
+					latestError := "could not parse error event"
+					errorSet, err := traverseMapAndGet[[]interface{}](rde.DefinedEntity.Entity, "status.capvcd.errorSet")
+					if err == nil {
+						latestError, err = traverseMapAndGet[string](errorSet[len(errorSet)-1], "additionalDetails.error")
+						if err != nil {
+							latestError = "could not parse error event"
+						}
+					}
+					return "", fmt.Errorf("got an error and 'auto_repair_on_errors=false', aborting. Latest error: %s", latestError)
+				}
 			}
 		}
 
@@ -550,7 +565,7 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 	for elapsed <= time.Duration(timeout)*time.Minute || timeout == 0 { // If the user specifies delete_timeout_minutes=0, we wait forever
 		rde, err := vcdClient.GetRdeById(d.Id())
 		if err != nil {
-			if govcd.IsNotFound(err) {
+			if govcd.ContainsNotFound(err) {
 				return nil // The RDE is gone, so the process is completed and there's nothing more to do
 			}
 			return diag.Errorf("could not retrieve the Kubernetes cluster with ID '%s': %s", d.Id(), err)

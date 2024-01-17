@@ -60,6 +60,13 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	postTestChecks(t)
 }
 
+// TODO: Test:
+// Basic (DONE)
+// With machine health checks
+// With machine health checks
+// Without storage class
+// With virtual IP and control plane IPs
+// Nodes With vGPU policies
 const testAccVcdCseKubernetesCluster = `
 # skip-binary-test - This one requires a very special setup
 
@@ -102,7 +109,7 @@ data "vcd_storage_profile" "sp" {
 }
 
 resource "vcd_api_token" "token" {
-  name             = "{{.Name}}72"
+  name             = "{{.Name}}75"
   file_name        = "{{.TokenFile}}"
   allow_token_file = true
 }
