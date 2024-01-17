@@ -742,25 +742,23 @@ func getTkgVersionBundleFromVAppTemplateName(ovaName string) (tkgVersionBundle, 
 // This is useful to avoid querying VCD too much, as the Terraform configuration works mostly with IDs, but we require names, among
 // other items that we eventually need to retrieve from VCD.
 type createClusterDto struct {
-	Name            string
-	VcdUrl          string
-	Org             *govcd.AdminOrg
-	VdcName         string
-	OvaName         string
-	CatalogName     string
-	NetworkName     string
-	RdeType         *govcd.DefinedEntityType
-	UrnToNamesCache map[string]string // Maps unique IDs with their resource names (example: Compute policy ID with its name)
-	VCDKEConfig     struct {
-		MaxUnhealthyNodesPercentage string
-		NodeStartupTimeout          string
-		NodeNotReadyTimeout         string
-		NodeUnknownTimeout          string
-		ContainerRegistryUrl        string
-	}
-	TkgVersion tkgVersionBundle
-	Owner      string
-	ApiToken   string
+	Name                        string
+	VcdUrl                      string
+	Org                         *govcd.AdminOrg
+	VdcName                     string
+	OvaName                     string
+	CatalogName                 string
+	NetworkName                 string
+	RdeType                     *govcd.DefinedEntityType
+	UrnToNamesCache             map[string]string // Maps unique IDs with their resource names (example: Compute policy ID with its name)
+	MaxUnhealthyNodesPercentage string
+	NodeStartupTimeout          string
+	NodeNotReadyTimeout         string
+	NodeUnknownTimeout          string
+	ContainerRegistryUrl        string
+	TkgVersion                  tkgVersionBundle
+	Owner                       string
+	ApiToken                    string
 }
 
 // getClusterCreateDto creates and returns a createClusterDto object by obtaining all the required information
@@ -904,11 +902,12 @@ func getClusterCreateDto(d *schema.ResourceData, vcdClient *VCDClient) (*createC
 		return nil, fmt.Errorf("wrong format of VCDKEConfig, expected a single 'profiles' element, got %d", len(vcdKeConfig.Profiles))
 	}
 
-	result.VCDKEConfig.MaxUnhealthyNodesPercentage = strconv.Itoa(vcdKeConfig.Profiles[0].K8Config.Mhc.MaxUnhealthyNodes)
-	result.VCDKEConfig.NodeStartupTimeout = strconv.Itoa(vcdKeConfig.Profiles[0].K8Config.Mhc.NodeStartupTimeout)
-	result.VCDKEConfig.NodeNotReadyTimeout = strconv.Itoa(vcdKeConfig.Profiles[0].K8Config.Mhc.NodeNotReadyTimeout)
-	result.VCDKEConfig.NodeUnknownTimeout = strconv.Itoa(vcdKeConfig.Profiles[0].K8Config.Mhc.NodeUnknownTimeout)
-	result.VCDKEConfig.ContainerRegistryUrl = fmt.Sprintf("%s/tkg", vcdKeConfig.Profiles[0].ContainerRegistryUrl)
+	result.MaxUnhealthyNodesPercentage = strconv.Itoa(vcdKeConfig.Profiles[0].K8Config.Mhc.MaxUnhealthyNodes)
+	result.NodeStartupTimeout = strconv.Itoa(vcdKeConfig.Profiles[0].K8Config.Mhc.NodeStartupTimeout)
+	result.NodeNotReadyTimeout = strconv.Itoa(vcdKeConfig.Profiles[0].K8Config.Mhc.NodeNotReadyTimeout)
+	result.NodeUnknownTimeout = strconv.Itoa(vcdKeConfig.Profiles[0].K8Config.Mhc.NodeUnknownTimeout)
+	// TODO: Check airgapped environments: https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1.1a/VMware-Cloud-Director-Container-Service-Extension-Install-provider-4.1.1/GUID-F00BE796-B5F2-48F2-A012-546E2E694400.html
+	result.ContainerRegistryUrl = fmt.Sprintf("%s/tkg", vcdKeConfig.Profiles[0].ContainerRegistryUrl)
 
 	owner, ok := d.GetOk("owner")
 	if !ok {
@@ -970,7 +969,7 @@ func generateCapiYaml(d *schema.ResourceData, clusterDetails *createClusterDto) 
 		"ControlPlaneMachineCount":    strconv.Itoa(d.Get("control_plane.0.machine_count").(int)),
 		"DnsVersion":                  clusterDetails.TkgVersion.CoreDnsVersion,
 		"EtcdVersion":                 clusterDetails.TkgVersion.EtcdVersion,
-		"ContainerRegistryUrl":        clusterDetails.VCDKEConfig.ContainerRegistryUrl,
+		"ContainerRegistryUrl":        clusterDetails.ContainerRegistryUrl,
 		"KubernetesVersion":           clusterDetails.TkgVersion.KubernetesVersion,
 		"SshPublicKey":                d.Get("ssh_public_key").(string),
 	}
@@ -981,10 +980,10 @@ func generateCapiYaml(d *schema.ResourceData, clusterDetails *createClusterDto) 
 		args["VirtualIpSubnet"] = d.Get("virtual_ip_subnet").(string)
 	}
 	if d.Get("node_health_check").(bool) {
-		args["MaxUnhealthyNodePercentage"] = fmt.Sprintf("%s%%%%", clusterDetails.VCDKEConfig.MaxUnhealthyNodesPercentage) // With the 'percentage' suffix, it is doubled to render the template correctly
-		args["NodeStartupTimeout"] = fmt.Sprintf("%ss", clusterDetails.VCDKEConfig.NodeStartupTimeout)                     // With the 'second' suffix
-		args["NodeUnknownTimeout"] = fmt.Sprintf("%ss", clusterDetails.VCDKEConfig.NodeUnknownTimeout)                     // With the 'second' suffix
-		args["NodeNotReadyTimeout"] = fmt.Sprintf("%ss", clusterDetails.VCDKEConfig.NodeNotReadyTimeout)                   // With the 'second' suffix
+		args["MaxUnhealthyNodePercentage"] = fmt.Sprintf("%s%%%%", clusterDetails.MaxUnhealthyNodesPercentage) // With the 'percentage' suffix, it is doubled to render the template correctly
+		args["NodeStartupTimeout"] = fmt.Sprintf("%ss", clusterDetails.NodeStartupTimeout)                     // With the 'second' suffix
+		args["NodeUnknownTimeout"] = fmt.Sprintf("%ss", clusterDetails.NodeUnknownTimeout)                     // With the 'second' suffix
+		args["NodeNotReadyTimeout"] = fmt.Sprintf("%ss", clusterDetails.NodeNotReadyTimeout)                   // With the 'second' suffix
 	}
 
 	buf := &bytes.Buffer{}

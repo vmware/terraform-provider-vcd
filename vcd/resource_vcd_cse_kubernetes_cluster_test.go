@@ -139,14 +139,6 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
     storage_profile_id = data.vcd_storage_profile.sp.id
   }
 
-  node_pool {
-    name               = "node-pool-2"
-    machine_count      = 1
-    disk_size_gi       = 20
-    sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id
-    storage_profile_id = data.vcd_storage_profile.sp.id
-  }
-
   default_storage_class {
 	name               = "sc-1"
 	storage_profile_id = data.vcd_storage_profile.sp.id
