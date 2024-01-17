@@ -818,7 +818,7 @@ func getClusterCreateDto(d *schema.ResourceData, vcdClient *VCDClient) (*createC
 	}
 	result.RdeType = rdeType
 
-	// Fills the cache map that relates Storage profiles IDs and Compute policies IDs (the schema uses them to build a
+	// Fills the cache map that relates IDs of Storage profiles and Compute policies (the schema uses them to build a
 	// healthy Terraform dependency graph) with their corresponding names (the cluster YAML and CSE in general uses names only).
 	// Having this map minimizes the amount of queries to VCD, specially when building the set of node pools,
 	// as there can be a lot of them.
@@ -849,32 +849,20 @@ func getClusterCreateDto(d *schema.ResourceData, vcdClient *VCDClient) (*createC
 					result.UrnToNamesCache[id.(string)] = storageProfile.Name
 				}
 			}
-			if id, ok := configBlock["sizing_policy_id"]; ok {
-				if _, alreadyPresent := result.UrnToNamesCache[id.(string)]; !alreadyPresent {
-					computePolicy, err := vcdClient.GetVdcComputePolicyV2ById(id.(string))
-					if err != nil {
-						return nil, fmt.Errorf("could not get a Sizing Policy with ID '%s': %s", id, err)
-					}
-					result.UrnToNamesCache[id.(string)] = computePolicy.VdcComputePolicyV2.Name
+			// The other sub-attributes are just Compute policies, we treat them the same
+			for _, attribute := range []string{"sizing_policy_id", "vgpu_policy_id", "placement_policy_id"} {
+				id, ok := configBlock[attribute]
+				if !ok {
+					continue
 				}
-			}
-			if id, ok := configBlock["vgpu_policy_id"]; ok {
-				if _, alreadyPresent := result.UrnToNamesCache[id.(string)]; !alreadyPresent {
-					computePolicy, err := vcdClient.GetVdcComputePolicyV2ById(id.(string))
-					if err != nil {
-						return nil, fmt.Errorf("could not get a vGPU Policy with ID '%s': %s", id, err)
-					}
-					result.UrnToNamesCache[id.(string)] = computePolicy.VdcComputePolicyV2.Name
+				if _, alreadyPresent := result.UrnToNamesCache[id.(string)]; alreadyPresent {
+					continue
 				}
-			}
-			if id, ok := configBlock["placement_policy_id"]; ok {
-				if _, alreadyPresent := result.UrnToNamesCache[id.(string)]; !alreadyPresent {
-					computePolicy, err := vcdClient.GetVdcComputePolicyV2ById(id.(string))
-					if err != nil {
-						return nil, fmt.Errorf("could not get a Placement Policy with ID '%s': %s", id, err)
-					}
-					result.UrnToNamesCache[id.(string)] = computePolicy.VdcComputePolicyV2.Name
+				computePolicy, err := vcdClient.GetVdcComputePolicyV2ById(id.(string))
+				if err != nil {
+					return nil, fmt.Errorf("could not get a Compute Policy with ID '%s': %s", id, err)
 				}
+				result.UrnToNamesCache[id.(string)] = computePolicy.VdcComputePolicyV2.Name
 			}
 		}
 	}
