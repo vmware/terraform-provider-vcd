@@ -356,62 +356,6 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 	return resourceVcdCseKubernetesRead(ctx, d, meta)
 }
 
-// waitUntilClusterIsProvisioned waits for the Kubernetes cluster to be in "provisioned" state, either indefinitely (if "create_timeout_minutes=0")
-// or until this timeout is reached. If one of the states is "error", this function also checks whether "auto_repair_on_errors=true" to keep
-// waiting.
-func waitUntilClusterIsProvisioned(vcdClient *VCDClient, d *schema.ResourceData, rdeId string) (string, error) {
-	var elapsed time.Duration
-	timeout := d.Get("create_timeout_minutes").(int)
-	currentState := ""
-
-	start := time.Now()
-	for elapsed <= time.Duration(timeout)*time.Minute || timeout == 0 { // If the user specifies create_timeout_minutes=0, we wait forever
-		rde, err := vcdClient.GetRdeById(rdeId)
-		if err != nil {
-			return "", err
-		}
-		currentState, err = traverseMapAndGet[string](rde.DefinedEntity.Entity, "status.vcdKe.state")
-		if err != nil {
-			util.Logger.Printf("[DEBUG] Failed getting cluster state: %s", err)
-			// We ignore this error, as eventually the state should be populated
-		} else {
-
-			// Add some traceability in the logs and Terraform output about the progress of the cluster provisioning
-			eventSet, err := traverseMapAndGet[[]interface{}](rde.DefinedEntity.Entity, "status.vcdKe.eventSet")
-			if err == nil {
-				latestEvent, err := traverseMapAndGet[string](eventSet[len(eventSet)-1], "additionalDetails.Detailed Event")
-				if err != nil {
-					util.Logger.Printf("[DEBUG] waiting for cluster to be provisioned. Latest event: '%s'", latestEvent)
-				}
-			}
-
-			switch currentState {
-			case "provisioned":
-				return currentState, nil
-			case "error":
-				// We just finish if auto-recovery is disabled, otherwise we just let CSE fixing things in background
-				if !d.Get("auto_repair_on_errors").(bool) {
-					// Try to give feedback about what went wrong, which is located in a set of events in the RDE payload
-					latestError := "could not parse error event"
-					errorSet, err := traverseMapAndGet[[]interface{}](rde.DefinedEntity.Entity, "status.capvcd.errorSet")
-					if err == nil {
-						latestError, err = traverseMapAndGet[string](errorSet[len(errorSet)-1], "additionalDetails.error")
-						if err != nil {
-							latestError = "could not parse error event"
-						}
-					}
-					return "", fmt.Errorf("got an error and 'auto_repair_on_errors=false', aborting. Latest error: %s", latestError)
-				}
-			}
-		}
-
-		elapsed = time.Since(start)
-		time.Sleep(50 * time.Second)
-
-	}
-	return "", fmt.Errorf("timeout of %d minutes reached, latest cluster state obtained was '%s'", timeout, currentState)
-}
-
 func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	var diags diag.Diagnostics
@@ -452,23 +396,22 @@ func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, met
 		})
 	}
 
-	jsonEntity, err := jsonToCompactString(rde.DefinedEntity.Entity)
-	if err != nil {
-		diags = append(diags, diag.Errorf("could not save the cluster '%s' raw RDE contents into 'raw_cluster_rde_json' attribute: %s", rde.DefinedEntity.ID, err)...)
-	}
-	if diags != nil && diags.HasError() {
+	d.SetId(rde.DefinedEntity.ID) // ID is already there, but just for completeness/readability
+	if len(diags) > 0 {
 		return diags
 	}
-	dSet(d, "raw_cluster_rde_json", jsonEntity)
-
-	d.SetId(rde.DefinedEntity.ID) // ID is already there, but just for completeness/readability
 	return nil
 }
 
 func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// The ID must be already set for the read to be successful. We can't rely on GetRdesByName as there can be
+	// Some arguments don't require changes in the backend
+	if !d.HasChangesExcept("create_timeout_minutes", "delete_timeout_minutes") {
+		return nil
+	}
+
+	// The ID must be already set for the update to be successful. We can't rely on GetRdesByName as there can be
 	// many clusters with the same name and RDE Type.
 	rde, err := vcdClient.GetRdeById(d.Id())
 	if err != nil {
@@ -481,42 +424,89 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 	if state != "provisioned" {
 		return diag.Errorf("could not update the Kubernetes cluster with ID '%s': It is in '%s' state, but should be 'provisioned'", d.Id(), state)
 	}
-	// Only OVA and pool sizes can be changed. This is guaranteed by all ForceNew flags, but it's worth it to
-	// double-check
-	if d.HasChangesExcept("ova_id", "control_plane.0.machine_count", "node_pool") {
-		return diag.Errorf("only the Kubernetes template or the control plane/node machine pools can be modified")
-	}
 
 	// Gets and unmarshals the CAPI YAML to update it
 	capiYaml, err := traverseMapAndGet[string](rde.DefinedEntity.Entity, "spec.capiYaml")
 	if err != nil {
 		return diag.Errorf("could not retrieve the CAPI YAML from the Kubernetes cluster with ID '%s': %s", d.Id(), err)
 	}
-	capiMap := map[string]interface{}{}
-	err = yaml.Unmarshal([]byte(capiYaml), &capiMap)
-	if err != nil {
-		return diag.Errorf("could not unmarshal the CAPI YAML from the Kubernetes cluster with ID '%s': %s", d.Id(), err)
+	// TODO: Is there a simpler way?
+	dec := yaml.NewDecoder(bytes.NewReader([]byte(capiYaml)))
+	var yamlDocs []map[string]interface{}
+	i := 0
+	for {
+		yamlDocs[i] = map[string]interface{}{}
+		if dec.Decode(&yamlDocs[i]) != nil {
+			break
+		}
+		i++
 	}
 
 	// TODO: Change YAML here
 	if d.HasChange("ova_id") {
 		newOva := d.Get("ova_id")
-		_, err := vcdClient.GetVAppTemplateById(newOva.(string))
+		ova, err := vcdClient.GetVAppTemplateById(newOva.(string))
 		if err != nil {
 			return diag.Errorf("could not retrieve the new Kubernetes OVA with ID '%s': %s", newOva, err)
 		}
 		// TODO: Check whether the update can be performed
+		for _, yamlDoc := range yamlDocs {
+			if yamlDoc["kind"] == "VCDMachineTemplate" {
+				yamlDoc["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["template"] = ova.VAppTemplate.Name
+			}
+		}
 	}
 	if d.HasChange("control_plane.0.machine_count") {
+		for _, yamlDoc := range yamlDocs {
+			if yamlDoc["kind"] == "KubeadmControlPlane" {
+				yamlDoc["spec"].(map[string]interface{})["replicas"] = d.Get("control_plane.0.machine_count")
+			}
+		}
+	}
+	// The pools can only be resized
+	nodePools := map[string]int{}
+	if d.HasChange("node_pool") {
+		for _, nodePoolRaw := range d.Get("node_pool").(*schema.Set).List() {
+			nodePool := nodePoolRaw.(map[string]interface{})
+			nodePools[nodePool["name"].(string)] = nodePool["machine_count"].(int)
+		}
 		util.Logger.Printf("not done but make static complains :)")
 	}
-	if d.HasChange("node_pool") {
+
+	for nodePoolName, nodePoolSize := range nodePools {
+		for _, yamlDoc := range yamlDocs {
+			if yamlDoc["kind"] == "KubeadmControlPlane" {
+				if yamlDoc["metadata"].(map[string]interface{})["name"] == nodePoolName {
+					yamlDoc["spec"].(map[string]interface{})["replicas"] = nodePoolSize
+				}
+			}
+		}
+	}
+
+	if d.HasChange("node_health_check") {
+		oldNhc, newNhc := d.GetChange("node_health_check")
+		if oldNhc.(bool) && !newNhc.(bool) {
+			for _, yamlDoc := range yamlDocs {
+				if yamlDoc["kind"] == "MachineHealthCheck" {
+					// TODO: TBD
+					fmt.Printf("a")
+				}
+			}
+		} else {
+			// Add the YAML block
+			for _, yamlDoc := range yamlDocs {
+				if yamlDoc["kind"] == "MachineHealthCheck" {
+					// TODO: Error? Should not be there
+					fmt.Printf("b")
+				}
+			}
+		}
 		util.Logger.Printf("not done but make static complains :)")
 	}
 
 	updatedYaml := capiYaml // FIXME
 	rde.DefinedEntity.Entity["spec"].(map[string]interface{})["capiYaml"] = updatedYaml
-
+	rde.DefinedEntity.Entity["spec"].(map[string]interface{})["vcdKe"].(map[string]interface{})["autoRepairOnErrors"] = d.Get("auto_repair_on_errors").(bool)
 	// FIXME: This must be done with retries due to ETag clash
 	err = rde.Update(*rde.DefinedEntity)
 	if err != nil {
@@ -675,6 +665,62 @@ func generateNodePoolYaml(d *schema.ResourceData, clusterDetails *createClusterD
 	return resultYaml, nil
 }
 
+// waitUntilClusterIsProvisioned waits for the Kubernetes cluster to be in "provisioned" state, either indefinitely (if "create_timeout_minutes=0")
+// or until this timeout is reached. If one of the states is "error", this function also checks whether "auto_repair_on_errors=true" to keep
+// waiting.
+func waitUntilClusterIsProvisioned(vcdClient *VCDClient, d *schema.ResourceData, rdeId string) (string, error) {
+	var elapsed time.Duration
+	timeout := d.Get("create_timeout_minutes").(int)
+	currentState := ""
+
+	start := time.Now()
+	for elapsed <= time.Duration(timeout)*time.Minute || timeout == 0 { // If the user specifies create_timeout_minutes=0, we wait forever
+		rde, err := vcdClient.GetRdeById(rdeId)
+		if err != nil {
+			return "", err
+		}
+		currentState, err = traverseMapAndGet[string](rde.DefinedEntity.Entity, "status.vcdKe.state")
+		if err != nil {
+			util.Logger.Printf("[DEBUG] Failed getting cluster state: %s", err)
+			// We ignore this error, as eventually the state should be populated
+		} else {
+
+			// Add some traceability in the logs and Terraform output about the progress of the cluster provisioning
+			eventSet, err := traverseMapAndGet[[]interface{}](rde.DefinedEntity.Entity, "status.vcdKe.eventSet")
+			if err == nil {
+				latestEvent, err := traverseMapAndGet[string](eventSet[len(eventSet)-1], "additionalDetails.Detailed Event")
+				if err != nil {
+					util.Logger.Printf("[DEBUG] waiting for cluster to be provisioned. Latest event: '%s'", latestEvent)
+				}
+			}
+
+			switch currentState {
+			case "provisioned":
+				return currentState, nil
+			case "error":
+				// We just finish if auto-recovery is disabled, otherwise we just let CSE fixing things in background
+				if !d.Get("auto_repair_on_errors").(bool) {
+					// Try to give feedback about what went wrong, which is located in a set of events in the RDE payload
+					latestError := "could not parse error event"
+					errorSet, err := traverseMapAndGet[[]interface{}](rde.DefinedEntity.Entity, "status.capvcd.errorSet")
+					if err == nil {
+						latestError, err = traverseMapAndGet[string](errorSet[len(errorSet)-1], "additionalDetails.error")
+						if err != nil {
+							latestError = "could not parse error event"
+						}
+					}
+					return "", fmt.Errorf("got an error and 'auto_repair_on_errors=false', aborting. Latest error: %s", latestError)
+				}
+			}
+		}
+
+		elapsed = time.Since(start)
+		time.Sleep(50 * time.Second)
+
+	}
+	return "", fmt.Errorf("timeout of %d minutes reached, latest cluster state obtained was '%s'", timeout, currentState)
+}
+
 // tkgVersionBundle is a type that contains all the versions of the components of
 // a Kubernetes cluster that can be obtained with the vApp Template name, downloaded
 // from VMware Customer connect:
@@ -691,6 +737,7 @@ type tkgVersionBundle struct {
 // all the Kubernetes cluster components versions given a valid vApp Template name, that should
 // correspond to a Kubernetes template. If it is not a valid vApp Template, returns an error.
 func getTkgVersionBundleFromVAppTemplateName(ovaName string) (tkgVersionBundle, error) {
+	// TODO: This should be probably a JSON file
 	versionsMap := map[string]map[string]string{
 		"v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc": {
 			"tkg":     "v2.2.0",
@@ -751,7 +798,7 @@ type createClusterDto struct {
 	NetworkName                 string
 	RdeType                     *govcd.DefinedEntityType
 	UrnToNamesCache             map[string]string // Maps unique IDs with their resource names (example: Compute policy ID with its name)
-	MaxUnhealthyNodesPercentage string
+	MaxUnhealthyNodesPercentage float64
 	NodeStartupTimeout          string
 	NodeNotReadyTimeout         string
 	NodeUnknownTimeout          string
@@ -871,43 +918,26 @@ func getClusterCreateDto(d *schema.ResourceData, vcdClient *VCDClient) (*createC
 		return nil, fmt.Errorf("expected exactly one VCDKEConfig RDE but got %d", len(rdes))
 	}
 
-	// Obtain some required elements from the CSE Server configuration (aka VCDKEConfig), so we don't have
-	// to deal with it again.
-	type vcdKeConfigType struct {
-		Profiles []struct {
-			K8Config struct {
-				Mhc struct {
-					MaxUnhealthyNodes   int `json:"maxUnhealthyNodes:omitempty"`
-					NodeStartupTimeout  int `json:"nodeStartupTimeout:omitempty"`
-					NodeNotReadyTimeout int `json:"nodeNotReadyTimeout:omitempty"`
-					NodeUnknownTimeout  int `json:"nodeUnknownTimeout:omitempty"`
-				} `json:"mhc:omitempty"`
-			} `json:"K8Config:omitempty"`
-			ContainerRegistryUrl string `json:"containerRegistryUrl,omitempty"`
-		} `json:"profiles,omitempty"`
-	}
-
-	var vcdKeConfig vcdKeConfigType
-	rawData, err := json.Marshal(rdes[0].DefinedEntity.Entity)
+	profiles, err := traverseMapAndGet[[]interface{}](rdes[0].DefinedEntity.Entity, "profiles")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("wrong format of VCDKEConfig, expected a 'profiles' element: %s", err)
 	}
-
-	err = json.Unmarshal(rawData, &vcdKeConfig)
-	if err != nil {
-		return nil, err
+	if len(profiles) != 1 {
+		return nil, fmt.Errorf("wrong format of VCDKEConfig, expected a single 'profiles' element, got %d", len(profiles))
 	}
-
-	if len(vcdKeConfig.Profiles) != 1 {
-		return nil, fmt.Errorf("wrong format of VCDKEConfig, expected a single 'profiles' element, got %d", len(vcdKeConfig.Profiles))
-	}
-
-	result.MaxUnhealthyNodesPercentage = strconv.Itoa(vcdKeConfig.Profiles[0].K8Config.Mhc.MaxUnhealthyNodes)
-	result.NodeStartupTimeout = strconv.Itoa(vcdKeConfig.Profiles[0].K8Config.Mhc.NodeStartupTimeout)
-	result.NodeNotReadyTimeout = strconv.Itoa(vcdKeConfig.Profiles[0].K8Config.Mhc.NodeNotReadyTimeout)
-	result.NodeUnknownTimeout = strconv.Itoa(vcdKeConfig.Profiles[0].K8Config.Mhc.NodeUnknownTimeout)
 	// TODO: Check airgapped environments: https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1.1a/VMware-Cloud-Director-Container-Service-Extension-Install-provider-4.1.1/GUID-F00BE796-B5F2-48F2-A012-546E2E694400.html
-	result.ContainerRegistryUrl = fmt.Sprintf("%s/tkg", vcdKeConfig.Profiles[0].ContainerRegistryUrl)
+	result.ContainerRegistryUrl = fmt.Sprintf("%s/tkg", profiles[0].(map[string]interface{})["containerRegistryUrl"].(string))
+
+	if _, ok := d.GetOk("node_health_check"); ok {
+		mhc, err := traverseMapAndGet[map[string]interface{}](profiles[0], "K8Config.mhc")
+		if err != nil {
+			return nil, fmt.Errorf("wrong format of VCDKEConfig, expected a 'profiles[0].K8sConfig.mhc' element: %s", err)
+		}
+		result.MaxUnhealthyNodesPercentage = mhc["maxUnhealthyNodes"].(float64)
+		result.NodeStartupTimeout = mhc["nodeStartupTimeout"].(string)
+		result.NodeNotReadyTimeout = mhc["nodeUnknownTimeout"].(string)
+		result.NodeUnknownTimeout = mhc["nodeNotReadyTimeout"].(string)
+	}
 
 	owner, ok := d.GetOk("owner")
 	if !ok {
@@ -980,7 +1010,7 @@ func generateCapiYaml(d *schema.ResourceData, clusterDetails *createClusterDto) 
 		args["VirtualIpSubnet"] = d.Get("virtual_ip_subnet").(string)
 	}
 	if d.Get("node_health_check").(bool) {
-		args["MaxUnhealthyNodePercentage"] = fmt.Sprintf("%s%%%%", clusterDetails.MaxUnhealthyNodesPercentage) // With the 'percentage' suffix, it is doubled to render the template correctly
+		args["MaxUnhealthyNodePercentage"] = fmt.Sprintf("%.0f%%", clusterDetails.MaxUnhealthyNodesPercentage) // With the 'percentage' suffix
 		args["NodeStartupTimeout"] = fmt.Sprintf("%ss", clusterDetails.NodeStartupTimeout)                     // With the 'second' suffix
 		args["NodeUnknownTimeout"] = fmt.Sprintf("%ss", clusterDetails.NodeUnknownTimeout)                     // With the 'second' suffix
 		args["NodeNotReadyTimeout"] = fmt.Sprintf("%ss", clusterDetails.NodeNotReadyTimeout)                   // With the 'second' suffix

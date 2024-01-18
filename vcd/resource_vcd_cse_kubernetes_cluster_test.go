@@ -67,12 +67,14 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					cacheId.cacheTestResourceFieldValue(clusterName, "id"),
 					resource.TestCheckResourceAttrSet(clusterName, "id"),
 					resource.TestCheckResourceAttr(clusterName, "name", strings.ToLower(t.Name())),
 					resource.TestCheckResourceAttr(clusterName, "state", "provisioned"),
-					resource.TestCheckResourceAttrSet(clusterName, "kubeconfig")),
+					resource.TestCheckResourceAttrSet(clusterName, "kubeconfig"),
+					resource.TestCheckResourceAttrSet(clusterName, "raw_cluster_rde_json"),
+				),
 			},
 		},
 	})
@@ -128,7 +130,7 @@ data "vcd_storage_profile" "sp" {
 }
 
 resource "vcd_api_token" "token" {
-  name             = "{{.Name}}77"
+  name             = "{{.Name}}83"
   file_name        = "{{.TokenFile}}"
   allow_token_file = true
 }
@@ -165,8 +167,8 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
     filesystem         = "ext4"
   }
 
-  auto_repair_on_errors = false
-  node_health_check     = false
+  auto_repair_on_errors = true
+  node_health_check     = true
 
   create_timeout_minutes = 0
   delete_timeout_minutes = 0

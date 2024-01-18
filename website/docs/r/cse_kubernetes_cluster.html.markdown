@@ -198,9 +198,13 @@ The following attributes are available for consumption as computed attributes:
   created and ready to use, or `error` when an error occurred. `provisioning` can only be obtained when a timeout happens during
   cluster creation. `error` can only be obtained either with a timeout or when `auto_repair_on_errors=false`.
 * `kubeconfig` - The ready-to-use Kubeconfig file **contents** as a raw string. Only available when `state=provisioned`
-* `raw_cluster_rde_json` - The raw JSON representation of this Kubernetes cluster inside the [RDE](/providers/vmware/vcd/latest/docs/resources/rde)
-  that CSE uses to operate the cluster
-* `latest_event` - The latest event that occurred in the lifetime of the cluster
+
+## Updating
+
+Upgrading CSE version with `cse_version` is not supported as this operation would require human intervention,
+as stated [in their documentation](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1/VMware-Cloud-Director-Container-Service-Extension-Using-Tenant-4.1/GUID-092C40B4-D0BA-4B90-813F-D36929F2F395.html).
+
+
 
 ## Importing
 
