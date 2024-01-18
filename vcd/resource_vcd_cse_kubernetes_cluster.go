@@ -434,7 +434,7 @@ func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, met
 	if state == "provisioned" {
 		// This can only be done if the cluster is in 'provisioned' state
 		invocationResult := map[string]interface{}{}
-		err := rde.InvokeBehaviorAndMarshal(fmt.Sprintf("urn:vcloud:behavior-interface:getFullEntity:cse:capvcd:%s", behaviorVersion), types.BehaviorInvocation{}, invocationResult)
+		err := rde.InvokeBehaviorAndMarshal(fmt.Sprintf("urn:vcloud:behavior-interface:getFullEntity:cse:capvcd:%s", behaviorVersion), types.BehaviorInvocation{}, &invocationResult)
 		if err != nil {
 			return diag.Errorf("could not invoke the behavior to obtain the Kubeconfig for the Kubernetes cluster with ID '%s': %s", d.Id(), err)
 		}

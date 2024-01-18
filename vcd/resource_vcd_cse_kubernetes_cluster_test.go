@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"os"
 	"strings"
 	"testing"
@@ -48,12 +49,30 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
+	cacheId := testCachedFieldValue{}
+	clusterName := "vcd_cse_kubernetes_cluster.my_cluster"
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
+		CheckDestroy: func(state *terraform.State) error {
+			if cacheId.fieldValue == "" {
+				return fmt.Errorf("cached ID '%s' is empty", cacheId.fieldValue)
+			}
+			conn := testAccProvider.Meta().(*VCDClient)
+			_, err := conn.GetRdeById(cacheId.fieldValue)
+			if err == nil {
+				return fmt.Errorf("cluster with ID '%s' still exists", cacheId.fieldValue)
+			}
+			return nil
+		},
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
-				Check:  resource.ComposeTestCheckFunc(),
+				Check: resource.ComposeTestCheckFunc(
+					cacheId.cacheTestResourceFieldValue(clusterName, "id"),
+					resource.TestCheckResourceAttrSet(clusterName, "id"),
+					resource.TestCheckResourceAttr(clusterName, "name", strings.ToLower(t.Name())),
+					resource.TestCheckResourceAttr(clusterName, "state", "provisioned"),
+					resource.TestCheckResourceAttrSet(clusterName, "kubeconfig")),
 			},
 		},
 	})
@@ -109,7 +128,7 @@ data "vcd_storage_profile" "sp" {
 }
 
 resource "vcd_api_token" "token" {
-  name             = "{{.Name}}75"
+  name             = "{{.Name}}77"
   file_name        = "{{.TokenFile}}"
   allow_token_file = true
 }
