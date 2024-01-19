@@ -178,7 +178,8 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
 }
 `
 
-// Test_getTkgVersionBundleFromVAppTemplateName requires connectivity with GitHub, as it fetches the 'tkg_versions.json' file.
+// Test_getTkgVersionBundleFromVAppTemplateName requires connectivity with GitHub (that's why it's not labeled as a unit test),
+// as it fetches the 'tkg_versions.json' file.
 // This tests asserts that getTkgVersionBundleFromVAppTemplateName works correctly, retrieving the correct TKG versions from that file.
 func Test_getTkgVersionBundleFromVAppTemplateName(t *testing.T) {
 	vcdClient := createSystemTemporaryVCDConnection()
