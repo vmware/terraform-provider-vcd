@@ -305,11 +305,6 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Computed:    true,
 				Description: "The contents of the kubeconfig of the Kubernetes cluster, only available when 'state=provisioned'",
 			},
-			"raw_cluster_rde_json": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The raw JSON that describes the cluster configuration inside the Runtime Defined Entity",
-			},
 		},
 	}
 }

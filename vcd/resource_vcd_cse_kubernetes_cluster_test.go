@@ -77,7 +77,6 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "name", strings.ToLower(t.Name())),
 					resource.TestCheckResourceAttr(clusterName, "state", "provisioned"),
 					resource.TestCheckResourceAttrSet(clusterName, "kubeconfig"),
-					resource.TestCheckResourceAttrSet(clusterName, "raw_cluster_rde_json"),
 				),
 			},
 		},
