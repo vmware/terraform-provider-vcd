@@ -426,7 +426,7 @@ func validateCseKubernetesClusterSchema(d *schema.ResourceData) diag.Diagnostics
 
 func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	diags := validateCseKubernetesClusterSchema(d)
-	if diags.HasError() && len(diags) > 0 {
+	if diags != nil {
 		return diags
 	}
 
@@ -528,7 +528,7 @@ func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, met
 
 func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	diags := validateCseKubernetesClusterSchema(d)
-	if diags.HasError() && len(diags) > 0 {
+	if diags != nil {
 		return diags
 	}
 
