@@ -193,7 +193,7 @@ If defined, the block asks for the following arguments:
 
 ## Attribute Reference
 
-The following attributes are available for consumption as computed attributes:
+The following attributes are available for consumption as read-only attributes:
 
 * `kubernetes_version` - The version of Kubernetes installed in this cluster
 * `tkg_product_version` - The version of TKG installed in this cluster
