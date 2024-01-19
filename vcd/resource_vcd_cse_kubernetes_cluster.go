@@ -107,9 +107,10 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Description: "The SSH public key used to login into the cluster nodes",
 			},
 			"control_plane": {
-				Type:     schema.TypeList,
-				MaxItems: 1,
-				Required: true,
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Required:    true,
+				Description: "Defines the control plane for the cluster",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"machine_count": {
@@ -157,17 +158,19 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 						"ip": {
 							Type:         schema.TypeString,
 							Optional:     true,
+							Computed:     true,
 							ForceNew:     true,
-							Description:  "IP for the control plane",
+							Description:  "IP for the control plane. It will be automatically assigned during cluster creation if left empty",
 							ValidateFunc: checkEmptyOrSingleIP(),
 						},
 					},
 				},
 			},
 			"node_pool": {
-				Type:     schema.TypeSet,
-				Required: true,
-				MinItems: 1,
+				Type:        schema.TypeSet,
+				Required:    true,
+				MinItems:    1,
+				Description: "Defines a node pool for the cluster",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -221,9 +224,10 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				},
 			},
 			"default_storage_class": {
-				Type:     schema.TypeList,
-				MaxItems: 1,
-				Optional: true,
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Optional:    true,
+				Description: "Defines the default storage class for the cluster",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"storage_profile_id": {
@@ -295,6 +299,37 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 					"specifies the time to wait until the cluster is completely deleted. Setting this argument to `0` means to wait indefinitely",
 				ValidateDiagFunc: minimumValue(0, "timeout must be at least 0 (no timeout)"),
 			},
+			"kubernetes_version": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The version of Kubernetes installed in this cluster",
+			},
+			"tkg_product_version": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The version of TKG installed in this cluster",
+			},
+			"capvcd_version": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The version of CAPVCD used by this cluster",
+			},
+			"cluster_resource_set_bindings": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "The cluster resource set bindings of this cluster",
+				Elem:        schema.TypeString,
+			},
+			"cpi_version": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The version of the Cloud Provider Interface used by this cluster",
+			},
+			"csi_version": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The version of the Container Storage Interface used by this cluster",
+			},
 			"state": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -304,6 +339,55 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The contents of the kubeconfig of the Kubernetes cluster, only available when 'state=provisioned'",
+			},
+			"persistent_volumes": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "A set of persistent volumes that are present in the cluster, only available when a 'default_storage_class' was provided during cluster creation",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "The name of the persistent volume",
+						},
+						"status": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "The status of the persistent volume",
+						},
+						"shared": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "Whether the persistent volume is shared or not",
+						},
+						"attached_node_count": {
+							Computed:    true,
+							Type:        schema.TypeInt,
+							Description: "How many nodes are consuming the persistent volume",
+						},
+						"iops": {
+							Computed:    true,
+							Type:        schema.TypeInt,
+							Description: "I/O operations per second for the persistent volume",
+						},
+						"size": {
+							Computed:    true,
+							Type:        schema.TypeInt,
+							Description: "Size of the persistent volume",
+						},
+						"storage_profile": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "Storage profile name of the persistent volume",
+						},
+						"owner": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "Owner of the persistent volume",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -389,6 +473,15 @@ func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, met
 			Detail:   fmt.Sprintf("Kubernetes cluster with ID '%s' is in '%s' state, won't be able to retrieve the Kubeconfig", d.Id(), state),
 		})
 	}
+
+	// TODO: Set
+	// kubernetes_version
+	// tkg_product_version
+	// capvcd_version
+	// cluster_resource_set_bindings
+	// cpi_version
+	// csi_version
+	// persistent_volumes
 
 	d.SetId(rde.DefinedEntity.ID) // ID is already there, but just for completeness/readability
 	if len(diags) > 0 {

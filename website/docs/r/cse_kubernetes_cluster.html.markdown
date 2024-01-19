@@ -161,7 +161,7 @@ This block asks for the following arguments:
 * `sizing_policy_id` - (Optional) VM Sizing policy for the control plane VMs. Must be one of the ones made available during CSE installation
 * `placement_policy_id` - (Optional) VM Placement policy for the control plane VMs
 * `storage_profile_id` - (Optional) Storage profile for the control plane VMs
-* `ip` - (Optional) A custom IP to use for the control plane
+* `ip` - (Optional) IP for the control plane. It will be automatically assigned during cluster creation if left empty
 
 ### Node Pools
 
@@ -195,10 +195,26 @@ If defined, the block asks for the following arguments:
 
 The following attributes are available for consumption as computed attributes:
 
+* `kubernetes_version` - The version of Kubernetes installed in this cluster
+* `tkg_product_version` - The version of TKG installed in this cluster
+* `capvcd_version` - The version of CAPVCD used by this cluster
+* `cluster_resource_set_bindings` - The cluster resource set bindings of this cluster
+* `cpi_version` - The version of the Cloud Provider Interface used by this cluster
+* `csi_version` - The version of the Container Storage Interface used by this cluster
 * `state` - The Kubernetes cluster status, can be `provisioning` when it is being created, `provisioned` when it was successfully
   created and ready to use, or `error` when an error occurred. `provisioning` can only be obtained when a timeout happens during
   cluster creation. `error` can only be obtained either with a timeout or when `auto_repair_on_errors=false`.
 * `kubeconfig` - The ready-to-use Kubeconfig file **contents** as a raw string. Only available when `state=provisioned`
+* `persistent_volumes` - A set of persistent volumes that are present in the cluster, only available when a `default_storage_class` was provided during
+  cluster creation:
+  * `name` - The name of the persistent volume
+  * `status` - The status of the persistent volume
+  * `shared` - Whether the persistent volume is shared or not
+  * `attached_node_count` - How many nodes are consuming the persistent volume
+  * `iops` - I/O operations per second for the persistent volume
+  * `size` - Size of the persistent volume
+  * `storage_profile` - Storage profile name of the persistent volume
+  * `owner` - Owner of the persistent volume
 
 ## Updating
 
