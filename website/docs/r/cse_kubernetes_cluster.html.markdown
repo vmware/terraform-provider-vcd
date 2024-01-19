@@ -260,23 +260,18 @@ The Kubeconfig can now be used with `kubectl` and the Kubernetes cluster can be 
 ~> The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
-An existing Kubernetes cluster can be [imported][docs-import] into this resource via supplying the Cluster (RDE) ID for it.
+An existing Kubernetes cluster can be [imported][docs-import] into this resource via supplying the CSE Version installed in VCD and the Cluster (RDE) ID for it.
 An example is below:
 
 ```hcl
 # This is just a snippet of code that will host the imported cluster from VCD.
 # This must not be created with Terraform beforehand
 resource "vcd_cse_kubernetes_cluster" "imported_cluster" {
-  # There is no need to provide any Required argument here, the Import operation
-  # will set them
-  node_pool {
-    
-  }
 }
 ```
 
 ```sh
-terraform import vcd_cse_kubernetes_cluster.imported_cluster urn:vcloud:entity:vmware:capvcdCluster:1d24af33-6e5a-4d47-a6ea-06d76f3ee5c9
+terraform import vcd_cse_kubernetes_cluster.imported_cluster 4.2.urn:vcloud:entity:vmware:capvcdCluster:1d24af33-6e5a-4d47-a6ea-06d76f3ee5c9
 ```
 
 -> The ID is required as it is the only way to unequivocally identify a Kubernetes cluster inside VCD. To obtain the ID

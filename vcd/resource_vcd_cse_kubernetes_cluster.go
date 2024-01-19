@@ -39,6 +39,9 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 		ReadContext:   resourceVcdCseKubernetesRead,
 		UpdateContext: resourceVcdCseKubernetesUpdate,
 		DeleteContext: resourceVcdCseKubernetesDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceVcdCseKubernetesImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"cse_version": {
 				Type:         schema.TypeString,
@@ -317,7 +320,9 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Description: "The cluster resource set bindings of this cluster",
-				Elem:        schema.TypeString,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"cpi_version": {
 				Type:        schema.TypeString,
@@ -732,6 +737,66 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 		return diag.Errorf("timeout of %d minutes reached, the cluster was successfully marked for deletion but was not removed in time", timeout)
 	}
 	return diag.Errorf("timeout of %d minutes reached, the cluster was not marked for deletion, please try again", timeout)
+}
+
+func resourceVcdCseKubernetesImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	vcdClient := meta.(*VCDClient)
+
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	var rdeId, cseVersion string
+	switch len(resourceURI) {
+	case 2: // ImportSeparator != '.'
+		cseVersion = resourceURI[0]
+		rdeId = resourceURI[1]
+	case 3: // ImportSeparator == '.'
+		cseVersion = fmt.Sprintf("%s.%s", resourceURI[0], resourceURI[1])
+		rdeId = resourceURI[2]
+	default:
+		return nil, fmt.Errorf("resource name must be specified as cse_version.cluster_id")
+	}
+
+	rde, err := vcdClient.GetRdeById(rdeId)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving Kubernetes cluster with ID '%s': %s", d.Id(), err)
+	}
+
+	// TODO: Set the Optional fields that are Required at runtime
+	dSet(d, "cse_version", cseVersion)
+	dSet(d, "name", rde.DefinedEntity.Name)
+	dSet(d, "ova_id", rde.DefinedEntity.Name)
+	dSet(d, "vdc_id", rde.DefinedEntity.Name)
+	dSet(d, "network_id", rde.DefinedEntity.Name)
+	dSet(d, "api_token_file", "******")
+	/*err = d.Set("control_plane", []map[string]interface{}{
+		{
+			"name": "a",
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error importing the control plane of the Kubernetes cluster with ID '%s': %s", d.Id(), err)
+	}
+	err = d.Set("node_pool", []map[string]interface{}{
+		{
+			"name": "node-pool-1",
+		},
+		{
+			"name": "node-pool-2",
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error importing node pools of the Kubernetes cluster with ID '%s': %s", d.Id(), err)
+	}
+	err = d.Set("default_storage_class", []map[string]interface{}{
+		{
+			"name": "sc-1",
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error importing node pools of the Kubernetes cluster with ID '%s': %s", d.Id(), err)
+	}*/
+
+	d.SetId(rde.DefinedEntity.ID)
+	return []*schema.ResourceData{d}, nil
 }
 
 // getCseKubernetesClusterCreationPayload gets the payload for the RDE that will trigger a Kubernetes cluster creation.
