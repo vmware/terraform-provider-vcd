@@ -173,6 +173,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 						"name": {
 							Type:        schema.TypeString,
 							Required:    true,
+							ForceNew:    true,
 							Description: "The name of this node pool",
 							ValidateDiagFunc: matchRegex(`^[a-z](?:[a-z0-9-]{0,29}[a-z0-9])?$`, "name must contain only lowercase alphanumeric characters or '-',"+
 								"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters"),
@@ -227,11 +228,13 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"storage_profile_id": {
 							Required:    true,
+							ForceNew:    true,
 							Type:        schema.TypeString,
 							Description: "ID of the storage profile to use for the storage class",
 						},
 						"name": {
 							Required:    true,
+							ForceNew:    true,
 							Type:        schema.TypeString,
 							Description: "Name to give to this storage class",
 							ValidateDiagFunc: matchRegex(`^[a-z](?:[a-z0-9-]{0,29}[a-z0-9])?$`, "name must contain only lowercase alphanumeric characters or '-',"+
@@ -239,12 +242,14 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 						},
 						"reclaim_policy": {
 							Required:     true,
+							ForceNew:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: validation.StringInSlice([]string{"delete", "retain"}, false),
 							Description:  "'delete' deletes the volume when the PersistentVolumeClaim is deleted. 'retain' does not, and the volume can be manually reclaimed",
 						},
 						"filesystem": {
 							Required:     true,
+							ForceNew:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: validation.StringInSlice([]string{"ext4", "xfs"}, false),
 							Description:  "Filesystem of the storage class, can be either 'ext4' or 'xfs'",
