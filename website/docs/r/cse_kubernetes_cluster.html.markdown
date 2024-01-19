@@ -143,10 +143,11 @@ The following arguments are supported:
   CSE Server will automatically attempt to repair the cluster. Defaults to `false`
 * `node_health_check` - (Optional) After the Kubernetes cluster becomes available, nodes that become unhealthy will be
   remediated according to unhealthy node conditions and remediation rules. Defaults to `false`
-* `create_timeout_minutes` - (Optional) The time, in minutes, to wait for the cluster to be completely created, with a
-  ready-to-use Kubeconfig. `0` means wait indefinitely (not recommended as it could hang Terraform). Defaults to `60`
-* `delete_timeout_minutes` - (Optional) The time, in minutes, to wait for the cluster to be deleted when it is marked
-  for deletion. `0` means wait indefinitely (not recommended as it could hang Terraform). Defaults to `10`
+* `operations_timeout_minutes` - (Optional) The time, in minutes, to wait for the cluster operations to be successfully completed.
+  For example, during cluster creation/update, it should be in `provisioned` state before the timeout is reached, otherwise the
+  operation will return an error. For cluster deletion, this timeout specifies the time to wait until the cluster is completely deleted.
+  Setting this argument to `0` means to wait indefinitely (not recommended as it could hang Terraform if the cluster can't be created or deleted
+  due to a configuration error). Defaults to `60`
 
 ### Control Plane
 

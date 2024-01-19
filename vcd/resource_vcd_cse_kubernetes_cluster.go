@@ -282,18 +282,13 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Default:     false,
 				Description: "After the Kubernetes cluster becomes available, nodes that become unhealthy will be remediated according to unhealthy node conditions and remediation rules",
 			},
-			"create_timeout_minutes": {
-				Type:             schema.TypeInt,
-				Optional:         true,
-				Default:          60,
-				Description:      "The time, in minutes, to wait for the cluster to be completely created, with a ready-to-use Kubeconfig. 0 means wait indefinitely",
-				ValidateDiagFunc: minimumValue(0, "timeout must be at least 0 (no timeout)"),
-			},
-			"delete_timeout_minutes": {
-				Type:             schema.TypeInt,
-				Optional:         true,
-				Default:          10,
-				Description:      "The time, in minutes, to wait for the cluster to be deleted when it is marked for deletion. 0 means wait indefinitely",
+			"operations_timeout_minutes": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				Default:  60,
+				Description: "The time, in minutes, to wait for the cluster operations to be successfully completed. For example, during cluster creation/update, it should be in `provisioned`" +
+					"state before the timeout is reached, otherwise the operation will return an error. For cluster deletion, this timeout" +
+					"specifies the time to wait until the cluster is completely deleted. Setting this argument to `0` means to wait indefinitely",
 				ValidateDiagFunc: minimumValue(0, "timeout must be at least 0 (no timeout)"),
 			},
 			"state": {
@@ -322,7 +317,7 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 		return diag.Errorf("could not create Kubernetes cluster: %s", err)
 	}
 
-	entityMap, err := getCseKubernetesClusterEntityMap(d, clusterDetails)
+	entityMap, err := getCseKubernetesClusterCreationPayload(d, clusterDetails)
 	if err != nil {
 		return diag.Errorf("could not create Kubernetes cluster with name '%s': %s", clusterDetails.Name, err)
 	}
@@ -407,7 +402,7 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 	vcdClient := meta.(*VCDClient)
 
 	// Some arguments don't require changes in the backend
-	if !d.HasChangesExcept("create_timeout_minutes", "delete_timeout_minutes") {
+	if !d.HasChangesExcept("operations_timeout_minutes") {
 		return nil
 	}
 
@@ -442,7 +437,6 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 		i++
 	}
 
-	// TODO: Change YAML here
 	if d.HasChange("ova_id") {
 		newOva := d.Get("ova_id")
 		ova, err := vcdClient.GetVAppTemplateById(newOva.(string))
@@ -463,21 +457,15 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 			}
 		}
 	}
-	// The pools can only be resized
-	nodePools := map[string]int{}
+	// The node pools can only be resized
 	if d.HasChange("node_pool") {
 		for _, nodePoolRaw := range d.Get("node_pool").(*schema.Set).List() {
 			nodePool := nodePoolRaw.(map[string]interface{})
-			nodePools[nodePool["name"].(string)] = nodePool["machine_count"].(int)
-		}
-		util.Logger.Printf("not done but make static complains :)")
-	}
-
-	for nodePoolName, nodePoolSize := range nodePools {
-		for _, yamlDoc := range yamlDocs {
-			if yamlDoc["kind"] == "KubeadmControlPlane" {
-				if yamlDoc["metadata"].(map[string]interface{})["name"] == nodePoolName {
-					yamlDoc["spec"].(map[string]interface{})["replicas"] = nodePoolSize
+			for _, yamlDoc := range yamlDocs {
+				if yamlDoc["kind"] == "KubeadmControlPlane" {
+					if yamlDoc["metadata"].(map[string]interface{})["name"] == nodePool["name"].(string) {
+						yamlDoc["spec"].(map[string]interface{})["replicas"] = nodePool["machine_count"].(int)
+					}
 				}
 			}
 		}
@@ -486,31 +474,67 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 	if d.HasChange("node_health_check") {
 		oldNhc, newNhc := d.GetChange("node_health_check")
 		if oldNhc.(bool) && !newNhc.(bool) {
-			for _, yamlDoc := range yamlDocs {
+			toDelete := 0
+			for i, yamlDoc := range yamlDocs {
 				if yamlDoc["kind"] == "MachineHealthCheck" {
-					// TODO: TBD
-					fmt.Printf("a")
+					toDelete = i
 				}
 			}
+			yamlDocs[toDelete] = yamlDocs[len(yamlDocs)-1] // We delete the MachineHealthCheck block by putting the last doc in its place
+			yamlDocs = yamlDocs[:len(yamlDocs)-1]          // Then we remove the last doc
 		} else {
 			// Add the YAML block
-			for _, yamlDoc := range yamlDocs {
-				if yamlDoc["kind"] == "MachineHealthCheck" {
-					// TODO: Error? Should not be there
-					fmt.Printf("b")
-				}
+			rawYaml, err := generateMemoryHealthCheckYaml(d, nil)
+			if err != nil {
+				return diag.FromErr(err)
 			}
+			yamlBlock := map[string]interface{}{}
+			err = yaml.Unmarshal([]byte(rawYaml), &yamlBlock)
+			if err != nil {
+				return diag.Errorf("error updating Memory Health Check: %s", err)
+			}
+			yamlDocs = append(yamlDocs, yamlBlock)
 		}
 		util.Logger.Printf("not done but make static complains :)")
 	}
 
-	updatedYaml := capiYaml // FIXME
-	rde.DefinedEntity.Entity["spec"].(map[string]interface{})["capiYaml"] = updatedYaml
-	rde.DefinedEntity.Entity["spec"].(map[string]interface{})["vcdKe"].(map[string]interface{})["autoRepairOnErrors"] = d.Get("auto_repair_on_errors").(bool)
-	// FIXME: This must be done with retries due to ETag clash
-	err = rde.Update(*rde.DefinedEntity)
+	updatedYaml, err := yaml.Marshal(yamlDocs)
 	if err != nil {
-		return diag.Errorf("could not update Kubernetes cluster with ID '%s': %s", d.Id(), err)
+		return diag.Errorf("error updating cluster: %s", err)
+	}
+
+	// This must be done with retries due to the possible clash on ETags
+	_, err = runWithRetry(
+		"update cluster",
+		"could not update cluster",
+		1*time.Minute,
+		nil,
+		func() (any, error) {
+			rde, err := vcdClient.GetRdeById(d.Id())
+			if err != nil {
+				return nil, fmt.Errorf("could not update Kubernetes cluster with ID '%s': %s", d.Id(), err)
+			}
+
+			rde.DefinedEntity.Entity["spec"].(map[string]interface{})["capiYaml"] = updatedYaml
+			rde.DefinedEntity.Entity["spec"].(map[string]interface{})["vcdKe"].(map[string]interface{})["autoRepairOnErrors"] = d.Get("auto_repair_on_errors").(bool)
+
+			err = rde.Update(*rde.DefinedEntity)
+			if err != nil {
+				return nil, err
+			}
+			return nil, nil
+		},
+	)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	state, err = waitUntilClusterIsProvisioned(vcdClient, d, rde.DefinedEntity.ID)
+	if err != nil {
+		return diag.Errorf("Kubernetes cluster update failed: %s", err)
+	}
+	if state != "provisioned" {
+		return diag.Errorf("Kubernetes cluster update failed, cluster is not in 'provisioned' state, but '%s'", state)
 	}
 
 	return resourceVcdCseKubernetesRead(ctx, d, meta)
@@ -525,9 +549,9 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 	vcdKe := map[string]interface{}{}
 
 	var elapsed time.Duration
-	timeout := d.Get("delete_timeout_minutes").(int)
+	timeout := d.Get("operations_timeout_minutes").(int)
 	start := time.Now()
-	for elapsed <= time.Duration(timeout)*time.Minute || timeout == 0 { // If the user specifies delete_timeout_minutes=0, we wait forever
+	for elapsed <= time.Duration(timeout)*time.Minute || timeout == 0 { // If the user specifies operations_timeout_minutes=0, we wait forever
 		rde, err := vcdClient.GetRdeById(d.Id())
 		if err != nil {
 			if govcd.ContainsNotFound(err) {
@@ -555,20 +579,21 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 			}
 		}
 
-		time.Sleep(30 * time.Second)
+		time.Sleep(10 * time.Second)
 		elapsed = time.Since(start)
 	}
 
-	// We give a hint to the user whenever possible
+	// We give a hint to the user about the deletion process result
 	if len(vcdKe) >= 2 && vcdKe["markForDelete"].(bool) && vcdKe["forceDelete"].(bool) {
 		return diag.Errorf("timeout of %d minutes reached, the cluster was successfully marked for deletion but was not removed in time", timeout)
 	}
 	return diag.Errorf("timeout of %d minutes reached, the cluster was not marked for deletion, please try again", timeout)
 }
 
-// getCseKubernetesClusterEntityMap gets the payload for the RDE that manages the Kubernetes cluster, so it
-// can be created or updated.
-func getCseKubernetesClusterEntityMap(d *schema.ResourceData, clusterDetails *createClusterDto) (map[string]interface{}, error) {
+// getCseKubernetesClusterCreationPayload gets the payload for the RDE that will trigger a Kubernetes cluster creation.
+// It generates a valid YAML that is embedded inside the RDE JSON, then it is returned as an unmarshaled
+// generic map, that allows to be sent to VCD as it is.
+func getCseKubernetesClusterCreationPayload(d *schema.ResourceData, clusterDetails *createClusterDto) (map[string]interface{}, error) {
 	capiYaml, err := generateCapiYaml(d, clusterDetails)
 	if err != nil {
 		return nil, err
@@ -665,16 +690,44 @@ func generateNodePoolYaml(d *schema.ResourceData, clusterDetails *createClusterD
 	return resultYaml, nil
 }
 
-// waitUntilClusterIsProvisioned waits for the Kubernetes cluster to be in "provisioned" state, either indefinitely (if "create_timeout_minutes=0")
+// generateMemoryHealthCheckYaml generates a YAML block corresponding to the Kubernetes memory health check.
+func generateMemoryHealthCheckYaml(d *schema.ResourceData, clusterDetails *createClusterDto) (string, error) {
+	if !d.Get("node_health_check").(bool) {
+		return "", nil
+	}
+
+	mhcTmpl, err := getCseTemplateFile(d, "capiyaml_mhc")
+	if err != nil {
+		return "", err
+	}
+
+	mhcEmptyTmpl := template.Must(template.New(clusterDetails.Name + "-mhc").Parse(mhcTmpl))
+	buf := &bytes.Buffer{}
+
+	if err := mhcEmptyTmpl.Execute(buf, map[string]string{
+		"ClusterName":                clusterDetails.Name,
+		"TargetNamespace":            clusterDetails.Name + "-ns",
+		"MaxUnhealthyNodePercentage": fmt.Sprintf("%.0f%%", clusterDetails.MaxUnhealthyNodesPercentage), // With the 'percentage' suffix
+		"NodeStartupTimeout":         fmt.Sprintf("%ss", clusterDetails.NodeStartupTimeout),             // With the 'second' suffix
+		"NodeUnknownTimeout":         fmt.Sprintf("%ss", clusterDetails.NodeUnknownTimeout),             // With the 'second' suffix
+		"NodeNotReadyTimeout":        fmt.Sprintf("%ss", clusterDetails.NodeNotReadyTimeout),            // With the 'second' suffix
+	}); err != nil {
+		return "", fmt.Errorf("could not generate a correct Memory Health Check YAML: %s", err)
+	}
+	return fmt.Sprintf("%s\n---\n", buf.String()), nil
+
+}
+
+// waitUntilClusterIsProvisioned waits for the Kubernetes cluster to be in "provisioned" state, either indefinitely (if "operations_timeout_minutes=0")
 // or until this timeout is reached. If one of the states is "error", this function also checks whether "auto_repair_on_errors=true" to keep
 // waiting.
 func waitUntilClusterIsProvisioned(vcdClient *VCDClient, d *schema.ResourceData, rdeId string) (string, error) {
 	var elapsed time.Duration
-	timeout := d.Get("create_timeout_minutes").(int)
+	timeout := d.Get("operations_timeout_minutes").(int)
 	currentState := ""
 
 	start := time.Now()
-	for elapsed <= time.Duration(timeout)*time.Minute || timeout == 0 { // If the user specifies create_timeout_minutes=0, we wait forever
+	for elapsed <= time.Duration(timeout)*time.Minute || timeout == 0 { // If the user specifies operations_timeout_minutes=0, we wait forever
 		rde, err := vcdClient.GetRdeById(rdeId)
 		if err != nil {
 			return "", err
@@ -715,8 +768,7 @@ func waitUntilClusterIsProvisioned(vcdClient *VCDClient, d *schema.ResourceData,
 		}
 
 		elapsed = time.Since(start)
-		time.Sleep(50 * time.Second)
-
+		time.Sleep(30 * time.Second)
 	}
 	return "", fmt.Errorf("timeout of %d minutes reached, latest cluster state obtained was '%s'", timeout, currentState)
 }
@@ -977,6 +1029,11 @@ func generateCapiYaml(d *schema.ResourceData, clusterDetails *createClusterDto) 
 		return "", err
 	}
 
+	memoryHealthCheckYaml, err := generateMemoryHealthCheckYaml(d, clusterDetails)
+	if err != nil {
+		return "", err
+	}
+
 	args := map[string]string{
 		"ClusterName":                 clusterDetails.Name,
 		"TargetNamespace":             clusterDetails.Name + "-ns",
@@ -1009,19 +1066,13 @@ func generateCapiYaml(d *schema.ResourceData, clusterDetails *createClusterDto) 
 	if _, ok := d.GetOk("virtual_ip_subnet"); ok {
 		args["VirtualIpSubnet"] = d.Get("virtual_ip_subnet").(string)
 	}
-	if d.Get("node_health_check").(bool) {
-		args["MaxUnhealthyNodePercentage"] = fmt.Sprintf("%.0f%%", clusterDetails.MaxUnhealthyNodesPercentage) // With the 'percentage' suffix
-		args["NodeStartupTimeout"] = fmt.Sprintf("%ss", clusterDetails.NodeStartupTimeout)                     // With the 'second' suffix
-		args["NodeUnknownTimeout"] = fmt.Sprintf("%ss", clusterDetails.NodeUnknownTimeout)                     // With the 'second' suffix
-		args["NodeNotReadyTimeout"] = fmt.Sprintf("%ss", clusterDetails.NodeNotReadyTimeout)                   // With the 'second' suffix
-	}
 
 	buf := &bytes.Buffer{}
 	if err := capiYamlEmpty.Execute(buf, args); err != nil {
 		return "", fmt.Errorf("could not generate a correct CAPI YAML: %s", err)
 	}
 	// The final "pretty" YAML. To embed it in the final payload it must be marshaled into a one-line JSON string
-	prettyYaml := fmt.Sprintf("%s\n%s", nodePoolYaml, buf.String())
+	prettyYaml := fmt.Sprintf("%s\n%s\n%s", memoryHealthCheckYaml, nodePoolYaml, buf.String())
 
 	// This encoder is used instead of a standard json.Marshal as the YAML contains special
 	// characters that are not encoded properly, such as '<'.

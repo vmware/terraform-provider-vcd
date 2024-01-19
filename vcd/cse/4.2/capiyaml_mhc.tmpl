@@ -1,0 +1,22 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  name: "{{.ClusterName}}"
+  namespace: "{{.TargetNamespace}}"
+  labels:
+    clusterctl.cluster.x-k8s.io: ""
+    clusterctl.cluster.x-k8s.io/move: ""
+spec:
+  clusterName: "{{.ClusterName}}"
+  maxUnhealthy: "{{.MaxUnhealthyNodePercentage}}"
+  nodeStartupTimeout: "{{.NodeStartupTimeout}}"
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: "{{.ClusterName}}"
+  unhealthyConditions:
+    - type: Ready
+      status: Unknown
+      timeout: "{{.NodeUnknownTimeout}}"
+    - type: Ready
+      status: "False"
+      timeout: "{{.NodeNotReadyTimeout}}"

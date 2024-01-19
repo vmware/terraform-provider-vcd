@@ -170,7 +170,6 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
   auto_repair_on_errors = true
   node_health_check     = true
 
-  create_timeout_minutes = 0
-  delete_timeout_minutes = 0
+  operations_timeout_minutes = 0
 }
 `
