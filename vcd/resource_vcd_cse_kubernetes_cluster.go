@@ -16,7 +16,6 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 	"gopkg.in/yaml.v2"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"text/template"
@@ -317,7 +316,7 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 		return diag.Errorf("could not create Kubernetes cluster: %s", err)
 	}
 
-	entityMap, err := getCseKubernetesClusterCreationPayload(d, clusterDetails)
+	entityMap, err := getCseKubernetesClusterCreationPayload(d, vcdClient, clusterDetails)
 	if err != nil {
 		return diag.Errorf("could not create Kubernetes cluster with name '%s': %s", clusterDetails.Name, err)
 	}
@@ -488,7 +487,7 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 			if err != nil {
 				return diag.FromErr(err)
 			}
-			rawYaml, err := generateMemoryHealthCheckYaml(d, *vcdKeConfig, d.Get("name").(string))
+			rawYaml, err := generateMemoryHealthCheckYaml(d, vcdClient, *vcdKeConfig, d.Get("name").(string))
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -552,6 +551,13 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 	vcdClient := meta.(*VCDClient)
 	vcdKe := map[string]interface{}{}
 
+	// The following loop is constantly polling VCD to retrieve the RDE, which has a big JSON inside, so we avoid filling
+	// the log with these big payloads.
+	_ = os.Setenv("GOVCD_LOG_SKIP_HTTP_RESP", "1")
+	defer func() {
+		_ = os.Unsetenv("GOVCD_LOG_SKIP_HTTP_RESP")
+	}()
+
 	var elapsed time.Duration
 	timeout := d.Get("operations_timeout_minutes").(int)
 	start := time.Now()
@@ -597,8 +603,8 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 // getCseKubernetesClusterCreationPayload gets the payload for the RDE that will trigger a Kubernetes cluster creation.
 // It generates a valid YAML that is embedded inside the RDE JSON, then it is returned as an unmarshaled
 // generic map, that allows to be sent to VCD as it is.
-func getCseKubernetesClusterCreationPayload(d *schema.ResourceData, clusterDetails *createClusterDto) (map[string]interface{}, error) {
-	capiYaml, err := generateCapiYaml(d, clusterDetails)
+func getCseKubernetesClusterCreationPayload(d *schema.ResourceData, vcdClient *VCDClient, clusterDetails *createClusterDto) (map[string]interface{}, error) {
+	capiYaml, err := generateCapiYaml(d, vcdClient, clusterDetails)
 	if err != nil {
 		return nil, err
 	}
@@ -626,7 +632,7 @@ func getCseKubernetesClusterCreationPayload(d *schema.ResourceData, clusterDetai
 		args["DefaultStorageClassFileSystem"] = d.Get("default_storage_class.0.filesystem").(string)
 	}
 
-	rdeTmpl, err := getCseTemplateFile(d, "rde")
+	rdeTmpl, err := getCseTemplateFile(d, vcdClient, "rde")
 	if err != nil {
 		return nil, err
 	}
@@ -647,8 +653,8 @@ func getCseKubernetesClusterCreationPayload(d *schema.ResourceData, clusterDetai
 }
 
 // generateNodePoolYaml generates YAML blocks corresponding to the Kubernetes node pools.
-func generateNodePoolYaml(d *schema.ResourceData, clusterDetails *createClusterDto) (string, error) {
-	nodePoolTmpl, err := getCseTemplateFile(d, "capiyaml_nodepool")
+func generateNodePoolYaml(d *schema.ResourceData, vcdClient *VCDClient, clusterDetails *createClusterDto) (string, error) {
+	nodePoolTmpl, err := getCseTemplateFile(d, vcdClient, "capiyaml_nodepool")
 	if err != nil {
 		return "", err
 	}
@@ -695,12 +701,12 @@ func generateNodePoolYaml(d *schema.ResourceData, clusterDetails *createClusterD
 }
 
 // generateMemoryHealthCheckYaml generates a YAML block corresponding to the Kubernetes memory health check.
-func generateMemoryHealthCheckYaml(d *schema.ResourceData, vcdKeConfig vcdKeConfig, clusterName string) (string, error) {
+func generateMemoryHealthCheckYaml(d *schema.ResourceData, vcdClient *VCDClient, vcdKeConfig vcdKeConfig, clusterName string) (string, error) {
 	if !d.Get("node_health_check").(bool) {
 		return "", nil
 	}
 
-	mhcTmpl, err := getCseTemplateFile(d, "capiyaml_mhc")
+	mhcTmpl, err := getCseTemplateFile(d, vcdClient, "capiyaml_mhc")
 	if err != nil {
 		return "", err
 	}
@@ -728,6 +734,13 @@ func generateMemoryHealthCheckYaml(d *schema.ResourceData, vcdKeConfig vcdKeConf
 func waitUntilClusterIsProvisioned(vcdClient *VCDClient, d *schema.ResourceData, rdeId string) (string, error) {
 	var elapsed time.Duration
 	timeout := d.Get("operations_timeout_minutes").(int)
+
+	// The following loop is constantly polling VCD to retrieve the RDE, which has a big JSON inside, so we avoid filling
+	// the log with these big payloads.
+	_ = os.Setenv("GOVCD_LOG_SKIP_HTTP_RESP", "1")
+	defer func() {
+		_ = os.Unsetenv("GOVCD_LOG_SKIP_HTTP_RESP")
+	}()
 	currentState := ""
 
 	start := time.Now()
@@ -792,7 +805,7 @@ type tkgVersionBundle struct {
 // getTkgVersionBundleFromVAppTemplateName returns a tkgVersionBundle with the details of
 // all the Kubernetes cluster components versions given a valid vApp Template name, that should
 // correspond to a Kubernetes template. If it is not a valid vApp Template, returns an error.
-func getTkgVersionBundleFromVAppTemplateName(ovaName string) (tkgVersionBundle, error) {
+func getTkgVersionBundleFromVAppTemplateName(vcdClient *VCDClient, ovaName string) (tkgVersionBundle, error) {
 	result := tkgVersionBundle{}
 
 	if strings.Contains(ovaName, "photon") {
@@ -805,13 +818,14 @@ func getTkgVersionBundleFromVAppTemplateName(ovaName string) (tkgVersionBundle, 
 	}
 	parsedOvaName := strings.ReplaceAll(ovaName, ".ova", "")[cutPosition+len("kube-"):]
 
-	b, err := os.ReadFile(filepath.Clean("cse/tkg_versions.json"))
+	// FIXME: This points to my fork, but should point to final version!!
+	file, err := fileFromUrlToString(vcdClient, "https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-cse-cluster-resource/vcd/cse/tkg_versions.json", "json")
 	if err != nil {
-		return result, fmt.Errorf("error reading cse/tkg_versions.json: %s", err)
+		return result, fmt.Errorf("error reading tkg_versions.json: %s", err)
 	}
 
 	versionsMap := map[string]interface{}{}
-	err = json.Unmarshal(b, &versionsMap)
+	err = json.Unmarshal([]byte(file), &versionsMap)
 	if err != nil {
 		return result, err
 	}
@@ -887,7 +901,7 @@ func getClusterCreateDto(d *schema.ResourceData, vcdClient *VCDClient) (*createC
 	}
 	result.OvaName = vAppTemplate.VAppTemplate.Name
 
-	tkgVersions, err := getTkgVersionBundleFromVAppTemplateName(vAppTemplate.VAppTemplate.Name)
+	tkgVersions, err := getTkgVersionBundleFromVAppTemplateName(vcdClient, vAppTemplate.VAppTemplate.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -1025,8 +1039,8 @@ func getVcdKeConfiguration(d *schema.ResourceData, vcdClient *VCDClient) (*vcdKe
 // generateCapiYaml generates the YAML string that is required during Kubernetes cluster creation, to be embedded
 // in the CAPVCD cluster JSON payload. This function picks data from the Terraform schema and the createClusterDto to
 // populate several Go templates and build a final YAML.
-func generateCapiYaml(d *schema.ResourceData, clusterDetails *createClusterDto) (string, error) {
-	clusterTmpl, err := getCseTemplateFile(d, "capiyaml_cluster")
+func generateCapiYaml(d *schema.ResourceData, vcdClient *VCDClient, clusterDetails *createClusterDto) (string, error) {
+	clusterTmpl, err := getCseTemplateFile(d, vcdClient, "capiyaml_cluster")
 	if err != nil {
 		return "", err
 	}
@@ -1035,12 +1049,12 @@ func generateCapiYaml(d *schema.ResourceData, clusterDetails *createClusterDto) 
 	sanitizedTemplate := strings.NewReplacer("%", "%%").Replace(clusterTmpl)
 	capiYamlEmpty := template.Must(template.New(clusterDetails.Name + "-cluster").Parse(sanitizedTemplate))
 
-	nodePoolYaml, err := generateNodePoolYaml(d, clusterDetails)
+	nodePoolYaml, err := generateNodePoolYaml(d, vcdClient, clusterDetails)
 	if err != nil {
 		return "", err
 	}
 
-	memoryHealthCheckYaml, err := generateMemoryHealthCheckYaml(d, clusterDetails.VcdKeConfig, clusterDetails.Name)
+	memoryHealthCheckYaml, err := generateMemoryHealthCheckYaml(d, vcdClient, clusterDetails.VcdKeConfig, clusterDetails.Name)
 	if err != nil {
 		return "", err
 	}
@@ -1100,16 +1114,14 @@ func generateCapiYaml(d *schema.ResourceData, clusterDetails *createClusterDto) 
 }
 
 // getCseTemplateFile gets a Go template file corresponding to the CSE version set in the Terraform configuration
-func getCseTemplateFile(d *schema.ResourceData, templateName string) (string, error) {
+func getCseTemplateFile(d *schema.ResourceData, vcdClient *VCDClient, templateName string) (string, error) {
 	cseVersion := d.Get("cse_version").(string)
 
 	// In the future, we can put here some logic for equivalent CSE versions, to avoid duplicating the same Go
 	// templates that didn't change among versions.
 
-	t := fmt.Sprintf("cse/%s/%s.tmpl", cseVersion, templateName)
-	b, err := os.ReadFile(filepath.Clean(t))
-	if err != nil {
-		return "", fmt.Errorf("error reading '%s': %s", t, err)
-	}
-	return string(b), nil
+	// FIXME: This points to my fork, but should point to the final URL!!
+	t := fmt.Sprintf("https://raw.githubusercontent.com/adambarreiro/terraform-provider-vcd/add-cse-cluster-resource/vcd/cse/%s/%s.tmpl", cseVersion, templateName)
+
+	return fileFromUrlToString(vcdClient, t, "tmpl")
 }
