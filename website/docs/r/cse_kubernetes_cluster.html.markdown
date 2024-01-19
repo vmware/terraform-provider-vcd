@@ -267,21 +267,10 @@ An example is below:
 # This is just a snippet of code that will host the imported cluster from VCD.
 # This must not be created with Terraform beforehand
 resource "vcd_cse_kubernetes_cluster" "imported_cluster" {
-  # Only the required arguments are needed
-  cse_version        = "4.2"
-  name               = "my-cluster"
-  ova_id             = data.vcd_catalog_vapp_template.tkg_ova.id
-  org                = "tenant_org"
-  vdc_id             = data.vcd_org_vdc.vdc.id
-  network_id         = data.vcd_network_routed_v2.routed.id
-  api_token_file	 = vcd_api_token.token.file_name
-
-  control_plane {
-  
-  }
-
+  # There is no need to provide any Required argument here, the Import operation
+  # will set them
   node_pool {
-    name               = "node-pool-1"
+    
   }
 }
 ```
