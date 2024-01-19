@@ -484,7 +484,11 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 			yamlDocs = yamlDocs[:len(yamlDocs)-1]          // Then we remove the last doc
 		} else {
 			// Add the YAML block
-			rawYaml, err := generateMemoryHealthCheckYaml(d, nil)
+			vcdKeConfig, err := getVcdKeConfiguration(d, vcdClient)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			rawYaml, err := generateMemoryHealthCheckYaml(d, *vcdKeConfig, d.Get("name").(string))
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -691,7 +695,7 @@ func generateNodePoolYaml(d *schema.ResourceData, clusterDetails *createClusterD
 }
 
 // generateMemoryHealthCheckYaml generates a YAML block corresponding to the Kubernetes memory health check.
-func generateMemoryHealthCheckYaml(d *schema.ResourceData, clusterDetails *createClusterDto) (string, error) {
+func generateMemoryHealthCheckYaml(d *schema.ResourceData, vcdKeConfig vcdKeConfig, clusterName string) (string, error) {
 	if !d.Get("node_health_check").(bool) {
 		return "", nil
 	}
@@ -701,16 +705,16 @@ func generateMemoryHealthCheckYaml(d *schema.ResourceData, clusterDetails *creat
 		return "", err
 	}
 
-	mhcEmptyTmpl := template.Must(template.New(clusterDetails.Name + "-mhc").Parse(mhcTmpl))
+	mhcEmptyTmpl := template.Must(template.New(clusterName + "-mhc").Parse(mhcTmpl))
 	buf := &bytes.Buffer{}
 
 	if err := mhcEmptyTmpl.Execute(buf, map[string]string{
-		"ClusterName":                clusterDetails.Name,
-		"TargetNamespace":            clusterDetails.Name + "-ns",
-		"MaxUnhealthyNodePercentage": fmt.Sprintf("%.0f%%", clusterDetails.MaxUnhealthyNodesPercentage), // With the 'percentage' suffix
-		"NodeStartupTimeout":         fmt.Sprintf("%ss", clusterDetails.NodeStartupTimeout),             // With the 'second' suffix
-		"NodeUnknownTimeout":         fmt.Sprintf("%ss", clusterDetails.NodeUnknownTimeout),             // With the 'second' suffix
-		"NodeNotReadyTimeout":        fmt.Sprintf("%ss", clusterDetails.NodeNotReadyTimeout),            // With the 'second' suffix
+		"ClusterName":                clusterName,
+		"TargetNamespace":            clusterName + "-ns",
+		"MaxUnhealthyNodePercentage": fmt.Sprintf("%.0f%%", vcdKeConfig.MaxUnhealthyNodesPercentage), // With the 'percentage' suffix
+		"NodeStartupTimeout":         fmt.Sprintf("%ss", vcdKeConfig.NodeStartupTimeout),             // With the 'second' suffix
+		"NodeUnknownTimeout":         fmt.Sprintf("%ss", vcdKeConfig.NodeUnknownTimeout),             // With the 'second' suffix
+		"NodeNotReadyTimeout":        fmt.Sprintf("%ss", vcdKeConfig.NodeNotReadyTimeout),            // With the 'second' suffix
 	}); err != nil {
 		return "", fmt.Errorf("could not generate a correct Memory Health Check YAML: %s", err)
 	}
@@ -841,23 +845,29 @@ func getTkgVersionBundleFromVAppTemplateName(ovaName string) (tkgVersionBundle, 
 // This is useful to avoid querying VCD too much, as the Terraform configuration works mostly with IDs, but we require names, among
 // other items that we eventually need to retrieve from VCD.
 type createClusterDto struct {
-	Name                        string
-	VcdUrl                      string
-	Org                         *govcd.AdminOrg
-	VdcName                     string
-	OvaName                     string
-	CatalogName                 string
-	NetworkName                 string
-	RdeType                     *govcd.DefinedEntityType
-	UrnToNamesCache             map[string]string // Maps unique IDs with their resource names (example: Compute policy ID with its name)
+	Name            string
+	VcdUrl          string
+	Org             *govcd.AdminOrg
+	VdcName         string
+	OvaName         string
+	CatalogName     string
+	NetworkName     string
+	RdeType         *govcd.DefinedEntityType
+	UrnToNamesCache map[string]string // Maps unique IDs with their resource names (example: Compute policy ID with its name)
+	VcdKeConfig     vcdKeConfig
+	TkgVersion      tkgVersionBundle
+	Owner           string
+	ApiToken        string
+}
+
+// vcdKeConfig is a type that contains only the required and relevant fields from the CSE installation configuration,
+// such as the Machine Health Check settings or the container registry URL.
+type vcdKeConfig struct {
 	MaxUnhealthyNodesPercentage float64
 	NodeStartupTimeout          string
 	NodeNotReadyTimeout         string
 	NodeUnknownTimeout          string
 	ContainerRegistryUrl        string
-	TkgVersion                  tkgVersionBundle
-	Owner                       string
-	ApiToken                    string
 }
 
 // getClusterCreateDto creates and returns a createClusterDto object by obtaining all the required information
@@ -962,6 +972,37 @@ func getClusterCreateDto(d *schema.ResourceData, vcdClient *VCDClient) (*createC
 		}
 	}
 
+	vcdKeConfig, err := getVcdKeConfiguration(d, vcdClient)
+	if err != nil {
+		return nil, err
+	}
+	result.VcdKeConfig = *vcdKeConfig
+
+	owner, ok := d.GetOk("owner")
+	if !ok {
+		sessionInfo, err := vcdClient.Client.GetSessionInfo()
+		if err != nil {
+			return nil, fmt.Errorf("error getting the owner of the cluster: %s", err)
+		}
+		owner = sessionInfo.User.Name
+	}
+	result.Owner = owner.(string)
+
+	apiToken, err := govcd.GetTokenFromFile(d.Get("api_token_file").(string))
+	if err != nil {
+		return nil, fmt.Errorf("API token file could not be parsed or found: %s\nPlease check that the format is the one that 'vcd_api_token' resource uses", err)
+	}
+	result.ApiToken = apiToken.RefreshToken
+
+	result.VcdUrl = strings.Replace(vcdClient.VCDClient.Client.VCDHREF.String(), "/api", "", 1)
+	return result, nil
+}
+
+// getVcdKeConfiguration gets the required information from the CSE Server configuration RDE
+func getVcdKeConfiguration(d *schema.ResourceData, vcdClient *VCDClient) (*vcdKeConfig, error) {
+	currentCseVersion := supportedCseVersions[d.Get("cse_version").(string)]
+	result := &vcdKeConfig{}
+
 	rdes, err := vcdClient.GetRdesByName("vmware", "VCDKEConfig", currentCseVersion[0], "vcdKeConfig")
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve VCDKEConfig RDE with version %s: %s", currentCseVersion[0], err)
@@ -990,24 +1031,6 @@ func getClusterCreateDto(d *schema.ResourceData, vcdClient *VCDClient) (*createC
 		result.NodeNotReadyTimeout = mhc["nodeUnknownTimeout"].(string)
 		result.NodeUnknownTimeout = mhc["nodeNotReadyTimeout"].(string)
 	}
-
-	owner, ok := d.GetOk("owner")
-	if !ok {
-		sessionInfo, err := vcdClient.Client.GetSessionInfo()
-		if err != nil {
-			return nil, fmt.Errorf("error getting the owner of the cluster: %s", err)
-		}
-		owner = sessionInfo.User.Name
-	}
-	result.Owner = owner.(string)
-
-	apiToken, err := govcd.GetTokenFromFile(d.Get("api_token_file").(string))
-	if err != nil {
-		return nil, fmt.Errorf("API token file could not be parsed or found: %s\nPlease check that the format is the one that 'vcd_api_token' resource uses", err)
-	}
-	result.ApiToken = apiToken.RefreshToken
-
-	result.VcdUrl = strings.Replace(vcdClient.VCDClient.Client.VCDHREF.String(), "/api", "", 1)
 	return result, nil
 }
 
@@ -1029,7 +1052,7 @@ func generateCapiYaml(d *schema.ResourceData, clusterDetails *createClusterDto) 
 		return "", err
 	}
 
-	memoryHealthCheckYaml, err := generateMemoryHealthCheckYaml(d, clusterDetails)
+	memoryHealthCheckYaml, err := generateMemoryHealthCheckYaml(d, clusterDetails.VcdKeConfig, clusterDetails.Name)
 	if err != nil {
 		return "", err
 	}
@@ -1056,7 +1079,7 @@ func generateCapiYaml(d *schema.ResourceData, clusterDetails *createClusterDto) 
 		"ControlPlaneMachineCount":    strconv.Itoa(d.Get("control_plane.0.machine_count").(int)),
 		"DnsVersion":                  clusterDetails.TkgVersion.CoreDnsVersion,
 		"EtcdVersion":                 clusterDetails.TkgVersion.EtcdVersion,
-		"ContainerRegistryUrl":        clusterDetails.ContainerRegistryUrl,
+		"ContainerRegistryUrl":        clusterDetails.VcdKeConfig.ContainerRegistryUrl,
 		"KubernetesVersion":           clusterDetails.TkgVersion.KubernetesVersion,
 		"SshPublicKey":                d.Get("ssh_public_key").(string),
 	}
