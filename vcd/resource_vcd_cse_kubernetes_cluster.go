@@ -793,30 +793,6 @@ type tkgVersionBundle struct {
 // all the Kubernetes cluster components versions given a valid vApp Template name, that should
 // correspond to a Kubernetes template. If it is not a valid vApp Template, returns an error.
 func getTkgVersionBundleFromVAppTemplateName(ovaName string) (tkgVersionBundle, error) {
-	// TODO: This should be probably a JSON file
-	versionsMap := map[string]map[string]string{
-		"v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc": {
-			"tkg":     "v2.2.0",
-			"etcd":    "v3.5.6_vmware.9",
-			"coreDns": "v1.9.3_vmware.8",
-		},
-		"v1.27.5+vmware.1-tkg.1-0eb96d2f9f4f705ac87c40633d4b69st": {
-			"tkg":     "v2.4.0",
-			"etcd":    "v3.5.7_vmware.6",
-			"coreDns": "v1.10.1_vmware.7",
-		},
-		"v1.26.8+vmware.1-tkg.1-b8c57a6c8c98d227f74e7b1a9eef27st": {
-			"tkg":     "v2.4.0",
-			"etcd":    "v3.5.6_vmware.20",
-			"coreDns": "v1.10.1_vmware.7",
-		},
-		"v1.26.8+vmware.1-tkg.1-0edd4dafbefbdb503f64d5472e500cf8": {
-			"tkg":     "v2.3.1",
-			"etcd":    "v3.5.6_vmware.20",
-			"coreDns": "v1.9.3_vmware.16",
-		},
-	}
-
 	result := tkgVersionBundle{}
 
 	if strings.Contains(ovaName, "photon") {
@@ -828,16 +804,28 @@ func getTkgVersionBundleFromVAppTemplateName(ovaName string) (tkgVersionBundle, 
 		return result, fmt.Errorf("the vApp Template '%s' is not a Kubernetes template OVA", ovaName)
 	}
 	parsedOvaName := strings.ReplaceAll(ovaName, ".ova", "")[cutPosition+len("kube-"):]
-	if _, ok := versionsMap[parsedOvaName]; !ok {
+
+	b, err := os.ReadFile(filepath.Clean("cse/tkg_versions.json"))
+	if err != nil {
+		return result, fmt.Errorf("error reading cse/tkg_versions.json: %s", err)
+	}
+
+	versionsMap := map[string]interface{}{}
+	err = json.Unmarshal(b, &versionsMap)
+	if err != nil {
+		return result, err
+	}
+	versionMap, ok := versionsMap[parsedOvaName]
+	if !ok {
 		return result, fmt.Errorf("the Kubernetes OVA '%s' is not supported", parsedOvaName)
 	}
 
 	// The map checking above guarantees that all splits and replaces will work
 	result.KubernetesVersion = strings.Split(parsedOvaName, "-")[0]
 	result.TkrVersion = strings.ReplaceAll(strings.Split(parsedOvaName, "-")[0], "+", "---") + "-" + strings.Split(parsedOvaName, "-")[1]
-	result.TkgVersion = versionsMap[parsedOvaName]["tkg"]
-	result.EtcdVersion = versionsMap[parsedOvaName]["etcd"]
-	result.CoreDnsVersion = versionsMap[parsedOvaName]["coreDns"]
+	result.TkgVersion = versionMap.(map[string]interface{})["tkg"].(string)
+	result.EtcdVersion = versionMap.(map[string]interface{})["etcd"].(string)
+	result.CoreDnsVersion = versionMap.(map[string]interface{})["coreDns"].(string)
 	return result, nil
 }
 

@@ -1,0 +1,92 @@
+{
+  "v1.27.5+vmware.1-tkg.1-0eb96d2f9f4f705ac87c40633d4b69st": {
+    "tkg": "v2.4.0",
+    "etcd": "v3.5.7_vmware.6",
+    "coreDns": "v1.10.1_vmware.7"
+  },
+  "v1.26.8+vmware.1-tkg.1-b8c57a6c8c98d227f74e7b1a9eef27st": {
+    "tkg": "v2.4.0",
+    "etcd": "v3.5.6_vmware.20",
+    "coreDns": "v1.10.1_vmware.7"
+  },
+  "v1.26.8+vmware.1-tkg.1-0edd4dafbefbdb503f64d5472e500cf8": {
+    "tkg": "v2.3.1",
+    "etcd": "v3.5.6_vmware.20",
+    "coreDns": "v1.9.3_vmware.16"
+  },
+  "v1.25.13+vmware.1-tkg.1-0031669997707d1c644156b8fc31ebst": {
+    "tkg": "v2.4.0",
+    "etcd": "v3.5.6_vmware.20",
+    "coreDns": "v1.10.1_vmware.7"
+  },
+  "v1.25.13+vmware.1-tkg.1-6f7650434fd3787d751e8fb3c9e2153d": {
+    "tkg": "v2.3.1",
+    "etcd": "v3.5.6_vmware.20",
+    "coreDns": "v1.9.3_vmware.11"
+  },
+  "v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc": {
+    "tkg": "v2.2.0",
+    "etcd": "v3.5.6_vmware.9",
+    "coreDns": "v1.9.3_vmware.8"
+  },
+  "v1.24.17+vmware.1-tkg.1-9f70d901a7d851fb115411e6790fdeae": {
+    "tkg": "v2.3.1",
+    "etcd": "v3.5.6_vmware.19",
+    "coreDns": "v1.8.6_vmware.26"
+  },
+  "v1.24.11+vmware.1-tkg.1-2ccb2a001f8bd8f15f1bfbc811071830": {
+    "tkg": "v2.2.0",
+    "etcd": "v3.5.6_vmware.10",
+    "coreDns": "v1.8.6_vmware.18"
+  },
+  "v1.24.10+vmware.1-tkg.1-765d418b72c247c2310384e640ee075e": {
+    "tkg": "v2.1.1",
+    "etcd": "v3.5.6_vmware.6",
+    "coreDns": "v1.8.6_vmware.17"
+  },
+  "v1.23.17+vmware.1-tkg.1-ee4d95d5d08cd7f31da47d1480571754": {
+    "tkg": "v2.2.0",
+    "etcd": "v3.5.6_vmware.11",
+    "coreDns": "v1.8.6_vmware.19"
+  },
+  "v1.23.16+vmware.1-tkg.1-eb0de9755338b944ea9652e6f758b3ce": {
+    "tkg": "v2.1.1",
+    "etcd": "v3.5.6_vmware.5",
+    "coreDns": "v1.8.6_vmware.16"
+  },
+  "v1.22.17+vmware.1-tkg.1-df08b304658a6cf17f5e74dc0ab7543c": {
+    "tkg": "v2.1.1",
+    "etcd": "v3.5.6_vmware.1",
+    "coreDns": "v1.8.4_vmware.10"
+  },
+  "v1.22.9+vmware.1-tkg.1-2182cbabee08edf480ee9bc5866d6933": {
+    "tkg": "v1.5.4",
+    "etcd": "v3.5.4_vmware.2",
+    "coreDns": "v1.8.4_vmware.9"
+  },
+  "v1.21.11+vmware.1-tkg.2-d788dbbb335710c0a0d1a28670057896": {
+    "tkg": "v1.5.4",
+    "etcd": "v3.4.13_vmware.27",
+    "coreDns": "v1.8.0_vmware.13"
+  },
+  "v1.21.8+vmware.1-tkg.2-ed3c93616a02968be452fe1934a1d37c": {
+    "tkg": "v1.4.3",
+    "etcd": "v3.4.13_vmware.25",
+    "coreDns": "v1.8.0_vmware.11"
+  },
+  "v1.20.15+vmware.1-tkg.2-839faf7d1fa7fa356be22b72170ce1a8": {
+    "tkg": "v1.5.4",
+    "etcd": "v3.4.13_vmware.23",
+    "coreDns": "v1.7.0_vmware.15"
+  },
+  "v1.20.14+vmware.1-tkg.2-5a5027ce2528a6229acb35b38ff8084e": {
+    "tkg": "v1.4.3",
+    "etcd": "v3.4.13_vmware.23",
+    "coreDns": "v1.7.0_vmware.15"
+  },
+  "v1.19.16+vmware.1-tkg.2-fba68db15591c15fcd5f26b512663a42": {
+    "tkg": "v1.4.3",
+    "etcd": "v3.4.13_vmware.19",
+    "coreDns": "v1.7.0_vmware.15"
+  }
+}
