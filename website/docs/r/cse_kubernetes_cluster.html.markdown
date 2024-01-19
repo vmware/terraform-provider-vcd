@@ -112,6 +112,9 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
   node_health_check     = false
 }
 
+output "kubeconfig" {
+  value = vcd_cse_kubernetes_cluster.my_cluster.kubeconfig
+}
 ```
 
 ## Argument Reference
@@ -231,6 +234,24 @@ Updating any other argument will delete the existing cluster and create a new on
 
 Upgrading CSE version with `cse_version` is not supported as this operation would require human intervention,
 as stated [in the official documentation](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1/VMware-Cloud-Director-Container-Service-Extension-Using-Tenant-4.1/GUID-092C40B4-D0BA-4B90-813F-D36929F2F395.html).
+
+## Accessing the Kubernetes cluster
+
+To retrieve the Kubeconfig of a created cluster, you may set it as an output:
+
+```hcl
+output "kubeconfig" {
+  value = vcd_cse_kubernetes_cluster.my_cluster.kubeconfig
+}
+```
+
+Then, creating a file turns out to be trivial:
+
+```shell
+terraform output kubeconfig > $HOME/kubeconfig
+```
+
+The Kubeconfig can now be used with `kubectl` and the Kubernetes cluster can be used.
 
 ## Importing
 
