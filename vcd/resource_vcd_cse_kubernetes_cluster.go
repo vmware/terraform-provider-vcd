@@ -133,8 +133,8 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Optional:         true,
 							Default:          20, // As suggested in UI
 							ForceNew:         true,
-							ValidateDiagFunc: minimumValue(20, "disk size in Gibibytes must be at least 20"),
-							Description:      "Disk size, in Gibibytes, for the control plane nodes. Must be at least 20",
+							ValidateDiagFunc: minimumValue(20, "disk size in Gibibytes (Gi) must be at least 20"),
+							Description:      "Disk size, in Gibibytes (Gi), for the control plane nodes. Must be at least 20",
 						},
 						"sizing_policy_id": {
 							Type:        schema.TypeString,
@@ -190,8 +190,8 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Optional:         true,
 							Default:          20, // As suggested in UI
 							ForceNew:         true,
-							Description:      "Disk size, in Gibibytes, for the control plane nodes",
-							ValidateDiagFunc: minimumValue(20, "disk size in Gibibytes must be at least 20"),
+							Description:      "Disk size, in Gibibytes (Gi), for the control plane nodes",
+							ValidateDiagFunc: minimumValue(20, "disk size in Gibibytes (Gi) must be at least 20"),
 						},
 						"sizing_policy_id": {
 							Type:        schema.TypeString,

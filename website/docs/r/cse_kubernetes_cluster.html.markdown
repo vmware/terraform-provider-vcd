@@ -157,7 +157,7 @@ in every resource.
 This block asks for the following arguments:
 
 * `machine_count` - (Optional) The number of nodes that the control plane has. Must be an odd number and higher than `0`. Defaults to `3`
-* `disk_size_gi` - (Optional) Disk size, in **Gibibytes**, for the control plane VMs. Must be at least `20`. Defaults to `20`
+* `disk_size_gi` - (Optional) Disk size, in **Gibibytes (Gi)**, for the control plane VMs. Must be at least `20`. Defaults to `20`
 * `sizing_policy_id` - (Optional) VM Sizing policy for the control plane VMs. Must be one of the ones made available during CSE installation
 * `placement_policy_id` - (Optional) VM Placement policy for the control plane VMs
 * `storage_profile_id` - (Optional) Storage profile for the control plane VMs
@@ -172,7 +172,7 @@ Each block asks for the following arguments:
 * `name` - (Required) The name of the node pool. It must contain only lowercase alphanumeric characters or "-",
   start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters
 * `machine_count` - (Optional) The number of VMs that the node pool has. Must be higher than `0`. Defaults to `1`
-* `disk_size_gi` - (Optional) Disk size, in **Gibibytes**, for the node pool VMs. Must be at least `20`. Defaults to `20`
+* `disk_size_gi` - (Optional) Disk size, in **Gibibytes (Gi)**, for the node pool VMs. Must be at least `20`. Defaults to `20`
 * `sizing_policy_id` - (Optional) VM Sizing policy for the control plane VMs. Must be one of the ones made available during CSE installation
 * `placement_policy_id` - (Optional) VM Placement policy for the node pool VMs. If this one is set, `vgpu_policy_id` must be empty
 * `vgpu_policy_id` - (Optional) vGPU policy for the node pool VMs. If this one is set, `placement_policy_id` must be empty
@@ -202,10 +202,19 @@ The following attributes are available for consumption as computed attributes:
 
 ## Updating
 
+Only the following arguments can be updated:
+
+* `ova_id`: The cluster must allow upgrading to the new TKG version
+* `machine_count` of the `control_plane`: Supports scaling up and down
+* `machine_count` of any `node_pool`: Supports scaling up and down
+* `auto_repair_on_errors`
+* `node_health_check`
+* `operations_timeout_minutes`: Does not require modifying the existing cluster
+
+Updating any other argument will delete the existing cluster and create a new one, if the Terraform plan is applied.
+
 Upgrading CSE version with `cse_version` is not supported as this operation would require human intervention,
-as stated [in their documentation](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1/VMware-Cloud-Director-Container-Service-Extension-Using-Tenant-4.1/GUID-092C40B4-D0BA-4B90-813F-D36929F2F395.html).
-
-
+as stated [in the official documentation](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1/VMware-Cloud-Director-Container-Service-Extension-Using-Tenant-4.1/GUID-092C40B4-D0BA-4B90-813F-D36929F2F395.html).
 
 ## Importing
 
