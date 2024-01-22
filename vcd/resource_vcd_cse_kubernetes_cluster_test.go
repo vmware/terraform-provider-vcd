@@ -34,20 +34,31 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 
 	now := time.Now()
 	var params = StringMap{
-		"Name":         strings.ToLower(t.Name()),
-		"OvaCatalog":   testConfig.Cse.OvaCatalog,
-		"OvaName":      testConfig.Cse.OvaName,
-		"SolutionsOrg": testConfig.Cse.SolutionsOrg,
-		"TenantOrg":    testConfig.Cse.TenantOrg,
-		"Vdc":          testConfig.Cse.Vdc,
-		"EdgeGateway":  testConfig.Cse.EdgeGateway,
-		"Network":      testConfig.Cse.RoutedNetwork,
-		"TokenName":    fmt.Sprintf("%s%d%d%d", strings.ToLower(t.Name()), now.Day(), now.Hour(), now.Minute()),
-		"TokenFile":    tokenFilename,
+		"Name":              strings.ToLower(t.Name()),
+		"OvaCatalog":        testConfig.Cse.OvaCatalog,
+		"OvaName":           testConfig.Cse.OvaName,
+		"SolutionsOrg":      testConfig.Cse.SolutionsOrg,
+		"TenantOrg":         testConfig.Cse.TenantOrg,
+		"Vdc":               testConfig.Cse.Vdc,
+		"EdgeGateway":       testConfig.Cse.EdgeGateway,
+		"Network":           testConfig.Cse.RoutedNetwork,
+		"TokenName":         fmt.Sprintf("%s%d%d%d", strings.ToLower(t.Name()), now.Day(), now.Hour(), now.Minute()),
+		"TokenFile":         tokenFilename,
+		"ControlPlaneCount": 1,
+		"NodePoolCount":     1,
 	}
 	testParamsNotEmpty(t, params)
 
-	configText := templateFill(testAccVcdCseKubernetesCluster, params)
+	step1 := templateFill(testAccVcdCseKubernetesCluster, params)
+
+	params["FuncName"] = t.Name() + "Step2"
+	params["ControlPlaneCount"] = 2
+	step2 := templateFill(testAccVcdCseKubernetesCluster, params)
+
+	params["FuncName"] = t.Name() + "Step3"
+	params["ControlPlaneCount"] = 1
+	params["NodePoolCount"] = 2
+	step3 := templateFill(testAccVcdCseKubernetesCluster, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -70,11 +81,27 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 		},
 		Steps: []resource.TestStep{
 			{
-				Config: configText,
+				Config: step1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					cacheId.cacheTestResourceFieldValue(clusterName, "id"),
 					resource.TestCheckResourceAttrSet(clusterName, "id"),
 					resource.TestCheckResourceAttr(clusterName, "name", strings.ToLower(t.Name())),
+					resource.TestCheckResourceAttr(clusterName, "state", "provisioned"),
+					resource.TestCheckResourceAttrSet(clusterName, "kubeconfig"),
+				),
+			},
+			{
+				Config: step2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(clusterName, "id", cacheId.fieldValue),
+					resource.TestCheckResourceAttr(clusterName, "state", "provisioned"),
+					resource.TestCheckResourceAttrSet(clusterName, "kubeconfig"),
+				),
+			},
+			{
+				Config: step3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(clusterName, "id", cacheId.fieldValue),
 					resource.TestCheckResourceAttr(clusterName, "state", "provisioned"),
 					resource.TestCheckResourceAttrSet(clusterName, "kubeconfig"),
 				),
@@ -149,7 +176,7 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
   api_token_file	 = vcd_api_token.token.file_name
 
   control_plane {
-    machine_count      = 1
+    machine_count      = {{.ControlPlaneCount}}
     disk_size_gi       = 20
     sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id
     storage_profile_id = data.vcd_storage_profile.sp.id
@@ -157,7 +184,7 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
 
   node_pool {
     name               = "node-pool-1"
-    machine_count      = 1
+    machine_count      = {{.NodePoolCount}}
     disk_size_gi       = 20
     sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id
     storage_profile_id = data.vcd_storage_profile.sp.id
