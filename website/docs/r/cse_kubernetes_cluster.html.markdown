@@ -225,10 +225,13 @@ Only the following arguments can be updated:
 
 * `ova_id`: The cluster must allow upgrading to the new TKG version
 * `machine_count` of the `control_plane`: Supports scaling up and down
-* `machine_count` of any `node_pool`: Supports scaling up and down
+* `machine_count` of any `node_pool`: Supports scaling up and down. Use caution when resizing down to 0 nodes.
+  The cluster must always have at least 1 running node, or else the cluster will enter an unrecoverable error state.
 * `auto_repair_on_errors`
 * `node_health_check`
 * `operations_timeout_minutes`: Does not require modifying the existing cluster
+
+You can also add more `node_pool` blocks to add more node pools to the cluster. 
 
 Updating any other argument will delete the existing cluster and create a new one, if the Terraform plan is applied.
 

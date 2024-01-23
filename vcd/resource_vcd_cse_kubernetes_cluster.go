@@ -14,7 +14,6 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
-	"gopkg.in/yaml.v2"
 	"os"
 	"strconv"
 	"strings"
@@ -188,7 +187,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Optional:         true,
 							Default:          1, // As suggested in UI
 							Description:      "The number of nodes that this node pool has. Must be higher than 0",
-							ValidateDiagFunc: minimumValue(1, "number of nodes must be higher than 0"),
+							ValidateDiagFunc: minimumValue(0, "number of nodes must be higher than or equal to 0"),
 						},
 						"disk_size_gi": {
 							Type:             schema.TypeInt,
@@ -537,112 +536,20 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 		return diags
 	}
 
-	vcdClient := meta.(*VCDClient)
-
 	// Some arguments don't require changes in the backend
 	if !d.HasChangesExcept("operations_timeout_minutes") {
 		return nil
 	}
 
-	// The ID must be already set for the update to be successful. We can't rely on GetRdesByName as there can be
-	// many clusters with the same name and RDE Type.
-	rde, err := vcdClient.GetRdeById(d.Id())
+	vcdClient := meta.(*VCDClient)
+	clusterDetails, err := getClusterCreateDto(d, vcdClient)
 	if err != nil {
-		return diag.Errorf("could not update Kubernetes cluster with ID '%s': %s", d.Id(), err)
-	}
-	state, err := traverseMapAndGet[string](rde.DefinedEntity.Entity, "status.vcdKe.state")
-	if err != nil {
-		return diag.Errorf("could not update Kubernetes cluster with ID '%s': %s", d.Id(), err)
-	}
-	if state != "provisioned" {
-		return diag.Errorf("could not update the Kubernetes cluster with ID '%s': It is in '%s' state, but should be 'provisioned'", d.Id(), state)
+		return diag.Errorf("could not create Kubernetes cluster: %s", err)
 	}
 
-	// Gets and unmarshals the CAPI YAML to update it
-	capiYaml, err := traverseMapAndGet[string](rde.DefinedEntity.Entity, "spec.capiYaml")
+	capiYaml, err := generateCapiYaml(d, vcdClient, clusterDetails)
 	if err != nil {
-		return diag.Errorf("could not retrieve the CAPI YAML from the Kubernetes cluster with ID '%s': %s", d.Id(), err)
-	}
-	// TODO: Is there a simpler way?
-	dec := yaml.NewDecoder(bytes.NewReader([]byte(capiYaml)))
-	var yamlDocs []map[string]interface{}
-	i := 0
-	for {
-		yamlDocs[i] = map[string]interface{}{}
-		if dec.Decode(&yamlDocs[i]) != nil {
-			break
-		}
-		i++
-	}
-
-	if d.HasChange("ova_id") {
-		newOva := d.Get("ova_id")
-		ova, err := vcdClient.GetVAppTemplateById(newOva.(string))
-		if err != nil {
-			return diag.Errorf("could not retrieve the new Kubernetes OVA with ID '%s': %s", newOva, err)
-		}
-		// TODO: Check whether the update can be performed
-		for _, yamlDoc := range yamlDocs {
-			if yamlDoc["kind"] == "VCDMachineTemplate" {
-				yamlDoc["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["template"] = ova.VAppTemplate.Name
-			}
-		}
-	}
-	if d.HasChange("control_plane.0.machine_count") {
-		for _, yamlDoc := range yamlDocs {
-			if yamlDoc["kind"] == "KubeadmControlPlane" {
-				yamlDoc["spec"].(map[string]interface{})["replicas"] = d.Get("control_plane.0.machine_count")
-			}
-		}
-	}
-	// The node pools can only be resized
-	if d.HasChange("node_pool") {
-		for _, nodePoolRaw := range d.Get("node_pool").(*schema.Set).List() {
-			nodePool := nodePoolRaw.(map[string]interface{})
-			for _, yamlDoc := range yamlDocs {
-				if yamlDoc["kind"] == "KubeadmControlPlane" {
-					if yamlDoc["metadata"].(map[string]interface{})["name"] == nodePool["name"].(string) {
-						yamlDoc["spec"].(map[string]interface{})["replicas"] = nodePool["machine_count"].(int)
-					}
-				}
-			}
-		}
-	}
-
-	if d.HasChange("node_health_check") {
-		oldNhc, newNhc := d.GetChange("node_health_check")
-		if oldNhc.(bool) && !newNhc.(bool) {
-			toDelete := 0
-			for i, yamlDoc := range yamlDocs {
-				if yamlDoc["kind"] == "MachineHealthCheck" {
-					toDelete = i
-				}
-			}
-			yamlDocs[toDelete] = yamlDocs[len(yamlDocs)-1] // We delete the MachineHealthCheck block by putting the last doc in its place
-			yamlDocs = yamlDocs[:len(yamlDocs)-1]          // Then we remove the last doc
-		} else {
-			// Add the YAML block
-			vcdKeConfig, err := getVcdKeConfiguration(d, vcdClient)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			rawYaml, err := generateMemoryHealthCheckYaml(d, vcdClient, *vcdKeConfig, d.Get("name").(string))
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			yamlBlock := map[string]interface{}{}
-			err = yaml.Unmarshal([]byte(rawYaml), &yamlBlock)
-			if err != nil {
-				return diag.Errorf("error updating Memory Health Check: %s", err)
-			}
-			yamlDocs = append(yamlDocs, yamlBlock)
-		}
-		util.Logger.Printf("not done but make static complains :)")
-	}
-
-	updatedYaml, err := yaml.Marshal(yamlDocs)
-	if err != nil {
-		return diag.Errorf("error updating cluster: %s", err)
+		return diag.FromErr(err) // TODO
 	}
 
 	// This must be done with retries due to the possible clash on ETags
@@ -657,7 +564,7 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 				return nil, fmt.Errorf("could not update Kubernetes cluster with ID '%s': %s", d.Id(), err)
 			}
 
-			rde.DefinedEntity.Entity["spec"].(map[string]interface{})["capiYaml"] = updatedYaml
+			rde.DefinedEntity.Entity["spec"].(map[string]interface{})["capiYaml"] = capiYaml
 			rde.DefinedEntity.Entity["spec"].(map[string]interface{})["vcdKe"].(map[string]interface{})["autoRepairOnErrors"] = d.Get("auto_repair_on_errors").(bool)
 
 			err = rde.Update(*rde.DefinedEntity)
@@ -669,14 +576,6 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 	)
 	if err != nil {
 		return diag.FromErr(err)
-	}
-
-	state, err = waitUntilClusterIsProvisioned(vcdClient, d, rde.DefinedEntity.ID)
-	if err != nil {
-		return diag.Errorf("Kubernetes cluster update failed: %s", err)
-	}
-	if state != "provisioned" {
-		return diag.Errorf("Kubernetes cluster update failed, cluster is not in 'provisioned' state, but '%s'", state)
 	}
 
 	return resourceVcdCseKubernetesRead(ctx, d, meta)
@@ -866,6 +765,10 @@ func generateNodePoolYaml(d *schema.ResourceData, vcdClient *VCDClient, clusterD
 	for _, nodePoolRaw := range d.Get("node_pool").(*schema.Set).List() {
 		nodePool := nodePoolRaw.(map[string]interface{})
 		name := nodePool["name"].(string)
+
+		if nodePool["machine_count"] == 0 {
+			return "", fmt.Errorf("the node pool '%s' should have at least 1 node", name)
+		}
 
 		// Check the correctness of the compute policies in the node pool block
 		placementPolicyId := nodePool["placement_policy_id"]
