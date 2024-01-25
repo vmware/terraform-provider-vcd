@@ -15,6 +15,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 	"gopkg.in/yaml.v3"
+	"net/url"
 	"strconv"
 	"strings"
 	"text/template"
@@ -759,6 +760,60 @@ func resourceVcdCseKubernetesImport(_ context.Context, d *schema.ResourceData, m
 	return []*schema.ResourceData{d}, nil
 }
 
+// cseKubernetesClusterStatus is an auxiliary structure that helps to read a Kubernetes cluster information retrieved
+// from CSE RDEs
+type cseKubernetesClusterStatus struct {
+	Cpi struct {
+		Version string `json:"version,omitempty"`
+	} `json:"cpi,omitempty"`
+	Csi struct {
+		Version string `json:"version,omitempty"`
+	} `json:"csi,omitempty"`
+	Capvcd struct {
+		Upgrade struct {
+			Current struct {
+				TkgVersion        string `json:"tkgVersion,omitempty"`
+				KubernetesVersion string `json:"kubernetesVersion,omitempty"`
+			} `json:"current,omitempty"`
+		} `json:"upgrade,omitempty"`
+		NodePool []struct {
+			Name             string `json:"name,omitempty"`
+			DiskSizeMb       int    `json:"diskSizeMb,omitempty"`
+			SizingPolicy     string `json:"sizingPolicy,omitempty"`
+			PlacementPolicy  string `json:"placementPolicy,omitempty"`
+			NvidiaGpuEnabled bool   `json:"nvidiaGpuEnabled,omitempty"`
+			StorageProfile   string `json:"storageProfile,omitempty"`
+			DesiredReplicas  int    `json:"desiredReplicas,omitempty"`
+		} `json:"nodePool,omitempty"`
+		K8sNetwork struct {
+			Pods struct {
+				CidrBlocks []string `json:"cidrBlocks,omitempty"`
+			} `json:"pods,omitempty"`
+			Services struct {
+				CidrBlocks []string `json:"cidrBlocks,omitempty"`
+			} `json:"services,omitempty"`
+		} `json:"k8sNetwork,omitempty"`
+		CapvcdVersion string `json:"capvcdVersion,omitempty"`
+		VcdProperties struct {
+			OrgVdcs []struct {
+				Name            string `json:"name,omitempty"`
+				OvdcNetworkName string `json:"ovdcNetworkName,omitempty"`
+			} `json:"orgVdcs,omitempty"`
+			Organizations []struct {
+				Name string `json:"name,omitempty"`
+			} `json:"organizations,omitempty"`
+		} `json:"vcdProperties,omitempty"`
+		ClusterResourceSetBindings []struct {
+			Name string `json:"name"`
+		} `json:"clusterResourceSetBindings,omitempty"`
+		ClusterApiStatus struct {
+			ApiEndpoints []struct {
+				Host string `json:"host,omitempty"`
+			} `json:"apiEndpoints,omitempty"`
+		} `json:"clusterApiStatus,omitempty"`
+	} `json:"capvcd,omitempty"`
+}
+
 // saveClusterDataToState reads the received RDE contents and sets the Terraform arguments and attributes.
 // Returns a slice of warnings first and an error second.
 func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, rde *govcd.DefinedEntity, cseVersion string) ([]error, error) {
@@ -769,27 +824,51 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, rde *g
 	dSet(d, "cse_version", cseVersion)
 	dSet(d, "runtime", "tkg") // Only one supported
 
-	if rde.DefinedEntity.Org == nil {
-		return nil, fmt.Errorf("could not retrieve Organization information from RDE")
-	}
-	adminOrg, err := vcdClient.GetAdminOrgById(rde.DefinedEntity.Org.ID)
-	if err != nil {
-		return nil, fmt.Errorf("could not retrieve Organization with ID '%s': %s", rde.DefinedEntity.Org.ID, err)
-	}
-	if _, ok := d.GetOk("org"); ok {
-		// This field is optional, as it can take the value from the VCD client
-		dSet(d, "org", adminOrg.AdminOrg.Name)
+	if _, ok := rde.DefinedEntity.Entity["status"]; !ok {
+		return nil, fmt.Errorf("could not retrieve 'status' object from Kubernetes cluster with ID '%s'", d.Id())
 	}
 
-	vdcName, err := traverseMapAndGet[string](rde.DefinedEntity.Entity, "metadata.virtualDataCenterName")
+	var status cseKubernetesClusterStatus
+	b, err := json.Marshal(rde.DefinedEntity.Entity["status"])
 	if err != nil {
-		return nil, fmt.Errorf("could not get VDC name from 'metadata.virtualDataCenterName': %s", err)
+		return nil, fmt.Errorf("could not marshal RDE '%s': %s", d.Id(), err)
 	}
-	vdc, err := adminOrg.GetVDCByName(vdcName, false)
+	err = json.Unmarshal(b, &status)
 	if err != nil {
-		return nil, fmt.Errorf("could not get VDC with name %s: %s", vdcName, err)
+		return nil, fmt.Errorf("could not unmarshal RDE '%s': %s", d.Id(), err)
+	}
+
+	util.Logger.Printf("ADAM %v", status)
+
+	// TODO CSE: Why is this a slice???
+	if len(status.Capvcd.VcdProperties.Organizations) == 0 {
+		return nil, fmt.Errorf("expected at least one Organization in cluster '%s'", d.Id())
+	}
+
+	// This field is optional, as it can take the value from the VCD client
+	if _, ok := d.GetOk("org"); ok {
+		dSet(d, "org", status.Capvcd.VcdProperties.Organizations[0].Name)
+	}
+	adminOrg, err := vcdClient.GetAdminOrgByName(status.Capvcd.VcdProperties.Organizations[0].Name)
+	if err != nil {
+		return nil, fmt.Errorf("could not get Organization with name %s: %s", status.Capvcd.VcdProperties.Organizations[0].Name, err)
+	}
+
+	// TODO CSE: Why is this a slice???
+	if len(status.Capvcd.VcdProperties.OrgVdcs) == 0 {
+		return nil, fmt.Errorf("expected at least one VDC in cluster '%s': %s", d.Id(), err)
+	}
+
+	vdc, err := adminOrg.GetVDCByName(status.Capvcd.VcdProperties.OrgVdcs[0].Name, false)
+	if err != nil {
+		return nil, fmt.Errorf("could not get VDC with name %s: %s", status.Capvcd.VcdProperties.OrgVdcs[0].Name, err)
 	}
 	dSet(d, "vdc_id", vdc.Vdc.ID)
+	network, err := vdc.GetOrgVdcNetworkByName(status.Capvcd.VcdProperties.OrgVdcs[0].OvdcNetworkName, false)
+	if err != nil {
+		return nil, fmt.Errorf("could not get Org VDC Network with name %s: %s", status.Capvcd.VcdProperties.OrgVdcs[0].OvdcNetworkName, err)
+	}
+	dSet(d, "network_id", network.OrgVDCNetwork.ID)
 
 	if _, ok := d.GetOk("owner"); ok {
 		// This field is optional, as it can take the value from the VCD client
@@ -805,10 +884,89 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, rde *g
 		dSet(d, "api_token_file", "******")
 	}
 
-	//ip, err := traverseMapAndGet[string](rde.DefinedEntity.Entity, "status.capvcd.clusterApiStatus.apiEndpoints.host")
-	//if err != nil {
-	//	return fmt.Errorf("could not get Control Plane IP from 'status.capvcd.clusterApiStatus.apiEndpoints.host': %s", err), nil
-	//}
+	bindings := make([]string, len(status.Capvcd.ClusterResourceSetBindings))
+	for i, binding := range status.Capvcd.ClusterResourceSetBindings {
+		bindings[i] = binding.Name
+	}
+	err = d.Set("cluster_resource_set_bindings", bindings)
+	if err != nil {
+		return nil, fmt.Errorf("could not set 'cluster_resource_set_bindings': %s", err)
+	}
+
+	dSet(d, "cpi_version", status.Cpi.Version)
+	dSet(d, "csi_version", status.Csi.Version)
+	dSet(d, "capvcd_version", status.Capvcd.CapvcdVersion)
+	dSet(d, "kubernetes_version", status.Capvcd.Upgrade.Current.KubernetesVersion)
+	dSet(d, "tkg_product_version", status.Capvcd.Upgrade.Current.TkgVersion)
+	if len(status.Capvcd.K8sNetwork.Pods.CidrBlocks) == 0 {
+		return nil, fmt.Errorf("expected at least one Pod CIDR block in cluster '%s': %s", d.Id(), err)
+	}
+	dSet(d, "pods_cidr", status.Capvcd.K8sNetwork.Pods.CidrBlocks[0])
+	if len(status.Capvcd.K8sNetwork.Services.CidrBlocks) == 0 {
+		return nil, fmt.Errorf("expected at least one Services CIDR block in cluster '%s': %s", d.Id(), err)
+	}
+	dSet(d, "services_cidr", status.Capvcd.K8sNetwork.Services.CidrBlocks[0])
+
+	nodePoolBlocks := make([]map[string]interface{}, len(status.Capvcd.NodePool)-1)
+	controlPlaneBlocks := make([]map[string]interface{}, 1)
+	nameToIds := map[string]string{"": ""} // Initialize with empty value
+	for i, nodePool := range status.Capvcd.NodePool {
+		block := map[string]interface{}{}
+		block["machine_count"] = nodePool.DesiredReplicas
+		// TODO: This needs a refactoring
+		if nodePool.PlacementPolicy != "" {
+			policies, err := vcdClient.GetAllVdcComputePoliciesV2(url.Values{
+				"filter": []string{fmt.Sprintf("name==%s", nodePool.PlacementPolicy)},
+			})
+			if err != nil {
+				return nil, err // TODO
+			}
+			nameToIds[nodePool.PlacementPolicy] = policies[0].VdcComputePolicyV2.ID
+		}
+		if nodePool.SizingPolicy != "" {
+			policies, err := vcdClient.GetAllVdcComputePoliciesV2(url.Values{
+				"filter": []string{fmt.Sprintf("name==%s", nodePool.SizingPolicy)},
+			})
+			if err != nil {
+				return nil, err // TODO
+			}
+			nameToIds[nodePool.PlacementPolicy] = policies[0].VdcComputePolicyV2.ID
+		}
+		if nodePool.StorageProfile != "" {
+			// TODO: govcd needs Getting Storage Profiles by Name or Get all with params
+			fmt.Print("foo") // Otherwise make static complains
+		}
+		block["sizing_policy_id"] = nameToIds[nodePool.SizingPolicy]
+		if !nodePool.NvidiaGpuEnabled {
+			block["vgpu_policy_id"] = nameToIds[nodePool.PlacementPolicy] // It's a placement policy here
+		} else {
+			block["placement_policy_id"] = nameToIds[nodePool.PlacementPolicy]
+		}
+		block["storage_profile_id"] = nameToIds[nodePool.StorageProfile]
+		block["disk_size_gi"] = nodePool.DiskSizeMb / 1024
+
+		if strings.HasSuffix(nodePool.Name, "-control-plane-node-pool") {
+			// Control Plane
+			if len(status.Capvcd.ClusterApiStatus.ApiEndpoints) == 0 {
+				return nil, fmt.Errorf("could not retrieve Cluster IP")
+			}
+			block["ip"] = status.Capvcd.ClusterApiStatus.ApiEndpoints[0].Host
+			controlPlaneBlocks[0] = block
+		} else {
+			// Worker node
+			block["name"] = nodePool.Name
+
+			nodePoolBlocks[i] = block
+		}
+	}
+	err = d.Set("node_pool", nodePoolBlocks)
+	if err != nil {
+		return nil, fmt.Errorf("could not set 'node_pool' pools: %s", err)
+	}
+	err = d.Set("control_plane", controlPlaneBlocks)
+	if err != nil {
+		return nil, fmt.Errorf("could not set 'control_plane': %s", err)
+	}
 
 	defaultStorageClassOptions, err := traverseMapAndGet[map[string]interface{}](rde.DefinedEntity.Entity, "spec.vcdKe.defaultStorageClassOptions")
 	var defaultStorageClass []map[string]interface{}
@@ -839,53 +997,6 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, rde *g
 		return nil, fmt.Errorf("could not save 'default_storage_class': %s", err)
 	}
 
-	// TODO: USE JSON!!!!
-	// Gets and unmarshals the CAPI YAML to update it
-	capiYaml, err := traverseMapAndGet[string](rde.DefinedEntity.Entity, "spec.capiYaml")
-	if err != nil {
-		return nil, fmt.Errorf("could not retrieve the CAPI YAML from the Kubernetes cluster with ID '%s': %s", d.Id(), err)
-	}
-	// TODO: Is there a simpler way?
-	dec := yaml.NewDecoder(bytes.NewReader([]byte(capiYaml)))
-	var yamlDocs []map[string]interface{}
-	i := 0
-	for {
-		yamlDocs = append(yamlDocs, map[string]interface{}{})
-		if dec.Decode(&yamlDocs[i]) != nil {
-			break
-		}
-		i++
-	}
-
-	for _, yamlDoc := range yamlDocs {
-		if yamlDoc["kind"] == "VCDMachineTemplate" {
-			catalogName := yamlDoc["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["catalog"]
-			catalog, err := adminOrg.GetCatalogByName(catalogName.(string), false)
-			if err != nil {
-				return nil, fmt.Errorf("could not retrieve OVA Catalog with name %s: %s", catalogName, err)
-			}
-			templateName := yamlDoc["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["template"]
-			tmpl, err := catalog.GetVAppTemplateByName(templateName.(string))
-			if err != nil {
-				return nil, fmt.Errorf("could not retrieve Kubernetes template with name %s: %s", templateName, err)
-			}
-			dSet(d, "ova_id", tmpl.VAppTemplate.ID)
-
-			// If metadata.name contains "control-plane"
-			//    - Sizing policy, placement, storage policy, count, IP
-			// Else: Node pools
-			//  Respect order in the list, easy with name field
-			//    - Name, Sizing policy, placement, vgpu policy, storage policy, count, disk_size_gi,
-		} else if yamlDoc["kind"] == "VCDCluster" {
-			networkName := yamlDoc["spec"].(map[string]interface{})["ovdcNetwork"]
-			network, err := vdc.GetOrgVdcNetworkByName(networkName.(string), false)
-			if err != nil {
-				return nil, fmt.Errorf("could not retrieve Network with name %s: %s", networkName, err)
-			}
-			dSet(d, "network_id", network.OrgVDCNetwork.ID)
-		}
-	}
-
 	state, err := traverseMapAndGet[string](rde.DefinedEntity.Entity, "status.vcdKe.state")
 	if err != nil {
 		return nil, fmt.Errorf("could not read 'status.vcdKe.state' from Kubernetes cluster with ID '%s': %s", d.Id(), err)
@@ -911,14 +1022,8 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, rde *g
 		warnings = append(warnings, fmt.Errorf("the Kubernetes cluster with ID '%s' is in '%s' state, won't be able to retrieve the Kubeconfig", d.Id(), state))
 	}
 
-	// TODO: Set
-	// kubernetes_version
-	// tkg_product_version
-	// capvcd_version
-	// cluster_resource_set_bindings
-	// cpi_version
-	// csi_version
-	// persistent_volumes
+	// TODO: Missing ova_id, ssh_public_key, virtual_ip_subnet, auto_repair_on_errors, node_health_check, persistent_volumes
+
 	return warnings, nil
 }
 
@@ -1419,7 +1524,7 @@ func generateCapiYaml(d *schema.ResourceData, vcdClient *VCDClient, clusterDetai
 	// The final "pretty" YAML. To embed it in the final payload it must be marshaled into a one-line JSON string
 	prettyYaml := fmt.Sprintf("%s\n%s\n%s", memoryHealthCheckYaml, nodePoolYaml, buf.String())
 
-	// This encoder is used instead of a standard json.Marshal as the YAML contains special
+	// We don't use a standard json.Marshal() as the YAML contains special
 	// characters that are not encoded properly, such as '<'.
 	buf.Reset()
 	enc := json.NewEncoder(buf)
