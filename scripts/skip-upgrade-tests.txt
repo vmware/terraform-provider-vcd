@@ -333,3 +333,4 @@ vcd.TestAccVcdSubscribedCatalog-no-local-copy-subscriber.tf v3.10.0 "Test was no
 vcd.TestAccVcdSubscribedCatalog-no-local-copy-subscriber-update.tf v3.10.0 "Test was not stable, 3.11 introduce improvements in PR 1101"
 vcd.TestAccVcdSubscribedCatalog-no-local-copy-subscriber-sync.tf v3.10.0 "Test was not stable, 3.11 introduce improvements in PR 1101"
 vcd.TestAccVcdAnyAccessControlGroupsstep1.tf v3.11.0 "Test was not stable in 3.11, 3.12 introduced improvements in PR 1194"
+vcd.ResourceSchema-vcd_network_routed_v2.tf v3.11.0 "Add route_advertisement_enabled field"
