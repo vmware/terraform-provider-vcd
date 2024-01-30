@@ -194,7 +194,7 @@ func matchRegex(regex, errorMessage string) schema.SchemaValidateDiagFunc {
 		}
 		r, err := regexp.Compile(regex)
 		if err != nil {
-			return diag.Errorf("could not compile regular expression '%s'", regex)
+			return diag.Errorf("could not compile regular expression '%s': %s", regex, err)
 		}
 		if !r.MatchString(value) {
 			return diag.Errorf("%s", errorMessage)
