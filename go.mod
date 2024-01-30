@@ -1,13 +1,13 @@
 module github.com/vmware/terraform-provider-vcd/v3
 
-go 1.20
+go 1.21
 
 require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.31.0
 	github.com/kr/pretty v0.2.1
-	github.com/vmware/go-vcloud-director/v2 v2.22.0
+	github.com/vmware/go-vcloud-director/v2 v2.23.0-alpha.1
 )
 
 require (
