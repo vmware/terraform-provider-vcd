@@ -153,6 +153,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_dns":                         datasourceVcdNsxtEdgeGatewayDns(),                      // 3.11
 	"vcd_vgpu_profile":                                 datasourceVcdVgpuProfile(),                             // 3.11
 	"vcd_vm_vgpu_policy":                               datasourceVcdVmVgpuPolicy(),                            // 3.11
+	"vcd_cse_kubernetes_cluster":                       datasourceVcdCseKubernetesCluster(),                    // 3.12
 }
 
 var globalResourceMap = map[string]*schema.Resource{

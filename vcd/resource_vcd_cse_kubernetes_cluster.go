@@ -448,7 +448,7 @@ func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, met
 		return diag.Errorf("could not read Kubernetes cluster with ID '%s': %s", d.Id(), err)
 	}
 
-	warns, err := saveClusterDataToState(d, cluster)
+	warns, err := saveClusterDataToState(d, cluster, org.Org.Name)
 	if err != nil {
 		return diag.Errorf("could not save Kubernetes cluster data into Terraform state: %s", err)
 	}
@@ -562,7 +562,7 @@ func resourceVcdCseKubernetesImport(_ context.Context, d *schema.ResourceData, m
 		return nil, fmt.Errorf("error retrieving Kubernetes cluster with ID '%s': %s", clusterId, err)
 	}
 
-	warns, err := saveClusterDataToState(d, cluster)
+	warns, err := saveClusterDataToState(d, cluster, org.Org.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed importing Kubernetes cluster '%s': %s", cluster.ID, err)
 	}
@@ -576,7 +576,7 @@ func resourceVcdCseKubernetesImport(_ context.Context, d *schema.ResourceData, m
 
 // saveClusterDataToState reads the received RDE contents and sets the Terraform arguments and attributes.
 // Returns a slice of warnings first and an error second.
-func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetesCluster) ([]error, error) {
+func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetesCluster, orgName string) ([]error, error) {
 	var warnings []error
 
 	d.SetId(cluster.ID)
@@ -598,20 +598,25 @@ func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetes
 	dSet(d, "auto_repair_on_errors", cluster.AutoRepairOnErrors)
 	dSet(d, "node_health_check", cluster.NodeHealthCheck)
 
-	if _, ok := d.GetOk("org"); ok {
-		// This field is optional, as it can take the value from the VCD client
-		dSet(d, "org", cluster.OrganizationId)
+	if orgName == "" {
+		// Data source
+		dSet(d, "org_id", cluster.OrganizationId)
+	} else {
+		// Resource
+		if _, ok := d.GetOk("org"); ok {
+			// This field is optional, as it can take the value from the VCD client
+			dSet(d, "org", orgName)
+		}
+		if _, ok := d.GetOk("api_token_file"); !ok {
+			// During imports, this field is impossible to get, so we set an artificial value, as this argument
+			// is required at runtime
+			dSet(d, "api_token_file", "******")
+		}
 	}
 
 	if _, ok := d.GetOk("owner"); ok {
 		// This field is optional, as it can take the value from the VCD client
 		dSet(d, "owner", cluster.Owner)
-	}
-
-	if _, ok := d.GetOk("api_token_file"); !ok {
-		// During imports, this field is impossible to get, so we set an artificial value, as this argument
-		// is required at runtime
-		dSet(d, "api_token_file", "******")
 	}
 
 	err := d.Set("cluster_resource_set_bindings", cluster.ClusterResourceSetBindings)
