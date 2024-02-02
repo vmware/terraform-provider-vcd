@@ -324,55 +324,6 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Computed:    true,
 				Description: "The contents of the kubeconfig of the Kubernetes cluster, only available when 'state=provisioned'",
 			},
-			"persistent_volumes": {
-				Type:        schema.TypeSet,
-				Computed:    true,
-				Description: "A set of persistent volumes that are present in the cluster, only available when a 'default_storage_class' was provided during cluster creation",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"name": {
-							Computed:    true,
-							Type:        schema.TypeString,
-							Description: "The name of the persistent volume",
-						},
-						"status": {
-							Computed:    true,
-							Type:        schema.TypeString,
-							Description: "The status of the persistent volume",
-						},
-						"shared": {
-							Computed:    true,
-							Type:        schema.TypeString,
-							Description: "Whether the persistent volume is shared or not",
-						},
-						"attached_node_count": {
-							Computed:    true,
-							Type:        schema.TypeInt,
-							Description: "How many nodes are consuming the persistent volume",
-						},
-						"iops": {
-							Computed:    true,
-							Type:        schema.TypeInt,
-							Description: "I/O operations per second for the persistent volume",
-						},
-						"size": {
-							Computed:    true,
-							Type:        schema.TypeInt,
-							Description: "Size of the persistent volume",
-						},
-						"storage_profile": {
-							Computed:    true,
-							Type:        schema.TypeString,
-							Description: "Storage profile name of the persistent volume",
-						},
-						"owner": {
-							Computed:    true,
-							Type:        schema.TypeString,
-							Description: "Owner of the persistent volume",
-						},
-					},
-				},
-			},
 		},
 	}
 }
