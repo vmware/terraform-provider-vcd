@@ -1,6 +1,8 @@
 module github.com/vmware/terraform-provider-vcd/v3
 
-go 1.20
+go 1.21
+
+toolchain go1.21.6
 
 require (
 	github.com/davecgh/go-spew v1.1.1
@@ -8,7 +10,6 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.31.0
 	github.com/kr/pretty v0.2.1
 	github.com/vmware/go-vcloud-director/v2 v2.22.0
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -18,6 +19,7 @@ require (
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231002182017-d307bd883b97 // indirect
+	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
 require (

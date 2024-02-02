@@ -13,63 +13,6 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-// getKeys retrieves all the keys from the given map and returns them as a slice
-func getKeys[K comparable, V any](input map[K]V) []K {
-	result := make([]K, len(input))
-	i := 0
-	for k := range input {
-		result[i] = k
-		i++
-	}
-	return result
-}
-
-// traverseMapAndGet traverses the input interface{}, which should be a map of maps, by following the path specified as
-// "keyA.keyB.keyC.keyD", doing something similar to, visually speaking, map["keyA"]["keyB"]["keyC"]["keyD"], or in other words,
-// it goes inside every inner map, which are inside the initial map, until the given path is finished.
-// The final value, "keyD" in the same example, should be of type ResultType, which is a generic type requested during the call
-// to this function.
-func traverseMapAndGet[ResultType any](input interface{}, path string) (ResultType, error) {
-	var nothing ResultType
-	if input == nil {
-		return nothing, fmt.Errorf("the input is nil")
-	}
-	inputMap, ok := input.(map[string]interface{})
-	if !ok {
-		return nothing, fmt.Errorf("the input is a %T, not a map[string]interface{}", input)
-	}
-	if len(inputMap) == 0 {
-		return nothing, fmt.Errorf("the map is empty")
-	}
-	pathUnits := strings.Split(path, ".")
-	completed := false
-	i := 0
-	var result interface{}
-	for !completed {
-		subPath := pathUnits[i]
-		traversed, ok := inputMap[subPath]
-		if !ok {
-			return nothing, fmt.Errorf("key '%s' does not exist in input map", subPath)
-		}
-		if i < len(pathUnits)-1 {
-			traversedMap, ok := traversed.(map[string]interface{})
-			if !ok {
-				return nothing, fmt.Errorf("key '%s' is a %T, not a map, but there are still %d paths to explore", subPath, traversed, len(pathUnits)-(i+1))
-			}
-			inputMap = traversedMap
-		} else {
-			completed = true
-			result = traversed
-		}
-		i++
-	}
-	resultTyped, ok := result.(ResultType)
-	if !ok {
-		return nothing, fmt.Errorf("could not convert obtained type %T to requested %T", result, nothing)
-	}
-	return resultTyped, nil
-}
-
 func expandIPRange(configured []interface{}) (types.IPRanges, error) {
 	ipRange := make([]*types.IPRange, 0, len(configured))
 

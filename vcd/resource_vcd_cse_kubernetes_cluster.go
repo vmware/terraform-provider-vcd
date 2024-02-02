@@ -1,7 +1,6 @@
 package vcd
 
 import (
-	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
@@ -10,25 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"github.com/vmware/go-vcloud-director/v2/util"
-	"gopkg.in/yaml.v3"
-	"net/url"
 	"strings"
 	"time"
 )
-
-// supportedCseVersions is a map that contains only the supported CSE versions as keys,
-// and its corresponding components versions as a slice of strings. The first string is the VCDKEConfig RDE Type version,
-// then the CAPVCD RDE Type version and finally the CAPVCD Behavior version.
-// TODO: Is this really necessary? What happens in UI if I have a 1.1.0-1.2.0-1.0.0 (4.2) cluster and then CSE is updated to 4.3?
-var supportedCseVersions = map[string][]string{
-	"4.2": {
-		"1.1.0", // VCDKEConfig RDE Type version
-		"1.2.0", // CAPVCD RDE Type version
-		"1.0.0", // CAPVCD Behavior version
-	},
-}
 
 func resourceVcdCseKubernetesCluster() *schema.Resource {
 	return &schema.Resource{
@@ -44,7 +27,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true, // Required, but validated at runtime
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice(getKeys(supportedCseVersions), false),
+				ValidateFunc: validation.StringInSlice([]string{"4.2"}, false),
 				Description:  "The CSE version to use",
 			},
 			"runtime": {
@@ -438,14 +421,14 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 		return diag.Errorf("could not create a Kubernetes cluster in the target Organization: %s", err)
 	}
 
-	creationData := govcd.CseClusterCreationInput{
+	creationData := govcd.CseClusterSettings{
 		Name:                    d.Get("name").(string),
 		OrganizationId:          org.Org.ID,
 		VdcId:                   d.Get("vdc_id").(string),
 		NetworkId:               d.Get("network_id").(string),
 		KubernetesTemplateOvaId: d.Get("ova_id").(string),
 		CseVersion:              d.Get("cse_version").(string),
-		ControlPlane: govcd.ControlPlaneInput{
+		ControlPlane: govcd.CseControlPlaneSettings{
 			MachineCount:      d.Get("control_plane.0.machine_count").(int),
 			DiskSizeGi:        d.Get("control_plane.0.disk_size_gi").(int),
 			SizingPolicyId:    d.Get("control_plane.0.sizing_policy_id").(string),
@@ -456,10 +439,10 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 	}
 
 	workerPoolsAttr := d.Get("worker_pool").(*schema.Set).List()
-	workerPools := make([]govcd.WorkerPoolInput, len(workerPoolsAttr))
+	workerPools := make([]govcd.CseWorkerPoolSettings, len(workerPoolsAttr))
 	for i, workerPoolRaw := range workerPoolsAttr {
 		workerPool := workerPoolRaw.(map[string]interface{})
-		workerPools[i] = govcd.WorkerPoolInput{
+		workerPools[i] = govcd.CseWorkerPoolSettings{
 			Name:              workerPool["name"].(string),
 			MachineCount:      workerPool["machine_count"].(int),
 			DiskSizeGi:        workerPool["disk_size_gi"].(int),
@@ -472,7 +455,7 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 	creationData.WorkerPools = workerPools
 
 	if _, ok := d.GetOk("default_storage_class"); ok {
-		creationData.DefaultStorageClass = &govcd.DefaultStorageClassInput{
+		creationData.DefaultStorageClass = &govcd.CseDefaultStorageClassSettings{
 			StorageProfileId: d.Get("default_storage_class.0.storage_profile_id").(string),
 			Name:             d.Get("default_storage_class.0.name").(string),
 			ReclaimPolicy:    d.Get("default_storage_class.0.reclaim_policy").(string),
@@ -480,11 +463,11 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 		}
 	}
 
-	cluster, err := vcdClient.CseCreateKubernetesCluster(creationData, time.Duration(d.Get("operations_timeout_minutes").(int))*time.Minute)
+	cluster, err := org.CseCreateKubernetesCluster(creationData, time.Duration(d.Get("operations_timeout_minutes").(int))*time.Minute)
 	if err != nil {
 		if cluster != nil {
-			if cluster.Capvcd.Status.VcdKe.State != "provisioned" {
-				return diag.Errorf("Kubernetes cluster creation finished, but it is in '%s' state, not 'provisioned': '%s'", cluster.Capvcd.Status.VcdKe.State, err)
+			if cluster.State != "provisioned" {
+				return diag.Errorf("Kubernetes cluster creation finished, but it is in '%s' state, not 'provisioned': '%s'", cluster.State, err)
 			}
 		}
 		return diag.Errorf("Kubernetes cluster creation failed: %s", err)
@@ -499,18 +482,22 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 }
 
 func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	vcdClient := meta.(*VCDClient)
 	var diags diag.Diagnostics
 
-	// The ID must be already set for the read to be successful. We can't rely on GetRdesByName as there can be
-	// many clusters with the same name and RDE Type.
-	var err error
-	cluster, err := vcdClient.GetKubernetesClusterById(d.Id())
+	vcdClient := meta.(*VCDClient)
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return diag.Errorf("could not create a Kubernetes cluster in the target Organization: %s", err)
+	}
+
+	// The ID must be already set for the read to be successful. We can't rely on the name as there can be
+	// many clusters with the same name in the same org.
+	cluster, err := org.CseGetKubernetesClusterById(d.Id())
 	if err != nil {
 		return diag.Errorf("could not read Kubernetes cluster with ID '%s': %s", d.Id(), err)
 	}
 
-	warns, err := saveClusterDataToState(d, vcdClient, cluster, d.Get("cse_version").(string))
+	warns, err := saveClusterDataToState(d, cluster)
 	if err != nil {
 		return diag.Errorf("could not save Kubernetes cluster data into Terraform state: %s", err)
 	}
@@ -541,148 +528,33 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	vcdClient := meta.(*VCDClient)
-
-	// The ID must be already set for the update to be successful. We can't rely on GetRdesByName as there can be
-	// many clusters with the same name and RDE Type.
-	rde, err := vcdClient.GetRdeById(d.Id())
+	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("could not update Kubernetes cluster with ID '%s': %s", d.Id(), err)
-	}
-	state, err := traverseMapAndGet[string](rde.DefinedEntity.Entity, "status.vcdKe.state")
-	if err != nil {
-		return diag.Errorf("could not update Kubernetes cluster with ID '%s': %s", d.Id(), err)
-	}
-	if state != "provisioned" {
-		return diag.Errorf("could not update the Kubernetes cluster with ID '%s': It is in '%s' state, but should be 'provisioned'", d.Id(), state)
+		return diag.Errorf("could not create a Kubernetes cluster in the target Organization: %s", err)
 	}
 
-	// Gets and unmarshals the CAPI YAML to update it
-	capiYaml, err := traverseMapAndGet[string](rde.DefinedEntity.Entity, "spec.capiYaml")
+	cluster, err := org.CseGetKubernetesClusterById(d.Id())
 	if err != nil {
-		return diag.Errorf("could not retrieve the CAPI YAML from the Kubernetes cluster with ID '%s': %s", d.Id(), err)
+		return diag.Errorf("could not get Kubernetes cluster with ID '%s': %s", d.Id(), err)
 	}
-	// TODO: Is there a simpler way?
-	dec := yaml.NewDecoder(bytes.NewReader([]byte(capiYaml)))
-	var yamlDocs []map[string]interface{}
-	i := 0
-	for {
-		yamlDocs = append(yamlDocs, map[string]interface{}{})
-		if dec.Decode(&yamlDocs[i]) != nil {
-			break
+	payload := govcd.CseClusterUpdateInput{}
+	if d.HasChange("worker_pool") {
+		workerPools := map[string]govcd.CseWorkerPoolUpdateInput{}
+		for _, workerPoolAttr := range d.Get("worker_pool").(*schema.Set).List() {
+			w := workerPoolAttr.(map[string]interface{})
+			workerPools[w["name"].(string)] = govcd.CseWorkerPoolUpdateInput{MachineCount: w["machine_count"].(int)}
 		}
-		i++
+		payload.WorkerPools = &workerPools
 	}
 
-	if d.HasChange("ova_id") {
-		newOva := d.Get("ova_id")
-		ova, err := vcdClient.GetVAppTemplateById(newOva.(string))
-		if err != nil {
-			return diag.Errorf("could not retrieve the new Kubernetes OVA with ID '%s': %s", newOva, err)
-		}
-		// TODO: Check whether the update can be performed
-		for _, yamlDoc := range yamlDocs {
-			if yamlDoc["kind"] == "VCDMachineTemplate" {
-				yamlDoc["spec"].(map[string]interface{})["template"].(map[string]interface{})["spec"].(map[string]interface{})["template"] = ova.VAppTemplate.Name
+	err = cluster.Update(payload)
+	if err != nil {
+		if cluster != nil {
+			if cluster.State != "provisioned" {
+				return diag.Errorf("Kubernetes cluster update finished, but it is in '%s' state, not 'provisioned': '%s'", cluster.State, err)
 			}
 		}
-	}
-	if d.HasChange("control_plane.0.machine_count") {
-		for _, yamlDoc := range yamlDocs {
-			if yamlDoc["kind"] == "KubeadmControlPlane" {
-				yamlDoc["spec"].(map[string]interface{})["replicas"] = d.Get("control_plane.0.machine_count")
-			}
-		}
-	}
-	// The node pools can only be created and resized
-	var newNodePools []map[string]interface{}
-	if d.HasChange("node_pool") {
-		for _, nodePoolRaw := range d.Get("node_pool").(*schema.Set).List() {
-			nodePool := nodePoolRaw.(map[string]interface{})
-			for _, yamlDoc := range yamlDocs {
-				if yamlDoc["kind"] == "MachineDeployment" {
-					if yamlDoc["metadata"].(map[string]interface{})["name"] == nodePool["name"].(string) {
-						yamlDoc["spec"].(map[string]interface{})["replicas"] = nodePool["machine_count"].(int)
-					} else {
-						// TODO: Create node pool
-						newNodePools = append(newNodePools, map[string]interface{}{})
-					}
-				}
-			}
-		}
-	}
-	if len(newNodePools) > 0 {
-		yamlDocs = append(yamlDocs, newNodePools...)
-	}
-
-	if d.HasChange("node_health_check") {
-		oldNhc, newNhc := d.GetChange("node_health_check")
-		if oldNhc.(bool) && !newNhc.(bool) {
-			toDelete := 0
-			for i, yamlDoc := range yamlDocs {
-				if yamlDoc["kind"] == "MachineHealthCheck" {
-					toDelete = i
-				}
-			}
-			yamlDocs[toDelete] = yamlDocs[len(yamlDocs)-1] // We delete the MachineHealthCheck block by putting the last doc in its place
-			yamlDocs = yamlDocs[:len(yamlDocs)-1]          // Then we remove the last doc
-		} else {
-			// Add the YAML block
-			vcdKeConfig, err := getVcdKeConfiguration(d, vcdClient)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			rawYaml, err := generateMemoryHealthCheckYaml(d, vcdClient, *vcdKeConfig, d.Get("name").(string))
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			yamlBlock := map[string]interface{}{}
-			err = yaml.Unmarshal([]byte(rawYaml), &yamlBlock)
-			if err != nil {
-				return diag.Errorf("error updating Memory Health Check: %s", err)
-			}
-			yamlDocs = append(yamlDocs, yamlBlock)
-		}
-		util.Logger.Printf("not done but make static complains :)")
-	}
-
-	updatedYaml, err := yaml.Marshal(yamlDocs)
-	if err != nil {
-		return diag.Errorf("error updating cluster: %s", err)
-	}
-
-	// This must be done with retries due to the possible clash on ETags
-	_, err = runWithRetry(
-		"update cluster",
-		"could not update cluster",
-		1*time.Minute,
-		nil,
-		func() (any, error) {
-			rde, err := vcdClient.GetRdeById(d.Id())
-			if err != nil {
-				return nil, fmt.Errorf("could not update Kubernetes cluster with ID '%s': %s", d.Id(), err)
-			}
-
-			rde.DefinedEntity.Entity["spec"].(map[string]interface{})["capiYaml"] = updatedYaml
-			rde.DefinedEntity.Entity["spec"].(map[string]interface{})["vcdKe"].(map[string]interface{})["autoRepairOnErrors"] = d.Get("auto_repair_on_errors").(bool)
-
-			//	err = rde.Update(*rde.DefinedEntity)
-			util.Logger.Printf("ADAM: PERFORM UPDATE: %v", rde.DefinedEntity.Entity)
-			if err != nil {
-				return nil, err
-			}
-			return nil, nil
-		},
-	)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	state, err = waitUntilClusterIsProvisioned(vcdClient, d, rde.DefinedEntity.ID)
-	if err != nil {
 		return diag.Errorf("Kubernetes cluster update failed: %s", err)
-	}
-	if state != "provisioned" {
-		return diag.Errorf("Kubernetes cluster update failed, cluster is not in 'provisioned' state, but '%s'", state)
 	}
 
 	return resourceVcdCseKubernetesRead(ctx, d, meta)
@@ -695,7 +567,12 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	cluster, err := vcdClient.GetKubernetesClusterById(d.Id())
+	org, err := vcdClient.GetOrgFromResource(d)
+	if err != nil {
+		return diag.Errorf("could not get Organization: %s", err)
+	}
+
+	cluster, err := org.CseGetKubernetesClusterById(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -703,37 +580,44 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	return nil
 }
 
 func resourceVcdCseKubernetesImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	vcdClient := meta.(*VCDClient)
-
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
-	var rdeId, cseVersion string
+	var clusterId, orgName, cseVersion string
 	switch len(resourceURI) {
-	case 2: // ImportSeparator != '.'
+	case 3: // ImportSeparator != '.'
 		cseVersion = resourceURI[0]
-		rdeId = resourceURI[1]
-	case 3: // ImportSeparator == '.'
+		orgName = resourceURI[1]
+		clusterId = resourceURI[2]
+	case 4: // ImportSeparator == '.'
 		cseVersion = fmt.Sprintf("%s.%s", resourceURI[0], resourceURI[1])
-		rdeId = resourceURI[2]
+		orgName = resourceURI[2]
+		clusterId = resourceURI[3]
 	default:
-		return nil, fmt.Errorf("resource name must be specified as cse_version.cluster_id")
+		return nil, fmt.Errorf("resource name must be specified as cse_version(two digits: major.minor).organization_name.cluster_id, but it was '%s'", d.Id())
 	}
-	dSet(d, "cse_version", cseVersion)
+	dSet(d, "cse_version", strings.Replace(cseVersion, "v", "", 1)) // We remove any 'v' prefix just in case, to avoid common errors if people use SemVer
 
-	rde, err := vcdClient.GetRdeById(rdeId)
+	vcdClient := meta.(*VCDClient)
+	org, err := vcdClient.GetOrgByName(orgName)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving Kubernetes cluster with ID '%s': %s", d.Id(), err)
+		return nil, fmt.Errorf("could not get Organization with name '%s': %s", orgName, err)
 	}
 
-	warns, err := saveClusterDataToState(d, vcdClient, rde, cseVersion)
+	cluster, err := org.CseGetKubernetesClusterById(clusterId)
 	if err != nil {
-		return nil, fmt.Errorf("failed importing Kubernetes cluster '%s': %s", rdeId, err)
+		return nil, fmt.Errorf("error retrieving Kubernetes cluster with ID '%s': %s", clusterId, err)
+	}
+
+	warns, err := saveClusterDataToState(d, cluster)
+	if err != nil {
+		return nil, fmt.Errorf("failed importing Kubernetes cluster '%s': %s", cluster.ID, err)
 	}
 	for _, warn := range warns {
 		// We can't do much here as Import does not support Diagnostics
-		logForScreen(rdeId, fmt.Sprintf("got a warning during import: %s", warn))
+		logForScreen(cluster.ID, fmt.Sprintf("got a warning during import: %s", warn))
 	}
 
 	return []*schema.ResourceData{d}, nil
@@ -741,49 +625,35 @@ func resourceVcdCseKubernetesImport(_ context.Context, d *schema.ResourceData, m
 
 // saveClusterDataToState reads the received RDE contents and sets the Terraform arguments and attributes.
 // Returns a slice of warnings first and an error second.
-func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluster *govcd.CseClusterApiProviderCluster, cseVersion string) ([]error, error) {
+func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetesCluster) ([]error, error) {
 	var warnings []error
 
 	d.SetId(cluster.ID)
-	dSet(d, "name", cluster.Capvcd.Name)
-	dSet(d, "cse_version", cseVersion)
+	dSet(d, "name", cluster.Name)
+	dSet(d, "cse_version", cluster.CseVersion)
 	dSet(d, "runtime", "tkg") // Only one supported
+	dSet(d, "vdc_id", cluster.VdcId)
+	dSet(d, "network_id", cluster.NetworkId)
+	dSet(d, "cpi_version", cluster.CpiVersion)
+	dSet(d, "csi_version", cluster.CsiVersion)
+	dSet(d, "capvcd_version", cluster.CapvcdVersion)
+	dSet(d, "kubernetes_version", cluster.KubernetesVersion)
+	dSet(d, "tkg_product_version", cluster.TkgVersion)
+	dSet(d, "pods_cidr", cluster.PodCidr)
+	dSet(d, "services_cidr", cluster.ServiceCidr)
+	dSet(d, "ova_id", cluster.KubernetesTemplateOvaId)
+	dSet(d, "ssh_public_key", cluster.SshPublicKey)
+	dSet(d, "virtual_ip_subnet", cluster.VirtualIpSubnet)
+	dSet(d, "auto_repair_on_errors", cluster.AutoRepairOnErrors)
+	dSet(d, "node_health_check", cluster.NodeHealthCheck)
 
-	// TODO CSE: Why is this a slice???
-	if len(cluster.Capvcd.Status.Capvcd.VcdProperties.Organizations) == 0 {
-		return nil, fmt.Errorf("expected at least one Organization in cluster '%s'", d.Id())
-	}
-
-	// This field is optional, as it can take the value from the VCD client
 	if _, ok := d.GetOk("org"); ok {
-		dSet(d, "org", cluster.Capvcd.Status.Capvcd.VcdProperties.Organizations[0].Name)
+		// This field is optional, as it can take the value from the VCD client
+		dSet(d, "org", cluster.OrganizationId)
 	}
-	adminOrg, err := vcdClient.GetAdminOrgByName(cluster.Capvcd.Status.Capvcd.VcdProperties.Organizations[0].Name)
-	if err != nil {
-		return nil, fmt.Errorf("could not get Organization with name %s: %s", cluster.Capvcd.Status.Capvcd.VcdProperties.Organizations[0].Name, err)
-	}
-
-	// TODO CSE: Why is this a slice???
-	if len(cluster.Capvcd.Status.Capvcd.VcdProperties.OrgVdcs) == 0 {
-		return nil, fmt.Errorf("expected at least one VDC in cluster '%s': %s", d.Id(), err)
-	}
-
-	vdc, err := adminOrg.GetVDCByName(cluster.Capvcd.Status.Capvcd.VcdProperties.OrgVdcs[0].Name, false)
-	if err != nil {
-		return nil, fmt.Errorf("could not get VDC with name %s: %s", cluster.Capvcd.Status.Capvcd.VcdProperties.OrgVdcs[0].Name, err)
-	}
-	dSet(d, "vdc_id", vdc.Vdc.ID)
-	network, err := vdc.GetOrgVdcNetworkByName(cluster.Capvcd.Status.Capvcd.VcdProperties.OrgVdcs[0].OvdcNetworkName, false)
-	if err != nil {
-		return nil, fmt.Errorf("could not get Org VDC Network with name %s: %s", cluster.Capvcd.Status.Capvcd.VcdProperties.OrgVdcs[0].OvdcNetworkName, err)
-	}
-	dSet(d, "network_id", network.OrgVDCNetwork.ID)
 
 	if _, ok := d.GetOk("owner"); ok {
 		// This field is optional, as it can take the value from the VCD client
-		if cluster.Owner == "" {
-			return nil, fmt.Errorf("could not retrieve Owner information from Cluster")
-		}
 		dSet(d, "owner", cluster.Owner)
 	}
 
@@ -793,151 +663,52 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluste
 		dSet(d, "api_token_file", "******")
 	}
 
-	bindings := make([]string, len(cluster.Capvcd.Status.Capvcd.ClusterResourceSetBindings))
-	for i, binding := range cluster.Capvcd.Status.Capvcd.ClusterResourceSetBindings {
-		bindings[i] = binding.Name
-	}
-	err = d.Set("cluster_resource_set_bindings", bindings)
+	err := d.Set("cluster_resource_set_bindings", cluster.ClusterResourceSetBindings)
 	if err != nil {
-		return nil, fmt.Errorf("could not set 'cluster_resource_set_bindings': %s", err)
+		return nil, err
 	}
 
-	dSet(d, "cpi_version", cluster.Capvcd.Status.Cpi.Version)
-	dSet(d, "csi_version", cluster.Capvcd.Status.Csi.Version)
-	dSet(d, "capvcd_version", cluster.Capvcd.Status.Capvcd.CapvcdVersion)
-	dSet(d, "kubernetes_version", cluster.Capvcd.Status.Capvcd.Upgrade.Current.KubernetesVersion)
-	dSet(d, "tkg_product_version", cluster.Capvcd.Status.Capvcd.Upgrade.Current.TkgVersion)
-	if len(cluster.Capvcd.Status.Capvcd.K8sNetwork.Pods.CidrBlocks) == 0 {
-		return nil, fmt.Errorf("expected at least one Pod CIDR block in cluster '%s': %s", d.Id(), err)
-	}
-	dSet(d, "pods_cidr", cluster.Capvcd.Status.Capvcd.K8sNetwork.Pods.CidrBlocks[0])
-	if len(cluster.Capvcd.Status.Capvcd.K8sNetwork.Services.CidrBlocks) == 0 {
-		return nil, fmt.Errorf("expected at least one Services CIDR block in cluster '%s': %s", d.Id(), err)
-	}
-	dSet(d, "services_cidr", cluster.Capvcd.Status.Capvcd.K8sNetwork.Services.CidrBlocks[0])
-
-	nodePoolBlocks := make([]map[string]interface{}, len(cluster.Capvcd.Status.Capvcd.NodePool)-1)
-	controlPlaneBlocks := make([]map[string]interface{}, 1)
-	nameToIds := map[string]string{"": ""} // Initialize with empty value
-	for i, nodePool := range cluster.Capvcd.Status.Capvcd.NodePool {
-		block := map[string]interface{}{}
-		block["machine_count"] = nodePool.DesiredReplicas
-		// TODO: This needs a refactoring
-		if nodePool.PlacementPolicy != "" {
-			policies, err := vcdClient.GetAllVdcComputePoliciesV2(url.Values{
-				"filter": []string{fmt.Sprintf("name==%s", nodePool.PlacementPolicy)},
-			})
-			if err != nil {
-				return nil, err // TODO
-			}
-			nameToIds[nodePool.PlacementPolicy] = policies[0].VdcComputePolicyV2.ID
-		}
-		if nodePool.SizingPolicy != "" {
-			policies, err := vcdClient.GetAllVdcComputePoliciesV2(url.Values{
-				"filter": []string{fmt.Sprintf("name==%s", nodePool.SizingPolicy)},
-			})
-			if err != nil {
-				return nil, err // TODO
-			}
-			nameToIds[nodePool.SizingPolicy] = policies[0].VdcComputePolicyV2.ID
-		}
-		if nodePool.StorageProfile != "" {
-			ref, err := vdc.FindStorageProfileReference(nodePool.StorageProfile)
-			if err != nil {
-				return nil, fmt.Errorf("could not get Default Storage Class options from 'spec.vcdKe.defaultStorageClassOptions': %s", err) // TODO
-			}
-			nameToIds[nodePool.StorageProfile] = ref.ID
-		}
-		block["sizing_policy_id"] = nameToIds[nodePool.SizingPolicy]
-		if nodePool.NvidiaGpuEnabled { // TODO: Be sure this is a worker node pool and not control plane (doesnt have this attr)
-			block["vgpu_policy_id"] = nameToIds[nodePool.PlacementPolicy] // It's a placement policy here
-		} else {
-			block["placement_policy_id"] = nameToIds[nodePool.PlacementPolicy]
-		}
-		block["storage_profile_id"] = nameToIds[nodePool.StorageProfile]
-		block["disk_size_gi"] = nodePool.DiskSizeMb / 1024
-
-		if strings.HasSuffix(nodePool.Name, "-control-plane-node-pool") {
-			// Control Plane
-			if len(cluster.Capvcd.Status.Capvcd.ClusterApiStatus.ApiEndpoints) == 0 {
-				return nil, fmt.Errorf("could not retrieve Cluster IP")
-			}
-			block["ip"] = cluster.Capvcd.Status.Capvcd.ClusterApiStatus.ApiEndpoints[0].Host
-			controlPlaneBlocks[0] = block
-		} else {
-			// Worker node
-			block["name"] = nodePool.Name
-
-			nodePoolBlocks[i] = block
+	nodePoolBlocks := make([]map[string]interface{}, len(cluster.WorkerPools))
+	for i, nodePool := range cluster.WorkerPools {
+		nodePoolBlocks[i] = map[string]interface{}{
+			"machine_count": nodePool.MachineCount,
 		}
 	}
 	err = d.Set("node_pool", nodePoolBlocks)
 	if err != nil {
-		return nil, fmt.Errorf("could not set 'node_pool' pools: %s", err)
-	}
-	err = d.Set("control_plane", controlPlaneBlocks)
-	if err != nil {
-		return nil, fmt.Errorf("could not set 'control_plane': %s", err)
+		return nil, err
 	}
 
-	defaultStorageClassOptions, err := traverseMapAndGet[map[string]interface{}](rde.DefinedEntity.Entity, "spec.vcdKe.defaultStorageClassOptions")
-	var defaultStorageClass []map[string]interface{}
+	err = d.Set("control_plane", []map[string]interface{}{
+		{
+			"machine_count": cluster.ControlPlane.MachineCount,
+		},
+	})
 	if err != nil {
-		if !strings.Contains(err.Error(), "does not exist in input map") {
-			return nil, fmt.Errorf("could not get Default Storage Class options from 'spec.vcdKe.defaultStorageClassOptions': %s", err)
-		}
-		// The object does not exist, hence the cluster does not use a default storage class
-	} else {
-		reclaimPolicy := "retain"
-		if defaultStorageClassOptions["useDeleteReclaimPolicy"].(bool) {
-			reclaimPolicy = "delete"
-		}
+		return nil, err
+	}
 
-		ref, err := vdc.FindStorageProfileReference(defaultStorageClassOptions["vcdStorageProfileName"].(string))
+	err = d.Set("default_storage_class", map[string]interface{}{
+		"storage_profile_id": cluster.DefaultStorageClass.StorageProfileId,
+		"name":               cluster.DefaultStorageClass.Name,
+		"reclaim_policy":     cluster.DefaultStorageClass.ReclaimPolicy,
+		"filesystem":         cluster.DefaultStorageClass.Filesystem,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	dSet(d, "state", cluster.State)
+
+	if cluster.State == "provisioned" {
+		kubeconfig, err := cluster.GetKubeconfig()
 		if err != nil {
-			return nil, fmt.Errorf("could not get Default Storage Class options from 'spec.vcdKe.defaultStorageClassOptions': %s", err) // TODO
-		}
-		// defaultStorageClassOptions["vcdStorageProfileName"]
-
-		defaultStorageClass = append(defaultStorageClass, map[string]interface{}{
-			"storage_profile_id": ref.ID,
-			"name":               defaultStorageClassOptions["k8sStorageClassName"],
-			"reclaim_policy":     reclaimPolicy,
-			"filesystem":         defaultStorageClassOptions["filesystem"],
-		})
-
-	}
-	err = d.Set("default_storage_class", defaultStorageClass)
-	if err != nil {
-		return nil, fmt.Errorf("could not save 'default_storage_class': %s", err)
-	}
-
-	state, err := traverseMapAndGet[string](rde.DefinedEntity.Entity, "status.vcdKe.state")
-	if err != nil {
-		return nil, fmt.Errorf("could not read 'status.vcdKe.state' from Kubernetes cluster with ID '%s': %s", d.Id(), err)
-	}
-	dSet(d, "state", state)
-
-	if state == "provisioned" {
-		behaviorVersion := supportedCseVersions[cseVersion][2]
-
-		// This can only be done if the cluster is in 'provisioned' state
-		invocationResult := map[string]interface{}{}
-		err := rde.InvokeBehaviorAndMarshal(fmt.Sprintf("urn:vcloud:behavior-interface:getFullEntity:cse:capvcd:%s", behaviorVersion), types.BehaviorInvocation{}, &invocationResult)
-		if err != nil {
-			return nil, fmt.Errorf("could not invoke the behavior to obtain the Kubeconfig for the Kubernetes cluster with ID '%s': %s", d.Id(), err)
-		}
-
-		kubeconfig, err := traverseMapAndGet[string](invocationResult, "entity.status.capvcd.private.kubeConfig")
-		if err != nil {
-			return nil, fmt.Errorf("could not retrieve Kubeconfig for Kubernetes cluster with ID '%s': %s", d.Id(), err)
+			return nil, fmt.Errorf("error getting Kubeconfig for Kubernetes cluster with ID '%s': %s", cluster.ID, err)
 		}
 		dSet(d, "kubeconfig", kubeconfig)
 	} else {
-		warnings = append(warnings, fmt.Errorf("the Kubernetes cluster with ID '%s' is in '%s' state, won't be able to retrieve the Kubeconfig", d.Id(), state))
+		warnings = append(warnings, fmt.Errorf("the Kubernetes cluster with ID '%s' is in '%s' state, won't be able to retrieve the Kubeconfig", d.Id(), cluster.State))
 	}
-
-	// TODO: Missing ova_id, ssh_public_key, virtual_ip_subnet, auto_repair_on_errors, node_health_check, persistent_volumes
 
 	return warnings, nil
 }
