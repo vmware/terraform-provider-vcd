@@ -12,6 +12,10 @@ Provides a resource to manage Kubernetes clusters in VMware Cloud Director with 
 
 Supported in provider *v3.12+*
 
+Supports the following **Container Service Extension** versions:
+
+* 4.2
+
 -> To install CSE in VMware Cloud Director, please follow [this guide](/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install)
 
 ## Example Usage
