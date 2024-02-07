@@ -381,6 +381,12 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Optional: true,
 			Set:      resourceVcdVmIndependentDiskHash,
 		},
+		"consolidate_disks_on_create": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "Consolidates disks during creation and allows to change disk size using 'override_template_disk' in fast provisioned VDCs",
+		},
 		"override_template_disk": {
 			Type:        schema.TypeSet,
 			Optional:    true,
@@ -1172,6 +1178,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 
 	// update existing internal disks in template (it is only applicable to VMs created
 	// Such fields are processed:
+	// * consolidate_disks_on_create
 	// * override_template_disk
 	err = updateTemplateInternalDisks(d, meta, *vm)
 	if err != nil {

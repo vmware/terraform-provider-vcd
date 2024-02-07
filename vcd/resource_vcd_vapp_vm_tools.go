@@ -611,6 +611,16 @@ func updateTemplateInternalDisks(d *schema.ResourceData, meta interface{}, vm go
 		return nil
 	}
 
+	// Check if disk consolidation is needed - it is a required operation in fast provisioned VDCs
+	// when override_template_disk tries to increase disk size
+	if d.Get("consolidate_disks_on_create").(bool) {
+		util.Logger.Printf("[INFO] disk consolidation is requested with field 'consolidate_disks_on_create': %s", err)
+		err := vm.ConsolidateDisks()
+		if err != nil {
+			return fmt.Errorf("error occurred while consolidating disks for VM '%s': %s", vm.VM.Name, err)
+		}
+	}
+
 	for _, internalDisk := range internalDisksList {
 		internalDiskProvidedConfig := internalDisk.(map[string]interface{})
 		diskCreatedByTemplate := getMatchedDisk(internalDiskProvidedConfig, diskSettings)
