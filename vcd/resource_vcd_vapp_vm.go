@@ -1176,9 +1176,28 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 	}
 
-	// update existing internal disks in template (it is only applicable to VMs created
+	// Check if disk consolidation is requested - it is a required operation in fast provisioned
+	// VDCs when override_template_disk tries to increase disk size, but there can also be other use
+	// cases.
 	// Such fields are processed:
 	// * consolidate_disks_on_create
+	//
+	// Note. Consolidating disks requires "vApp: VM Migrate, Force Undeploy, Relocate, Consolidate"
+	// right
+	if d.Get("consolidate_disks_on_create").(bool) {
+		util.Logger.Printf("[INFO] disk consolidation is requested with field 'consolidate_disks_on_create': %s", err)
+		err := vm.ConsolidateDisks()
+		if err != nil {
+			return nil, fmt.Errorf("error occurred while consolidating disks for VM '%s': %s", vm.VM.Name, err)
+		}
+	}
+
+	if err := vm.Refresh(); err != nil {
+		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
+	}
+
+	// update existing internal disks in template (it is only applicable to VMs created
+	// Such fields are processed:
 	// * override_template_disk
 	err = updateTemplateInternalDisks(d, meta, *vm)
 	if err != nil {
