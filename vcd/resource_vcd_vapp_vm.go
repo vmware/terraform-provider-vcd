@@ -385,6 +385,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     false,
+			ForceNew:    true,
 			Description: "Consolidates disks during creation and allows to change disk size using 'override_template_disk' in fast provisioned VDCs",
 		},
 		"override_template_disk": {
