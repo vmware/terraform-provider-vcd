@@ -39,7 +39,7 @@ data "vcd_version" "cse_minimum_supported" {
   fail_if_not_match = true
 }
 
-# There are some special rights an elements introduced in VCD 10.5.1
+# There are some special rights and elements introduced in VCD 10.5.1
 data "vcd_version" "gte_1051" {
   condition         = ">= 10.5.1"
   fail_if_not_match = false
