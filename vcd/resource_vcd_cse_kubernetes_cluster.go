@@ -28,7 +28,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true, // Required, but validated at runtime
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"4.1.0", "4.1.1", "4.2.0", "4.2.1"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"4.1.0", "4.1.1", "4.2.0"}, false),
 				Description:  "The CSE version to use",
 				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
 					// This custom diff function allows to correctly compare versions
@@ -163,7 +163,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 					},
 				},
 			},
-			"node_pool": {
+			"worker_pool": {
 				Type:        schema.TypeList,
 				Optional:    true, // Required, but validated at runtime
 				Description: "Defines a node pool for the cluster",
@@ -173,7 +173,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true, // Required, but validated at runtime
 							ForceNew:    true,
-							Description: "The name of this node pool",
+							Description: "The name of this worker pool",
 							ValidateDiagFunc: matchRegex(`^[a-z](?:[a-z0-9-]{0,29}[a-z0-9])?$`, "name must contain only lowercase alphanumeric characters or '-',"+
 								"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters"),
 						},
@@ -181,7 +181,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Default:          1, // As suggested in UI
-							Description:      "The number of nodes that this node pool has. Must be higher than 0",
+							Description:      "The number of nodes that this worker pool has. Must be higher than 0",
 							ValidateDiagFunc: minimumValue(0, "number of nodes must be higher than or equal to 0"),
 						},
 						"disk_size_gi": {
@@ -346,17 +346,17 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 // are marked as Optional in the schema to facilitate the Import operation, but some of them are actually mandatory.
 func validateCseKubernetesClusterSchema(d *schema.ResourceData) diag.Diagnostics {
 	var diags diag.Diagnostics
-	for _, arg := range []string{"cse_version", "name", "ova_id", "vdc_id", "network_id", "api_token_file", "control_plane", "node_pool"} {
+	for _, arg := range []string{"cse_version", "name", "ova_id", "vdc_id", "network_id", "api_token_file", "control_plane", "worker_pool"} {
 		if _, ok := d.GetOk(arg); !ok {
 			diags = append(diags, diag.Errorf("the argument '%s' is required, but no definition was found", arg)...)
 		}
 	}
-	nodePoolsRaw := d.Get("node_pool").([]interface{})
-	for _, nodePoolRaw := range nodePoolsRaw {
-		nodePool := nodePoolRaw.(map[string]interface{})
+	workerPools := d.Get("worker_pool").([]interface{})
+	for _, w := range workerPools {
+		workerPool := w.(map[string]interface{})
 		for _, arg := range []string{"name"} {
-			if _, ok := nodePool[arg]; !ok {
-				diags = append(diags, diag.Errorf("the argument 'node_pool.%s' is required, but no definition was found", arg)...)
+			if _, ok := workerPool[arg]; !ok {
+				diags = append(diags, diag.Errorf("the argument 'worker_pool.%s' is required, but no definition was found", arg)...)
 			}
 		}
 	}
@@ -391,13 +391,30 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 		return diag.Errorf("could not create a Kubernetes cluster in the target Organization: %s", err)
 	}
 
+	apiTokenFile := d.Get("api_token_file").(string)
+	apiToken, err := govcd.GetTokenFromFile(apiTokenFile)
+	if err != nil {
+		return diag.Errorf("could not read the API token from the file '%s': %s", apiTokenFile, err)
+	}
+	owner := d.Get("owner").(string)
+	if owner == "" {
+		session, err := vcdClient.Client.GetSessionInfo()
+		if err != nil {
+			return diag.Errorf("could not get an Owner for the Kubernetes cluster. 'owner' is not set and cannot get one from the Provider configuration: %s", err)
+		}
+		owner = session.User.Name
+		if owner == "" {
+			return diag.Errorf("could not get an Owner for the Kubernetes cluster. 'owner' is not set and cannot get one from the Provider configuration")
+		}
+	}
+
 	creationData := govcd.CseClusterSettings{
+		CseVersion:              *cseVersion,
 		Name:                    d.Get("name").(string),
 		OrganizationId:          org.Org.ID,
 		VdcId:                   d.Get("vdc_id").(string),
 		NetworkId:               d.Get("network_id").(string),
 		KubernetesTemplateOvaId: d.Get("ova_id").(string),
-		CseVersion:              *cseVersion,
 		ControlPlane: govcd.CseControlPlaneSettings{
 			MachineCount:      d.Get("control_plane.0.machine_count").(int),
 			DiskSizeGi:        d.Get("control_plane.0.disk_size_gi").(int),
@@ -406,12 +423,20 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 			StorageProfileId:  d.Get("control_plane.0.storage_profile_id").(string),
 			Ip:                d.Get("control_plane.0.ip").(string),
 		},
+		Owner:              owner,
+		ApiToken:           apiToken.RefreshToken,
+		NodeHealthCheck:    d.Get("node_health_check").(bool),
+		PodCidr:            d.Get("pods_cidr").(string),
+		ServiceCidr:        d.Get("services_cidr").(string),
+		SshPublicKey:       d.Get("ssh_public_key").(string),
+		VirtualIpSubnet:    d.Get("virtual_ip_subnet").(string),
+		AutoRepairOnErrors: d.Get("auto_repair_on_errors").(bool),
 	}
 
-	workerPoolsAttr := d.Get("worker_pool").(*schema.Set).List()
+	workerPoolsAttr := d.Get("worker_pool").([]interface{})
 	workerPools := make([]govcd.CseWorkerPoolSettings, len(workerPoolsAttr))
-	for i, workerPoolRaw := range workerPoolsAttr {
-		workerPool := workerPoolRaw.(map[string]interface{})
+	for i, w := range workerPoolsAttr {
+		workerPool := w.(map[string]interface{})
 		workerPools[i] = govcd.CseWorkerPoolSettings{
 			Name:              workerPool["name"].(string),
 			MachineCount:      workerPool["machine_count"].(int),
@@ -510,14 +535,14 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 	payload := govcd.CseClusterUpdateInput{}
 	if d.HasChange("worker_pool") {
 		workerPools := map[string]govcd.CseWorkerPoolUpdateInput{}
-		for _, workerPoolAttr := range d.Get("worker_pool").(*schema.Set).List() {
+		for _, workerPoolAttr := range d.Get("worker_pool").([]interface{}) {
 			w := workerPoolAttr.(map[string]interface{})
 			workerPools[w["name"].(string)] = govcd.CseWorkerPoolUpdateInput{MachineCount: w["machine_count"].(int)}
 		}
 		payload.WorkerPools = &workerPools
 	}
 
-	err = cluster.Update(payload, false)
+	err = cluster.Update(payload, true)
 	if err != nil {
 		if cluster != nil {
 			if cluster.State != "provisioned" {
@@ -605,22 +630,15 @@ func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetes
 	dSet(d, "auto_repair_on_errors", cluster.AutoRepairOnErrors)
 	dSet(d, "node_health_check", cluster.NodeHealthCheck)
 
-	if orgName == "" {
-		// Data source
-		dSet(d, "org_id", cluster.OrganizationId)
-	} else {
-		// Resource
-		if _, ok := d.GetOk("org"); ok {
-			// This field is optional, as it can take the value from the VCD client
-			dSet(d, "org", orgName)
-		}
-		if _, ok := d.GetOk("api_token_file"); !ok {
-			// During imports, this field is impossible to get, so we set an artificial value, as this argument
-			// is required at runtime
-			dSet(d, "api_token_file", "******")
-		}
+	if _, ok := d.GetOk("org"); ok {
+		// This field is optional, as it can take the value from the VCD client
+		dSet(d, "org", orgName)
 	}
-
+	if _, ok := d.GetOk("api_token_file"); !ok {
+		// During imports, this field is impossible to get, so we set an artificial value, as this argument
+		// is required at runtime
+		dSet(d, "api_token_file", "******")
+	}
 	if _, ok := d.GetOk("owner"); ok {
 		// This field is optional, as it can take the value from the VCD client
 		dSet(d, "owner", cluster.Owner)
@@ -637,7 +655,7 @@ func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetes
 			"machine_count": nodePool.MachineCount,
 		}
 	}
-	err = d.Set("node_pool", nodePoolBlocks)
+	err = d.Set("worker_pool", nodePoolBlocks)
 	if err != nil {
 		return nil, err
 	}

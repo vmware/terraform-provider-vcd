@@ -3,43 +3,50 @@ package vcd
 import (
 	"context"
 	_ "embed"
+	semver "github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 func datasourceVcdCseKubernetesCluster() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdCseKubernetesRead,
 		Schema: map[string]*schema.Schema{
+			"org": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Description: "The name of organization that owns the Kubernetes cluster, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
+			},
 			"cluster_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The ID of the Kubernetes cluster to read",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"cluster_id", "name"},
+				Description:  "The unique ID of the Kubernetes cluster to read that must be present in the Organization",
+			},
+			"name": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"cluster_id", "name"},
+				RequiredWith: []string{"cse_version"},
+				Description:  "The name of the Kubernetes cluster to read. If there is more than one Kubernetes cluster with the same name, searching by name will fail",
 			},
 			"cse_version": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The CSE version used by the cluster",
+				Type:         schema.TypeString,
+				Optional:     true,
+				RequiredWith: []string{"name"},
+				Description:  "The CSE version used by the cluster",
 			},
 			"runtime": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The Kubernetes runtime used by the cluster",
 			},
-			"name": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The name of the Kubernetes cluster",
-			},
 			"ova_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The ID of the vApp Template that corresponds to a Kubernetes template OVA",
-			},
-			"org_id": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "The name of organization that owns this Kubernetes cluster",
 			},
 			"vdc_id": {
 				Type:        schema.TypeString,
@@ -251,15 +258,31 @@ func datasourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, m
 	vcdClient := meta.(*VCDClient)
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("could not read Kubernetes cluster with ID '%s': %s", d.Get("cluster_id"), err)
+		return diag.Errorf("could not get the target Organization: %s", err)
 	}
 
-	cluster, err := org.CseGetKubernetesClusterById(d.Get("cluster_id").(string))
-	if err != nil {
-		return diag.Errorf("could not read Kubernetes cluster with ID '%s': %s", d.Get("cluster_id"), err)
+	var cluster *govcd.CseKubernetesCluster
+	if id, ok := d.GetOk("cluster_id"); ok {
+		cluster, err = org.CseGetKubernetesClusterById(id.(string))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	} else if name, ok := d.GetOk("name"); ok {
+		cseVersion, err := semver.NewVersion(d.Get("cse_version").(string))
+		if err != nil {
+			return diag.Errorf("could not parse cse_version='%s': %s", cseVersion, err)
+		}
+		clusters, err := org.CseGetKubernetesClustersByName(*cseVersion, name.(string))
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if len(clusters) != 1 {
+			return diag.Errorf("expected one Kubernetes cluster with name '%s', got %d. Try to use 'cluster_id' instead of 'name'", name, len(clusters))
+		}
+		cluster = clusters[0]
 	}
 
-	warns, err := saveClusterDataToState(d, cluster, "")
+	warns, err := saveClusterDataToState(d, cluster, org.Org.Name)
 	if err != nil {
 		return diag.Errorf("could not save Kubernetes cluster data into Terraform state: %s", err)
 	}

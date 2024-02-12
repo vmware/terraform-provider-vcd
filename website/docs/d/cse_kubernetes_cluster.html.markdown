@@ -18,11 +18,35 @@ Supports the following **Container Service Extension** versions:
 
 -> To install CSE in VMware Cloud Director, please follow [this guide](/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install)
 
-## Example Usage
+## Example Usage with ID
+
+The cluster ID identifies unequivocally the cluster within VCD, and can be obtained with the CSE UI Plugin.
+
+This option requires only the target organization where the Kubernetes cluster is located and its ID:
 
 ```hcl
 data "vcd_cse_kubernetes_cluster" "my_cluster" {
+  org         = "tenant_org"
   cluster_id  = "urn:vcloud:entity:vmware:capvcdCluster:e8e82bcc-50a1-484f-9dd0-20965ab3e865"
+}
+```
+
+## Example Usage with Name
+
+Sometimes using the cluster ID is not convenient, so this data source allows to use the cluster name.
+As VCD allows to have multiple clusters with the same name, this option must be used with caution as it will fail
+if there is more than one Kubernetes cluster with the same name in the same Organization:
+
+```hcl
+locals {
+  my_clusters = [ "beta1", "test2", "foo45"]
+}
+
+data "vcd_cse_kubernetes_cluster" "my_cluster" {
+  for_each = local.my_clusters
+  org         = "tenant_org"
+  cse_version = "4.2.0"
+  name        = each.key
 }
 ```
 
@@ -30,7 +54,10 @@ data "vcd_cse_kubernetes_cluster" "my_cluster" {
 
 The following arguments are supported:
 
-* `cluster_id` - (Required) Unequivocally identifies a cluster in VCD
+* `org` - (Optional) The name of the Organization to which the Kubernetes cluster belongs. Optional if defined at provider level.
+* `cluster_id` - (Optional) Unequivocally identifies a cluster in VCD. It must belong to the given `org`. Either `cluster_id` or `name` must be set.
+* `name` - (Optional) Allows to find a Kubernetes cluster by name inside the given `org`. Either `cluster_id` or `name` must be set. This argument requires `cse_version` to be set.
+* `cse_version` - (Optional) Specifies the CSE Version of the cluster to find when `name` is used instead of `cluster_id`.
 
 ## Attribute Reference
 
