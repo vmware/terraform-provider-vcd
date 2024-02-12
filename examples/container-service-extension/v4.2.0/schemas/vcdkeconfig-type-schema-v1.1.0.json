@@ -1,0 +1,727 @@
+{
+    "type": "object",
+    "required": [
+        "kind",
+        "metadata",
+        "apiVersion",
+        "spec"
+    ],
+    "properties": {
+        "kind": {
+            "enum": [
+                "CAPVCDCluster"
+            ],
+            "type": "string",
+            "title": "The kind of the Kubernetes cluster.",
+            "default": "CAPVCDCluster",
+            "description": "The kind of the Kubernetes cluster."
+        },
+        "spec": {
+            "type": "object",
+            "title": "User specification for the cluster",
+            "properties": {
+                "vcdKe": {
+                    "type": "object",
+                    "title": "User specification for VCDKE component",
+                    "properties": {
+                        "secure": {
+                            "type": "object",
+                            "title": "Encrypted data",
+                            "properties": {
+                                "apiToken": {
+                                    "type": "string",
+                                    "title": "API Token (Refresh Token) of the user",
+                                    "description": "API Token (Refresh Token) of the user."
+                                }
+                            },
+                            "description": "Fields under this section will be encrypted",
+                            "x-vcloud-restricted": [
+                                "private",
+                                "secure"
+                            ]
+                        },
+                        "forceDelete": {
+                            "type": "boolean",
+                            "title": "User's intent to delete the cluster forcefully",
+                            "default": false,
+                            "description": "User's intent to delete the cluster forcefully"
+                        },
+                        "markForDelete": {
+                            "type": "boolean",
+                            "title": "User's intent to delete the cluster",
+                            "default": false,
+                            "description": "Mark the cluster for deletion"
+                        },
+                        "isVCDKECluster": {
+                            "type": "boolean",
+                            "title": "User's intent to have this specification processed by VCDKE",
+                            "description": "Does user wants this specification to be processed by the VCDKE component of CSE stack?"
+                        },
+                        "autoRepairOnErrors": {
+                            "type": "boolean",
+                            "title": "User's intent to let the VCDKE repair/recreate the cluster",
+                            "default": true,
+                            "description": "User's intent to let the VCDKE repair/recreate the cluster on any errors during cluster creation"
+                        },
+                        "defaultStorageClassOptions": {
+                            "type": "object",
+                            "title": "Default Storage class options to be set on the target cluster",
+                            "properties": {
+                                "fileSystem": {
+                                    "type": "string",
+                                    "title": "Default file System of the volumes",
+                                    "description": "Default file System of the volumes to be created from the default storage class"
+                                },
+                                "k8sStorageClassName": {
+                                    "type": "string",
+                                    "title": "Name of the Kubernetes storage class to be created",
+                                    "description": "Name of the Kubernetes storage class to be created"
+                                },
+                                "vcdStorageProfileName": {
+                                    "type": "string",
+                                    "title": "Name of the VCD storage profile",
+                                    "description": "Name of the VCD storage profile"
+                                },
+                                "useDeleteReclaimPolicy": {
+                                    "type": "boolean",
+                                    "title": "Reclaim policy of the Kubernetes storage class",
+                                    "description": "Reclaim policy of the Kubernetes storage class"
+                                }
+                            },
+                            "description": "Default Storage class options to be set on the target cluster"
+                        }
+                    },
+                    "description": "User specification for VCDKE component"
+                },
+                "yamlSet": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "title": "User specified K8s Yaml strings",
+                    "description": "User specified K8s Yaml strings to be applied on the target cluster. The component Projector will process this property periodically."
+                },
+                "capiYaml": {
+                    "type": "string",
+                    "title": "CAPI yaml",
+                    "description": "User specification of the CAPI yaml; It is user's responsibility to embed the correct CAPI yaml generated as per instructions - https://github.com/vmware/cluster-api-provider-cloud-director/blob/main/docs/CLUSTERCTL.md#generate-cluster-manifests-for-workload-cluster"
+                },
+                "projector": {
+                    "type": "object",
+                    "title": "User specification for Projector component",
+                    "properties": {
+                        "operations": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "required": [
+                                    "verb",
+                                    "values",
+                                    "valueType",
+                                    "sequence"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "title": "Name of the operation",
+                                        "description": "The name of the operation, if applicable."
+                                    },
+                                    "verb": {
+                                        "enum": [
+                                            "apply",
+                                            "create"
+                                        ],
+                                        "type": "string",
+                                        "title": "Kubernetes command of the operation",
+                                        "description": "Specifies the Kubernetes command for the operation. Apply supports yamlLink, yamlString; Delete supports KubernetesKind; Create supports yamlLink, yamlString"
+                                    },
+                                    "values": {
+                                        "type": "array",
+                                        "items": {
+                                            "anyOf": [
+                                                {
+                                                    "type": "string"
+                                                },
+                                                {
+                                                    "type": "object"
+                                                }
+                                            ]
+                                        },
+                                        "title": "Value of the operation",
+                                        "description": "Array of values used for the operation.Type of the values must be consistent with the valueType",
+                                        "x-vcloud-restricted": [
+                                            "private",
+                                            "secure"
+                                        ]
+                                    },
+                                    "sequence": {
+                                        "type": "integer",
+                                        "title": "Sequence number of the operation",
+                                        "minimum": 1,
+                                        "description": "Specifies the sequence/order in which the operation should be executed."
+                                    },
+                                    "valueType": {
+                                        "enum": [
+                                            "yamlLink",
+                                            "yamlString"
+                                        ],
+                                        "type": "string",
+                                        "title": "Value type of the operation",
+                                        "description": "Specifies the type of values to be used (e.g., yamlString, yamlLink, K8sKind, cseContainer)."
+                                    },
+                                    "retryUntilSuccess": {
+                                        "type": "boolean",
+                                        "title": "Operation will be retried until it succeeds",
+                                        "default": false,
+                                        "description": "Operation will be retried until it succeeds"
+                                    }
+                                }
+                            },
+                            "title": "Operations to be executed by the component projector",
+                            "description": "User-specified operations to be applied on the target cluster. "
+                        }
+                    },
+                    "description": "Defines the operations to be executed by the component projector",
+                    "x-vcloud-restricted": "private"
+                }
+            },
+            "description": "User specification for the cluster"
+        },
+        "status": {
+            "type": "object",
+            "title": "Current status of the cluster",
+            "properties": {
+                "cpi": {
+                    "type": "object",
+                    "title": "CPI for VCD's view of the current status of the cluster",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "title": "Name of the Cloud Provider Interface",
+                            "description": "Name of the CPI"
+                        },
+                        "version": {
+                            "type": "string",
+                            "title": "Product version of the CPI",
+                            "description": "Product version of the CPI"
+                        }
+                    },
+                    "description": "CPI for VCD's view of the current status of the cluster"
+                },
+                "vcdKe": {
+                    "type": "object",
+                    "title": "VCDKE's view of the current status of the cluster",
+                    "properties": {
+                        "state": {
+                            "type": "string",
+                            "title": "VCDKE's view of the current state of the cluster",
+                            "description": "VCDKE's view of the current state of the cluster - provisioning/provisioned/error"
+                        },
+                        "vcdKeVersion": {
+                            "type": "string",
+                            "title": "VCDKE/CSE product version",
+                            "description": "The VCDKE version with which the cluster is originally created"
+                        },
+                        "defaultStorageClass": {
+                            "type": "object",
+                            "title": "Default Storage class options to be set on the target cluster",
+                            "properties": {
+                                "fileSystem": {
+                                    "type": "string",
+                                    "title": "Default file System of the volumes",
+                                    "description": "Default file System of the volumes to be created from the default storage class"
+                                },
+                                "k8sStorageClassName": {
+                                    "type": "string",
+                                    "title": "Name of the Kubernetes storage class to be created",
+                                    "description": "Name of the Kubernetes storage class to be created"
+                                },
+                                "vcdStorageProfileName": {
+                                    "type": "string",
+                                    "title": "Name of the VCD storage profile",
+                                    "description": "Name of the VCD storage profile"
+                                },
+                                "useDeleteReclaimPolicy": {
+                                    "type": "boolean",
+                                    "title": "Reclaim policy of the Kubernetes storage class",
+                                    "description": "Reclaim policy of the Kubernetes storage class"
+                                }
+                            },
+                            "description": "Default Storage class options to be set on the target cluster"
+                        }
+                    },
+                    "description": "Current status of the cluster from VCDKE's point of view"
+                },
+                "capvcd": {
+                    "type": "object",
+                    "title": "CAPVCD's view of the current status of the cluster",
+                    "properties": {
+                        "uid": {
+                            "type": "string"
+                        },
+                        "phase": {
+                            "type": "string"
+                        },
+                        "private": {
+                            "type": "object",
+                            "properties": {
+                                "kubeConfig": {
+                                    "type": "string",
+                                    "description": "Kube config to access the Kubernetes cluster."
+                                }
+                            },
+                            "description": "Placeholder for the properties invisible and secure to non-admin users.",
+                            "x-vcloud-restricted": [
+                                "private",
+                                "secure"
+                            ]
+                        },
+                        "upgrade": {
+                            "type": "object",
+                            "properties": {
+                                "ready": {
+                                    "type": "boolean",
+                                    "description": "boolean indicating the status of the cluster upgrade."
+                                },
+                                "current": {
+                                    "type": "object",
+                                    "properties": {
+                                        "tkgVersion": {
+                                            "type": "string",
+                                            "description": "current TKG version of the cluster. If being upgraded, will represent the tarkget TKG version of the cluster."
+                                        },
+                                        "kubernetesVersion": {
+                                            "type": "string",
+                                            "description": "current kubernetes version of the cluster. If being upgraded, will represent target kubernetes version of the cluster."
+                                        }
+                                    }
+                                },
+                                "previous": {
+                                    "type": "object",
+                                    "properties": {
+                                        "tkgVersion": {
+                                            "type": "string",
+                                            "description": "the TKG version from which the cluster was upgraded from. If cluster upgrade is still in progress, the field will represent the source TKG versoin from which the cluster is being upgraded."
+                                        },
+                                        "kubernetesVersion": {
+                                            "type": "string",
+                                            "description": "the kubernetes version from which the cluster was upgraded from. If cluster upgrade is still in progress, the field will represent the source kubernetes version from which the cluster is being upgraded."
+                                        }
+                                    }
+                                }
+                            },
+                            "description": "determines the state of upgrade. If no upgrade is issued, only the existing version is stored."
+                        },
+                        "errorSet": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {}
+                            }
+                        },
+                        "eventSet": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {}
+                            }
+                        },
+                        "nodePool": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "description": "name of the node pool"
+                                    },
+                                    "diskSizeMb": {
+                                        "type": "integer",
+                                        "description": "disk size of the VMs in the node pool in MB"
+                                    },
+                                    "sizingPolicy": {
+                                        "type": "string",
+                                        "description": "name of the sizing policy used by the node pool"
+                                    },
+                                    "storageProfile": {
+                                        "type": "string",
+                                        "description": "storage profile used by the node pool"
+                                    },
+                                    "desiredReplicas": {
+                                        "type": "integer",
+                                        "description": "desired replica count of the nodes in the node pool"
+                                    },
+                                    "placementPolicy": {
+                                        "type": "string",
+                                        "description": "name of the sizing policy used by the node pool"
+                                    },
+                                    "nvidiaGpuEnabled": {
+                                        "type": "boolean",
+                                        "description": "boolean indicating if the node pools have nvidia GPU enabled"
+                                    },
+                                    "availableReplicas": {
+                                        "type": "integer",
+                                        "description": "number of available replicas in the node pool"
+                                    }
+                                }
+                            }
+                        },
+                        "parentUid": {
+                            "type": "string"
+                        },
+                        "k8sNetwork": {
+                            "$ref": "#/definitions/k8sNetwork"
+                        },
+                        "kubernetes": {
+                            "type": "string"
+                        },
+                        "capvcdVersion": {
+                            "type": "string"
+                        },
+                        "vcdProperties": {
+                            "type": "object",
+                            "properties": {
+                                "site": {
+                                    "type": "string"
+                                },
+                                "orgVdcs": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "string"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            },
+                                            "ovdcNetworkName": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                },
+                                "organizations": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "id": {
+                                                "type": "string"
+                                            },
+                                            "name": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "vcdResourceSet": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {}
+                            }
+                        },
+                        "clusterApiStatus": {
+                            "type": "object",
+                            "properties": {
+                                "phase": {
+                                    "type": "string",
+                                    "description": "The phase describing the control plane infrastructure deployment."
+                                },
+                                "apiEndpoints": {
+                                    "type": "array",
+                                    "items": {
+                                        "host": {
+                                            "type": "string"
+                                        },
+                                        "port": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "description": "Control Plane load balancer endpoints"
+                                }
+                            }
+                        },
+                        "createdByVersion": {
+                            "type": "string",
+                            "description": "CAPVCD version used to create the cluster"
+                        },
+                        "clusterResourceSet": {
+                            "type": "object",
+                            "properties": {}
+                        },
+                        "useAsManagementCluster": {
+                            "type": "boolean"
+                        },
+                        "clusterResourceSetBindings": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "kind": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "applied": {
+                                        "type": "boolean"
+                                    },
+                                    "lastAppliedTime": {
+                                        "type": "string"
+                                    },
+                                    "clusterResourceSetName": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "description": "CAPVCD's view of the current status of the cluster"
+                },
+                "projector": {
+                    "type": "object",
+                    "title": "Current Status of the Projector Component",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "title": "Projector Name",
+                            "description": "The name of the projector component."
+                        },
+                        "version": {
+                            "type": "string",
+                            "title": "Projector Version",
+                            "description": "The product version of the projector component."
+                        },
+                        "errorSet": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {}
+                            },
+                            "title": "Error Set",
+                            "description": "An array containing error information related to the operations of the projector component."
+                        },
+                        "eventSet": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {}
+                            },
+                            "title": "Event Set",
+                            "description": "An array containing event information related to the operations of the projector component."
+                        },
+                        "retrySet": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "operation": {
+                                        "type": "object",
+                                        "title": "Spec of the operation to be retried",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "title": "Name of the operation",
+                                                "description": "Name of the operation"
+                                            },
+                                            "verb": {
+                                                "enum": [
+                                                    "apply",
+                                                    "create"
+                                                ],
+                                                "type": "string",
+                                                "title": "Kubernetes command of the operation",
+                                                "description": "Kubernetes command of the operation"
+                                            },
+                                            "values": {
+                                                "type": "array",
+                                                "items": {
+                                                    "anyOf": [
+                                                        {
+                                                            "type": "string"
+                                                        },
+                                                        {
+                                                            "type": "object"
+                                                        }
+                                                    ]
+                                                },
+                                                "title": "Value of the operation",
+                                                "description": "Array of values used for the operation.Type of the values must be consistent with the valueType",
+                                                "x-vcloud-restricted": [
+                                                    "private",
+                                                    "secure"
+                                                ]
+                                            },
+                                            "sequence": {
+                                                "type": "integer",
+                                                "title": "Sequence number of the operation",
+                                                "description": "Sequence number of the operation"
+                                            },
+                                            "valueType": {
+                                                "enum": [
+                                                    "yamlLink",
+                                                    "yamlString"
+                                                ],
+                                                "type": "string",
+                                                "title": "Value type of the operation",
+                                                "description": "Value type of the operation"
+                                            },
+                                            "retryUntilSuccess": {
+                                                "type": "boolean",
+                                                "title": "Operation will be retried until it succeeds",
+                                                "description": "Operation will be retried until it succeeds"
+                                            }
+                                        },
+                                        "description": "Spec of the operation to be retried"
+                                    },
+                                    "createTimeStamp": {
+                                        "type": "string",
+                                        "title": "The timestamp at which this operation failed for the first time",
+                                        "description": "The timestamp at which this operation failed for the first time"
+                                    }
+                                }
+                            },
+                            "title": "The operations to be retried by the Projector",
+                            "description": "The operations to be retried by the Projector"
+                        },
+                        "operations": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "title": "Operation Status",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "title": "Name of the operation",
+                                        "description": "The name of the operation, if applicable."
+                                    },
+                                    "verb": {
+                                        "enum": [
+                                            "apply",
+                                            "create"
+                                        ],
+                                        "type": "string",
+                                        "title": "Kubernetes command of the operation",
+                                        "description": "Specifies the Kubernetes command for the operation. Apply supports yamlLink, yamlString; Delete supports KubernetesKind; Create supports yamlLink, yamlString"
+                                    },
+                                    "output": {
+                                        "type": "string",
+                                        "title": "Output",
+                                        "description": "The execution output of the operation."
+                                    },
+                                    "sequence": {
+                                        "type": "integer",
+                                        "title": "Sequence number of the operation",
+                                        "description": "Specifies the sequence/order in which the operation should be executed."
+                                    },
+                                    "valueType": {
+                                        "enum": [
+                                            "yamlLink",
+                                            "yamlString"
+                                        ],
+                                        "type": "string",
+                                        "title": "Value type the operation",
+                                        "description": "Specifies the type of values to be used (e.g., yamlString, yamlLink, K8sKind, cseContainer)."
+                                    },
+                                    "forceDelete": {
+                                        "type": "boolean",
+                                        "title": "Flag which indicates whether the operation should be forcefully deleted.",
+                                        "description": "Indicates whether the operation should be forcefully deleted."
+                                    }
+                                },
+                                "description": "Status of a specific operation executed in the projector component."
+                            },
+                            "title": "Operation Status of Projector after Execution",
+                            "description": "An array containing the status of operations executed in the projector component."
+                        },
+                        "lastAppliedSequence": {
+                            "type": "integer",
+                            "title": "Last Applied Sequence",
+                            "default": 1,
+                            "minimum": 1,
+                            "description": "The sequence number of the last applied operation in the projector component."
+                        },
+                        "lastAppliedTimestamp": {
+                            "type": "string",
+                            "title": "Last Applied Timestamp",
+                            "description": "The timestamp of the last applied operation in the projector component."
+                        }
+                    },
+                    "description": "Current status of the projector component. It reflects the operation execution status of the projector component."
+                }
+            },
+            "description": "Current status of the cluster. The subsections are updated by various components of CSE stack - VCDKE, Projector, CAPVCD, CPI, CSI and Extensions",
+            "x-vcloud-restricted": "protected"
+        },
+        "metadata": {
+            "type": "object",
+            "title": "User specification of the metadata of the cluster",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "title": "The name of the cluster.",
+                    "description": "The name of the cluster."
+                },
+                "site": {
+                    "type": "string",
+                    "title": "Fully Qualified Domain Name of the VCD site in which the cluster is deployed",
+                    "description": "Fully Qualified Domain Name (https://VCD-FQDN.com) of the VCD site in which the cluster is deployed"
+                },
+                "orgName": {
+                    "type": "string",
+                    "title": "The name of the Organization in which cluster needs to be created or managed.",
+                    "description": "The name of the Organization in which cluster needs to be created or managed."
+                },
+                "virtualDataCenterName": {
+                    "type": "string",
+                    "title": "The name of the Organization data center in which the cluster need to be created or managed.",
+                    "description": "The name of the Organization data center in which the cluster need to be created or managed."
+                }
+            },
+            "description": "User specification of the metadata of the cluster"
+        },
+        "apiVersion": {
+            "type": "string",
+            "default": "capvcd.vmware.com/v1.2",
+            "description": "The version of the payload format"
+        }
+    },
+    "definitions": {
+        "k8sNetwork": {
+            "type": "object",
+            "properties": {
+                "pods": {
+                    "type": "object",
+                    "properties": {
+                        "cidrBlocks": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Specifies a range of IP addresses to use for Kubernetes pods."
+                        }
+                    },
+                    "description": "The network settings for Kubernetes pods."
+                },
+                "services": {
+                    "type": "object",
+                    "properties": {
+                        "cidrBlocks": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "The range of IP addresses to use for Kubernetes services"
+                        }
+                    },
+                    "description": "The network settings for Kubernetes services"
+                }
+            },
+            "description": "The network-related settings for the cluster."
+        }
+    }
+}
