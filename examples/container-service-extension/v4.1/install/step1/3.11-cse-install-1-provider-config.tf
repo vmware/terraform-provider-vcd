@@ -11,12 +11,12 @@
 #   Other than that, this snippet should be applied as it is.
 # ------------------------------------------------------------------------------------------------------------
 
-# VCD Provider configuration. It must be at least v3.11.0 and configured with a System administrator account.
+# VCD Provider configuration. It must be at least v3.12.0 and configured with a System administrator account.
 terraform {
   required_providers {
     vcd = {
       source  = "vmware/vcd"
-      version = ">= 3.11"
+      version = ">= 3.12"
     }
   }
 }
@@ -31,4 +31,16 @@ provider "vcd" {
   allow_unverified_ssl = var.insecure_login
   logging              = true
   logging_file         = "cse_install_step1.log"
+}
+
+# Minimum supported version for CSE
+data "vcd_version" "cse_minimum_supported" {
+  condition         = ">= 10.4.2"
+  fail_if_not_match = true
+}
+
+# There are some special rights and elements introduced in VCD 10.5.1
+data "vcd_version" "gte_1051" {
+  condition         = ">= 10.5.1"
+  fail_if_not_match = false
 }
