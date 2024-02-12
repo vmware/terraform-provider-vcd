@@ -28,8 +28,21 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true, // Required, but validated at runtime
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"4.1.0", "4.1.1", "4.2.0"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"4.1.0", "4.1.1", "4.2.0", "4.2.1"}, false),
 				Description:  "The CSE version to use",
+				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
+					// This custom diff function allows to correctly compare versions
+					oldVersion, err := semver.NewVersion(oldValue)
+					if err != nil {
+						return false
+					}
+					newVersion, err := semver.NewVersion(newValue)
+					if err != nil {
+						return false
+					}
+					return oldVersion.Equal(newVersion)
+				},
+				DiffSuppressOnRefresh: true,
 			},
 			"runtime": {
 				Type:         schema.TypeString,
