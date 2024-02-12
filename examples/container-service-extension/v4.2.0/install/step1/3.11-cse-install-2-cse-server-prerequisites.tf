@@ -96,6 +96,7 @@ resource "vcd_role" "cse_admin_role" {
   description = "Used for administrative purposes"
   rights = [
     "API Tokens: Manage",
+    "Organization: Traversal",
     "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: Administrator Full access",
     "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: Administrator View",
     "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: Full Access",
