@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"fmt"
 	"github.com/hashicorp/go-cty/cty"
+	semver "github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -27,7 +28,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true, // Required, but validated at runtime
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"4.2"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"4.1.0", "4.1.1", "4.2.0"}, false),
 				Description:  "The CSE version to use",
 			},
 			"runtime": {
@@ -276,7 +277,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 				Default:  60,
-				Description: "The time, in minutes, to wait for the cluster operations to be successfully completed. For example, during cluster creation/update, it should be in `provisioned`" +
+				Description: "The time, in minutes, to wait for the cluster operations to be successfully completed. For example, during cluster creation, it should be in `provisioned`" +
 					"state before the timeout is reached, otherwise the operation will return an error. For cluster deletion, this timeout" +
 					"specifies the time to wait until the cluster is completely deleted. Setting this argument to `0` means to wait indefinitely",
 				ValidateDiagFunc: minimumValue(0, "timeout must be at least 0 (no timeout)"),
@@ -366,6 +367,11 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 		return diags
 	}
 
+	cseVersion, err := semver.NewSemver(d.Get("cse_version").(string))
+	if err != nil {
+		return diag.Errorf("the introduced 'cse_version=%s' is not valid: %s", d.Get("cse_version"), err)
+	}
+
 	vcdClient := meta.(*VCDClient)
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
@@ -378,7 +384,7 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 		VdcId:                   d.Get("vdc_id").(string),
 		NetworkId:               d.Get("network_id").(string),
 		KubernetesTemplateOvaId: d.Get("ova_id").(string),
-		CseVersion:              d.Get("cse_version").(string),
+		CseVersion:              *cseVersion,
 		ControlPlane: govcd.CseControlPlaneSettings{
 			MachineCount:      d.Get("control_plane.0.machine_count").(int),
 			DiskSizeGi:        d.Get("control_plane.0.disk_size_gi").(int),
@@ -498,7 +504,7 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 		payload.WorkerPools = &workerPools
 	}
 
-	err = cluster.Update(payload)
+	err = cluster.Update(payload, false)
 	if err != nil {
 		if cluster != nil {
 			if cluster.State != "provisioned" {
@@ -536,30 +542,19 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 
 func resourceVcdCseKubernetesImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
-	var clusterId, orgName, cseVersion string
-	switch len(resourceURI) {
-	case 3: // ImportSeparator != '.'
-		cseVersion = resourceURI[0]
-		orgName = resourceURI[1]
-		clusterId = resourceURI[2]
-	case 4: // ImportSeparator == '.'
-		cseVersion = fmt.Sprintf("%s.%s", resourceURI[0], resourceURI[1])
-		orgName = resourceURI[2]
-		clusterId = resourceURI[3]
-	default:
-		return nil, fmt.Errorf("resource name must be specified as cse_version(two digits: major.minor).organization_name.cluster_id, but it was '%s'", d.Id())
+	if len(resourceURI) != 2 {
+		return nil, fmt.Errorf("resource name must be specified as organization_name.cluster_id, but it was '%s'", d.Id())
 	}
-	dSet(d, "cse_version", strings.Replace(cseVersion, "v", "", 1)) // We remove any 'v' prefix just in case, to avoid common errors if people use SemVer
 
 	vcdClient := meta.(*VCDClient)
-	org, err := vcdClient.GetOrgByName(orgName)
+	org, err := vcdClient.GetOrgByName(resourceURI[0])
 	if err != nil {
-		return nil, fmt.Errorf("could not get Organization with name '%s': %s", orgName, err)
+		return nil, fmt.Errorf("could not get Organization with name '%s': %s", resourceURI[0], err)
 	}
 
-	cluster, err := org.CseGetKubernetesClusterById(clusterId)
+	cluster, err := org.CseGetKubernetesClusterById(resourceURI[1])
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving Kubernetes cluster with ID '%s': %s", clusterId, err)
+		return nil, fmt.Errorf("error retrieving Kubernetes cluster with ID '%s': %s", resourceURI[1], err)
 	}
 
 	warns, err := saveClusterDataToState(d, cluster, org.Org.Name)
@@ -579,7 +574,6 @@ func resourceVcdCseKubernetesImport(_ context.Context, d *schema.ResourceData, m
 func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetesCluster, orgName string) ([]error, error) {
 	var warnings []error
 
-	d.SetId(cluster.ID)
 	dSet(d, "name", cluster.Name)
 	dSet(d, "cse_version", cluster.CseVersion)
 	dSet(d, "runtime", "tkg") // Only one supported
@@ -666,5 +660,6 @@ func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetes
 		warnings = append(warnings, fmt.Errorf("the Kubernetes cluster with ID '%s' is in '%s' state, won't be able to retrieve the Kubeconfig", d.Id(), cluster.State))
 	}
 
+	d.SetId(cluster.ID)
 	return warnings, nil
 }
