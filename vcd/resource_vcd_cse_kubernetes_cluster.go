@@ -480,19 +480,14 @@ func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, met
 	var diags diag.Diagnostics
 
 	vcdClient := meta.(*VCDClient)
-	org, err := vcdClient.GetOrgFromResource(d)
-	if err != nil {
-		return diag.Errorf("could not create a Kubernetes cluster in the target Organization: %s", err)
-	}
-
 	// The ID must be already set for the read to be successful. We can't rely on the name as there can be
 	// many clusters with the same name in the same org.
-	cluster, err := org.CseGetKubernetesClusterById(d.Id())
+	cluster, err := vcdClient.CseGetKubernetesClusterById(d.Id())
 	if err != nil {
 		return diag.Errorf("could not read Kubernetes cluster with ID '%s': %s", d.Id(), err)
 	}
 
-	warns, err := saveClusterDataToState(d, cluster, org.Org.Name)
+	warns, err := saveClusterDataToState(d, cluster)
 	if err != nil {
 		return diag.Errorf("could not save Kubernetes cluster data into Terraform state: %s", err)
 	}
@@ -523,12 +518,7 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	vcdClient := meta.(*VCDClient)
-	org, err := vcdClient.GetOrgFromResource(d)
-	if err != nil {
-		return diag.Errorf("could not create a Kubernetes cluster in the target Organization: %s", err)
-	}
-
-	cluster, err := org.CseGetKubernetesClusterById(d.Id())
+	cluster, err := vcdClient.CseGetKubernetesClusterById(d.Id())
 	if err != nil {
 		return diag.Errorf("could not get Kubernetes cluster with ID '%s': %s", d.Id(), err)
 	}
@@ -561,13 +551,7 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 // to be gone.
 func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-
-	org, err := vcdClient.GetOrgFromResource(d)
-	if err != nil {
-		return diag.Errorf("could not get Organization: %s", err)
-	}
-
-	cluster, err := org.CseGetKubernetesClusterById(d.Id())
+	cluster, err := vcdClient.CseGetKubernetesClusterById(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -585,17 +569,12 @@ func resourceVcdCseKubernetesImport(_ context.Context, d *schema.ResourceData, m
 	}
 
 	vcdClient := meta.(*VCDClient)
-	org, err := vcdClient.GetOrgByName(resourceURI[0])
-	if err != nil {
-		return nil, fmt.Errorf("could not get Organization with name '%s': %s", resourceURI[0], err)
-	}
-
-	cluster, err := org.CseGetKubernetesClusterById(resourceURI[1])
+	cluster, err := vcdClient.CseGetKubernetesClusterById(resourceURI[1])
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving Kubernetes cluster with ID '%s': %s", resourceURI[1], err)
 	}
 
-	warns, err := saveClusterDataToState(d, cluster, org.Org.Name)
+	warns, err := saveClusterDataToState(d, cluster)
 	if err != nil {
 		return nil, fmt.Errorf("failed importing Kubernetes cluster '%s': %s", cluster.ID, err)
 	}
@@ -609,7 +588,7 @@ func resourceVcdCseKubernetesImport(_ context.Context, d *schema.ResourceData, m
 
 // saveClusterDataToState reads the received RDE contents and sets the Terraform arguments and attributes.
 // Returns a slice of warnings first and an error second.
-func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetesCluster, orgName string) ([]error, error) {
+func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetesCluster) ([]error, error) {
 	var warnings []error
 
 	dSet(d, "name", cluster.Name)
@@ -630,10 +609,6 @@ func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetes
 	dSet(d, "auto_repair_on_errors", cluster.AutoRepairOnErrors)
 	dSet(d, "node_health_check", cluster.NodeHealthCheck)
 
-	if _, ok := d.GetOk("org"); ok {
-		// This field is optional, as it can take the value from the VCD client
-		dSet(d, "org", orgName)
-	}
 	if _, ok := d.GetOk("api_token_file"); !ok {
 		// During imports, this field is impossible to get, so we set an artificial value, as this argument
 		// is required at runtime

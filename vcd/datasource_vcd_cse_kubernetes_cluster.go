@@ -13,30 +13,30 @@ func datasourceVcdCseKubernetesCluster() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdCseKubernetesRead,
 		Schema: map[string]*schema.Schema{
-			"org": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Description: "The name of organization that owns the Kubernetes cluster, optional if defined at provider " +
-					"level. Useful when connected as sysadmin working across different organizations",
-			},
 			"cluster_id": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"cluster_id", "name"},
-				Description:  "The unique ID of the Kubernetes cluster to read that must be present in the Organization",
+				Description:  "The unique ID of the Kubernetes cluster to read",
 			},
 			"name": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"cluster_id", "name"},
-				RequiredWith: []string{"cse_version"},
+				RequiredWith: []string{"cse_version", "org"},
 				Description:  "The name of the Kubernetes cluster to read. If there is more than one Kubernetes cluster with the same name, searching by name will fail",
+			},
+			"org_id": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				RequiredWith: []string{"cse_version", "name"},
+				Description:  "The ID of organization that owns the Kubernetes cluster, only required if 'name' is set",
 			},
 			"cse_version": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				RequiredWith: []string{"name"},
-				Description:  "The CSE version used by the cluster",
+				RequiredWith: []string{"name", "org"},
+				Description:  "The CSE version used by the cluster, only required if 'name' is set",
 			},
 			"runtime": {
 				Type:        schema.TypeString,
@@ -256,14 +256,10 @@ func datasourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, m
 	var diags diag.Diagnostics
 
 	vcdClient := meta.(*VCDClient)
-	org, err := vcdClient.GetOrgFromResource(d)
-	if err != nil {
-		return diag.Errorf("could not get the target Organization: %s", err)
-	}
-
 	var cluster *govcd.CseKubernetesCluster
+	var err error
 	if id, ok := d.GetOk("cluster_id"); ok {
-		cluster, err = org.CseGetKubernetesClusterById(id.(string))
+		cluster, err = vcdClient.CseGetKubernetesClusterById(id.(string))
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -272,6 +268,13 @@ func datasourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, m
 		if err != nil {
 			return diag.Errorf("could not parse cse_version='%s': %s", cseVersion, err)
 		}
+
+		orgId := d.Get("org_id").(string)
+		org, err := vcdClient.GetOrgById(orgId)
+		if err != nil {
+			return diag.Errorf("could not find an Organization with ID '%s': %s", orgId, err)
+		}
+
 		clusters, err := org.CseGetKubernetesClustersByName(*cseVersion, name.(string))
 		if err != nil {
 			return diag.FromErr(err)
@@ -282,7 +285,10 @@ func datasourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, m
 		cluster = clusters[0]
 	}
 
-	warns, err := saveClusterDataToState(d, cluster, org.Org.Name)
+	dSet(d, "org_id", cluster.OrganizationId)
+	dSet(d, "cluster_id", cluster.ID)
+
+	warns, err := saveClusterDataToState(d, cluster)
 	if err != nil {
 		return diag.Errorf("could not save Kubernetes cluster data into Terraform state: %s", err)
 	}

@@ -20,13 +20,11 @@ Supports the following **Container Service Extension** versions:
 
 ## Example Usage with ID
 
-The cluster ID identifies unequivocally the cluster within VCD, and can be obtained with the CSE UI Plugin.
-
-This option requires only the target organization where the Kubernetes cluster is located and its ID:
+The cluster ID identifies unequivocally the cluster within VCD, and can be obtained with the CSE Kubernetes Clusters UI Plugin, by selecting
+the desired cluster and obtaining the ID from the displayed information.
 
 ```hcl
 data "vcd_cse_kubernetes_cluster" "my_cluster" {
-  org         = "tenant_org"
   cluster_id  = "urn:vcloud:entity:vmware:capvcdCluster:e8e82bcc-50a1-484f-9dd0-20965ab3e865"
 }
 ```
@@ -54,8 +52,8 @@ data "vcd_cse_kubernetes_cluster" "my_cluster" {
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of the Organization to which the Kubernetes cluster belongs. Optional if defined at provider level.
-* `cluster_id` - (Optional) Unequivocally identifies a cluster in VCD. It must belong to the given `org`. Either `cluster_id` or `name` must be set.
+* `cluster_id` - (Optional) Unequivocally identifies a cluster in VCD. Either `cluster_id` or `name` must be set.
+* `org` - (Optional) The name of the Organization to which the Kubernetes cluster belongs. Optional if defined at provider level. Only used if `cluster_id` is not set.
 * `name` - (Optional) Allows to find a Kubernetes cluster by name inside the given `org`. Either `cluster_id` or `name` must be set. This argument requires `cse_version` to be set.
 * `cse_version` - (Optional) Specifies the CSE Version of the cluster to find when `name` is used instead of `cluster_id`.
 
