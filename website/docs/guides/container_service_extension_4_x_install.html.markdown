@@ -1,19 +1,19 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: Container Service Extension v4.1 installation"
+page_title: "VMware Cloud Director: Container Service Extension 4.2 installation"
 sidebar_current: "docs-vcd-guides-cse-4-x-install"
 description: |-
-  Provides guidance on configuring VCD to be able to install and use Container Service Extension v4.1
+  Provides guidance on configuring VCD to be able to install and use Container Service Extension 4.2
 ---
 
-# Container Service Extension v4.1 installation
+# Container Service Extension 4.2 installation
 
 ## About
 
-This guide describes the required steps to configure VCD to install the Container Service Extension (CSE) v4.1, that
+This guide describes the required steps to configure VCD to install the Container Service Extension (CSE) 4.2, that
 will allow tenant users to deploy **Tanzu Kubernetes Grid Multi-cloud (TKGm)** clusters on VCD using Terraform or the UI.
 
-To know more about CSE v4.1, you can visit [the documentation][cse_docs].
+To know more about CSE 4.2, you can visit [the documentation][cse_docs].
 
 ## Pre-requisites
 
@@ -21,15 +21,15 @@ To know more about CSE v4.1, you can visit [the documentation][cse_docs].
 
 In order to complete the steps described in this guide, please be aware:
 
-* CSE v4.1 is supported from VCD v10.4.2 or above, as specified in the [Product Interoperability Matrix][product_matrix].
+* CSE 4.2 is supported from VCD v10.4.2 or above, as specified in the [Product Interoperability Matrix][product_matrix].
   Please check that the target VCD appliance matches the criteria.
-* Terraform provider needs to be v3.11.0 or above.
+* Terraform provider needs to be v3.12.0 or above.
 * Both CSE Server and the Bootstrap clusters require outbound Internet connectivity.
-* CSE v4.1 makes use of [ALB](/providers/vmware/vcd/latest/docs/guides/nsxt_alb) capabilities.
+* CSE 4.2 makes use of [ALB](/providers/vmware/vcd/latest/docs/guides/nsxt_alb) capabilities.
 
 ## Installation process
 
--> To install CSE v4.1, this guide will make use of the example Terraform configuration located [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/install).
+-> To install CSE 4.2, this guide will make use of the example Terraform configuration located [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.2.0/install).
 You can check it, customise it to your needs and apply. However, reading this guide first is recommended to understand what it does and how to use it.
 
 The installation process is split in two independent steps that must be run one after the other:
@@ -57,7 +57,7 @@ modified and be applied as they are.
 
 #### RDE Interfaces, Types and Behaviors
 
-CSE v4.1 requires a set of Runtime Defined Entity items, such as [Interfaces][rde_interface], [Types][rde_type] and [Behaviors][rde_interface_behavior].
+CSE 4.2 requires a set of Runtime Defined Entity items, such as [Interfaces][rde_interface], [Types][rde_type] and [Behaviors][rde_interface_behavior].
 In the [step 1 configuration][step1] you can find the following:
 
 * The required `VCDKEConfig` [RDE Interface][rde_interface] and [RDE Type][rde_type]. These two resources specify the schema of the **CSE Server
@@ -76,14 +76,15 @@ To customise it, the [step 1 configuration][step1] asks for the following variab
 
 * `vcdkeconfig_template_filepath` references a local file that defines the `VCDKEConfig` [RDE][rde] contents.
   It should be a JSON file with template variables that Terraform can interpret, like
-  [the RDE template file for CSE v4.1](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/entities/vcdkeconfig.json.template)
+  [the RDE template file for CSE 4.2](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.2.0/entities/vcdkeconfig.json.template)
   used in the step 1 configuration, that can be rendered correctly with the Terraform built-in function `templatefile`.
-  (Note: In `terraform.tfvars.example` the path for the CSE v4.1 RDE contents is already provided).
-* `capvcd_version`: The version for CAPVCD. The default value is **"1.1.0"** for CSE v4.1.
+  (Note: In `terraform.tfvars.example` the path for the CSE 4.2 RDE contents is already provided).
+* `capvcd_version`: The version for CAPVCD. The default value is **"1.1.0"** for CSE 4.2.
   (Note: Do not confuse with the version of the `capvcdCluster` [RDE Type][rde_type],
-  which **must be "1.2.0"** for CSE v4.1 and cannot be changed through a variable).
-* `cpi_version`: The version for CPI (Cloud Provider Interface). The default value is **"1.4.0"** for CSE v4.1.
-* `csi_version`: The version for CSI (Cloud Storage Interface). The default value is **"1.4.0"** for CSE v4.1.
+  which **must be "1.3.0"** for CSE 4.2 and cannot be changed through a variable).
+* `cpi_version`: The version for CPI (Cloud Provider Interface). The default value is **"1.5.0"** for CSE 4.2.
+* `csi_version`: The version for CSI (Cloud Storage Interface). The default value is **"1.5.0"** for CSE 4.2.
+* `rde_projector_version`: The version for the RDE Projector. The default value is **"0.7.0"** for CSE 4.2.
 * `github_personal_access_token`: Create this one [here](https://github.com/settings/tokens),
   this will avoid installation errors caused by GitHub rate limiting, as the TKGm cluster creation process requires downloading
   some Kubernetes components from GitHub.
@@ -106,7 +107,7 @@ To customise it, the [step 1 configuration][step1] asks for the following variab
 
 #### Rights, Roles and VM Sizing Policies
 
-CSE v4.1 requires a set of new [Rights Bundles][rights_bundle], [Roles][role] and [VM Sizing Policies][sizing] that are also created
+CSE 4.2 requires a set of new [Rights Bundles][rights_bundle], [Roles][role] and [VM Sizing Policies][sizing] that are also created
 in this step of the [step 1 configuration][step1]. Nothing should be customised here, except for the "CSE Administrator"
 account to be created, where you can provide a username of your choice (`cse_admin_username`) and its password (`cse_admin_password`).
 
@@ -120,7 +121,7 @@ Once all variables are reviewed and set, you can start the installation with `te
 
 ~> Make sure that the previous step is successfully completed.
 
-This step will create all the remaining elements to install CSE v4.1 in VCD. You can read the subsequent sections
+This step will create all the remaining elements to install CSE 4.2 in VCD. You can read the subsequent sections
 to have a better understanding of the building blocks that are described in the [step 2 Terraform configuration][step2].
 
 In this [configuration][step2] you can also find a file named `terraform.tfvars.example` that needs to be updated with correct values and renamed to `terraform.tfvars`
@@ -171,7 +172,7 @@ Then it will upload the required OVAs to them. The OVAs can be specified in `ter
 * `tkgm_ova_folder`: This will reference the path to the TKGm OVA, as an absolute or relative path. It should **not** end with a trailing `/`.
 * `tkgm_ova_files`: This will reference the file names of the TKGm OVAs, like `[ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc.ova, ubuntu-2004-kube-v1.24.11+vmware.1-tkg.1-2ccb2a001f8bd8f15f1bfbc811071830.ova]`.
 * `cse_ova_folder`: This will reference the path to the CSE OVA, as an absolute or relative path. It should **not** end with a trailing `/`.
-* `cse_ova_file`: This will reference the file name of the CSE OVA, like `VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova`.
+* `cse_ova_file`: This will reference the file name of the CSE OVA, like `VMware_Cloud_Director_Container_Service_Extension-4.2.0.ova`.
 
 -> To download the required OVAs, please refer to the [CSE documentation][cse_docs]. 
 You can also check the [Product Interoperability Matrix][product_matrix] to confirm the appropriate version of TKGm.
@@ -182,7 +183,7 @@ In case you're using a pre-uploaded OVA, leverage the [vcd_catalog_vapp_template
 
 #### Networking
 
-The [step 2 configuration][step2] prepares a basic networking layout that will make CSE v4.1 work. However, it is
+The [step 2 configuration][step2] prepares a basic networking layout that will make CSE 4.2 work. However, it is
 recommended that you review the code and adapt the different parts to your needs, specially for the resources like `vcd_nsxt_firewall`.
 
 The configuration will create the following:
@@ -283,7 +284,7 @@ or if your tenant users are not familiar with Terraform, they will be still able
 with the UI.
 
 If you decide to install it, `k8s_container_clusters_ui_plugin_path` should point to the
-[Kubernetes Container Clusters UI plug-in v4.1][cse_docs] ZIP file that you can download in the [CSE documentation][cse_docs].
+[Kubernetes Container Clusters UI plug-in 4.2][cse_docs] ZIP file that you can download in the [CSE documentation][cse_docs].
 
 ### Final considerations
 
@@ -337,65 +338,24 @@ The most common issues are:
 * Cluster creation is failing:
   * Please visit the [CSE documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
 
-## Upgrade from CSE v4.0 to v4.1
+## Upgrade from CSE 4.1 to 4.2
 
-In this section you can find the required steps to update from CSE v4.0 to v4.1.
+In this section you can find the required steps to update from CSE 4.1 to 4.2.
 
-~> This section assumes that the old CSE v4.0 installation was done with Terraform by following the v4.0 guide steps.
+~> This section assumes that the old CSE 4.1 installation was done with Terraform by following the 4.1 guide steps.
 Also, you need to meet [the pre-requisites criteria](#pre-requisites).
 
 ### Create the new RDE elements
 
-A new [RDE Interface][rde_interface] needs to be created, which is required by the new v4.1 version:
-
-```hcl
-resource "vcd_rde_interface" "cse_interface" {
-  vendor  = "cse"
-  nss     = "capvcd"
-  version = "1.0.0"
-  name    = "cseInterface"
-}
-```
-
-CSE v4.1 also requires the usage of [RDE Interface Behaviors][rde_interface_behavior] and
-[RDE Behavior Access Controls][rde_type_behavior_acl] that can be created with the following snippets (these can
-also be found in the [step 1 configuration][step1]):
-
-```hcl
-resource "vcd_rde_interface_behavior" "capvcd_behavior" {
-  rde_interface_id = vcd_rde_interface.cse_interface.id
-  name             = "getFullEntity"
-  execution = {
-    "type" : "noop"
-    "id" : "getFullEntity"
-  }
-}
-
-resource "vcd_rde_type_behavior_acl" "capvcd_behavior_acl" {
-  rde_type_id      = vcd_rde_type.capvcdcluster_type_v120.id # This definition is below
-  behavior_id      = vcd_rde_interface_behavior.capvcd_behavior.id
-  access_level_ids = ["urn:vcloud:accessLevel:FullControl"]
-}
-```
-
-Create a new version of the [RDE Types][rde_type] that were used in v4.0. This will allow them to co-exist with the old ones,
+Create a new version of the [RDE Types][rde_type] that were used in 4.1. This will allow them to co-exist with the old ones,
 so we can perform a smooth upgrade.
 
 ```hcl
-resource "vcd_rde_type" "vcdkeconfig_type_v110" {
-  # Same attributes as v4.1, except for:
-  version = "1.1.0" # New version
+resource "vcd_rde_type" "capvcdcluster_type_v130" {
+  # Same attributes as 4.1, except for:
+  version = "1.3.0" # New version
   # New schema:
-  schema_url = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/vcdkeconfig-type-schema-v1.1.0.json"
-}
-
-resource "vcd_rde_type" "capvcdcluster_type_v120" {
-  # Same attributes as v4.1, except for:
-  version = "1.2.0" # New version
-  # New schema:
-  schema_url = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.1/schemas/capvcd-type-schema-v1.2.0.json"
-  # Notice that the new interface cse:capvcd:1.0.0 is used
-  interface_ids = [data.vcd_rde_interface.kubernetes_interface.id, vcd_rde_interface.cse_interface.id]
+  schema_url = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.2.0/schemas/capvcd-type-schema-v1.3.0.json"
   # Behaviors need to be created before any RDE Type
   depends_on = [vcd_rde_interface_behavior.capvcd_behavior]
 }
@@ -404,22 +364,15 @@ resource "vcd_rde_type" "capvcdcluster_type_v120" {
 ### Upgrade the VCDKEConfig RDE (CSE Server configuration)
 
 With the new [RDE Types][rde_type] in place, you need to perform an upgrade of the existing `VCDKEConfig` [RDE][rde], which
-stores the CSE Server configuration. By using the v3.11.0 of the VCD Terraform Provider, you can do this update without forcing
+stores the CSE Server configuration. By using the v3.12.0 of the VCD Terraform Provider, you can do this update without forcing
 a replacement:
 
 ```hcl
 resource "vcd_rde" "vcdkeconfig_instance" {
   # Same values as before, except:
-  rde_type_id = vcd_rde_type.vcdkeconfig_type_v110.id # Update to the new RDE Type
   input_entity = templatefile(var.vcdkeconfig_template_filepath, {
     # Same values as before, except:
-    node_startup_timeout          = var.node_startup_timeout
-    node_not_ready_timeout        = var.node_not_ready_timeout
-    node_unknown_timeout          = var.node_unknown_timeout
-    max_unhealthy_node_percentage = var.max_unhealthy_node_percentage
-    container_registry_url        = var.container_registry_url
-    k8s_cluster_certificates      = join(",", var.k8s_cluster_certificates)
-    bootstrap_vm_certificates     = join(",", var.bootstrap_vm_certificates)
+    rde_projector_version = "0.7.0"
   })
 }
 ```
@@ -427,24 +380,19 @@ resource "vcd_rde" "vcdkeconfig_instance" {
 You can find the meaning of these values in the section ["RDE (CSE Server configuration / VCDKEConfig)"](#rde-cse-server-configuration--vcdkeconfig).
 Please notice that you need to upgrade the CAPVCD, CPI and CSI versions. The new values are stated in the same section.
 
-### Update Rights and Roles
+### Upload the new CSE 4.2 OVA
 
-There are differences between the rights needed in v4.0 and v4.1. You can check the resources `vcd_rights_bundle.k8s_clusters_rights_bundle` and
-`vcd_global_role.k8s_cluster_author` in the [step 1 configuration][step1] to see the new required set of rights.
-
-### Upload the new CSE v4.1 OVA
-
-You need to upload the new CSE v4.1 OVA to the `cse_catalog` that already hosts the CSE v4.0 one.
+You need to upload the new CSE 4.2 OVA to the `cse_catalog` that already hosts the CSE 4.1 one.
 To download the required OVAs, please refer to the [CSE documentation][cse_docs].
 
 ```hcl
-resource "vcd_catalog_vapp_template" "cse_ova_v4_1" {
-  org        = vcd_org.solutions_organization.name # References the Solutions Organization that already exists from v4.0
-  catalog_id = vcd_catalog.cse_catalog.id          # References the CSE Catalog that already exists from v4.0
+resource "vcd_catalog_vapp_template" "cse_ova_4_2" {
+  org        = vcd_org.solutions_organization.name # References the Solutions Organization that already exists from 4.1
+  catalog_id = vcd_catalog.cse_catalog.id          # References the CSE Catalog that already exists from 4.1
 
-  name        = "VMware_Cloud_Director_Container_Service_Extension-4.1.0"
-  description = "VMware_Cloud_Director_Container_Service_Extension-4.1.0"
-  ova_path    = "VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova"
+  name        = "VMware_Cloud_Director_Container_Service_Extension-4.2.0"
+  description = "VMware_Cloud_Director_Container_Service_Extension-4.2.0"
+  ova_path    = "VMware_Cloud_Director_Container_Service_Extension-4.2.0.ova"
 }
 ```
 
@@ -455,11 +403,11 @@ To update the CSE Server, just change the referenced OVA:
 ```hcl
 resource "vcd_vapp_vm" "cse_server_vm" {
   # All values remain the same, except:
-  vapp_template_id = vcd_catalog_vapp_template.cse_ova_v4_1.id # Reference the v4.1 OVA
+  vapp_template_id = vcd_catalog_vapp_template.cse_ova_4_2.id # Reference the 4.2 OVA
 }
 ```
 
-This will re-deploy the VM with the new CSE v4.1 Server.
+This will re-deploy the VM with the new CSE 4.2 Server.
 
 ## Update CSE Server Configuration
 
@@ -501,14 +449,14 @@ In the [step 2 configuration][step2], you can find the `cse_ova` [vApp Template]
 Then you can create a new `vcd_catalog_vapp_template` and modify `cse_server_vm` to reference it:
 
 ```hcl
-# Uploads a new CSE Server OVA. In the example below, we upload version 4.1.0
+# Uploads a new CSE Server OVA. In the example below, we upload version 4.2.1
 resource "vcd_catalog_vapp_template" "new_cse_ova" {
   org        = vcd_org.solutions_organization.name # References the Solutions Organization
   catalog_id = vcd_catalog.cse_catalog.id          # References the CSE Catalog
 
-  name        = "VMware_Cloud_Director_Container_Service_Extension-4.1.0"
-  description = "VMware_Cloud_Director_Container_Service_Extension-4.1.0"
-  ova_path    = "/home/bob/cse/VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova"
+  name        = "VMware_Cloud_Director_Container_Service_Extension-4.2.1"
+  description = "VMware_Cloud_Director_Container_Service_Extension-4.2.1"
+  ova_path    = "/home/bob/cse/VMware_Cloud_Director_Container_Service_Extension-4.2.1.ova"
 }
 
 # ...
@@ -556,8 +504,8 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [role]: /providers/vmware/vcd/latest/docs/resources/role
 [routed_network]: /providers/vmware/vcd/latest/docs/resources/network_routed_v2
 [sizing]: /providers/vmware/vcd/latest/docs/resources/vm_sizing_policy
-[step1]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/install/step1
-[step2]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.1/install/step2
+[step1]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.2.0/install/step1
+[step2]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.2.0/install/step2
 [tkgm_docs]: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/index.html
 [user]: /providers/vmware/vcd/latest/docs/resources/org_user
 [ui_plugin]: /providers/vmware/vcd/latest/docs/resources/ui_plugin
