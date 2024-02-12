@@ -7,6 +7,7 @@
 # ------------------------------------------------
 
 vcd_url                = "https://vcd.my-awesome-corp.com"
+vcd_version            = "10.5.1"
 administrator_user     = "administrator"
 administrator_password = "change-me"
 administrator_org      = "System"

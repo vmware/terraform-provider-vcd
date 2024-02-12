@@ -94,9 +94,8 @@ resource "vcd_role" "cse_admin_role" {
   org         = var.administrator_org
   name        = "CSE Admin Role"
   description = "Used for administrative purposes"
-  rights = [
+  rights = concat([
     "API Tokens: Manage",
-    "Organization: Traversal",
     "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: Administrator Full access",
     "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: Administrator View",
     "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: Full Access",
@@ -107,7 +106,7 @@ resource "vcd_role" "cse_admin_role" {
     "${vcd_rde_type.capvcdcluster_type.vendor}:${vcd_rde_type.capvcdcluster_type.nss}: Full Access",
     "${vcd_rde_type.capvcdcluster_type.vendor}:${vcd_rde_type.capvcdcluster_type.nss}: Modify",
     "${vcd_rde_type.capvcdcluster_type.vendor}:${vcd_rde_type.capvcdcluster_type.nss}: View"
-  ]
+  ], data.vcd_version.gte_1051.matches_condition ? ["Organization: Traversal"] : [])
 }
 
 # This will allow to have a user with a limited set of rights that can access the Provider area of VCD.

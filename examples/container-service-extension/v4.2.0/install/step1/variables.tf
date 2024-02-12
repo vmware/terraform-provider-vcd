@@ -7,6 +7,11 @@ variable "vcd_url" {
   type        = string
 }
 
+variable "vcd_version" {
+  description = "The version of VCD. Required to manage the differences between VCD versions, such as available Rights"
+  type        = string
+}
+
 variable "insecure_login" {
   description = "Allow unverified SSL connections when operating with VCD"
   type        = bool
