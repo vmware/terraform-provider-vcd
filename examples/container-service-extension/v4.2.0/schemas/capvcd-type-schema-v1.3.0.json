@@ -66,6 +66,84 @@
                     "title": "User specified K8s Yaml strings",
                     "description": "User specified K8s Yaml strings to be applied on the target cluster. The component Projector will process this property periodically."
                 },
+                "projector": {
+                    "type": "object",
+                    "x-vcloud-restricted": "private",
+                    "title": "User specification for Projector component",
+                    "description": "Defines the operations to be executed by the component projector",
+                    "properties": {
+                        "operations": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "verb": {
+                                        "type": "string",
+                                        "enum": [
+                                            "apply",
+                                            "create"
+                                        ],
+                                        "title": "Kubernetes command of the operation",
+                                        "description": "Specifies the Kubernetes command for the operation. Apply supports yamlLink, yamlString; Delete supports KubernetesKind; Create supports yamlLink, yamlString"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "title": "Name of the operation",
+                                        "description": "The name of the operation, if applicable."
+                                    },
+                                    "valueType": {
+                                        "type": "string",
+                                        "enum": [
+                                            "yamlLink",
+                                            "yamlString"
+                                        ],
+                                        "title": "Value type of the operation",
+                                        "description": "Specifies the type of values to be used (e.g., yamlString, yamlLink, K8sKind, cseContainer)."
+                                    },
+                                    "values": {
+                                        "type": "array",
+                                        "x-vcloud-restricted": [
+                                            "private",
+                                            "secure"
+                                        ],
+                                        "items": {
+                                            "anyOf": [
+                                                {
+                                                    "type": "string"
+                                                },
+                                                {
+                                                    "type": "object"
+                                                }
+                                            ]
+                                        },
+                                        "title": "Value of the operation",
+                                        "description": "Array of values used for the operation.Type of the values must be consistent with the valueType"
+                                    },
+                                    "sequence": {
+                                        "type": "integer",
+                                        "title": "Sequence number of the operation",
+                                        "minimum": 1,
+                                        "description": "Specifies the sequence/order in which the operation should be executed."
+                                    },
+                                    "retryUntilSuccess": {
+                                        "type": "boolean",
+                                        "title": "Operation will be retried until it succeeds",
+                                        "description": "Operation will be retried until it succeeds",
+                                        "default": false
+                                    }
+                                },
+                                "required": [
+                                    "verb",
+                                    "values",
+                                    "valueType",
+                                    "sequence"
+                                ]
+                            },
+                            "title": "Operations to be executed by the component projector",
+                            "description": "User-specified operations to be applied on the target cluster. "
+                        }
+                    }
+                },
                 "vcdKe": {
                     "type": "object",
                     "properties": {
@@ -121,7 +199,10 @@
                         },
                         "secure": {
                             "type": "object",
-                            "x-vcloud-restricted": ["private", "secure"],
+                            "x-vcloud-restricted": [
+                                "private",
+                                "secure"
+                            ],
                             "properties": {
                                 "apiToken": {
                                     "type": "string",
@@ -374,7 +455,10 @@
                         },
                         "private": {
                             "type": "object",
-                            "x-vcloud-restricted": ["private", "secure"],
+                            "x-vcloud-restricted": [
+                                "private",
+                                "secure"
+                            ],
                             "description": "Placeholder for the properties invisible and secure to non-admin users.",
                             "properties": {
                                 "kubeConfig": {
@@ -458,6 +542,177 @@
                     },
                     "title": "CPI for VCD's view of the current status of the cluster",
                     "description": "CPI for VCD's view of the current status of the cluster"
+                },
+                "projector": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "title": "Projector Name",
+                            "description": "The name of the projector component."
+                        },
+                        "version": {
+                            "type": "string",
+                            "title": "Projector Version",
+                            "description": "The product version of the projector component."
+                        },
+                        "errorSet": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {}
+                            },
+                            "title": "Error Set",
+                            "description": "An array containing error information related to the operations of the projector component."
+                        },
+                        "eventSet": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {}
+                            },
+                            "title": "Event Set",
+                            "description": "An array containing event information related to the operations of the projector component."
+                        },
+                        "lastAppliedSequence": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "default": 1,
+                            "title": "Last Applied Sequence",
+                            "description": "The sequence number of the last applied operation in the projector component."
+                        },
+                        "lastAppliedTimestamp": {
+                            "type": "string",
+                            "title": "Last Applied Timestamp",
+                            "description": "The timestamp of the last applied operation in the projector component."
+                        },
+                        "operations": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "verb": {
+                                        "type": "string",
+                                        "enum": [
+                                            "apply",
+                                            "create"
+                                        ],
+                                        "title": "Kubernetes command of the operation",
+                                        "description": "Specifies the Kubernetes command for the operation. Apply supports yamlLink, yamlString; Delete supports KubernetesKind; Create supports yamlLink, yamlString"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "title": "Name of the operation",
+                                        "description": "The name of the operation, if applicable."
+                                    },
+                                    "valueType": {
+                                        "type": "string",
+                                        "enum": [
+                                            "yamlLink",
+                                            "yamlString"
+                                        ],
+                                        "title": "Value type the operation",
+                                        "description": "Specifies the type of values to be used (e.g., yamlString, yamlLink, K8sKind, cseContainer)."
+                                    },
+                                    "sequence": {
+                                        "type": "integer",
+                                        "title": "Sequence number of the operation",
+                                        "description": "Specifies the sequence/order in which the operation should be executed."
+                                    },
+                                    "forceDelete": {
+                                        "type": "boolean",
+                                        "title": "Flag which indicates whether the operation should be forcefully deleted.",
+                                        "description": "Indicates whether the operation should be forcefully deleted."
+                                    },
+                                    "output": {
+                                        "type": "string",
+                                        "title": "Output",
+                                        "description": "The execution output of the operation."
+                                    }
+                                },
+                                "title": "Operation Status",
+                                "description": "Status of a specific operation executed in the projector component."
+                            },
+                            "title": "Operation Status of Projector after Execution",
+                            "description": "An array containing the status of operations executed in the projector component."
+                        },
+                        "retrySet": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "operation": {
+                                        "type": "object",
+                                        "properties": {
+                                            "verb": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "apply",
+                                                    "create"
+                                                ],
+                                                "title": "Kubernetes command of the operation",
+                                                "description": "Kubernetes command of the operation"
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "title": "Name of the operation",
+                                                "description": "Name of the operation"
+                                            },
+                                            "valueType": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "yamlLink",
+                                                    "yamlString"
+                                                ],
+                                                "title": "Value type of the operation",
+                                                "description": "Value type of the operation"
+                                            },
+                                            "values": {
+                                                "type": "array",
+                                                "x-vcloud-restricted": [
+                                                    "private",
+                                                    "secure"
+                                                ],
+                                                "items": {
+                                                    "anyOf": [
+                                                        {
+                                                            "type": "string"
+                                                        },
+                                                        {
+                                                            "type": "object"
+                                                        }
+                                                    ]
+                                                },
+                                                "title": "Value of the operation",
+                                                "description": "Array of values used for the operation.Type of the values must be consistent with the valueType"
+                                            },
+                                            "sequence": {
+                                                "type": "integer",
+                                                "title": "Sequence number of the operation",
+                                                "description": "Sequence number of the operation"
+                                            },
+                                            "retryUntilSuccess": {
+                                                "type": "boolean",
+                                                "title": "Operation will be retried until it succeeds",
+                                                "description": "Operation will be retried until it succeeds"
+                                            }
+                                        },
+                                        "title": "Spec of the operation to be retried",
+                                        "description": "Spec of the operation to be retried"
+                                    },
+                                    "createTimeStamp": {
+                                        "type": "string",
+                                        "title": "The timestamp at which this operation failed for the first time",
+                                        "description": "The timestamp at which this operation failed for the first time"
+                                    }
+                                }
+                            },
+                            "title": "The operations to be retried by the Projector",
+                            "description": "The operations to be retried by the Projector"
+                        }
+                    },
+                    "title": "Current Status of the Projector Component",
+                    "description": "Current status of the projector component. It reflects the operation execution status of the projector component."
                 }
             },
             "title": "Current status of the cluster",

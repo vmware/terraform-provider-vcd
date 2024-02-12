@@ -8,6 +8,11 @@
                 "heartbeatWatcherTimeoutInMin": 10,
                 "staleHeartbeatIntervalInMin": 30
             },
+            "vcdKeInstances": [
+              {
+                "name": "vcd-container-service-extension"
+              }
+            ],
             "K8Config": {
                 "certificateAuthorities": [
                     ${k8s_cluster_certificates}
@@ -32,7 +37,7 @@
                     "nodeNotReadyTimeout": "${node_not_ready_timeout}",
                     "nodeUnknownTimeout": "${node_unknown_timeout}"
                 },
-                "rdeProjectorVersion": "0.6.0"
+                "rdeProjectorVersion": "${rde_projector_version}"
             },
         "vcdConfig": {
             "sysLogger": {
@@ -51,7 +56,7 @@
                     "capvcdRde": {
                         "nss": "capvcdCluster",
                         "vendor": "vmware",
-                        "version": "1.2.0"
+                        "version": "1.3.0"
                     }
                 },
                 "coreCapiVersion": "v1.4.0",
