@@ -542,7 +542,14 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 		payload.KubernetesTemplateOvaId = addrOf(d.Get("kubernetes_template_id").(string))
 	}
 
-	// If the cluster is not in "provisioned" state, this call should fail
+	if d.HasChange("node_health_check") {
+		payload.NodeHealthCheck = addrOf(d.Get("node_health_check").(bool))
+	}
+
+	if d.HasChanges("auto_repair_on_errors") {
+		payload.AutoRepairOnErrors = addrOf(d.Get("auto_repair_on_errors").(bool))
+	}
+
 	err = cluster.Update(payload, true)
 	if err != nil {
 		return diag.Errorf("Kubernetes cluster update failed: %s", err)
