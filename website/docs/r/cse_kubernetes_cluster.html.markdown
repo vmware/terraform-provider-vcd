@@ -170,7 +170,7 @@ The `worker_pool` block is **required**, and every cluster should have **at leas
 
 Each block asks for the following arguments:
 
-* `name` - (Required) The name of the worker pool. It must contain only lowercase alphanumeric characters or "-",
+* `name` - (Required) The name of the worker pool. It must be unique per cluster, and must contain only lowercase alphanumeric characters or "-",
   start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters
 * `machine_count` - (Optional) The number of VMs that the worker pool has. Must be higher than `0`. Defaults to `1`
 * `disk_size_gi` - (Optional) Disk size, in **Gibibytes (Gi)**, for the worker pool VMs. Must be at least `20`. Defaults to `20`
@@ -218,8 +218,9 @@ Only the following arguments can be updated:
 * `machine_count` of the `control_plane`: Supports scaling up and down
 * `machine_count` of any `worker_pool`: Supports scaling up and down. Use caution when resizing down to 0 nodes.
   The cluster must always have at least 1 running node, or else the cluster will enter an unrecoverable error state.
-* `auto_repair_on_errors`
-* `node_health_check`
+* `auto_repair_on_errors`: Can only be updated in CSE 4.1.0, and it is recommended to set it to `false` when the cluster is created.
+  In versions 4.1.1 and 4.2.0, this is automatically done by the CSE Server, so this flag cannot be updated.
+* `node_health_check`: Can be turned on/off.
 * `operations_timeout_minutes`: Does not require modifying the existing cluster
 
 You can also add more `worker_pool` blocks to add more worker pools to the cluster. 
