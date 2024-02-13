@@ -268,12 +268,13 @@ It does not generate configuration. [More information.](https://www.terraform.io
 An existing Kubernetes cluster can be [imported][docs-import] into this resource via supplying the **Cluster ID** for it.
 The ID can be easily obtained in VCD UI, in the CSE Kubernetes Container Clusters plugin.
 
-An example is below. During import, none of the mentioned arguments are required, but they will in subsequent Terraform commands
+An example is below. During import, none of the mentioned arguments are required, but they will be in subsequent Terraform commands
 such as `terraform plan`. Each comment in the code gives some context about how to obtain them to have a completely manageable cluster:
 
 ```hcl
 # This is just a snippet of code that will host the imported cluster that already exists in VCD.
 # This must NOT be created with Terraform beforehand, it is just a shell that will receive the information
+# None of the arguments are required during the Import phase, but they will be asked when operating it afterwards
 resource "vcd_cse_kubernetes_cluster" "imported_cluster" {
   name              = "test2"                                   # The name of the existing cluster
   cse_version       = "4.2.0"                                   # The CSE version installed in your VCD
@@ -352,8 +353,6 @@ data "vcd_nsxt_edgegateway" "egw" {
   owner_id = data.vcd_org_vdc.vdc.id
   name     = "tenant_edgegateway"
 }
-
-
 ```
 
 ```sh
