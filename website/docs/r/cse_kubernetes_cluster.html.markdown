@@ -262,23 +262,102 @@ The Kubeconfig can now be used with `kubectl` and the Kubernetes cluster can be 
 
 ## Importing
 
-!!!!!!!!!!! TODO: NOT IMPLEMENTED. HOW TO DEAL WITH REQUIRED IDS?
-
 ~> The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
-An existing Kubernetes cluster can be [imported][docs-import] into this resource via supplying the CSE Version installed in VCD and the Cluster (RDE) ID for it.
-An example is below:
+An existing Kubernetes cluster can be [imported][docs-import] into this resource via supplying the **Cluster ID** for it.
+The ID can be easily obtained in VCD UI, in the CSE Kubernetes Container Clusters plugin.
+
+An example is below. During import, none of the mentioned arguments are required, but they will in subsequent Terraform commands
+such as `terraform plan`. Each comment in the code gives some context about how to obtain them to have a completely manageable cluster:
 
 ```hcl
-# This is just a snippet of code that will host the imported cluster from VCD.
-# This must not be created with Terraform beforehand
+# This is just a snippet of code that will host the imported cluster that already exists in VCD.
+# This must NOT be created with Terraform beforehand, it is just a shell that will receive the information
 resource "vcd_cse_kubernetes_cluster" "imported_cluster" {
+  name              = "test2"                                   # The name of the existing cluster
+  cse_version       = "4.2.0"                                   # The CSE version installed in your VCD
+  ova_id            = data.vcd_catalog_vapp_template.tkg_ova.id # See below data sources
+  vdc_id            = data.vcd_org_vdc.vdc.id                   # See below data sources
+  network_id        = data.vcd_network_routed_v2.routed.id      # See below data sources
+  node_health_check = true                                      # Whether the existing cluster has Machine Health Check enabled or not, this can be checked in UI
+
+  control_plane {
+    machine_count      = 5                                      # This is optional, but not setting it to the current value will make subsequent plans to try to scale our existing cluster to the default one
+    sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id # See below data sources
+    storage_profile_id = data.vcd_storage_profile.sp.id         # See below data sources
+  }
+
+  worker_pool {
+    name               = "node-pool-1"                          # The name of the existing worker pool of the existing cluster. Retrievable from UI
+    machine_count      = 40                                     # This is optional, but not setting it to the current value will make subsequent plans to try to scale our existing cluster to the default one
+    sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id # See below data sources
+    storage_profile_id = data.vcd_storage_profile.sp.id         # See below data sources
+  }
+
+  # While optional, we cannot change the Default Storage Class after an import, so we need
+  # to set the information of the existing cluster to avoid re-creation.
+  # The information can be retrieved from UI
+  default_storage_class {
+    filesystem         = "ext4"
+    name               = "sc-1"
+    reclaim_policy     = "delete"
+    storage_profile_id = data.vcd_storage_profile.sp.id # See below data sources
+  }
 }
+
+# The below data sources are needed to retrieve the required IDs. They are not needed
+# during the Import phase, but they will be asked when operating it afterwards
+
+# The VDC and Organization where the existing cluster is located
+data "vcd_org_vdc" "vdc" {
+  org  = "tenant_org"
+  name = "tenant_vdc"
+}
+
+# The OVA that the existing cluster is using. You can obtain the OVA by inspecting
+# the existing cluster TKG/Kubernetes version.
+data "vcd_catalog_vapp_template" "tkg_ova" {
+  org        = data.vcd_catalog.tkg_catalog.org
+  catalog_id = data.vcd_catalog.tkg_catalog.id
+  name       = "ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc"
+}
+
+# The network that the existing cluster is using
+data "vcd_network_routed_v2" "routed" {
+  org             = data.vcd_nsxt_edgegateway.egw.org
+  edge_gateway_id = data.vcd_nsxt_edgegateway.egw.id
+  name            = "tenant_net_routed"
+}
+
+# The VM Sizing Policy of the existing cluster nodes
+data "vcd_vm_sizing_policy" "tkg_small" {
+  name = "TKG small"
+}
+
+# The Storage Profile that the existing cluster uses
+data "vcd_storage_profile" "sp" {
+  org  = data.vcd_org_vdc.vdc.org
+  vdc  = data.vcd_org_vdc.vdc.name
+  name = "*"
+}
+
+data "vcd_catalog" "tkg_catalog" {
+  org  = "solutions_org" # The Organization that shares the TKGm OVAs with the tenants
+  name = "tkgm_catalog"  # The Catalog name
+}
+
+data "vcd_nsxt_edgegateway" "egw" {
+  org      = data.vcd_org_vdc.vdc.org
+  owner_id = data.vcd_org_vdc.vdc.id
+  name     = "tenant_edgegateway"
+}
+
+
 ```
 
 ```sh
-terraform import vcd_cse_kubernetes_cluster.imported_cluster 4.2.urn:vcloud:entity:vmware:capvcdCluster:1d24af33-6e5a-4d47-a6ea-06d76f3ee5c9
+terraform import vcd_cse_kubernetes_cluster.imported_cluster urn:vcloud:entity:vmware:capvcdCluster:1d24af33-6e5a-4d47-a6ea-06d76f3ee5c9
 ```
 
 -> The ID is required as it is the only way to unequivocally identify a Kubernetes cluster inside VCD. To obtain the ID

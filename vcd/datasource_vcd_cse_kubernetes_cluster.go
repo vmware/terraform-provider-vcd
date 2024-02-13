@@ -23,7 +23,7 @@ func datasourceVcdCseKubernetesCluster() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"cluster_id", "name"},
-				RequiredWith: []string{"cse_version", "org"},
+				RequiredWith: []string{"cse_version", "org_id"},
 				Description:  "The name of the Kubernetes cluster to read. If there is more than one Kubernetes cluster with the same name, searching by name will fail",
 			},
 			"org_id": {
@@ -35,7 +35,7 @@ func datasourceVcdCseKubernetesCluster() *schema.Resource {
 			"cse_version": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				RequiredWith: []string{"name", "org"},
+				RequiredWith: []string{"name", "org_id"},
 				Description:  "The CSE version used by the cluster, only required if 'name' is set",
 			},
 			"runtime": {
