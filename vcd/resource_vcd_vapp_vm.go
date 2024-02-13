@@ -143,6 +143,21 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Description:   "The catalog name in which to find the given vApp Template or media for boot_image",
 			ConflictsWith: []string{"vapp_template_id", "boot_image_id"},
 		},
+		"copy_from_vdc_id": {
+			Type:          schema.TypeString,
+			Optional:      true,
+			ForceNew:      true,
+			Description:   "Source VM that should be copied from",
+			ConflictsWith: []string{"template_name", "vapp_template_id", "catalog_name"},
+			RequiredWith:  []string{"copy_from_vm_id"},
+		},
+		"copy_from_vm_id": {
+			Type:          schema.TypeString,
+			Optional:      true,
+			ForceNew:      true,
+			Description:   "Source VM that should be copied from",
+			ConflictsWith: []string{"template_name", "vapp_template_id", "catalog_name"},
+		},
 		"description": {
 			Type:        schema.TypeString,
 			Optional:    true,
@@ -734,8 +749,10 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	// Deprecated: If at least Catalog Name and Template name are set - a VM from vApp template is being created
 	isVmFromTemplateDeprecated := d.Get("catalog_name").(string) != "" && d.Get("template_name").(string) != ""
 
+	isVmCopy := d.Get("copy_from_vm_id").(string) != "" // "Copy VM functionality"
+
 	isVmFromTemplate := d.Get("vapp_template_id").(string) != ""
-	isEmptyVm := !isVmFromTemplate && !isVmFromTemplateDeprecated
+	isEmptyVm := !isVmFromTemplate && !isVmFromTemplateDeprecated && !isVmCopy
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// This part of code conditionally calls functions for VM creation from template and empty VMs
@@ -750,6 +767,12 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		vm, err = createVmFromTemplate(d, meta, vmType)
 		if err != nil {
 			return diag.Errorf("error creating VM from template: %s", err)
+		}
+	case isVmCopy:
+		util.Logger.Printf("[DEBUG] [VM create] creating VM copy")
+		vm, err = createVmCopy(d, meta, "vmCopy")
+		if err != nil {
+			return diag.Errorf("error creating VM copy: %s", err)
 		}
 	case isEmptyVm:
 		util.Logger.Printf("[DEBUG] [VM create] creating empty VM")
@@ -1169,6 +1192,221 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	if err := vm.Refresh(); err != nil {
 		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 	}
+
+	// update existing internal disks in template (it is only applicable to VMs created
+	// Such fields are processed:
+	// * override_template_disk
+	err = updateTemplateInternalDisks(d, meta, *vm)
+	if err != nil {
+		dSet(d, "override_template_disk", nil)
+		return nil, fmt.Errorf("error managing internal disks : %s", err)
+	}
+
+	if err := vm.Refresh(); err != nil {
+		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
+	}
+
+	// OS Type and Hardware version should only be changed if specified. (Only applying to VMs from
+	// templates as empty VMs require this by default)
+	// Such fields are processed:
+	// * os_type
+	// * hardware_version
+	err = updateHardwareVersionAndOsType(d, vm)
+	if err != nil {
+		return nil, fmt.Errorf("error updating hardware version and OS type : %s", err)
+	}
+
+	if err := vm.Refresh(); err != nil {
+		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
+	}
+
+	// Template VMs require CPU/Memory setting
+	// Lookup CPU values either from schema or from sizing policy. If nothing is set - it will be
+	// inherited from template
+	var cpuCores, cpuCoresPerSocket *int
+	var memory *int64
+	if sizingPolicy != nil {
+		cpuCores, cpuCoresPerSocket, memory, err = getCpuMemoryValues(d, sizingPolicy.VdcComputePolicyV2)
+	} else {
+		cpuCores, cpuCoresPerSocket, memory, err = getCpuMemoryValues(d, nil)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("error getting CPU/Memory compute values: %s", err)
+	}
+
+	if cpuCores != nil || cpuCoresPerSocket != nil {
+		err = vm.ChangeCPUAndCoreCount(cpuCores, cpuCoresPerSocket)
+		if err != nil {
+			return nil, fmt.Errorf("error changing CPU settings: %s", err)
+		}
+
+		if err := vm.Refresh(); err != nil {
+			return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
+		}
+	}
+
+	if memory != nil {
+		err = vm.ChangeMemory(*memory)
+		if err != nil {
+			return nil, fmt.Errorf("error setting memory size from schema for VM from template: %s", err)
+		}
+
+		if err := vm.Refresh(); err != nil {
+			return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
+		}
+	}
+
+	return vm, nil
+}
+
+func createVmCopy(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*govcd.VM, error) {
+	vcdClient := meta.(*VCDClient)
+
+	// Step 1 - lookup common information
+	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	// Source VM for copying VM can be in another VDC (but same Org)
+	// copy_from_vdc_id
+	copySourceVdc := vdc
+	if d.Get("copy_from_vdc_id").(string) != "" {
+		sourceVdc, err := org.GetVDCById(d.Get("copy_from_vdc_id").(string), false)
+		if err != nil {
+			return nil, fmt.Errorf("[VM create] error retrieving source VDC by ID'%s': %s", d.Get("copy_from_vdc_id").(string), err)
+		}
+		copySourceVdc = sourceVdc
+	}
+
+	identifier := d.Get("copy_from_vm_id").(string)
+	sourceVm, err := copySourceVdc.QueryVmById(identifier)
+
+	if govcd.IsNotFound(err) {
+		vmByName, listStr, errByName := getVmByName(vcdClient, vdc, identifier)
+		if errByName != nil && listStr != "" {
+			return nil, fmt.Errorf("[VM create] error retrieving VM %s by name: %s\n%s\n%s", identifier, errByName, listStr, err)
+		}
+		sourceVm = vmByName
+	}
+
+	// Build up network configuration
+	networkConnectionSection, err := networksToConfig(d, nil)
+	if err != nil {
+		return nil, fmt.Errorf("unable to process network configuration: %s", err)
+	}
+	util.Logger.Printf("[VM create] networkConnectionSection %# v", pretty.Formatter(networkConnectionSection))
+
+	// Lookup storage profile reference if it was specified
+	storageProfilePtr, err := lookupStorageProfile(d, vdc)
+	if err != nil {
+		return nil, fmt.Errorf("error finding storage profile: %s", err)
+	}
+
+	// Look up compute policies
+	sizingPolicy, err := lookupComputePolicy(d, vcdClient, "sizing_policy_id")
+	if err != nil {
+		return nil, fmt.Errorf("error finding sizing policy: %s", err)
+	}
+	placementPolicy, err := lookupComputePolicy(d, vcdClient, "placement_policy_id")
+	if err != nil {
+		return nil, fmt.Errorf("error finding placement policy: %s", err)
+	}
+	var vmComputePolicy *types.ComputePolicy
+	if sizingPolicy != nil || placementPolicy != nil {
+		vmComputePolicy = &types.ComputePolicy{}
+		if sizingPolicy != nil {
+			vmComputePolicy.VmSizingPolicy = &types.Reference{HREF: sizingPolicy.Href}
+		}
+		if placementPolicy != nil {
+			vmComputePolicy.VmPlacementPolicy = &types.Reference{HREF: placementPolicy.Href}
+		}
+	}
+
+	var vm *govcd.VM
+	vmName := d.Get("name").(string)
+
+	// Step 2 - perform VM creation operation based on type
+	// VM creation uses different structure depending on if it is a standaloneVmType or vappVmType
+	// These structures differ and one might accept all required parameters, while other
+	switch vmType {
+
+	////////////////////////////////////////////////////////////////////////////////////////////
+	// This part of code handles additional VM create operations, which can not be set during
+	// initial VM creation.
+	// __Explicitly__ template based Standalone VMs are addressed here.
+	////////////////////////////////////////////////////////////////////////////////////////////
+
+	case "vmCopy":
+		vappName := d.Get("vapp_name").(string)
+		vapp, err := vdc.GetVAppByName(vappName, false)
+		if err != nil {
+			return nil, fmt.Errorf("[VM create] error finding vApp %s: %s", vappName, err)
+		}
+
+		vappVmParams := &types.ReComposeVAppParams{
+			Ovf:              types.XMLNamespaceOVF,
+			Xsi:              types.XMLNamespaceXSI,
+			Xmlns:            types.XMLNamespaceVCloud,
+			AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
+			Name:             vapp.VApp.Name,
+			PowerOn:          false, // VM will be powered on after all configuration is done
+			SourcedItem: &types.SourcedCompositionItemParam{
+				Source: &types.Reference{
+					// HREF: vmTemplate.VAppTemplate.HREF,
+					HREF: sourceVm.VM.HREF,
+					Name: vmName, // This VM name defines the VM name after creation
+				},
+				VMGeneralParams: &types.VMGeneralParams{
+					Description: d.Get("description").(string),
+				},
+				InstantiationParams: &types.InstantiationParams{
+					// If a MAC address is specified for NIC - it does not get set with this call,
+					// therefore an additional `vm.UpdateNetworkConnectionSection` is required.
+					NetworkConnectionSection: &networkConnectionSection,
+				},
+				ComputePolicy:  vmComputePolicy,
+				StorageProfile: storageProfilePtr,
+			},
+		}
+
+		vm, err = vapp.AddRawVM(vappVmParams)
+		if err != nil {
+			d.SetId("")
+			return nil, fmt.Errorf("[VM creation] error getting VM %s : %s", vmName, err)
+		}
+
+		d.SetId(vm.VM.ID)
+		dSet(d, "vm_type", string(vappVmType))
+
+	////////////////////////////////////////////////////////////////////////////////////////////
+	// This part of code handles additional VM create operations, which can not be set during
+	// initial VM creation.
+	// __Explicitly__ template based vApp VMs are addressed here.
+	////////////////////////////////////////////////////////////////////////////////////////////
+
+	default:
+		return nil, fmt.Errorf("unknown VM type %s", vmType)
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// This part of code handles additional VM create operations, which can not be set during
+	// initial VM creation.
+	// __Only__ template based VMs are addressed here.
+	////////////////////////////////////////////////////////////////////////////////////////////////
+
+	// If a MAC address is specified for NIC - it does not get set with initial create call therefore
+	// running additional update call to make sure it is set correctly
+
+	// err = vm.UpdateNetworkConnectionSection(&networkConnectionSection)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("unable to setup network configuration for empty VM %s", err)
+	// }
+
+	// // Refresh VM to have the latest structure
+	// if err := vm.Refresh(); err != nil {
+	// 	return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
+	// }
 
 	// update existing internal disks in template (it is only applicable to VMs created
 	// Such fields are processed:
