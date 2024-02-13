@@ -177,7 +177,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 							ForceNew:    true,
-							Description: "The name of this worker pool",
+							Description: "The name of this worker pool. Must be unique",
 							ValidateDiagFunc: matchRegex(`^[a-z](?:[a-z0-9-]{0,29}[a-z0-9])?$`, "name must contain only lowercase alphanumeric characters or '-',"+
 								"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters"),
 						},
