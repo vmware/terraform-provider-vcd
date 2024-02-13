@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"sort"
 	"time"
 )
 
@@ -164,6 +165,9 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				},
 			},
 			"worker_pool": {
+				// This is a list because TypeSet tries to replace the whole block when we just change a sub-attribute like "machine_count",
+				// provoking that the whole cluster is marked to be replaced. On the other hand, with TypeList the updates on sub-attributes
+				// work as expected but in exchange we need to be careful on reads to guarantee that order is respected.
 				Type:        schema.TypeList,
 				Required:    true,
 				Description: "Defines a node pool for the cluster",
@@ -484,8 +488,6 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 		return nil
 	}
 
-	// TODO: If creation ended in error???? Should we check cluster state and auto_recover??
-
 	vcdClient := meta.(*VCDClient)
 	cluster, err := vcdClient.CseGetKubernetesClusterById(d.Id())
 	if err != nil {
@@ -493,21 +495,56 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 	}
 	payload := govcd.CseClusterUpdateInput{}
 	if d.HasChange("worker_pool") {
-		workerPools := map[string]govcd.CseWorkerPoolUpdateInput{}
-		for _, workerPoolAttr := range d.Get("worker_pool").([]interface{}) {
-			w := workerPoolAttr.(map[string]interface{})
-			workerPools[w["name"].(string)] = govcd.CseWorkerPoolUpdateInput{MachineCount: w["machine_count"].(int)}
-		}
-		payload.WorkerPools = &workerPools
-	}
+		oldPools, newPools := d.GetChange("worker_pool")
+		notNew := map[string]bool{}
 
-	err = cluster.Update(payload, true)
-	if err != nil {
-		if cluster != nil {
-			if cluster.State != "provisioned" {
-				return diag.Errorf("Kubernetes cluster update finished, but it is in '%s' state, not 'provisioned': '%s'", cluster.State, err)
+		// Fetch the already existing worker pools that have been modified
+		changePoolsPayload := map[string]govcd.CseWorkerPoolUpdateInput{}
+		for _, o := range oldPools.([]interface{}) {
+			oldPool := o.(map[string]interface{})
+			for _, n := range newPools.([]interface{}) {
+				newPool := n.(map[string]interface{})
+				if oldPool["name"].(string) == newPool["name"].(string) {
+					changePoolsPayload[newPool["name"].(string)] = govcd.CseWorkerPoolUpdateInput{MachineCount: newPool["machine_count"].(int)}
+					notNew[newPool["name"].(string)] = true // Register this pool as not new
+				}
 			}
 		}
+		payload.WorkerPools = &changePoolsPayload
+
+		// Fetch the worker pools that are brand new
+		var addPoolsPayload []govcd.CseWorkerPoolSettings
+		for _, n := range newPools.([]interface{}) {
+			newPool := n.(map[string]interface{})
+			if _, ok := notNew[newPool["name"].(string)]; !ok {
+				addPoolsPayload = append(addPoolsPayload, govcd.CseWorkerPoolSettings{
+					Name:              newPool["name"].(string),
+					MachineCount:      newPool["machine_count"].(int),
+					DiskSizeGi:        newPool["disk_size_gi"].(int),
+					SizingPolicyId:    newPool["sizing_policy_id"].(string),
+					PlacementPolicyId: newPool["placement_policy_id"].(string),
+					VGpuPolicyId:      newPool["vgpu_policy_id"].(string),
+					StorageProfileId:  newPool["storage_profile_id"].(string),
+				})
+			}
+		}
+		payload.NewWorkerPools = &addPoolsPayload
+	}
+	if d.HasChange("control_plane") {
+		controlPlane := govcd.CseControlPlaneUpdateInput{}
+		for _, controlPlaneAttr := range d.Get("control_plane").([]interface{}) {
+			c := controlPlaneAttr.(map[string]interface{})
+			controlPlane.MachineCount = c["machine_count"].(int)
+		}
+		payload.ControlPlane = &controlPlane
+	}
+	if d.HasChange("kubernetes_template_id") {
+		payload.KubernetesTemplateOvaId = addrOf(d.Get("kubernetes_template_id").(string))
+	}
+
+	// If the cluster is not in "provisioned" state, this call should fail
+	err = cluster.Update(payload, true)
+	if err != nil {
 		return diag.Errorf("Kubernetes cluster update failed: %s", err)
 	}
 
@@ -572,7 +609,7 @@ func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetes
 	dSet(d, "virtual_ip_subnet", cluster.VirtualIpSubnet)
 	dSet(d, "auto_repair_on_errors", cluster.AutoRepairOnErrors)
 	dSet(d, "node_health_check", cluster.NodeHealthCheck)
-	dSet(d, "api_token_file", "")
+	//dSet(d, "api_token_file", "")
 
 	if _, ok := d.GetOk("owner"); ok {
 		// This field is optional, as it can take the value from the VCD client
@@ -596,6 +633,12 @@ func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetes
 			"disk_size_gi":        workerPool.DiskSizeGi,
 		}
 	}
+	// The "worker_pool" argument is a TypeList, not a TypeSet (check the Schema comments for context),
+	// so we need to guarantee order. We order them by name.
+	sort.SliceStable(workerPoolBlocks, func(i, j int) bool {
+		return workerPoolBlocks[i]["name"].(string) < workerPoolBlocks[j]["name"].(string)
+	})
+
 	err = d.Set("worker_pool", workerPoolBlocks)
 	if err != nil {
 		return nil, err
