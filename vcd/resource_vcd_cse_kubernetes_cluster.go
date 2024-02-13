@@ -350,6 +350,35 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"events": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "A set of events that happened during the Kubernetes cluster lifecycle",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "Name of the event",
+						},
+						"type": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "Type of the event, either 'event' or 'error'",
+						},
+						"occurred_at": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "When the event happened",
+						},
+						"details": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "Details of the event",
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -641,7 +670,7 @@ func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetes
 		}
 	}
 	// The "worker_pool" argument is a TypeList, not a TypeSet (check the Schema comments for context),
-	// so we need to guarantee order. We order them by name.
+	// so we need to guarantee order. We order them by name, which is unique.
 	sort.SliceStable(workerPoolBlocks, func(i, j int) bool {
 		return workerPoolBlocks[i]["name"].(string) < workerPoolBlocks[j]["name"].(string)
 	})
@@ -686,6 +715,20 @@ func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetes
 		supportedUpgradesNames[i] = upgrade.Name
 	}
 	err = d.Set("supported_upgrades", supportedUpgradesNames)
+	if err != nil {
+		return nil, err
+	}
+
+	events := make([]map[string]interface{}, len(cluster.Events))
+	for i, event := range cluster.Events {
+		events[i] = map[string]interface{}{
+			"name":        event.Name,
+			"occurred_at": event.OccurredAt.String(),
+			"details":     event.Details,
+			"type":        event.Type,
+		}
+	}
+	err = d.Set("events", events)
 	if err != nil {
 		return nil, err
 	}
