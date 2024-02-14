@@ -288,7 +288,7 @@ func datasourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, m
 	dSet(d, "org_id", cluster.OrganizationId)
 	dSet(d, "cluster_id", cluster.ID)
 
-	warns, err := saveClusterDataToState(d, cluster)
+	warns, err := saveClusterDataToState(d, nil, cluster)
 	if err != nil {
 		return diag.Errorf("could not save Kubernetes cluster data into Terraform state: %s", err)
 	}

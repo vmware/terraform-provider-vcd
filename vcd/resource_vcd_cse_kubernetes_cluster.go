@@ -396,10 +396,14 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 	}
 
 	apiTokenFile := d.Get("api_token_file").(string)
+	if apiTokenFile == "" {
+		return diag.Errorf("the API token file 'is required during Kubernetes cluster creation")
+	}
 	apiToken, err := govcd.GetTokenFromFile(apiTokenFile)
 	if err != nil {
 		return diag.Errorf("could not read the API token from the file '%s': %s", apiTokenFile, err)
 	}
+
 	owner := d.Get("owner").(string)
 	if owner == "" {
 		session, err := vcdClient.Client.GetSessionInfo()
@@ -492,7 +496,7 @@ func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, met
 		return diag.Errorf("could not read Kubernetes cluster with ID '%s': %s", d.Id(), err)
 	}
 
-	warns, err := saveClusterDataToState(d, cluster)
+	warns, err := saveClusterDataToState(d, vcdClient, cluster)
 	if err != nil {
 		return diag.Errorf("could not save Kubernetes cluster data into Terraform state: %s", err)
 	}
@@ -614,7 +618,7 @@ func resourceVcdCseKubernetesImport(_ context.Context, d *schema.ResourceData, m
 		return nil, fmt.Errorf("error retrieving Kubernetes cluster with ID '%s': %s", d.Id(), err)
 	}
 
-	warns, err := saveClusterDataToState(d, cluster)
+	warns, err := saveClusterDataToState(d, nil, cluster)
 	if err != nil {
 		return nil, fmt.Errorf("failed importing Kubernetes cluster '%s': %s", cluster.ID, err)
 	}
@@ -628,7 +632,7 @@ func resourceVcdCseKubernetesImport(_ context.Context, d *schema.ResourceData, m
 
 // saveClusterDataToState reads the received RDE contents and sets the Terraform arguments and attributes.
 // Returns a slice of warnings first and an error second.
-func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetesCluster) ([]error, error) {
+func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluster *govcd.CseKubernetesCluster) ([]error, error) {
 	var warnings []error
 
 	dSet(d, "name", cluster.Name)
@@ -648,7 +652,17 @@ func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetes
 	dSet(d, "virtual_ip_subnet", cluster.VirtualIpSubnet)
 	dSet(d, "auto_repair_on_errors", cluster.AutoRepairOnErrors)
 	dSet(d, "node_health_check", cluster.NodeHealthCheck)
-	//dSet(d, "api_token_file", "")
+
+	if _, ok := d.GetOk("org"); ok {
+		// This field is optional, as it can take the value from the VCD client
+		if cluster.OrganizationId != "" {
+			org, err := vcdClient.GetOrgById(cluster.OrganizationId)
+			if err != nil {
+				return nil, fmt.Errorf("could not set 'org' argument: %s", err)
+			}
+			dSet(d, "org", org.Org.Name)
+		}
+	}
 
 	if _, ok := d.GetOk("owner"); ok {
 		// This field is optional, as it can take the value from the VCD client
@@ -743,7 +757,9 @@ func saveClusterDataToState(d *schema.ResourceData, cluster *govcd.CseKubernetes
 		}
 		dSet(d, "kubeconfig", kubeconfig)
 	} else {
-		warnings = append(warnings, fmt.Errorf("the Kubernetes cluster with ID '%s' is in '%s' state, won't be able to retrieve the Kubeconfig", d.Id(), cluster.State))
+		warnings = append(warnings, fmt.Errorf("the Kubernetes cluster with ID '%s' is in '%s' state, meaning that "+
+			"the Kubeconfig cannot be retrieved and "+
+			"some attributes could be unavailable", d.Id(), cluster.State))
 	}
 
 	d.SetId(cluster.ID)

@@ -112,6 +112,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 
 // TODO: Test:
 // Basic (DONE)
+// Error with no auto-repair, then set auto-repair
 // With machine health checks
 // With machine health checks
 // Without storage class
