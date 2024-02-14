@@ -595,6 +595,9 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 	vcdClient := meta.(*VCDClient)
 	cluster, err := vcdClient.CseGetKubernetesClusterById(d.Id())
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			return nil // The cluster is gone, nothing to do
+		}
 		return diag.FromErr(err)
 	}
 	err = cluster.Delete(time.Duration(d.Get("operations_timeout_minutes").(int)))
