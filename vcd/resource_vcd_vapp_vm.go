@@ -143,18 +143,18 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Description:   "The catalog name in which to find the given vApp Template or media for boot_image",
 			ConflictsWith: []string{"vapp_template_id", "boot_image_id"},
 		},
-		"copy_from_vdc_id": {
+		"copy_from_vdc_id": { // TODO - can I find parent VDC from VM
 			Type:          schema.TypeString,
 			Optional:      true,
 			ForceNew:      true,
-			Description:   "Source VM that should be copied from",
+			Description:   "Source VM VDC (if it differs)",
 			ConflictsWith: []string{"template_name", "vapp_template_id", "catalog_name"},
 			RequiredWith:  []string{"copy_from_vm_id"},
 		},
 		"copy_from_vm_id": {
-			Type:          schema.TypeString,
-			Optional:      true,
-			ForceNew:      true,
+			Type:     schema.TypeString,
+			Optional: true,
+			// ForceNew:      true,
 			Description:   "Source VM that should be copied from",
 			ConflictsWith: []string{"template_name", "vapp_template_id", "catalog_name"},
 		},
@@ -748,10 +748,8 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 
 	// Deprecated: If at least Catalog Name and Template name are set - a VM from vApp template is being created
 	isVmFromTemplateDeprecated := d.Get("catalog_name").(string) != "" && d.Get("template_name").(string) != ""
-
-	isVmCopy := d.Get("copy_from_vm_id").(string) != "" // "Copy VM functionality"
-
 	isVmFromTemplate := d.Get("vapp_template_id").(string) != ""
+	isVmCopy := d.Get("copy_from_vm_id").(string) != "" // "Copy VM functionality"
 	isEmptyVm := !isVmFromTemplate && !isVmFromTemplateDeprecated && !isVmCopy
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -770,7 +768,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		}
 	case isVmCopy:
 		util.Logger.Printf("[DEBUG] [VM create] creating VM copy")
-		vm, err = createVmCopy(d, meta, "vmCopy")
+		vm, err = createVmCopy(d, meta, vmType)
 		if err != nil {
 			return diag.Errorf("error creating VM copy: %s", err)
 		}
@@ -1259,6 +1257,9 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	return vm, nil
 }
 
+// createVmCopy handles VM Copy scenario.
+// It is explicitly based on `copy_from_vm_id` and `copy_from_vdc_id` (if VM is copied from another
+// VDC)
 func createVmCopy(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*govcd.VM, error) {
 	vcdClient := meta.(*VCDClient)
 
@@ -1330,6 +1331,49 @@ func createVmCopy(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*g
 	// VM creation uses different structure depending on if it is a standaloneVmType or vappVmType
 	// These structures differ and one might accept all required parameters, while other
 	switch vmType {
+	case standaloneVmType:
+		standaloneVmParams := types.InstantiateVmTemplateParams{
+			Xmlns:            types.XMLNamespaceVCloud,
+			Name:             vmName, // VM name post creation
+			PowerOn:          false,  // VM will be powered on after all configuration is done
+			AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
+			ComputePolicy:    vmComputePolicy,
+			SourcedVmTemplateItem: &types.SourcedVmTemplateParams{
+				Source: &types.Reference{
+					HREF: sourceVm.VM.HREF,
+					Type: sourceVm.VM.Type,
+					Name: vmName,
+				},
+				VmGeneralParams: &types.VMGeneralParams{
+					Description: d.Get("description").(string),
+				},
+				VmTemplateInstantiationParams: &types.InstantiationParams{
+					// If a MAC address is specified for NIC - it does not get set with this call,
+					// therefore an additional `vm.UpdateNetworkConnectionSection` is required.
+					NetworkConnectionSection: &networkConnectionSection,
+				},
+				StorageProfile: storageProfilePtr,
+			},
+		}
+
+		util.Logger.Printf("%# v", pretty.Formatter(standaloneVmParams))
+		vm, err = vdc.CreateStandaloneVMFromTemplate(&standaloneVmParams)
+		if err != nil {
+			d.SetId("")
+			return nil, fmt.Errorf("[VM creation] error creating standalone VM copy %s : %s", vmName, err)
+		}
+
+		d.SetId(vm.VM.ID)
+
+		util.Logger.Printf("[VM create] VM from template after creation %# v", pretty.Formatter(vm.VM))
+		vapp, err := vm.GetParentVApp()
+		if err != nil {
+			d.SetId("")
+			return nil, fmt.Errorf("[VM creation] error retrieving vApp from standalone VM %s : %s", vmName, err)
+		}
+		util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
+		dSet(d, "vapp_name", vapp.VApp.Name)
+		dSet(d, "vm_type", string(standaloneVmType))
 
 	////////////////////////////////////////////////////////////////////////////////////////////
 	// This part of code handles additional VM create operations, which can not be set during
@@ -1337,7 +1381,7 @@ func createVmCopy(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*g
 	// __Explicitly__ template based Standalone VMs are addressed here.
 	////////////////////////////////////////////////////////////////////////////////////////////
 
-	case "vmCopy":
+	case vappVmType:
 		vappName := d.Get("vapp_name").(string)
 		vapp, err := vdc.GetVAppByName(vappName, false)
 		if err != nil {
@@ -1353,7 +1397,6 @@ func createVmCopy(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*g
 			PowerOn:          false, // VM will be powered on after all configuration is done
 			SourcedItem: &types.SourcedCompositionItemParam{
 				Source: &types.Reference{
-					// HREF: vmTemplate.VAppTemplate.HREF,
 					HREF: sourceVm.VM.HREF,
 					Name: vmName, // This VM name defines the VM name after creation
 				},

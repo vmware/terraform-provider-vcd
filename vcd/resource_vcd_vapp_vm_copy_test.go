@@ -115,6 +115,25 @@ resource "vcd_vapp_vm" "copy" {
     ip_allocation_mode = "POOL"
   }
 }
+
+resource "vcd_vm" "copy" {
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  name          = "{{.TestName}}-dest"
+  computer_name = "{{.ComputerName}}"
+
+  copy_from_vm_id  = vcd_vm.source.id
+  power_on         = false
+  memory           = 1024
+  cpus             = 2
+  cpu_cores        = 1
+
+  #network {
+  #  type               = "vapp"
+  #  name               = vcd_vapp_network.vappNet.name
+  #  ip_allocation_mode = "POOL"
+  #}
+}
 `
 
 func TestAccVcdVAppVm_BasicCopyDifferentVdc(t *testing.T) {
@@ -226,5 +245,25 @@ resource "vcd_vapp_vm" "copy" {
     name               = vcd_vapp_network.vappNet.name
     ip_allocation_mode = "POOL"
   }
+}
+
+resource "vcd_vm" "copy" {
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  name          = "{{.TestName}}-dest"
+  computer_name = "{{.ComputerName}}"
+
+  copy_from_vdc_id = data.vcd_org_vdc.source.id
+  copy_from_vm_id  = vcd_vm.source.id
+  power_on         = true
+  memory           = 1024
+  cpus             = 2
+  cpu_cores        = 1
+
+  #network {
+  #  type               = "vapp"
+  #  name               = vcd_vapp_network.vappNet.name
+  #  ip_allocation_mode = "POOL"
+  #}
 }
 `
