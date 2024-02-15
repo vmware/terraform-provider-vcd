@@ -113,6 +113,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 // TODO: Test:
 // Basic (DONE)
 // Error with no auto-repair, then set auto-repair
+// Upgrade v2.2.0-v1.25.7 to v2.4.0-v1.26.8
 // With machine health checks
 // With machine health checks
 // Without storage class
