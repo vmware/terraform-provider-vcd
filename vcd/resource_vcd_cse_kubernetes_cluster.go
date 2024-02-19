@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"sort"
 	"time"
 )
 
@@ -165,12 +164,13 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				},
 			},
 			"worker_pool": {
-				// This is a list because TypeSet tries to replace the whole block when we just change a sub-attribute like "machine_count",
-				// provoking that the whole cluster is marked to be replaced. On the other hand, with TypeList the updates on sub-attributes
-				// work as expected but in exchange we need to be careful on reads to guarantee that order is respected.
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Required:    true,
 				Description: "Defines a node pool for the cluster",
+				Set: func(v interface{}) int {
+					// Every Worker Pool is defined unequivocally by its unique name.
+					return hashcodeString(v.(map[string]interface{})["name"].(string))
+				},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -441,7 +441,7 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 		AutoRepairOnErrors: d.Get("auto_repair_on_errors").(bool),
 	}
 
-	workerPoolsAttr := d.Get("worker_pool").([]interface{})
+	workerPoolsAttr := d.Get("worker_pool").(*schema.Set).List()
 	workerPools := make([]govcd.CseWorkerPoolSettings, len(workerPoolsAttr))
 	for i, w := range workerPoolsAttr {
 		workerPool := w.(map[string]interface{})
@@ -533,9 +533,9 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 
 		// Fetch the already existing worker pools that have been modified
 		changePoolsPayload := map[string]govcd.CseWorkerPoolUpdateInput{}
-		for _, o := range oldPools.([]interface{}) {
+		for _, o := range oldPools.(*schema.Set).List() {
 			oldPool := o.(map[string]interface{})
-			for _, n := range newPools.([]interface{}) {
+			for _, n := range newPools.(*schema.Set).List() {
 				newPool := n.(map[string]interface{})
 				if oldPool["name"].(string) == newPool["name"].(string) {
 					changePoolsPayload[newPool["name"].(string)] = govcd.CseWorkerPoolUpdateInput{MachineCount: newPool["machine_count"].(int)}
@@ -547,7 +547,7 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 
 		// Fetch the worker pools that are brand new
 		var addPoolsPayload []govcd.CseWorkerPoolSettings
-		for _, n := range newPools.([]interface{}) {
+		for _, n := range newPools.(*schema.Set).List() {
 			newPool := n.(map[string]interface{})
 			if _, ok := notNew[newPool["name"].(string)]; !ok {
 				addPoolsPayload = append(addPoolsPayload, govcd.CseWorkerPoolSettings{
@@ -686,12 +686,6 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluste
 			"disk_size_gi":        workerPool.DiskSizeGi,
 		}
 	}
-	// The "worker_pool" argument is a TypeList, not a TypeSet (check the Schema comments for context),
-	// so we need to guarantee order. We order them by name, which is unique.
-	sort.SliceStable(workerPoolBlocks, func(i, j int) bool {
-		return workerPoolBlocks[i]["name"].(string) < workerPoolBlocks[j]["name"].(string)
-	})
-
 	err = d.Set("worker_pool", workerPoolBlocks)
 	if err != nil {
 		return nil, err
