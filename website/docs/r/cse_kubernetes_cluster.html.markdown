@@ -120,7 +120,7 @@ The following arguments are supported:
 
 * `cse_version` - (Required) Specifies the CSE version to use. Accepted versions: `4.1.0`, `4.1.1` and `4.2.0`
 * `runtime` - (Optional) Specifies the Kubernetes runtime to use. Defaults to `tkg` (Tanzu Kubernetes Grid)
-* `name` - (Required) The name of the Kubernetes cluster. It must contain only lowercase alphanumeric characters or "-", 
+* `name` - (Required) The name of the Kubernetes cluster. It must contain only lowercase alphanumeric characters or "-",
   start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters
 * `kubernetes_template_id` - (Required) The ID of the vApp Template that corresponds to a Kubernetes template OVA
 * `org` - (Optional) The name of organization that will host the Kubernetes cluster, optional if defined in the provider configuration
@@ -209,10 +209,10 @@ The following attributes are available for consumption as read-only attributes a
 * `supported_upgrades` - A set of vApp Template names that can be fetched with a
   [`vcd_catalog_vapp_template` data source](/providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template) to upgrade the cluster.
 * `events` - A set of events that happened during the Kubernetes cluster lifecycle. Each event has:
-    * `name` - Name of the event
-    * `type` - Type of the event, either `event` or `error`
-    * `details` - Details of the event
-    * `occurred_at` - When the event happened
+  * `name` - Name of the event
+  * `type` - Type of the event, either `event` or `error`
+  * `details` - Details of the event
+  * `occurred_at` - When the event happened
 
 ## Updating
 
@@ -220,7 +220,7 @@ Only the following arguments can be updated:
 
 * `kubernetes_template_id`: The cluster must allow upgrading to the new TKG version. You can check `supported_upgrades` attribute to know
   the available OVAs.
-* `machine_count` of the `control_plane`: Supports scaling up and down
+* `machine_count` of the `control_plane`: Supports scaling up and down. Nothing else can be updated.
 * `machine_count` of any `worker_pool`: Supports scaling up and down. Use caution when resizing down to 0 nodes.
   The cluster must always have at least 1 running node, or else the cluster will enter an unrecoverable error state.
 * `auto_repair_on_errors`: Can only be updated in CSE 4.1.0, and it is recommended to set it to `false` when the cluster is created.
@@ -228,7 +228,8 @@ Only the following arguments can be updated:
 * `node_health_check`: Can be turned on/off.
 * `operations_timeout_minutes`: Does not require modifying the existing cluster
 
-You can also add more `worker_pool` blocks to add more worker pools to the cluster. 
+You can also add more `worker_pool` blocks to add more worker pools to the cluster. **You can't delete Worker Pools**, but they can
+be scaled down to zero.
 
 Updating any other argument will delete the existing cluster and create a new one, if the Terraform plan is applied.
 

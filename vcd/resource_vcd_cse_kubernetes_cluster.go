@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"sort"
 	"time"
 )
 
@@ -164,19 +165,20 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				},
 			},
 			"worker_pool": {
-				Type:        schema.TypeSet,
+				// This is a list because TypeSet tries to replace the whole block when we just change a sub-attribute like "machine_count",
+				// provoking that the worker pool is marked to be deleted and the re-created, and that cannot be done in CSE.
+				// On the other hand, with TypeList the updates on sub-attributes work as expected but in exchange
+				// we need to be careful on reads to guarantee that order is respected.
+				Type:        schema.TypeList,
 				Required:    true,
 				Description: "Defines a node pool for the cluster",
-				Set: func(v interface{}) int {
-					// Every Worker Pool is defined unequivocally by its unique name.
-					return hashcodeString(v.(map[string]interface{})["name"].(string))
-				},
 				Elem: &schema.Resource{
+					// Ideally, all of these sub-attributes should have ForceNew: true except for "machine_count", as
+					// they can´t be changed. However, this doesn´t work well so we check this at runtime.
 					Schema: map[string]*schema.Schema{
 						"name": {
 							Type:        schema.TypeString,
 							Required:    true,
-							ForceNew:    true,
 							Description: "The name of this worker pool. Must be unique",
 							ValidateDiagFunc: matchRegex(`^[a-z](?:[a-z0-9-]{0,29}[a-z0-9])?$`, "name must contain only lowercase alphanumeric characters or '-',"+
 								"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters"),
@@ -192,32 +194,27 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Default:          20, // As suggested in UI
-							ForceNew:         true,
 							Description:      "Disk size, in Gibibytes (Gi), for the control plane nodes",
 							ValidateDiagFunc: minimumValue(20, "disk size in Gibibytes (Gi) must be at least 20"),
 						},
 						"sizing_policy_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							ForceNew:    true,
 							Description: "VM Sizing policy for the control plane nodes",
 						},
 						"placement_policy_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							ForceNew:    true,
 							Description: "VM Placement policy for the control plane nodes",
 						},
 						"vgpu_policy_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							ForceNew:    true,
 							Description: "vGPU policy for the control plane nodes",
 						},
 						"storage_profile_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							ForceNew:    true,
 							Description: "Storage profile for the control plane nodes",
 						},
 					},
@@ -441,7 +438,7 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 		AutoRepairOnErrors: d.Get("auto_repair_on_errors").(bool),
 	}
 
-	workerPoolsAttr := d.Get("worker_pool").(*schema.Set).List()
+	workerPoolsAttr := d.Get("worker_pool").([]interface{})
 	workerPools := make([]govcd.CseWorkerPoolSettings, len(workerPoolsAttr))
 	for i, w := range workerPoolsAttr {
 		workerPool := w.(map[string]interface{})
@@ -529,27 +526,50 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 	payload := govcd.CseClusterUpdateInput{}
 	if d.HasChange("worker_pool") {
 		oldPools, newPools := d.GetChange("worker_pool")
-		notNew := map[string]bool{}
+		existingPools := map[string]bool{}
 
 		// Fetch the already existing worker pools that have been modified
 		changePoolsPayload := map[string]govcd.CseWorkerPoolUpdateInput{}
-		for _, o := range oldPools.(*schema.Set).List() {
+		for _, o := range oldPools.([]interface{}) {
 			oldPool := o.(map[string]interface{})
-			for _, n := range newPools.(*schema.Set).List() {
+			for _, n := range newPools.([]interface{}) {
 				newPool := n.(map[string]interface{})
 				if oldPool["name"].(string) == newPool["name"].(string) {
+					if oldPool["disk_size_gi"] != newPool["disk_size_gi"] {
+						return diag.Errorf("'disk_size_gi' of Worker Pool '%s' cannot be changed", oldPool["name"])
+					}
+					if oldPool["sizing_policy_id"] != newPool["sizing_policy_id"] {
+						return diag.Errorf("'sizing_policy_id' of Worker Pool '%s' cannot be changed", oldPool["name"])
+					}
+					if oldPool["placement_policy_id"] != newPool["placement_policy_id"] {
+						return diag.Errorf("'placement_policy_id' of Worker Pool '%s' cannot be changed", oldPool["name"])
+					}
+					if oldPool["vgpu_policy_id"] != newPool["vgpu_policy_id"] {
+						return diag.Errorf("'vgpu_policy_id' of Worker Pool '%s' cannot be changed", oldPool["name"])
+					}
+					if oldPool["storage_profile_id"] != newPool["storage_profile_id"] {
+						return diag.Errorf("'storage_profile_id' of Worker Pool '%s' cannot be changed", oldPool["name"])
+					}
 					changePoolsPayload[newPool["name"].(string)] = govcd.CseWorkerPoolUpdateInput{MachineCount: newPool["machine_count"].(int)}
-					notNew[newPool["name"].(string)] = true // Register this pool as not new
+					existingPools[newPool["name"].(string)] = true // Register this pool as not new
 				}
 			}
 		}
 		payload.WorkerPools = &changePoolsPayload
 
+		// Check that no Worker Pools are deleted
+		for _, o := range oldPools.([]interface{}) {
+			oldPool := o.(map[string]interface{})
+			if _, ok := existingPools[oldPool["name"].(string)]; !ok {
+				return diag.Errorf("the Worker Pool '%s' can't be deleted, but you can scale it to 0", oldPool["name"].(string))
+			}
+		}
+
 		// Fetch the worker pools that are brand new
 		var addPoolsPayload []govcd.CseWorkerPoolSettings
-		for _, n := range newPools.(*schema.Set).List() {
+		for _, n := range newPools.([]interface{}) {
 			newPool := n.(map[string]interface{})
-			if _, ok := notNew[newPool["name"].(string)]; !ok {
+			if _, ok := existingPools[newPool["name"].(string)]; !ok {
 				addPoolsPayload = append(addPoolsPayload, govcd.CseWorkerPoolSettings{
 					Name:              newPool["name"].(string),
 					MachineCount:      newPool["machine_count"].(int),
@@ -686,6 +706,12 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluste
 			"disk_size_gi":        workerPool.DiskSizeGi,
 		}
 	}
+	// The "worker_pool" argument is a TypeList, not a TypeSet (check the Schema comments for context),
+	// so we need to guarantee order. We order them by name, which is unique.
+	sort.SliceStable(workerPoolBlocks, func(i, j int) bool {
+		return workerPoolBlocks[i]["name"].(string) < workerPoolBlocks[j]["name"].(string)
+	})
+
 	err = d.Set("worker_pool", workerPoolBlocks)
 	if err != nil {
 		return nil, err
