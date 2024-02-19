@@ -431,6 +431,150 @@ resource "vcd_vm" "empty-vm" {
 
   prevent_update_power_off = true
 }
+
+# VM Copy from here
+resource "vcd_vapp" "vm-copy-destination-template-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-vm-copy-template-destination"
+  description = "vApp destination for VM Copy"
+  power_on    = false
+}
+
+resource "vcd_vapp" "vm-copy-destination-empty-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-vm-copy-empty-destination"
+  description = "vApp destination for VM Copy"
+  power_on    = false
+}
+
+resource "vcd_vapp_vm" "template-vm-copy" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  
+  copy_from_vm_id = vcd_vapp_vm.template-vm.id
+  vapp_name       = vcd_vapp.vm-copy-destination-template-vm.name
+  name            = "{{.TestName}}-template-vapp-vm-copy"
+  description     = "{{.TestName}}-template-vapp-vm"
+  power_on        = false
+
+  #network {
+#	type               = "org"
+#	name               = (vcd_vapp_org_network.template-vapp.id == "always-not-equal" ? null : vcd_vapp_org_network.template-vapp.org_network_name)
+#	adapter_type       = "VMXNET3"
+#	ip_allocation_mode = "POOL"
+  #}
+#
+  #network {
+#	type               = "vapp"
+#	name               = (vcd_vapp_network.template.id == "always-not-equal" ? null : vcd_vapp_network.template.name)
+#	adapter_type       = "E1000"
+#	ip_allocation_mode = "POOL"
+#	mac                = "00:00:00:AA:BB:CC"
+  #}
+
+  depends_on = [vcd_vapp_network.template]
+
+  prevent_update_power_off = true
+}
+
+resource "vcd_vapp_vm" "empty-vm-copy" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  
+  vapp_name     = vcd_vapp.vm-copy-destination-empty-vm.name
+  name          = "{{.TestName}}-empty-vapp-vm-copy"
+  description   = "{{.TestName}}-empty-vapp-vm"
+  computer_name = "vapp-vm"
+  power_on      = false
+
+  cpus   = 1
+  memory = 1024
+
+  copy_from_vm_id = vcd_vapp_vm.empty-vm.id
+
+#  network {
+#	type               = "org"
+#	name               = (vcd_vapp_org_network.empty-vapp.id == "always-not-equal" ? null : vcd_vapp_org_network.empty-vapp.org_network_name)
+#	adapter_type       = "VMXNET3"
+#	ip_allocation_mode = "POOL"
+#  }
+#
+#  network {
+#	type               = "vapp"
+#	name               = (vcd_vapp_network.empty-vm.id == "always-not-equal" ? null : vcd_vapp_network.empty-vm.name)
+#	adapter_type       = "E1000"
+#	ip_allocation_mode = "POOL"
+#	mac                = "00:00:00:BB:AA:CC"
+#  }
+
+  depends_on = [vcd_vapp_network.empty-vm]
+
+  prevent_update_power_off = true
+}
+
+resource "vcd_vm" "template-vm-copy" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
+  
+  name        = "{{.TestName}}-template-standalone-vm-copy"
+  description = "{{.TestName}}-template-standalone-vm"
+  power_on    = false
+
+  network {
+	type               = "org"
+	name               = (vcd_network_routed_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_routed_v2.nsxt-backed.name)
+	adapter_type       = "VMXNET3"
+	ip_allocation_mode = "POOL"
+  }
+
+  network {
+	type               = "org"
+	name               = (vcd_network_routed_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_routed_v2.nsxt-backed.name)
+	adapter_type       = "E1000E"
+	ip_allocation_mode = "POOL"
+	mac                = "00:00:00:11:22:33"
+  }
+
+  prevent_update_power_off = true
+}
+
+resource "vcd_vm" "empty-vm-copy" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  name          = "{{.TestName}}-empty-standalone-vm-copy"
+  description   = "{{.TestName}}-standalone"
+  computer_name = "standalone"
+  power_on      = false
+
+  cpus   = 1
+  memory = 1024
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
+
+  network {
+	type               = "org"
+	name               = (vcd_network_routed_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_routed_v2.nsxt-backed.name)
+	adapter_type       = "VMXNET3"
+	ip_allocation_mode = "POOL"
+  }
+
+  network {
+	type               = "org"
+	name               = (vcd_network_routed_v2.nsxt-backed.id == "always-not-equal" ? null : vcd_network_routed_v2.nsxt-backed.name)
+	adapter_type       = "E1000E"
+	ip_allocation_mode = "POOL"
+	mac                = "00:00:00:22:33:44"
+  }
+
+  prevent_update_power_off = true
+}
 `
 
 // TestAccVcdVAppVm_4types_storage_profile validates that storage profile assignment works correctly
@@ -701,6 +845,139 @@ resource "vcd_vm" "empty-vm" {
 
   name          = "{{.TestName}}-empty-standalone-vm"
   computer_name = "comp-name"
+
+  cpus   = 1
+  memory = 1024
+
+  cpu_hot_add_enabled            = true
+  memory_hot_add_enabled         = true
+  expose_hardware_virtualization = true
+
+  os_type          = "rhel8_64Guest"
+  hardware_version = "vmx-17"
+
+  storage_profile = data.vcd_storage_profile.nsxt-vdc.name
+
+  metadata = {
+    "vm1" = "VM Metadata"
+    "vm2" = "VM Metadata2"
+  }
+
+  guest_properties = {
+	"guest.hostname"       = "test-host"
+	"guest.another.subkey" = "another-value"
+  }
+}
+
+# VM Copy from here
+resource "vcd_vapp" "vm-copy-destination-template-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-vm-copy-template-destination"
+  description = "vApp destination for VM Copy"
+  power_on    = false
+}
+
+resource "vcd_vapp" "vm-copy-destination-empty-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-vm-copy-empty-destination"
+  description = "vApp destination for VM Copy"
+  power_on    = false
+}
+
+resource "vcd_vapp_vm" "template-vm-copy" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  copy_from_vm_id = vcd_vapp_vm.template-vm.id
+  computer_name    = "comp-name"
+  
+  vapp_name   = vcd_vapp.vm-copy-destination-template-vm.name
+  name        = "{{.TestName}}-template-vapp-vm-copy"
+
+  cpu_hot_add_enabled            = true
+  memory_hot_add_enabled         = true
+  expose_hardware_virtualization = true
+
+  storage_profile = data.vcd_storage_profile.nsxt-vdc.name
+
+  metadata = {
+    "vm1" = "VM Metadata"
+    "vm2" = "VM Metadata2"
+  }
+
+  guest_properties = {
+	"guest.hostname"       = "test-host"
+	"guest.another.subkey" = "another-value"
+  }
+}
+
+resource "vcd_vapp_vm" "empty-vm-copy" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  
+  vapp_name        = vcd_vapp.vm-copy-destination-empty-vm.name
+  copy_from_vm_id  = vcd_vapp_vm.empty-vm.id
+  name             = "{{.TestName}}-empty-vapp-vm-copy"
+  computer_name    = "comp-name"
+
+  cpus   = 1
+  memory = 1024
+
+  cpu_hot_add_enabled            = true
+  memory_hot_add_enabled         = true
+  expose_hardware_virtualization = true
+
+  os_type          = "rhel8_64Guest"
+  hardware_version = "vmx-17"
+
+  storage_profile = data.vcd_storage_profile.nsxt-vdc.name
+
+  metadata = {
+    "vm1" = "VM Metadata"
+    "vm2" = "VM Metadata2"
+  }
+
+  guest_properties = {
+	"guest.hostname"       = "test-host"
+	"guest.another.subkey" = "another-value"
+  }
+}
+
+resource "vcd_vm" "template-vm-copy" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  copy_from_vm_id  = vcd_vm.template-vm.id
+  computer_name    = "comp-name"
+  
+  name        = "{{.TestName}}-template-standalone-vm-copy"
+
+  cpu_hot_add_enabled            = true
+  memory_hot_add_enabled         = true
+  expose_hardware_virtualization = true
+
+  storage_profile = data.vcd_storage_profile.nsxt-vdc.name
+
+  metadata = {
+    "vm1" = "VM Metadata"
+    "vm2" = "VM Metadata2"
+  }
+
+  guest_properties = {
+	"guest.hostname"       = "test-host"
+	"guest.another.subkey" = "another-value"
+  }
+}
+
+resource "vcd_vm" "empty-vm-copy" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  copy_from_vm_id  = vcd_vm.empty-vm.id
+  name             = "{{.TestName}}-empty-standalone-vm-copy"
+  computer_name    = "comp-name"
 
   cpus   = 1
   memory = 1024
@@ -1005,6 +1282,93 @@ resource "vcd_vm" "empty-vm" {
 
   sizing_policy_id = {{.SizingPolicyId}}
 }
+
+# VM Copy from here
+resource "vcd_vapp" "vm-copy-destination-template-vm" {
+  org         = "{{.Org}}"
+  vdc         = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+  name        = "{{.TestName}}-vm-copy-template-destination"
+  description = "vApp destination for VM Copy"
+  power_on    = false
+}
+
+resource "vcd_vapp" "vm-copy-destination-empty-vm" {
+  org         = "{{.Org}}"
+  vdc         = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+  name        = "{{.TestName}}-vm-copy-empty-destination"
+  description = "vApp destination for VM Copy"
+  power_on    = false
+}
+
+resource "vcd_vapp_vm" "template-vm-copy" {
+  org = "{{.Org}}"
+  vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+
+  copy_from_vm_id = vcd_vapp_vm.template-vm.id
+  vapp_name       = vcd_vapp.vm-copy-destination-template-vm.name
+  name            = "{{.TestName}}-template-vapp-vm-copy"
+  description     = "{{.TestName}}-template-vapp-vm"
+
+  prevent_update_power_off = true
+
+  sizing_policy_id = {{.SizingPolicyId}}
+}
+
+resource "vcd_vapp_vm" "empty-vm-copy" {
+  org = "{{.Org}}"
+  vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+  
+  copy_from_vm_id = vcd_vapp_vm.empty-vm.id
+  vapp_name       = vcd_vapp.vm-copy-destination-empty-vm.name
+  name            = "{{.TestName}}-empty-vapp-vm-copy"
+  description     = "{{.TestName}}-empty-vapp-vm"
+  computer_name   = "vapp-vm"
+
+  cpus   = 1
+  memory = 1024
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
+
+  prevent_update_power_off = true
+
+  sizing_policy_id = {{.SizingPolicyId}}
+}
+
+resource "vcd_vm" "template-vm-copy" {
+  org = "{{.Org}}"
+  vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+
+  copy_from_vm_id = vcd_vm.template-vm.id
+  name            = "{{.TestName}}-template-standalone-vm-copy"
+  description     = "{{.TestName}}-template-standalone-vm"
+
+  prevent_update_power_off = true
+
+  sizing_policy_id = {{.SizingPolicyId}}
+}
+
+resource "vcd_vm" "empty-vm-copy" {
+  org = "{{.Org}}"
+  vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+
+  copy_from_vm_id = vcd_vm.empty-vm.id
+  name            = "{{.TestName}}-empty-standalone-vm-copy"
+  description     = "{{.TestName}}-standalone"
+  computer_name   = "standalone"
+
+  cpus   = 1
+  memory = 1024
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
+
+  prevent_update_power_off = true
+
+  sizing_policy_id = {{.SizingPolicyId}}
+}
 `
 
 // TestAccVcdVAppVm_4types_sizing_max checks that all types of VMs can be created by inheriting
@@ -1194,6 +1558,87 @@ resource "vcd_vm" "empty-vm" {
   name          = "{{.TestName}}-empty-standalone-vm"
   description   = "{{.TestName}}-standalone"
   computer_name = "standalone"
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
+
+  prevent_update_power_off = true
+
+  sizing_policy_id = {{.SizingPolicyId}}
+}
+
+# VM Copy from here
+resource "vcd_vapp" "vm-copy-destination-template-vm" {
+  org         = "{{.Org}}"
+  vdc         = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+  name        = "{{.TestName}}-vm-copy-template-destination"
+  description = "vApp destination for VM Copy"
+  power_on    = false
+}
+
+resource "vcd_vapp" "vm-copy-destination-empty-vm" {
+  org         = "{{.Org}}"
+  vdc         = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+  name        = "{{.TestName}}-vm-copy-empty-destination"
+  description = "vApp destination for VM Copy"
+  power_on    = false
+}
+
+resource "vcd_vapp_vm" "template-vm-copy" {
+  org = "{{.Org}}"
+  vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+
+  copy_from_vm_id = vcd_vapp_vm.template-vm.id
+  vapp_name       = vcd_vapp.vm-copy-destination-template-vm.name
+  name            = "{{.TestName}}-template-vapp-vm-copy"
+  description     = "{{.TestName}}-template-vapp-vm"
+
+  prevent_update_power_off = true
+
+  sizing_policy_id = {{.SizingPolicyId}}
+}
+
+resource "vcd_vapp_vm" "empty-vm-copy" {
+  org = "{{.Org}}"
+  vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+  
+  copy_from_vm_id = vcd_vapp_vm.empty-vm.id
+  vapp_name       = vcd_vapp.vm-copy-destination-empty-vm.name
+  name            = "{{.TestName}}-empty-vapp-vm-copy"
+  description     = "{{.TestName}}-empty-vapp-vm"
+  computer_name   = "vapp-vm"
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
+
+  prevent_update_power_off = true
+
+  sizing_policy_id = {{.SizingPolicyId}}
+}
+
+resource "vcd_vm" "template-vm-copy" {
+  org = "{{.Org}}"
+  vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+
+  copy_from_vm_id = vcd_vm.template-vm.id
+  name            = "{{.TestName}}-template-standalone-vm-copy"
+  description     = "{{.TestName}}-template-standalone-vm"
+
+  prevent_update_power_off = true
+
+  sizing_policy_id = {{.SizingPolicyId}}
+}
+
+resource "vcd_vm" "empty-vm-copy" {
+  org = "{{.Org}}"
+  vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+
+  copy_from_vm_id = vcd_vm.empty-vm.id
+  name            = "{{.TestName}}-empty-standalone-vm-copy"
+  description     = "{{.TestName}}-standalone"
+  computer_name   = "standalone"
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
@@ -1398,6 +1843,96 @@ resource "vcd_vm" "empty-vm" {
   name          = "{{.TestName}}-empty-standalone-vm"
   description   = "{{.TestName}}-standalone"
   computer_name = "standalone"
+
+  memory = 1024
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
+
+  prevent_update_power_off = true
+
+  sizing_policy_id = {{.SizingPolicyId}}
+}
+
+
+# VM Copy from here
+resource "vcd_vapp" "vm-copy-destination-template-vm" {
+  org         = "{{.Org}}"
+  vdc         = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+  name        = "{{.TestName}}-vm-copy-template-destination"
+  description = "vApp destination for VM Copy"
+  power_on    = false
+}
+
+resource "vcd_vapp" "vm-copy-destination-empty-vm" {
+  org         = "{{.Org}}"
+  vdc         = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+  name        = "{{.TestName}}-vm-copy-empty-destination"
+  description = "vApp destination for VM Copy"
+  power_on    = false
+}
+
+resource "vcd_vapp_vm" "template-vm-copy" {
+  org = "{{.Org}}"
+  vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+
+  copy_from_vm_id = vcd_vapp_vm.template-vm.id
+  vapp_name       = vcd_vapp.vm-copy-destination-template-vm.name
+  name            = "{{.TestName}}-template-vapp-vm-copy"
+  description     = "{{.TestName}}-template-vapp-vm"
+
+  memory = 1024
+
+  prevent_update_power_off = true
+
+  sizing_policy_id = {{.SizingPolicyId}}
+}
+
+resource "vcd_vapp_vm" "empty-vm-copy" {
+  org = "{{.Org}}"
+  vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+  
+  copy_from_vm_id = vcd_vapp_vm.empty-vm.id
+  vapp_name       = vcd_vapp.vm-copy-destination-empty-vm.name
+  name            = "{{.TestName}}-empty-vapp-vm-copy"
+  description     = "{{.TestName}}-empty-vapp-vm"
+  computer_name   = "vapp-vm"
+
+  memory = 1024
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
+
+  prevent_update_power_off = true
+
+  sizing_policy_id = {{.SizingPolicyId}}
+}
+
+resource "vcd_vm" "template-vm-copy" {
+  org = "{{.Org}}"
+  vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+
+  copy_from_vm_id = vcd_vm.template-vm.id
+  name            = "{{.TestName}}-template-standalone-vm-copy"
+  description     = "{{.TestName}}-template-standalone-vm"
+
+  memory = 1024
+
+  prevent_update_power_off = true
+
+  sizing_policy_id = {{.SizingPolicyId}}
+}
+
+resource "vcd_vm" "empty-vm-copy" {
+  org = "{{.Org}}"
+  vdc = (vcd_org_vdc.sizing-policy.id == "always-not-equal" ? null : vcd_org_vdc.sizing-policy.name)
+
+  copy_from_vm_id = vcd_vm.empty-vm.id
+  name            = "{{.TestName}}-empty-standalone-vm-copy"
+  description     = "{{.TestName}}-standalone"
+  computer_name   = "standalone"
 
   memory = 1024
 
@@ -1672,6 +2207,123 @@ resource "vcd_vm" "empty-vm" {
   cpu_reservation = "200"
   cpu_limit       = "1000"
 }
+
+# VM Copy from here
+resource "vcd_vapp" "vm-copy-destination-template-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-vm-copy-template-destination"
+  description = "vApp destination for VM Copy"
+  power_on    = false
+}
+
+resource "vcd_vapp" "vm-copy-destination-empty-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-vm-copy-empty-destination"
+  description = "vApp destination for VM Copy"
+  power_on    = false
+}
+
+resource "vcd_vapp_vm" "template-vm-copy" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  copy_from_vm_id = vcd_vapp_vm.template-vm.id
+  vapp_name       = vcd_vapp.vm-copy-destination-template-vm.name
+  name            = "{{.TestName}}-template-vapp-vm-copy"
+  description     = "{{.TestName}}-template-vapp-vm"
+
+  cpus   = 1
+  memory = 1024
+
+  memory_priority    = "CUSTOM"
+  memory_shares      = "480"
+  memory_reservation = "8"
+  memory_limit       = "48"
+
+  cpu_priority    = "CUSTOM"
+  cpu_shares      = "512"
+  cpu_reservation = "200"
+  cpu_limit       = "1000"
+}
+
+resource "vcd_vapp_vm" "empty-vm-copy" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+  
+  copy_from_vm_id = vcd_vapp_vm.empty-vm.id
+  vapp_name       = vcd_vapp.vm-copy-destination-empty-vm.name
+  name            = "{{.TestName}}-empty-vapp-vm-copy"
+  description     = "{{.TestName}}-empty-vapp-vm"
+  computer_name   = "vapp-vm"
+
+  cpus   = 1
+  memory = 1024
+
+  memory_priority    = "CUSTOM"
+  memory_shares      = "480"
+  memory_reservation = "8"
+  memory_limit       = "48"
+
+  cpu_priority    = "CUSTOM"
+  cpu_shares      = "512"
+  cpu_reservation = "200"
+  cpu_limit       = "1000"
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
+}
+
+resource "vcd_vm" "template-vm-copy" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  copy_from_vm_id = vcd_vm.template-vm.id
+  name            = "{{.TestName}}-template-standalone-vm-copy"
+  description     = "{{.TestName}}-template-standalone-vm"
+
+  cpus   = 1
+  memory = 1024
+
+  memory_priority    = "CUSTOM"
+  memory_shares      = "480"
+  memory_reservation = "8"
+  memory_limit       = "48"
+
+  cpu_priority    = "CUSTOM"
+  cpu_shares      = "512"
+  cpu_reservation = "200"
+  cpu_limit       = "1000"
+}
+
+resource "vcd_vm" "empty-vm-copy" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  copy_from_vm_id = vcd_vm.empty-vm.id
+  name            = "{{.TestName}}-empty-standalone-vm-copy"
+  description     = "{{.TestName}}-standalone"
+  computer_name   = "standalone"
+
+  cpus   = 1
+  memory = 1024
+
+  memory_priority    = "CUSTOM"
+  memory_shares      = "480"
+  memory_reservation = "8"
+  memory_limit       = "48"
+
+  cpu_priority    = "CUSTOM"
+  cpu_shares      = "512"
+  cpu_reservation = "200"
+  cpu_limit       = "1000"
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
+}
 `
 
 // TestAccVcdVAppVm_4types_PowerState aims to test if power management works correctly for vApps and
@@ -1893,20 +2545,20 @@ resource "vcd_vapp" "empty-vm" {
 }
 
 data "vcd_catalog" "{{.Catalog}}" {
-	org  = "{{.Org}}"
-	name = "{{.Catalog}}"
+  org  = "{{.Org}}"
+  name = "{{.Catalog}}"
 }
 
 data "vcd_catalog_vapp_template" "{{.CatalogItem}}" {
-	org         = "{{.Org}}"
-	catalog_id = data.vcd_catalog.{{.Catalog}}.id
-	name       = "{{.CatalogItem}}"
+  org         = "{{.Org}}"
+  catalog_id = data.vcd_catalog.{{.Catalog}}.id
+  name       = "{{.CatalogItem}}"
 }
 
 data "vcd_catalog_media" "{{.Media}}" {
-	org     = "{{.Org}}"
-	catalog = data.vcd_catalog.{{.Catalog}}.name
-	name    = "{{.Media}}"
+  org     = "{{.Org}}"
+  catalog = data.vcd_catalog.{{.Catalog}}.name
+  name    = "{{.Media}}"
 }
 
 resource "vcd_vapp_vm" "template-vm" {
@@ -1961,6 +2613,123 @@ resource "vcd_vm" "empty-vm" {
 
   cpus   = 1
   memory = 1024
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
+}
+
+# VM Copy from here
+resource "vcd_vapp" "vm-copy-destination-template-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-vm-copy-template-destination"
+  description = "vApp destination for VM Copy"
+  power_on    = true
+}
+
+resource "vcd_vapp" "vm-copy-destination-empty-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-vm-copy-empty-destination"
+  description = "vApp destination for VM Copy"
+  power_on    = true
+}
+
+resource "vcd_vapp_vm" "template-vm-copy" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  copy_from_vm_id = vcd_vapp_vm.template-vm.id
+  vapp_name       = vcd_vapp.vm-copy-destination-template-vm.name
+  name            = "{{.TestName}}-template-vapp-vm-copy"
+  description     = "{{.TestName}}-template-vapp-vm"
+
+  cpus   = 1
+  memory = 1024
+
+  memory_priority    = "CUSTOM"
+  memory_shares      = "480"
+  memory_reservation = "8"
+  memory_limit       = "48"
+
+  cpu_priority    = "CUSTOM"
+  cpu_shares      = "512"
+  cpu_reservation = "200"
+  cpu_limit       = "1000"
+}
+
+resource "vcd_vapp_vm" "empty-vm-copy" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+  
+  copy_from_vm_id = vcd_vapp_vm.empty-vm.id
+  vapp_name       = vcd_vapp.vm-copy-destination-empty-vm.name
+  name            = "{{.TestName}}-empty-vapp-vm-copy"
+  description     = "{{.TestName}}-empty-vapp-vm"
+  computer_name   = "vapp-vm"
+
+  cpus   = 1
+  memory = 1024
+
+  memory_priority    = "CUSTOM"
+  memory_shares      = "480"
+  memory_reservation = "8"
+  memory_limit       = "48"
+
+  cpu_priority    = "CUSTOM"
+  cpu_shares      = "512"
+  cpu_reservation = "200"
+  cpu_limit       = "1000"
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
+}
+
+resource "vcd_vm" "template-vm-copy" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  copy_from_vm_id = vcd_vm.template-vm.id
+  name            = "{{.TestName}}-template-standalone-vm-copy"
+  description     = "{{.TestName}}-template-standalone-vm"
+
+  cpus   = 1
+  memory = 1024
+
+  memory_priority    = "CUSTOM"
+  memory_shares      = "480"
+  memory_reservation = "8"
+  memory_limit       = "48"
+
+  cpu_priority    = "CUSTOM"
+  cpu_shares      = "512"
+  cpu_reservation = "200"
+  cpu_limit       = "1000"
+}
+
+resource "vcd_vm" "empty-vm-copy" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  copy_from_vm_id = vcd_vm.empty-vm.id
+  name            = "{{.TestName}}-empty-standalone-vm-copy"
+  description     = "{{.TestName}}-standalone"
+  computer_name   = "standalone"
+
+  cpus   = 1
+  memory = 1024
+
+  memory_priority    = "CUSTOM"
+  memory_shares      = "480"
+  memory_reservation = "8"
+  memory_limit       = "48"
+
+  cpu_priority    = "CUSTOM"
+  cpu_shares      = "512"
+  cpu_reservation = "200"
+  cpu_limit       = "1000"
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
