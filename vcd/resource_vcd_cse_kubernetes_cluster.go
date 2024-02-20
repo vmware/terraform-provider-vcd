@@ -681,7 +681,8 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluste
 	// The data source does not have the attribute "org", so we cannot set it
 	if origin != "datasource" {
 		// If the Org was set, it needs to be refreshed (it should not change, though)
-		if _, ok := d.GetOk("org"); ok {
+		// We also set it always during imports.
+		if _, ok := d.GetOk("org"); ok || origin == "import" {
 			if cluster.OrganizationId != "" {
 				org, err := vcdClient.GetOrgById(cluster.OrganizationId)
 				if err != nil {
@@ -693,8 +694,8 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluste
 	}
 
 	// If the Owner was set, it needs to be refreshed (it should not change, though).
-	// If the origin is a data source, we always need to set this one as it is a purely computed attribute.
-	if _, ok := d.GetOk("owner"); ok || origin == "datasource" {
+	// If the origin is a data source or import, we always need to set this one.
+	if _, ok := d.GetOk("owner"); ok || origin == "datasource" || origin == "import" {
 		dSet(d, "owner", cluster.Owner)
 	}
 
