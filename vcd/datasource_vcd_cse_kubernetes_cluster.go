@@ -257,7 +257,7 @@ func datasourceVcdCseKubernetesCluster() *schema.Resource {
 				},
 			},
 			"events": {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList, // Order matters here, as they're ordered by date
 				Computed:    true,
 				Description: "A set of events that happened during the Kubernetes cluster lifecycle",
 				Elem: &schema.Resource{

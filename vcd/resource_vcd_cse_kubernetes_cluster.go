@@ -348,9 +348,9 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				},
 			},
 			"events": {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList, // Order matters here, as they're ordered by date
 				Computed:    true,
-				Description: "A set of events that happened during the Kubernetes cluster lifecycle",
+				Description: "A list of events that happened during the Kubernetes cluster lifecycle",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -765,7 +765,7 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluste
 		return nil, err
 	}
 
-	events := make([]map[string]interface{}, len(cluster.Events))
+	events := make([]interface{}, len(cluster.Events))
 	for i, event := range cluster.Events {
 		events[i] = map[string]interface{}{
 			"resource_id": event.ResourceId,
