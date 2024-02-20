@@ -358,6 +358,11 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Type:        schema.TypeString,
 							Description: "Name of the event",
 						},
+						"resource_id": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "ID of the resource that caused the event",
+						},
 						"type": {
 							Computed:    true,
 							Type:        schema.TypeString,
@@ -759,6 +764,7 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluste
 	events := make([]map[string]interface{}, len(cluster.Events))
 	for i, event := range cluster.Events {
 		events[i] = map[string]interface{}{
+			"resource_id": event.ResourceId,
 			"name":        event.Name,
 			"occurred_at": event.OccurredAt.String(),
 			"details":     event.Details,
