@@ -31,7 +31,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{"4.1.0", "4.1.1", "4.2.0"}, false),
 				Description:  "The CSE version to use",
 				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
-					// This custom diff function allows to correctly compare versions
+					// This custom diff function allows to correctly compare versions.
 					oldVersion, err := semver.NewVersion(oldValue)
 					if err != nil {
 						return false
@@ -166,7 +166,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 			},
 			"worker_pool": {
 				// This is a list because TypeSet tries to replace the whole block when we just change a sub-attribute like "machine_count",
-				// provoking that the worker pool is marked to be deleted and the re-created, and that cannot be done in CSE.
+				// that would cause the worker pool to be deleted and then re-created, which is not allowed in CSE.
 				// On the other hand, with TypeList the updates on sub-attributes work as expected but in exchange
 				// we need to be careful on reads to guarantee that order is respected.
 				Type:        schema.TypeList,
@@ -174,7 +174,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Description: "Defines a node pool for the cluster",
 				Elem: &schema.Resource{
 					// Ideally, all of these sub-attributes should have ForceNew: true except for "machine_count", as
-					// they can´t be changed. However, this doesn´t work well so we check this at runtime.
+					// they can't be changed. However, this doesn't work well, so we check this at runtime.
 					Schema: map[string]*schema.Schema{
 						"name": {
 							Type:        schema.TypeString,
@@ -498,7 +498,7 @@ func resourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, met
 		return diag.Errorf("could not read Kubernetes cluster with ID '%s': %s", d.Id(), err)
 	}
 
-	warns, err := saveClusterDataToState(d, vcdClient, cluster)
+	warns, err := saveClusterDataToState(d, vcdClient, cluster, "resource")
 	if err != nil {
 		return diag.Errorf("could not save Kubernetes cluster data into Terraform state: %s", err)
 	}
@@ -643,7 +643,7 @@ func resourceVcdCseKubernetesImport(_ context.Context, d *schema.ResourceData, m
 		return nil, fmt.Errorf("error retrieving Kubernetes cluster with ID '%s': %s", d.Id(), err)
 	}
 
-	warns, err := saveClusterDataToState(d, nil, cluster)
+	warns, err := saveClusterDataToState(d, vcdClient, cluster, "import")
 	if err != nil {
 		return nil, fmt.Errorf("failed importing Kubernetes cluster '%s': %s", cluster.ID, err)
 	}
@@ -657,7 +657,7 @@ func resourceVcdCseKubernetesImport(_ context.Context, d *schema.ResourceData, m
 
 // saveClusterDataToState reads the received RDE contents and sets the Terraform arguments and attributes.
 // Returns a slice of warnings first and an error second.
-func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluster *govcd.CseKubernetesCluster) ([]error, error) {
+func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluster *govcd.CseKubernetesCluster, origin string) ([]error, error) {
 	var warnings []error
 
 	dSet(d, "name", cluster.Name)
@@ -678,19 +678,23 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluste
 	dSet(d, "auto_repair_on_errors", cluster.AutoRepairOnErrors)
 	dSet(d, "node_health_check", cluster.NodeHealthCheck)
 
-	if _, ok := d.GetOk("org"); ok {
-		// This field is optional, as it can take the value from the VCD client
-		if cluster.OrganizationId != "" {
-			org, err := vcdClient.GetOrgById(cluster.OrganizationId)
-			if err != nil {
-				return nil, fmt.Errorf("could not set 'org' argument: %s", err)
+	// The data source does not have the attribute "org", so we cannot set it
+	if origin != "datasource" {
+		// If the Org was set, it needs to be refreshed (it should not change, though)
+		if _, ok := d.GetOk("org"); ok {
+			if cluster.OrganizationId != "" {
+				org, err := vcdClient.GetOrgById(cluster.OrganizationId)
+				if err != nil {
+					return nil, fmt.Errorf("could not set 'org' argument: %s", err)
+				}
+				dSet(d, "org", org.Org.Name)
 			}
-			dSet(d, "org", org.Org.Name)
 		}
 	}
 
-	if _, ok := d.GetOk("owner"); ok {
-		// This field is optional, as it can take the value from the VCD client
+	// If the Owner was set, it needs to be refreshed (it should not change, though).
+	// If the origin is a data source, we always need to set this one as it is a purely computed attribute.
+	if _, ok := d.GetOk("owner"); ok || origin == "datasource" {
 		dSet(d, "owner", cluster.Owner)
 	}
 

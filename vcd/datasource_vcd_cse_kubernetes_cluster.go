@@ -43,7 +43,7 @@ func datasourceVcdCseKubernetesCluster() *schema.Resource {
 				Computed:    true,
 				Description: "The Kubernetes runtime used by the cluster",
 			},
-			"ova_id": {
+			"kubernetes_template_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The ID of the vApp Template that corresponds to a Kubernetes template OVA",
@@ -107,7 +107,7 @@ func datasourceVcdCseKubernetesCluster() *schema.Resource {
 					},
 				},
 			},
-			"node_pool": {
+			"worker_pool": {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "Defines a node pool for the cluster",
@@ -248,6 +248,48 @@ func datasourceVcdCseKubernetesCluster() *schema.Resource {
 				Computed:    true,
 				Description: "The contents of the kubeconfig of the Kubernetes cluster, only available when 'state=provisioned'",
 			},
+			"supported_upgrades": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "A set of vApp Template names that could be used to upgrade the existing cluster",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"events": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "A set of events that happened during the Kubernetes cluster lifecycle",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "Name of the event",
+						},
+						"resource_id": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "ID of the resource that caused the event",
+						},
+						"type": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "Type of the event, either 'event' or 'error'",
+						},
+						"occurred_at": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "When the event happened",
+						},
+						"details": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "Details of the event",
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -285,10 +327,11 @@ func datasourceVcdCseKubernetesRead(_ context.Context, d *schema.ResourceData, m
 		cluster = clusters[0]
 	}
 
+	// These fields are specific to the data source
 	dSet(d, "org_id", cluster.OrganizationId)
 	dSet(d, "cluster_id", cluster.ID)
 
-	warns, err := saveClusterDataToState(d, nil, cluster)
+	warns, err := saveClusterDataToState(d, vcdClient, cluster, "datasource")
 	if err != nil {
 		return diag.Errorf("could not save Kubernetes cluster data into Terraform state: %s", err)
 	}
