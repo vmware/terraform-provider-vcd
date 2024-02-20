@@ -208,8 +208,9 @@ The following attributes are available for consumption as read-only attributes a
 * `kubeconfig` - The ready-to-use Kubeconfig file **contents** as a raw string. Only available when `state=provisioned`
 * `supported_upgrades` - A set of vApp Template names that can be fetched with a
   [`vcd_catalog_vapp_template` data source](/providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template) to upgrade the cluster.
-* `events` - A set of events that happened during the Kubernetes cluster lifecycle. Each event has:
+* `events` - A set of events that happened during the Kubernetes cluster lifecycle. They're ordered from most recent to least. Each event has:
   * `name` - Name of the event
+  * `resource_id` - ID of the resource that caused the event
   * `type` - Type of the event, either `event` or `error`
   * `details` - Details of the event
   * `occurred_at` - When the event happened
