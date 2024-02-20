@@ -167,14 +167,14 @@ resource "vcd_api_token" "token" {
 }
 
 resource "vcd_cse_kubernetes_cluster" "my_cluster" {
-  cse_version        = "4.2"
-  runtime            = "tkg"
-  name               = "{{.Name}}"
-  ova_id             = data.vcd_catalog_vapp_template.tkg_ova.id
-  org                = data.vcd_org_vdc.vdc.org
-  vdc_id             = data.vcd_org_vdc.vdc.id
-  network_id         = data.vcd_network_routed_v2.routed.id
-  api_token_file	 = vcd_api_token.token.file_name
+  cse_version            = "4.2.0"
+  runtime                = "tkg"
+  name                   = "{{.Name}}"
+  kubernetes_template_id = data.vcd_catalog_vapp_template.tkg_ova.id
+  org                    = data.vcd_org_vdc.vdc.org
+  vdc_id                 = data.vcd_org_vdc.vdc.id
+  network_id             = data.vcd_network_routed_v2.routed.id
+  api_token_file	     = vcd_api_token.token.file_name
 
   control_plane {
     machine_count      = {{.ControlPlaneCount}}
@@ -183,8 +183,8 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
     storage_profile_id = data.vcd_storage_profile.sp.id
   }
 
-  node_pool {
-    name               = "node-pool-1"
+  worker_pool {
+    name               = "worker-pool-1"
     machine_count      = {{.NodePoolCount}}
     disk_size_gi       = 20
     sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id
