@@ -35,7 +35,7 @@ data "vcd_cse_kubernetes_cluster" "my_cluster" {
 
 Sometimes using the cluster ID is not convenient, so this data source allows to use the cluster name.
 As VCD allows to have multiple clusters with the same name, this option must be used with caution as it will fail
-if there is more than one Kubernetes cluster with the same name in the same Organization:å
+if there is more than one Kubernetes cluster with the same name in the same Organization:
 
 ```hcl
 locals {
