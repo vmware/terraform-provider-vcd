@@ -67,7 +67,7 @@ data "vcd_storage_profile" "sp" {
 # The token file is required, and it should be safely stored
 resource "vcd_api_token" "token" {
   name             = "myClusterToken"
-  file_name        = "/home/Bob/vcdTestAccVcdCseKubernetesCluster.json"
+  file_name        = "/home/Bob/safely_stored_token.json"
   allow_token_file = true
 }
 
