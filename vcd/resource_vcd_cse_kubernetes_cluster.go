@@ -63,7 +63,6 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 			"kubernetes_template_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "The ID of the vApp Template that corresponds to a Kubernetes template OVA",
 			},
 			"org": {
