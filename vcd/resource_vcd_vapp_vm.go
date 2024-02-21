@@ -25,6 +25,14 @@ const (
 	vappVmType       typeOfVm = "vcd_vapp_vm"
 )
 
+// vmImageSource defines if the VM source image is a catalog template or a
+type vmImageSource string
+
+const (
+	vmCatalogTemplate vmImageSource = "catalog_template"
+	vmCopy            vmImageSource = "vm_copy"
+)
+
 // Maintenance guide for VM code
 //
 // VM codebase grew to be quite complicated because of a few reasons:
@@ -762,13 +770,13 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	switch {
 	case isVmFromTemplateDeprecated || isVmFromTemplate:
 		util.Logger.Printf("[DEBUG] [VM create] creating VM from template")
-		vm, err = createVmFromTemplate(d, meta, vmType)
+		vm, err = createVmFromImage(d, meta, vmType, vmCatalogTemplate)
 		if err != nil {
 			return diag.Errorf("error creating VM from template: %s", err)
 		}
 	case isVmCopy:
 		util.Logger.Printf("[DEBUG] [VM create] creating VM copy")
-		vm, err = createVmCopy(d, meta, vmType)
+		vm, err = createVmFromImage(d, meta, vmType, vmCopy)
 		if err != nil {
 			return diag.Errorf("error creating VM copy: %s", err)
 		}
@@ -981,7 +989,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	return nil
 }
 
-// createVmFromTemplate is responsible for create VMs from template of two types:
+// createVmFromImage is responsible for create VMs from template of two types:
 // * Standalone VMs
 // * VMs inside vApp (vApp VMs)
 //
@@ -1001,7 +1009,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 // 3. Perform additional operations which are common for both types of VMs
 //
 // Note. VM Power ON (if it wasn't disabled in HCL configuration) occurs as last step after all configuration is done.
-func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*govcd.VM, error) {
+func createVmFromImage(d *schema.ResourceData, meta interface{}, vmType typeOfVm, sourceImageType vmImageSource) (*govcd.VM, error) {
 	vcdClient := meta.(*VCDClient)
 
 	// Step 1 - lookup common information
@@ -1010,11 +1018,13 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	// Look up VM template inside vApp template - either specified by `vm_name_in_template` or the
-	// first one in vApp
-	vmTemplate, err := lookupvAppTemplateforVm(d, vcdClient, org, vdc)
+	// Non empty VMs can be based on one of two things:
+	// * Catalog VM template (regular way for creating VMs)
+	// * Already running VM templates (VM Copy)
+	// A correct source image must be identified
+	vmSourceImage, err := getVmSourceImage(sourceImageType, d, vcdClient, org, vdc)
 	if err != nil {
-		return nil, fmt.Errorf("error finding vApp template: %s", err)
+		return nil, err
 	}
 
 	// Look up vApp before setting up network configuration. Having a vApp set, will enable
@@ -1078,12 +1088,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
 			ComputePolicy:    vmComputePolicy,
 			SourcedVmTemplateItem: &types.SourcedVmTemplateParams{
-				Source: &types.Reference{
-					HREF: vmTemplate.VAppTemplate.HREF,
-					ID:   vmTemplate.VAppTemplate.ID,
-					Type: vmTemplate.VAppTemplate.Type,
-					Name: vmTemplate.VAppTemplate.Name,
-				},
+				Source: vmSourceImage,
 				VmGeneralParams: &types.VMGeneralParams{
 					Description: d.Get("description").(string),
 				},
@@ -1137,7 +1142,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			PowerOn:          false, // VM will be powered on after all configuration is done
 			SourcedItem: &types.SourcedCompositionItemParam{
 				Source: &types.Reference{
-					HREF: vmTemplate.VAppTemplate.HREF,
+					HREF: vmSourceImage.HREF,
 					Name: vmName, // This VM name defines the VM name after creation
 				},
 				VMGeneralParams: &types.VMGeneralParams{
@@ -1190,266 +1195,6 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	if err := vm.Refresh(); err != nil {
 		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 	}
-
-	// update existing internal disks in template (it is only applicable to VMs created
-	// Such fields are processed:
-	// * override_template_disk
-	err = updateTemplateInternalDisks(d, meta, *vm)
-	if err != nil {
-		dSet(d, "override_template_disk", nil)
-		return nil, fmt.Errorf("error managing internal disks : %s", err)
-	}
-
-	if err := vm.Refresh(); err != nil {
-		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
-	}
-
-	// OS Type and Hardware version should only be changed if specified. (Only applying to VMs from
-	// templates as empty VMs require this by default)
-	// Such fields are processed:
-	// * os_type
-	// * hardware_version
-	err = updateHardwareVersionAndOsType(d, vm)
-	if err != nil {
-		return nil, fmt.Errorf("error updating hardware version and OS type : %s", err)
-	}
-
-	if err := vm.Refresh(); err != nil {
-		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
-	}
-
-	// Template VMs require CPU/Memory setting
-	// Lookup CPU values either from schema or from sizing policy. If nothing is set - it will be
-	// inherited from template
-	var cpuCores, cpuCoresPerSocket *int
-	var memory *int64
-	if sizingPolicy != nil {
-		cpuCores, cpuCoresPerSocket, memory, err = getCpuMemoryValues(d, sizingPolicy.VdcComputePolicyV2)
-	} else {
-		cpuCores, cpuCoresPerSocket, memory, err = getCpuMemoryValues(d, nil)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("error getting CPU/Memory compute values: %s", err)
-	}
-
-	if cpuCores != nil || cpuCoresPerSocket != nil {
-		err = vm.ChangeCPUAndCoreCount(cpuCores, cpuCoresPerSocket)
-		if err != nil {
-			return nil, fmt.Errorf("error changing CPU settings: %s", err)
-		}
-
-		if err := vm.Refresh(); err != nil {
-			return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
-		}
-	}
-
-	if memory != nil {
-		err = vm.ChangeMemory(*memory)
-		if err != nil {
-			return nil, fmt.Errorf("error setting memory size from schema for VM from template: %s", err)
-		}
-
-		if err := vm.Refresh(); err != nil {
-			return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
-		}
-	}
-
-	return vm, nil
-}
-
-// createVmCopy handles VM Copy scenario.
-// It is explicitly based on `copy_from_vm_id` and `copy_from_vdc_id` (if VM is copied from another
-// VDC)
-func createVmCopy(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*govcd.VM, error) {
-	vcdClient := meta.(*VCDClient)
-
-	// Step 1 - lookup common information
-	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	if err != nil {
-		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
-	}
-
-	// Source VM for copying VM can be in another VDC (but same Org)
-	// copy_from_vdc_id
-	copySourceVdc := vdc
-	if d.Get("copy_from_vdc_id").(string) != "" {
-		sourceVdc, err := org.GetVDCById(d.Get("copy_from_vdc_id").(string), false)
-		if err != nil {
-			return nil, fmt.Errorf("[VM create] error retrieving source VDC by ID'%s': %s", d.Get("copy_from_vdc_id").(string), err)
-		}
-		copySourceVdc = sourceVdc
-	}
-
-	identifier := d.Get("copy_from_vm_id").(string)
-	sourceVm, err := copySourceVdc.QueryVmById(identifier)
-
-	if govcd.IsNotFound(err) {
-		vmByName, listStr, errByName := getVmByName(vcdClient, vdc, identifier)
-		if errByName != nil && listStr != "" {
-			return nil, fmt.Errorf("[VM create] error retrieving VM %s by name: %s\n%s\n%s", identifier, errByName, listStr, err)
-		}
-		sourceVm = vmByName
-	}
-
-	// Build up network configuration
-	networkConnectionSection, err := networksToConfig(d, nil)
-	if err != nil {
-		return nil, fmt.Errorf("unable to process network configuration: %s", err)
-	}
-	util.Logger.Printf("[VM create] networkConnectionSection %# v", pretty.Formatter(networkConnectionSection))
-
-	// Lookup storage profile reference if it was specified
-	storageProfilePtr, err := lookupStorageProfile(d, vdc)
-	if err != nil {
-		return nil, fmt.Errorf("error finding storage profile: %s", err)
-	}
-
-	// Look up compute policies
-	sizingPolicy, err := lookupComputePolicy(d, vcdClient, "sizing_policy_id")
-	if err != nil {
-		return nil, fmt.Errorf("error finding sizing policy: %s", err)
-	}
-	placementPolicy, err := lookupComputePolicy(d, vcdClient, "placement_policy_id")
-	if err != nil {
-		return nil, fmt.Errorf("error finding placement policy: %s", err)
-	}
-	var vmComputePolicy *types.ComputePolicy
-	if sizingPolicy != nil || placementPolicy != nil {
-		vmComputePolicy = &types.ComputePolicy{}
-		if sizingPolicy != nil {
-			vmComputePolicy.VmSizingPolicy = &types.Reference{HREF: sizingPolicy.Href}
-		}
-		if placementPolicy != nil {
-			vmComputePolicy.VmPlacementPolicy = &types.Reference{HREF: placementPolicy.Href}
-		}
-	}
-
-	var vm *govcd.VM
-	vmName := d.Get("name").(string)
-
-	// Step 2 - perform VM creation operation based on type
-	// VM creation uses different structure depending on if it is a standaloneVmType or vappVmType
-	// These structures differ and one might accept all required parameters, while other
-	switch vmType {
-	case standaloneVmType:
-		standaloneVmParams := types.InstantiateVmTemplateParams{
-			Xmlns:            types.XMLNamespaceVCloud,
-			Name:             vmName, // VM name post creation
-			PowerOn:          false,  // VM will be powered on after all configuration is done
-			AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
-			ComputePolicy:    vmComputePolicy,
-			SourcedVmTemplateItem: &types.SourcedVmTemplateParams{
-				Source: &types.Reference{
-					HREF: sourceVm.VM.HREF,
-					Type: sourceVm.VM.Type,
-					Name: vmName,
-				},
-				VmGeneralParams: &types.VMGeneralParams{
-					Description: d.Get("description").(string),
-				},
-				VmTemplateInstantiationParams: &types.InstantiationParams{
-					// If a MAC address is specified for NIC - it does not get set with this call,
-					// therefore an additional `vm.UpdateNetworkConnectionSection` is required.
-					NetworkConnectionSection: &networkConnectionSection,
-				},
-				StorageProfile: storageProfilePtr,
-			},
-		}
-
-		util.Logger.Printf("%# v", pretty.Formatter(standaloneVmParams))
-		vm, err = vdc.CreateStandaloneVMFromTemplate(&standaloneVmParams)
-		if err != nil {
-			d.SetId("")
-			return nil, fmt.Errorf("[VM creation] error creating standalone VM copy %s : %s", vmName, err)
-		}
-
-		d.SetId(vm.VM.ID)
-
-		util.Logger.Printf("[VM create] VM from template after creation %# v", pretty.Formatter(vm.VM))
-		vapp, err := vm.GetParentVApp()
-		if err != nil {
-			d.SetId("")
-			return nil, fmt.Errorf("[VM creation] error retrieving vApp from standalone VM %s : %s", vmName, err)
-		}
-		util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
-		dSet(d, "vapp_name", vapp.VApp.Name)
-		dSet(d, "vm_type", string(standaloneVmType))
-
-	////////////////////////////////////////////////////////////////////////////////////////////
-	// This part of code handles additional VM create operations, which can not be set during
-	// initial VM creation.
-	// __Explicitly__ template based Standalone VMs are addressed here.
-	////////////////////////////////////////////////////////////////////////////////////////////
-
-	case vappVmType:
-		vappName := d.Get("vapp_name").(string)
-		vapp, err := vdc.GetVAppByName(vappName, false)
-		if err != nil {
-			return nil, fmt.Errorf("[VM create] error finding vApp %s: %s", vappName, err)
-		}
-
-		vappVmParams := &types.ReComposeVAppParams{
-			Ovf:              types.XMLNamespaceOVF,
-			Xsi:              types.XMLNamespaceXSI,
-			Xmlns:            types.XMLNamespaceVCloud,
-			AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
-			Name:             vapp.VApp.Name,
-			PowerOn:          false, // VM will be powered on after all configuration is done
-			SourcedItem: &types.SourcedCompositionItemParam{
-				Source: &types.Reference{
-					HREF: sourceVm.VM.HREF,
-					Name: vmName, // This VM name defines the VM name after creation
-				},
-				VMGeneralParams: &types.VMGeneralParams{
-					Description: d.Get("description").(string),
-				},
-				InstantiationParams: &types.InstantiationParams{
-					// If a MAC address is specified for NIC - it does not get set with this call,
-					// therefore an additional `vm.UpdateNetworkConnectionSection` is required.
-					NetworkConnectionSection: &networkConnectionSection,
-				},
-				ComputePolicy:  vmComputePolicy,
-				StorageProfile: storageProfilePtr,
-			},
-		}
-
-		vm, err = vapp.AddRawVM(vappVmParams)
-		if err != nil {
-			d.SetId("")
-			return nil, fmt.Errorf("[VM creation] error getting VM %s : %s", vmName, err)
-		}
-
-		d.SetId(vm.VM.ID)
-		dSet(d, "vm_type", string(vappVmType))
-
-	////////////////////////////////////////////////////////////////////////////////////////////
-	// This part of code handles additional VM create operations, which can not be set during
-	// initial VM creation.
-	// __Explicitly__ template based vApp VMs are addressed here.
-	////////////////////////////////////////////////////////////////////////////////////////////
-
-	default:
-		return nil, fmt.Errorf("unknown VM type %s", vmType)
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	// This part of code handles additional VM create operations, which can not be set during
-	// initial VM creation.
-	// __Only__ template based VMs are addressed here.
-	////////////////////////////////////////////////////////////////////////////////////////////////
-
-	// If a MAC address is specified for NIC - it does not get set with initial create call therefore
-	// running additional update call to make sure it is set correctly
-
-	// err = vm.UpdateNetworkConnectionSection(&networkConnectionSection)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("unable to setup network configuration for empty VM %s", err)
-	// }
-
-	// // Refresh VM to have the latest structure
-	// if err := vm.Refresh(); err != nil {
-	// 	return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
-	// }
 
 	// update existing internal disks in template (it is only applicable to VMs created
 	// Such fields are processed:

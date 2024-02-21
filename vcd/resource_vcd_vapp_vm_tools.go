@@ -23,6 +23,60 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
+// getVmSourceImage retrieves non-empty VM source image reference. It can be one of:
+// * Catalog VM template (regular way for creating VMs)
+// * Already running VM templates (VM Copy)
+// There is no difference in how these VMs are created
+func getVmSourceImage(sourceImageType vmImageSource, d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vdc *govcd.Vdc) (*types.Reference, error) {
+	// Source image is a catalog template
+	if sourceImageType == vmCatalogTemplate {
+		vmTemplate, err := lookupvAppTemplateforVm(d, vcdClient, org, vdc)
+		if err != nil {
+			return nil, fmt.Errorf("error finding vApp template: %s", err)
+		}
+		return &types.Reference{
+			HREF: vmTemplate.VAppTemplate.HREF,
+			ID:   vmTemplate.VAppTemplate.ID,
+			Type: vmTemplate.VAppTemplate.Type,
+			Name: vmTemplate.VAppTemplate.Name,
+		}, nil
+
+	}
+
+	// If source image is another VM
+	if sourceImageType == vmCopy {
+		// Source VM for copying VM can be in another VDC (but same Org)
+		// copy_from_vdc_id
+		copySourceVdc := vdc
+		if d.Get("copy_from_vdc_id").(string) != "" {
+			sourceVdc, err := org.GetVDCById(d.Get("copy_from_vdc_id").(string), false)
+			if err != nil {
+				return nil, fmt.Errorf("[VM create copy] error retrieving source VDC by ID'%s': %s", d.Get("copy_from_vdc_id").(string), err)
+			}
+			copySourceVdc = sourceVdc
+		}
+
+		identifier := d.Get("copy_from_vm_id").(string)
+		sourceVm, err := copySourceVdc.QueryVmById(identifier)
+		if govcd.IsNotFound(err) {
+			vmByName, listStr, errByName := getVmByName(vcdClient, copySourceVdc, identifier)
+			if errByName != nil && listStr != "" {
+				return nil, fmt.Errorf("[VM create copy] error retrieving VM %s by name: %s\n%s\n%s", identifier, errByName, listStr, err)
+			}
+			sourceVm = vmByName
+		}
+
+		return &types.Reference{
+			HREF: sourceVm.VM.HREF,
+			ID:   sourceVm.VM.ID,
+			Type: sourceVm.VM.Type,
+			Name: sourceVm.VM.Name,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("unrecognized VM source image type: %s", sourceImageType)
+}
+
 // lookupvAppTemplateforVm will do the following
 // evaluate if optional parameter `vm_name_in_template` was specified.
 //
