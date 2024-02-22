@@ -25,11 +25,11 @@ import (
 
 // getVmSourceImage retrieves non-empty VM source image reference. It can be one of:
 // * Catalog VM template (regular way for creating VMs)
-// * Already running VM templates (VM Copy)
-// There is no difference in how these VMs are created
+// * Already running VM templates (VM Copy). The VM must be within the same Org
+// There is no difference in how these VMs are created apart from having different source image
 func getVmSourceImage(sourceImageType vmImageSource, d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vdc *govcd.Vdc) (*types.Reference, error) {
 	// Source image is a catalog template
-	if sourceImageType == vmCatalogTemplate {
+	if sourceImageType == vmSourceCatalogTemplate {
 		vmTemplate, err := lookupvAppTemplateforVm(d, vcdClient, org, vdc)
 		if err != nil {
 			return nil, fmt.Errorf("error finding vApp template: %s", err)
@@ -44,26 +44,11 @@ func getVmSourceImage(sourceImageType vmImageSource, d *schema.ResourceData, vcd
 	}
 
 	// If source image is another VM
-	if sourceImageType == vmCopy {
-		// Source VM for copying VM can be in another VDC (but same Org)
-		// copy_from_vdc_id
-		copySourceVdc := vdc
-		if d.Get("copy_from_vdc_id").(string) != "" {
-			sourceVdc, err := org.GetVDCById(d.Get("copy_from_vdc_id").(string), false)
-			if err != nil {
-				return nil, fmt.Errorf("[VM create copy] error retrieving source VDC by ID'%s': %s", d.Get("copy_from_vdc_id").(string), err)
-			}
-			copySourceVdc = sourceVdc
-		}
-
+	if sourceImageType == vmSourceVmCopy {
 		identifier := d.Get("copy_from_vm_id").(string)
-		sourceVm, err := copySourceVdc.QueryVmById(identifier)
-		if govcd.IsNotFound(err) {
-			vmByName, listStr, errByName := getVmByName(vcdClient, copySourceVdc, identifier)
-			if errByName != nil && listStr != "" {
-				return nil, fmt.Errorf("[VM create copy] error retrieving VM %s by name: %s\n%s\n%s", identifier, errByName, listStr, err)
-			}
-			sourceVm = vmByName
+		sourceVm, err := org.QueryVmById(identifier)
+		if err != nil {
+			return nil, fmt.Errorf("[VM create copy] error retrieving VM %s by ID: %s", identifier, err)
 		}
 
 		return &types.Reference{

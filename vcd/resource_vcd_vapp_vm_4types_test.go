@@ -13,9 +13,9 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// Terraform codebase for VM management is very complicated and is backed by 6 types of VM:
-//  * `types.InstantiateVmTemplateParams` (Standalone VM from template)
-//  * `types.ReComposeVAppParams` (vApp VM from template)
+// Terraform codebase for VM management is very complicated and is backed by 4 SDK types of VM:
+//  * `types.InstantiateVmTemplateParams` (Standalone VM from template or copy of another VM)
+//  * `types.ReComposeVAppParams` (vApp VM from template or copy of another VM)
 //  * `types.RecomposeVAppParamsForEmptyVm` (Empty vApp VM)
 //  * `types.CreateVmParams` (Empty Standalone VM)
 //

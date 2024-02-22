@@ -29,8 +29,8 @@ const (
 type vmImageSource string
 
 const (
-	vmCatalogTemplate vmImageSource = "catalog_template"
-	vmCopy            vmImageSource = "vm_copy"
+	vmSourceCatalogTemplate vmImageSource = "catalog_template"
+	vmSourceVmCopy          vmImageSource = "vm_copy"
 )
 
 // Maintenance guide for VM code
@@ -38,8 +38,8 @@ const (
 // VM codebase grew to be quite complicated because of a few reasons:
 // * It is a resource with many API quirks
 // * There are 4 different go-vcloud-director SDK types for creating VM
-//   * `types.InstantiateVmTemplateParams` (Standalone VM from template)
-//   * `types.ReComposeVAppParams` (vApp VM from template)
+//   * `types.InstantiateVmTemplateParams` (Standalone VM from template or VM Copy from another VM)
+//   * `types.ReComposeVAppParams` (vApp VM from template or VM Copy from another VM)
 //   * `types.RecomposeVAppParamsForEmptyVm` (Empty vApp VM)
 //   * `types.CreateVmParams` (Empty Standalone VM)
 // They also use different functions. All VM types are directly populated in resource code instead of
@@ -151,18 +151,10 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Description:   "The catalog name in which to find the given vApp Template or media for boot_image",
 			ConflictsWith: []string{"vapp_template_id", "boot_image_id"},
 		},
-		"copy_from_vdc_id": { // TODO - can I find parent VDC from VM
+		"copy_from_vm_id": {
 			Type:          schema.TypeString,
 			Optional:      true,
 			ForceNew:      true,
-			Description:   "Source VM VDC (if it differs)",
-			ConflictsWith: []string{"template_name", "vapp_template_id", "catalog_name"},
-			RequiredWith:  []string{"copy_from_vm_id"},
-		},
-		"copy_from_vm_id": {
-			Type:     schema.TypeString,
-			Optional: true,
-			// ForceNew:      true,
 			Description:   "Source VM that should be copied from",
 			ConflictsWith: []string{"template_name", "vapp_template_id", "catalog_name"},
 		},
@@ -778,13 +770,13 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	switch {
 	case isVmFromTemplateDeprecated || isVmFromTemplate:
 		util.Logger.Printf("[DEBUG] [VM create] creating VM from template")
-		vm, err = createVmFromImage(d, meta, vmType, vmCatalogTemplate)
+		vm, err = createVmFromImage(d, meta, vmType, vmSourceCatalogTemplate)
 		if err != nil {
 			return diag.Errorf("error creating VM from template: %s", err)
 		}
 	case isVmCopy:
 		util.Logger.Printf("[DEBUG] [VM create] creating VM copy")
-		vm, err = createVmFromImage(d, meta, vmType, vmCopy)
+		vm, err = createVmFromImage(d, meta, vmType, vmSourceVmCopy)
 		if err != nil {
 			return diag.Errorf("error creating VM copy: %s", err)
 		}
@@ -1003,7 +995,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 //
 // Code flow has 3 layers:
 // 1. Lookup common information, required for both types of VMs (Standalone and vApp child). Things such as
-//   - Template to be used
+//   - VM Source Image - Catalog Template or VM (VM Copy operation) to be used
 //   - Network adapter configuration
 //   - Storage profile configuration
 //   - VM compute policy configuration
@@ -1029,7 +1021,6 @@ func createVmFromImage(d *schema.ResourceData, meta interface{}, vmType typeOfVm
 	// Non empty VMs can be based on one of two things:
 	// * Catalog VM template (regular way for creating VMs)
 	// * Already running VM templates (VM Copy)
-	// A correct source image must be identified
 	vmSourceImage, err := getVmSourceImage(sourceImageType, d, vcdClient, org, vdc)
 	if err != nil {
 		return nil, err

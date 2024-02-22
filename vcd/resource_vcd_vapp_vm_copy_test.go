@@ -469,7 +469,6 @@ resource "vcd_vapp_vm" "copy" {
   name          = "{{.TestName}}-dest"
   computer_name = "{{.ComputerName}}"
 
-  copy_from_vdc_id = data.vcd_org_vdc.source.id
   copy_from_vm_id  = vcd_vapp_vm.source.id
   power_on         = true
   memory           = 1024
@@ -489,7 +488,6 @@ resource "vcd_vm" "copy" {
   name          = "{{.TestName}}-dest"
   computer_name = "{{.ComputerName}}"
 
-  copy_from_vdc_id = data.vcd_org_vdc.source.id
   copy_from_vm_id  = vcd_vapp_vm.source.id
   power_on         = true
   memory           = 1024
