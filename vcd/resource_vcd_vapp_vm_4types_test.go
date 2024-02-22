@@ -3290,3 +3290,148 @@ func testAccCheckVcdVappPowerState(orgName, vdcName string, vappName string, exp
 		return nil
 	}
 }
+
+// TestAccVcdVAppVm_2typesOverrideDiskFastProvisionedVdc checks that `consolidate_disks_on_create`
+// performs disk consolidation, which in turn allows to use 'override_template_disk' for growing
+// template based VMs (vApp and standalone) at the time of creation in fast provisioned VDCs
+func TestAccVcdVAppVm_2typesOverrideDiskFastProvisionedVdc(t *testing.T) {
+	preTestChecks(t)
+
+	var params = StringMap{
+		"TestName":           t.Name(),
+		"Org":                testConfig.VCD.Org,
+		"Vdc":                testConfig.Nsxt.Vdc,
+		"Catalog":            testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"CatalogItem":        testConfig.VCD.Catalog.CatalogItemWithMultiVms,
+		"VmNameInTemplate1":  testConfig.VCD.Catalog.VmName1InMultiVmItem,
+		"VmNameInTemplate2":  testConfig.VCD.Catalog.VmName2InMultiVmItem,
+		"Media":              testConfig.Media.NsxtBackedMediaName,
+		"NsxtEdgeGateway":    testConfig.Nsxt.EdgeGateway,
+		"StorageProfileName": testConfig.VCD.NsxtProviderVdc.StorageProfile,
+
+		"Tags": "vapp vm",
+	}
+	testParamsNotEmpty(t, params)
+
+	configTextStep1 := templateFill(testAccVcdVAppVm_4typesOverrideDiskFastProvisionedVdc, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep1)
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-template-vm"),
+			testAccCheckVcdStandaloneVmDestroy(t.Name()+"-template-standalone-vm", testConfig.VCD.Org, testConfig.Nsxt.Vdc),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: configTextStep1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// Template vApp VM checks
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "name", t.Name()+"-template-vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "description", t.Name()+"-template-vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "power_on", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "consolidate_disks_on_create", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "status_text", "POWERED_ON"),
+					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, t.Name()+"-template-vm", t.Name()+"-template-vapp-vm", "POWERED_ON"),
+					resource.TestCheckOutput("vcd_vapp_vm_disk_size", "20480"),
+
+					// Standalone template VM checks
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "name", t.Name()+"-template-standalone-vm"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "description", t.Name()+"-template-standalone-vm"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "power_on", "true"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "consolidate_disks_on_create", "true"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "status_text", "POWERED_ON"),
+					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, "", t.Name()+"-template-standalone-vm", "POWERED_ON"),
+					resource.TestCheckOutput("vcd_vm_disk_size", "20480"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdVAppVm_4typesOverrideDiskFastProvisionedVdc = `
+data "vcd_catalog" "{{.Catalog}}" {
+  org  = "{{.Org}}"
+  name = "{{.Catalog}}"
+}
+
+data "vcd_catalog_vapp_template" "multivm" {
+  org         = "{{.Org}}"
+  catalog_id = data.vcd_catalog.{{.Catalog}}.id
+  name       = "{{.CatalogItem}}"
+}
+
+resource "vcd_vapp" "template-vm" {
+  org         = "{{.Org}}"
+  vdc         = "{{.Vdc}}"
+  name        = "{{.TestName}}-template-vm"
+  description = "vApp for Template VM description"
+  power_on    = true
+}
+
+resource "vcd_vapp_vm" "template-vm" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  vapp_template_id    = data.vcd_catalog_vapp_template.multivm.id
+  vm_name_in_template = "{{.VmNameInTemplate1}}"
+  
+  vapp_name   = vcd_vapp.template-vm.name
+  name        = "{{.TestName}}-template-vapp-vm"
+  description = "{{.TestName}}-template-vapp-vm"
+  power_on    = true
+
+  consolidate_disks_on_create = true
+
+  override_template_disk {
+    bus_type         = "parallel"
+    size_in_mb       = "20480"
+    bus_number       = 0
+    unit_number      = 0
+    iops             = 0
+    storage_profile  = "{{.StorageProfileName}}"
+  }
+
+  prevent_update_power_off = true
+}
+
+resource "vcd_vm" "template-vm" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+
+  vapp_template_id    = data.vcd_catalog_vapp_template.multivm.id
+  vm_name_in_template = "{{.VmNameInTemplate1}}"
+  
+  name        = "{{.TestName}}-template-standalone-vm"
+  description = "{{.TestName}}-template-standalone-vm"
+  power_on    = true
+
+  consolidate_disks_on_create = true
+
+  override_template_disk {
+    bus_type         = "parallel"
+    size_in_mb       = "20480"
+    bus_number       = 0
+    unit_number      = 0
+    iops             = 0
+    storage_profile  = "{{.StorageProfileName}}"
+  }
+
+  prevent_update_power_off = true
+}
+
+output "vcd_vapp_vm_disk_size" {
+  value = tolist(vcd_vapp_vm.template-vm.override_template_disk)[0].size_in_mb
+}
+
+output "vcd_vm_disk_size" {
+	value = tolist(vcd_vm.template-vm.override_template_disk)[0].size_in_mb
+}
+`
