@@ -1674,8 +1674,8 @@ func TestAccVcdVAppVm_4types_sizing_max(t *testing.T) {
 		"Limit":                     "40000",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"FuncName":                  t.Name(),
-		"MemoryGuaranteed":          "0.3",
-		"CpuGuaranteed":             "0.2",
+		"MemoryGuaranteed":          "0.2",
+		"CpuGuaranteed":             "0.1",
 		// The parameters below are for Flex allocation model
 		// Part of HCL is created dynamically and these parameters with values result in the Flex part of the template being filled:
 		"equalsChar":                   "=",

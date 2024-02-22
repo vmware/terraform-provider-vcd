@@ -25,7 +25,7 @@ const (
 	vappVmType       typeOfVm = "vcd_vapp_vm"
 )
 
-// vmImageSource defines if the VM source image is a catalog template or a
+// vmImageSource defines if the VM source image is a catalog template or an existing VM
 type vmImageSource string
 
 const (
@@ -756,6 +756,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 
 	// Deprecated: If at least Catalog Name and Template name are set - a VM from vApp template is being created
 	isVmFromTemplateDeprecated := d.Get("catalog_name").(string) != "" && d.Get("template_name").(string) != ""
+
 	isVmFromTemplate := d.Get("vapp_template_id").(string) != ""
 	isVmCopy := d.Get("copy_from_vm_id").(string) != "" // "Copy VM functionality"
 	isEmptyVm := !isVmFromTemplate && !isVmFromTemplateDeprecated && !isVmCopy
