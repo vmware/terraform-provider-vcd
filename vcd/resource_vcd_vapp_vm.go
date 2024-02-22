@@ -381,6 +381,13 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Optional: true,
 			Set:      resourceVcdVmIndependentDiskHash,
 		},
+		"consolidate_disks_on_create": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			ForceNew:    true,
+			Description: "Consolidates disks during creation and allows to change disk size using 'override_template_disk' in fast provisioned VDCs",
+		},
 		"override_template_disk": {
 			Type:        schema.TypeSet,
 			Optional:    true,
@@ -1166,6 +1173,26 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	}
 
 	// Refresh VM to have the latest structure
+	if err := vm.Refresh(); err != nil {
+		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
+	}
+
+	// Check if disk consolidation is requested - it is a required operation in fast provisioned
+	// VDCs when override_template_disk tries to increase disk size, but there can also be other use
+	// cases.
+	// Such fields are processed:
+	// * consolidate_disks_on_create
+	//
+	// Note. Consolidating disks requires "vApp: VM Migrate, Force Undeploy, Relocate, Consolidate"
+	// right
+	if d.Get("consolidate_disks_on_create").(bool) {
+		util.Logger.Printf("[INFO] disk consolidation is requested with field 'consolidate_disks_on_create': %s", err)
+		err := vm.ConsolidateDisks()
+		if err != nil {
+			return nil, fmt.Errorf("error occurred while consolidating disks for VM '%s': %s", vm.VM.Name, err)
+		}
+	}
+
 	if err := vm.Refresh(); err != nil {
 		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 	}
