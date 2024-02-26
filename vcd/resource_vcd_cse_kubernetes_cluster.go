@@ -781,7 +781,7 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluste
 	}
 
 	if cluster.State == "provisioned" {
-		kubeconfig, err := cluster.GetKubeconfig()
+		kubeconfig, err := cluster.GetKubeconfig(false)
 		if err != nil {
 			return nil, fmt.Errorf("error getting Kubeconfig for the Kubernetes cluster with ID '%s': %s", cluster.ID, err)
 		}
