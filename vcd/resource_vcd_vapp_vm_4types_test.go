@@ -677,7 +677,7 @@ resource "vcd_vm" "template-vm-copy" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
 
-  vapp_template_id = data.vcd_catalog_vapp_template.{{.CatalogItem}}.id
+  copy_from_vm_id = vcd_vm.template-vm.id
   
   name        = "{{.TestName}}-template-standalone-vm-copy"
   description = "{{.TestName}}-template-standalone-vm"
@@ -713,9 +713,7 @@ resource "vcd_vm" "empty-vm-copy" {
   cpus   = 1
   memory = 1024
 
-  os_type          = "sles10_64Guest"
-  hardware_version = "vmx-14"
-  boot_image_id    = data.vcd_catalog_media.{{.Media}}.id
+  copy_from_vm_id = vcd_vm.empty-vm.id
 
   network {
 	type               = "org"
