@@ -25,7 +25,7 @@ import (
 
 // getVmSourceImage retrieves non-empty VM source image reference. It can be one of:
 // * Catalog VM template (regular way for creating VMs)
-// * Already running VM templates (VM Copy). The VM must be within the same Org
+// * Already running VM templates (for VM Copy). The VM must be within the same Org
 // There is no difference in how these VMs are created apart from having different source image
 func getVmSourceImage(sourceImageType vmImageSource, d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vdc *govcd.Vdc) (*types.Reference, error) {
 	// Source image is a catalog template

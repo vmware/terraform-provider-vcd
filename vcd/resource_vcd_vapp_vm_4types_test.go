@@ -49,7 +49,7 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 		"Org":             testConfig.VCD.Org,
 		"Vdc":             testConfig.Nsxt.Vdc,
 		"Catalog":         testConfig.VCD.Catalog.NsxtBackedCatalogName,
-		"CatalogItem":     testConfig.VCD.Catalog.NsxtCatalogItem,
+		"CatalogItem":     testConfig.VCD.Catalog.CatalogItemWithMultiVms,
 		"Media":           testConfig.Media.NsxtBackedMediaName,
 		"NsxtEdgeGateway": testConfig.Nsxt.EdgeGateway,
 
@@ -752,7 +752,7 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 		"Org":            testConfig.VCD.Org,
 		"Vdc":            testConfig.Nsxt.Vdc,
 		"Catalog":        testConfig.VCD.Catalog.NsxtBackedCatalogName,
-		"CatalogItem":    testConfig.VCD.Catalog.NsxtCatalogItem,
+		"CatalogItem":    testConfig.VCD.Catalog.CatalogItemWithMultiVms,
 		"Media":          testConfig.Media.NsxtBackedMediaName,
 		"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
 
@@ -792,7 +792,7 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					// Template vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "name", t.Name()+"-template-vapp-vm"),
-					resource.TestCheckResourceAttrSet("vcd_vapp_vm.template-vm", "description"), // Inherited from vApp template
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "description", ""),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "storage_profile", params["StorageProfile"].(string)),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "computer_name", "comp-name"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_hot_add_enabled", "true"),
@@ -832,7 +832,7 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					// Standalone template VM checks
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "name", t.Name()+"-template-standalone-vm"),
-					resource.TestCheckResourceAttrSet("vcd_vm.template-vm", "description"), //  Inherited from vApp template
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "description", ""), //  Inherited from vApp template
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "storage_profile", params["StorageProfile"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "computer_name", "comp-name"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpu_hot_add_enabled", "true"),
@@ -928,7 +928,7 @@ func TestAccVcdVAppVm_4types_storage_profile(t *testing.T) {
 					// Standalone template VM checks
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "vm_type", "vcd_vm"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "name", t.Name()+"-template-standalone-vm-copy"),
-					resource.TestCheckResourceAttrSet("vcd_vm.template-vm-copy", "description"), //  Inherited from vApp template
+					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "description", ""), //  Inherited from vApp template
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "storage_profile", params["StorageProfile"].(string)),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "computer_name", "comp-name"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "cpu_hot_add_enabled", "true"),
@@ -1268,7 +1268,7 @@ func TestAccVcdVAppVm_4types_sizing_min(t *testing.T) {
 		"Org":            testConfig.VCD.Org,
 		"Vdc":            testConfig.Nsxt.Vdc,
 		"Catalog":        testConfig.VCD.Catalog.NsxtBackedCatalogName,
-		"CatalogItem":    testConfig.VCD.Catalog.NsxtCatalogItem,
+		"CatalogItem":    testConfig.VCD.Catalog.CatalogItemWithMultiVms,
 		"Media":          testConfig.Media.NsxtBackedMediaName,
 		"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
 
@@ -1659,7 +1659,7 @@ func TestAccVcdVAppVm_4types_sizing_max(t *testing.T) {
 		"Org":            testConfig.VCD.Org,
 		"Vdc":            testConfig.Nsxt.Vdc,
 		"Catalog":        testConfig.VCD.Catalog.NsxtBackedCatalogName,
-		"CatalogItem":    testConfig.VCD.Catalog.NsxtCatalogItem,
+		"CatalogItem":    testConfig.VCD.Catalog.CatalogItemWithMultiVms,
 		"Media":          testConfig.Media.NsxtBackedMediaName,
 		"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
 
@@ -1973,7 +1973,7 @@ func TestAccVcdVAppVm_4types_sizing_cpu_only(t *testing.T) {
 		"Org":            testConfig.VCD.Org,
 		"Vdc":            testConfig.Nsxt.Vdc,
 		"Catalog":        testConfig.VCD.Catalog.NsxtBackedCatalogName,
-		"CatalogItem":    testConfig.VCD.Catalog.NsxtCatalogItem,
+		"CatalogItem":    testConfig.VCD.Catalog.CatalogItemWithMultiVms,
 		"Media":          testConfig.Media.NsxtBackedMediaName,
 		"StorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile2,
 
@@ -2301,7 +2301,7 @@ func TestAccVcdVAppVm_4typesAdvancedComputeSettings(t *testing.T) {
 		"Org":         testConfig.VCD.Org,
 		"Vdc":         testConfig.Nsxt.Vdc,
 		"Catalog":     testConfig.VCD.Catalog.NsxtBackedCatalogName,
-		"CatalogItem": testConfig.VCD.Catalog.NsxtCatalogItem,
+		"CatalogItem": testConfig.VCD.Catalog.CatalogItemWithMultiVms,
 		"Media":       testConfig.Media.NsxtBackedMediaName,
 
 		"Tags": "vapp vm",
@@ -2338,7 +2338,7 @@ func TestAccVcdVAppVm_4typesAdvancedComputeSettings(t *testing.T) {
 					// Template vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "name", t.Name()+"-template-vapp-vm"),
-					resource.TestCheckResourceAttrSet("vcd_vapp_vm.template-vm", "description"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "description", ""),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_hot_add_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory_hot_add_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "expose_hardware_virtualization", "false"),
@@ -2379,7 +2379,7 @@ func TestAccVcdVAppVm_4typesAdvancedComputeSettings(t *testing.T) {
 					// Standalone template VM checks
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "name", t.Name()+"-template-standalone-vm"),
-					resource.TestCheckResourceAttrSet("vcd_vm.template-vm", "description"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "description", ""),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpu_hot_add_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory_hot_add_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "expose_hardware_virtualization", "false"),
@@ -2777,7 +2777,7 @@ func TestAccVcdVAppVm_4types_PowerState(t *testing.T) {
 		"Org":             testConfig.VCD.Org,
 		"Vdc":             testConfig.Nsxt.Vdc,
 		"Catalog":         testConfig.VCD.Catalog.NsxtBackedCatalogName,
-		"CatalogItem":     testConfig.VCD.Catalog.NsxtCatalogItem,
+		"CatalogItem":     testConfig.VCD.Catalog.CatalogItemWithMultiVms,
 		"Media":           testConfig.Media.NsxtBackedMediaName,
 		"NsxtEdgeGateway": testConfig.Nsxt.EdgeGateway,
 

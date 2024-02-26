@@ -757,7 +757,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	isVmFromTemplateDeprecated := d.Get("catalog_name").(string) != "" && d.Get("template_name").(string) != ""
 
 	isVmFromTemplate := d.Get("vapp_template_id").(string) != ""
-	isVmCopy := d.Get("copy_from_vm_id").(string) != "" // "Copy VM functionality"
+	isVmCopy := d.Get("copy_from_vm_id").(string) != "" // Copy VM functionality
 	isEmptyVm := !isVmFromTemplate && !isVmFromTemplateDeprecated && !isVmCopy
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -995,7 +995,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 //
 // Code flow has 3 layers:
 // 1. Lookup common information, required for both types of VMs (Standalone and vApp child). Things such as
-//   - VM Source Image - Catalog Template or VM (VM Copy operation) to be used
+//   - VM Source Image - Catalog Template or VM (for VM Copy operation) to be used
 //   - Network adapter configuration
 //   - Storage profile configuration
 //   - VM compute policy configuration
