@@ -462,7 +462,7 @@ resource "vcd_vapp_vm" "vm-copy" {
   org = "org"
   vdc = "vdc"
 
-  copy_from_vm_id = data.vcd_vapp_vm.existing.id        # source VM ID
+  copy_from_vm_id = data.vcd_vapp_vm.existing.id # source VM ID
   vapp_name       = data.vcd_vapp_vm.existing.vapp_name
   name            = "VM Copy"
   power_on        = false
