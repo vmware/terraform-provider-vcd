@@ -232,6 +232,7 @@ type TestConfig struct {
 	} `json:"testEnvBuild"`
 	EnvVariables map[string]string `json:"envVariables,omitempty"`
 	Cse          struct {
+		CseVersion    string `json:"cseVersion,omitempty"`
 		SolutionsOrg  string `json:"solutionsOrg,omitempty"`
 		TenantOrg     string `json:"tenantOrg,omitempty"`
 		Vdc           string `json:"vdc,omitempty"`

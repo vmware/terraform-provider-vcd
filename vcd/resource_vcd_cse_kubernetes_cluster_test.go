@@ -4,13 +4,12 @@ package vcd
 
 import (
 	"fmt"
+	semver "github.com/hashicorp/go-version"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"os"
 	"strings"
 	"testing"
-	"time"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccVcdCseKubernetesCluster(t *testing.T) {
@@ -18,6 +17,16 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 
 	if cse := os.Getenv("TEST_VCD_CSE"); cse == "" {
 		t.Skip("CSE tests deactivated, skipping " + t.Name())
+	}
+
+	cseVersion, err := semver.NewVersion(testConfig.Cse.CseVersion)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	v411, err := semver.NewVersion("4.1.1")
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	tokenFilename := getCurrentDir() + t.Name() + ".json"
@@ -31,33 +40,55 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 		}
 	}()
 
-	now := time.Now()
 	var params = StringMap{
-		"Name":              strings.ToLower(t.Name()),
-		"OvaCatalog":        testConfig.Cse.OvaCatalog,
-		"OvaName":           testConfig.Cse.OvaName,
-		"SolutionsOrg":      testConfig.Cse.SolutionsOrg,
-		"TenantOrg":         testConfig.Cse.TenantOrg,
-		"Vdc":               testConfig.Cse.Vdc,
-		"EdgeGateway":       testConfig.Cse.EdgeGateway,
-		"Network":           testConfig.Cse.RoutedNetwork,
-		"TokenName":         fmt.Sprintf("%s%d%d%d", strings.ToLower(t.Name()), now.Day(), now.Hour(), now.Minute()),
-		"TokenFile":         tokenFilename,
-		"ControlPlaneCount": 1,
-		"NodePoolCount":     1,
+		"CseVersion":         testConfig.Cse.CseVersion,
+		"Name":               strings.ToLower(t.Name()),
+		"OvaCatalog":         testConfig.Cse.OvaCatalog,
+		"OvaName":            testConfig.Cse.OvaName,
+		"SolutionsOrg":       testConfig.Cse.SolutionsOrg,
+		"TenantOrg":          testConfig.Cse.TenantOrg,
+		"Vdc":                testConfig.Cse.Vdc,
+		"EdgeGateway":        testConfig.Cse.EdgeGateway,
+		"Network":            testConfig.Cse.RoutedNetwork,
+		"TokenName":          t.Name(),
+		"TokenFile":          tokenFilename,
+		"ControlPlaneCount":  1,
+		"NodePoolCount":      1,
+		"ExtraWorkerPool":    " ",
+		"AutoRepairOnErrors": true,
+		"NodeHealthCheck":    true,
 	}
 	testParamsNotEmpty(t, params)
 
 	step1 := templateFill(testAccVcdCseKubernetesCluster, params)
 
 	params["FuncName"] = t.Name() + "Step2"
-	params["ControlPlaneCount"] = 2
+	params["ControlPlaneCount"] = 3
 	step2 := templateFill(testAccVcdCseKubernetesCluster, params)
 
 	params["FuncName"] = t.Name() + "Step3"
 	params["ControlPlaneCount"] = 1
 	params["NodePoolCount"] = 2
 	step3 := templateFill(testAccVcdCseKubernetesCluster, params)
+
+	params["FuncName"] = t.Name() + "Step4"
+	params["ControlPlaneCount"] = 1
+	params["NodePoolCount"] = 1
+	params["NodeHealthCheck"] = false
+	step4 := templateFill(testAccVcdCseKubernetesCluster, params)
+
+	extraWorkerPool := "  worker_pool {\n" +
+		"    name               = \"worker-pool-2\"\n" +
+		"    machine_count      = 1\n" +
+		"    disk_size_gi       = 20\n" +
+		"    sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id\n" +
+		"    storage_profile_id = data.vcd_storage_profile.sp.id\n" +
+		"  }"
+
+	params["FuncName"] = t.Name() + "Step5"
+	params["NodeHealthCheck"] = true
+	params["ExtraWorkerPool"] = extraWorkerPool
+	step5 := templateFill(testAccVcdCseKubernetesCluster, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -84,7 +115,41 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					cacheId.cacheTestResourceFieldValue(clusterName, "id"),
 					resource.TestCheckResourceAttrSet(clusterName, "id"),
+					resource.TestCheckResourceAttr(clusterName, "cse_version", testConfig.Cse.CseVersion),
+					resource.TestCheckResourceAttr(clusterName, "runtime", "tkg"),
 					resource.TestCheckResourceAttr(clusterName, "name", strings.ToLower(t.Name())),
+					resource.TestCheckResourceAttrPair(clusterName, "kubernetes_template_id", "data.vcd_catalog_vapp_template.tkg_ova", "id"),
+					resource.TestCheckNoResourceAttr(clusterName, "org"), // It is taken from Provider config
+					resource.TestCheckResourceAttrPair(clusterName, "vdc_id", "data.vcd_org_vdc.vdc", "id"),
+					resource.TestCheckResourceAttrPair(clusterName, "network_id", "data.vcd_network_routed_v2.routed", "id"),
+					resource.TestCheckNoResourceAttr(clusterName, "owner"), // It is taken from Provider config
+					resource.TestCheckResourceAttr(clusterName, "control_plane.0.machine_count", "1"),
+					resource.TestCheckResourceAttr(clusterName, "control_plane.0.disk_size_gi", "20"),
+					resource.TestCheckResourceAttrPair(clusterName, "control_plane.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
+					resource.TestCheckResourceAttrPair(clusterName, "control_plane.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
+					resource.TestCheckResourceAttrSet(clusterName, "control_plane.0.ip"), // IP should be assigned after creation as it was not set manually in HCL config
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.#", "1"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.name", "worker-pool-1"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.machine_count", "1"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.disk_size_gi", "20"),
+					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
+					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
+					resource.TestCheckResourceAttrPair(clusterName, "default_storage_class.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
+					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.name", "sc-1"),
+					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.reclaim_policy", "delete"),
+					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.filesystem", "ext4"),
+					resource.TestCheckResourceAttr(clusterName, "pods_cidr", "100.96.0.0/11"),
+					resource.TestCheckResourceAttr(clusterName, "services_cidr", "100.64.0.0/13"),
+					func() resource.TestCheckFunc {
+						// Auto Repair on Errors gets automatically deactivated after cluster creation since CSE 4.1.1
+						if cseVersion.GreaterThanOrEqual(v411) {
+							return resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "false")
+						} else {
+							return resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "true")
+						}
+					}(),
+					resource.TestCheckResourceAttr(clusterName, "node_health_check", "true"),
+					resource.TestCheckResourceAttrSet(clusterName, "kubernetes_version"), // TODO: Fine-grain?
 					resource.TestCheckResourceAttr(clusterName, "state", "provisioned"),
 					resource.TestCheckResourceAttrSet(clusterName, "kubeconfig"),
 				),
@@ -99,6 +164,22 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 			},
 			{
 				Config: step3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(clusterName, "id", cacheId.fieldValue),
+					resource.TestCheckResourceAttr(clusterName, "state", "provisioned"),
+					resource.TestCheckResourceAttrSet(clusterName, "kubeconfig"),
+				),
+			},
+			{
+				Config: step4,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(clusterName, "id", cacheId.fieldValue),
+					resource.TestCheckResourceAttr(clusterName, "state", "provisioned"),
+					resource.TestCheckResourceAttrSet(clusterName, "kubeconfig"),
+				),
+			},
+			{
+				Config: step5,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(clusterName, "id", cacheId.fieldValue),
 					resource.TestCheckResourceAttr(clusterName, "state", "provisioned"),
@@ -167,7 +248,7 @@ resource "vcd_api_token" "token" {
 }
 
 resource "vcd_cse_kubernetes_cluster" "my_cluster" {
-  cse_version            = "4.2.0"
+  cse_version            = "{{.CseVersion}}"
   runtime                = "tkg"
   name                   = "{{.Name}}"
   kubernetes_template_id = data.vcd_catalog_vapp_template.tkg_ova.id
@@ -191,6 +272,8 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
     storage_profile_id = data.vcd_storage_profile.sp.id
   }
 
+  {{.ExtraWorkerPool}}
+
   default_storage_class {
 	name               = "sc-1"
 	storage_profile_id = data.vcd_storage_profile.sp.id
@@ -198,8 +281,8 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
     filesystem         = "ext4"
   }
 
-  auto_repair_on_errors = true
-  node_health_check     = true
+  auto_repair_on_errors = {{.AutoRepairOnErrors}}
+  node_health_check     = {{.NodeHealthCheck}}
 
   operations_timeout_minutes = 0
 }
