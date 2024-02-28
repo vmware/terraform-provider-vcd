@@ -8,18 +8,30 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 )
 
+func requireCseConfig(t *testing.T, testConfig TestConfig) {
+	skippedPrefix := fmt.Sprintf("skipped %s because:", t.Name())
+	if cse := os.Getenv("TEST_VCD_CSE"); cse == "" {
+		t.Skipf("%s the environment variable TEST_VCD_CSE is not set", skippedPrefix)
+	}
+	cseConfigValues := reflect.ValueOf(testConfig.Cse)
+	cseConfigType := cseConfigValues.Type()
+	for i := 0; i < cseConfigValues.NumField(); i++ {
+		if cseConfigValues.Field(i).String() == "" {
+			t.Skipf("%s the config value '%s' inside 'cse' object of vcd_test_config.json is not set", skippedPrefix, cseConfigType.Field(i).Name)
+		}
+	}
+}
+
 func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	preTestChecks(t)
+	requireCseConfig(t, testConfig)
 
-	if cse := os.Getenv("TEST_VCD_CSE"); cse == "" {
-		t.Skip("CSE tests deactivated, skipping " + t.Name())
-	}
-
-	cseVersion, err := semver.NewVersion(testConfig.Cse.CseVersion)
+	cseVersion, err := semver.NewVersion(testConfig.Cse.Version)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +53,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	}()
 
 	var params = StringMap{
-		"CseVersion":         testConfig.Cse.CseVersion,
+		"CseVersion":         testConfig.Cse.Version,
 		"Name":               strings.ToLower(t.Name()),
 		"OvaCatalog":         testConfig.Cse.OvaCatalog,
 		"OvaName":            testConfig.Cse.OvaName,
@@ -50,7 +62,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 		"Vdc":                testConfig.Cse.Vdc,
 		"EdgeGateway":        testConfig.Cse.EdgeGateway,
 		"Network":            testConfig.Cse.RoutedNetwork,
-		"TokenName":          t.Name(),
+		"TokenName":          t.Name() + "2", // FIXME: Remove suffix
 		"TokenFile":          tokenFilename,
 		"ControlPlaneCount":  1,
 		"NodePoolCount":      1,
@@ -115,7 +127,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					cacheId.cacheTestResourceFieldValue(clusterName, "id"),
 					resource.TestCheckResourceAttrSet(clusterName, "id"),
-					resource.TestCheckResourceAttr(clusterName, "cse_version", testConfig.Cse.CseVersion),
+					resource.TestCheckResourceAttr(clusterName, "cse_version", testConfig.Cse.Version),
 					resource.TestCheckResourceAttr(clusterName, "runtime", "tkg"),
 					resource.TestCheckResourceAttr(clusterName, "name", strings.ToLower(t.Name())),
 					resource.TestCheckResourceAttrPair(clusterName, "kubernetes_template_id", "data.vcd_catalog_vapp_template.tkg_ova", "id"),
@@ -284,6 +296,6 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
   auto_repair_on_errors = {{.AutoRepairOnErrors}}
   node_health_check     = {{.NodeHealthCheck}}
 
-  operations_timeout_minutes = 0
+  operations_timeout_minutes = 150
 }
 `

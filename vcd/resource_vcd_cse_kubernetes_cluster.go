@@ -627,7 +627,7 @@ func resourceVcdCseKubernetesDelete(_ context.Context, d *schema.ResourceData, m
 		}
 		return diag.FromErr(err)
 	}
-	err = cluster.Delete(time.Duration(d.Get("operations_timeout_minutes").(int)))
+	err = cluster.Delete(time.Duration(d.Get("operations_timeout_minutes").(int)) * time.Minute)
 	if err != nil {
 		return diag.FromErr(err)
 	}
