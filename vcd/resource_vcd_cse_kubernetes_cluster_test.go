@@ -131,10 +131,11 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "runtime", "tkg"),
 					resource.TestCheckResourceAttr(clusterName, "name", strings.ToLower(t.Name())),
 					resource.TestCheckResourceAttrPair(clusterName, "kubernetes_template_id", "data.vcd_catalog_vapp_template.tkg_ova", "id"),
-					resource.TestCheckNoResourceAttr(clusterName, "org"), // It is taken from Provider config
+					resource.TestCheckResourceAttr(clusterName, "org", ""), // It is taken from Provider config
 					resource.TestCheckResourceAttrPair(clusterName, "vdc_id", "data.vcd_org_vdc.vdc", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "network_id", "data.vcd_network_routed_v2.routed", "id"),
-					resource.TestCheckNoResourceAttr(clusterName, "owner"), // It is taken from Provider config
+					resource.TestCheckResourceAttr(clusterName, "owner", ""), // It is taken from Provider config
+					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", ""),
 					resource.TestCheckResourceAttr(clusterName, "control_plane.0.machine_count", "1"),
 					resource.TestCheckResourceAttr(clusterName, "control_plane.0.disk_size_gi", "20"),
 					resource.TestCheckResourceAttrPair(clusterName, "control_plane.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
@@ -152,6 +153,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.filesystem", "ext4"),
 					resource.TestCheckResourceAttr(clusterName, "pods_cidr", "100.96.0.0/11"),
 					resource.TestCheckResourceAttr(clusterName, "services_cidr", "100.64.0.0/13"),
+					resource.TestCheckResourceAttr(clusterName, "virtual_ip_subnet", ""),
 					func() resource.TestCheckFunc {
 						// Auto Repair on Errors gets automatically deactivated after cluster creation since CSE 4.1.1
 						if cseVersion.GreaterThanOrEqual(v411) {
