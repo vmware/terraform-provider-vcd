@@ -131,7 +131,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "runtime", "tkg"),
 					resource.TestCheckResourceAttr(clusterName, "name", strings.ToLower(t.Name())),
 					resource.TestCheckResourceAttrPair(clusterName, "kubernetes_template_id", "data.vcd_catalog_vapp_template.tkg_ova", "id"),
-					resource.TestCheckResourceAttr(clusterName, "org", ""), // It is taken from Provider config
+					resource.TestCheckResourceAttrPair(clusterName, "org", "data.vcd_org_vdc.vdc", "org"),
 					resource.TestCheckResourceAttrPair(clusterName, "vdc_id", "data.vcd_org_vdc.vdc", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "network_id", "data.vcd_network_routed_v2.routed", "id"),
 					resource.TestCheckResourceAttr(clusterName, "owner", ""), // It is taken from Provider config
