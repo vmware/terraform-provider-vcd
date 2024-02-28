@@ -11,8 +11,8 @@ import (
 )
 
 func TestAccVcdVersion(t *testing.T) {
-	//preTestChecks(t)
-	//skipIfNotSysAdmin(t)
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
 
 	vcdClient := createSystemTemporaryVCDConnection()
 	currentVersion, err := vcdClient.Client.GetVcdShortVersion()
@@ -79,6 +79,7 @@ func TestAccVcdVersion(t *testing.T) {
 
 const testAccVcdVersion = `
 data "vcd_version" "version" {
-	name = "{{.Vcenter}}"
-  }
+  condition         = "{{.Condition}}"
+  fail_if_not_match = {{.FailIfNotMatch}}
+}
 `
