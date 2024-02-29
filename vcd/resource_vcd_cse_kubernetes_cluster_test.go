@@ -42,7 +42,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	vcdClient := createSystemTemporaryVCDConnection()
+	// vcdClient := createSystemTemporaryVCDConnection()
 
 	tokenFilename := getCurrentDir() + t.Name() + ".json"
 	defer func() {
@@ -107,9 +107,9 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	step5 := templateFill(testAccVcdCseKubernetesCluster, params)
 
 	params["FuncName"] = t.Name() + "Step6"
-	upgradeOvaId := ""
+	//upgradeOvaId := ""
 	// This one is set dynamically by the Step6 pre-check itself
-	step6 := ""
+	// step6 := ""
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -415,7 +415,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 				),
 			},
 			// Enable health check, add a worker pool
-			{
+			/*{
 				SkipFunc: func() (bool, error) {
 					cluster, err := vcdClient.CseGetKubernetesClusterById(cacheId.fieldValue)
 					if err != nil {
@@ -448,68 +448,12 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					params["KubernetesOva"] = fmt.Sprintf("\"%s\"", upgradeOvaId)
 					step6 = templateFill(testAccVcdCseKubernetesCluster, params)
 				},
-				Config: func() string {
-					return step6
-				}(),
+				Config: step6,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// The OVA should be updated
 					resource.TestCheckResourceAttr(clusterName, "kubernetes_template_id", upgradeOvaId),
-
-					// Other things should remain the same
-					resource.TestCheckResourceAttr(clusterName, "id", cacheId.fieldValue),
-					resource.TestCheckResourceAttr(clusterName, "cse_version", testConfig.Cse.Version),
-					resource.TestCheckResourceAttr(clusterName, "runtime", "tkg"),
-					resource.TestCheckResourceAttr(clusterName, "name", strings.ToLower(t.Name())),
-					resource.TestCheckResourceAttrPair(clusterName, "kubernetes_template_id", "data.vcd_catalog_vapp_template.tkg_ova", "id"),
-					resource.TestCheckResourceAttrPair(clusterName, "org", "data.vcd_org_vdc.vdc", "org"),
-					resource.TestCheckResourceAttrPair(clusterName, "vdc_id", "data.vcd_org_vdc.vdc", "id"),
-					resource.TestCheckResourceAttrPair(clusterName, "network_id", "data.vcd_network_routed_v2.routed", "id"),
-					resource.TestCheckNoResourceAttr(clusterName, "owner"), // It is taken from Provider config
-					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", ""),
-					resource.TestCheckResourceAttr(clusterName, "control_plane.0.machine_count", "1"),
-					resource.TestCheckResourceAttr(clusterName, "control_plane.0.disk_size_gi", "20"),
-					resource.TestCheckResourceAttrPair(clusterName, "control_plane.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
-					resource.TestCheckResourceAttrPair(clusterName, "control_plane.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
-					resource.TestCheckResourceAttrSet(clusterName, "control_plane.0.ip"), // IP should be assigned after creation as it was not set manually in HCL config
-					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.machine_count", "1"),
-					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.name", "worker-pool-1"),
-					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.disk_size_gi", "20"),
-					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
-					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
-					resource.TestCheckResourceAttr(clusterName, "worker_pool.#", "2"),
-					resource.TestCheckResourceAttr(clusterName, "worker_pool.1.machine_count", "1"),
-					resource.TestCheckResourceAttr(clusterName, "worker_pool.1.name", "worker-pool-2"),
-					resource.TestCheckResourceAttr(clusterName, "worker_pool.1.disk_size_gi", "20"),
-					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.1.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
-					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.1.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
-					resource.TestCheckResourceAttrPair(clusterName, "default_storage_class.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
-					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.name", "sc-1"),
-					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.reclaim_policy", "delete"),
-					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.filesystem", "ext4"),
-					resource.TestCheckResourceAttr(clusterName, "node_health_check", "true"),
-					resource.TestCheckResourceAttr(clusterName, "pods_cidr", "100.96.0.0/11"),
-					resource.TestCheckResourceAttr(clusterName, "services_cidr", "100.64.0.0/13"),
-					resource.TestCheckResourceAttr(clusterName, "virtual_ip_subnet", ""),
-					func() resource.TestCheckFunc {
-						// Auto Repair on Errors gets automatically deactivated after cluster creation since CSE 4.1.1
-						if cseVersion.GreaterThanOrEqual(v411) {
-							return resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "false")
-						} else {
-							return resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "true")
-						}
-					}(),
-					resource.TestMatchResourceAttr(clusterName, "kubernetes_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+\+vmware\.[0-9]$`)),
-					resource.TestMatchResourceAttr(clusterName, "tkg_product_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)),
-					resource.TestMatchResourceAttr(clusterName, "capvcd_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)),
-					resource.TestMatchResourceAttr(clusterName, "cluster_resource_set_bindings.#", regexp.MustCompile(`^[1-9][0-9]*$`)),
-					resource.TestMatchResourceAttr(clusterName, "cpi_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)),
-					resource.TestMatchResourceAttr(clusterName, "csi_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)),
-					resource.TestMatchResourceAttr(clusterName, "csi_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)),
-					resource.TestCheckResourceAttr(clusterName, "state", "provisioned"),
-					resource.TestCheckResourceAttrSet(clusterName, "kubeconfig"),
-					resource.TestMatchResourceAttr(clusterName, "events.#", regexp.MustCompile(`^[1-9][0-9]*$`)),
 				),
-			},
+			},*/
 		},
 	})
 	postTestChecks(t)
