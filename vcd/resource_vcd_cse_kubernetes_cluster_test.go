@@ -448,7 +448,9 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					params["KubernetesOva"] = fmt.Sprintf("\"%s\"", upgradeOvaId)
 					step6 = templateFill(testAccVcdCseKubernetesCluster, params)
 				},
-				Config: step6,
+				Config: func() string {
+					return step6
+				}(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// The OVA should be updated
 					resource.TestCheckResourceAttr(clusterName, "kubernetes_template_id", upgradeOvaId),
