@@ -659,15 +659,15 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluste
 	var warnings []error
 
 	dSet(d, "name", cluster.Name)
-	dSet(d, "cse_version", cluster.CseVersion.String())
+	dSet(d, "cse_version", cluster.CseVersion.Original())
 	dSet(d, "runtime", "tkg") // Only one supported
 	dSet(d, "vdc_id", cluster.VdcId)
 	dSet(d, "network_id", cluster.NetworkId)
-	dSet(d, "cpi_version", cluster.CpiVersion.String())
-	dSet(d, "csi_version", cluster.CsiVersion.String())
-	dSet(d, "capvcd_version", cluster.CapvcdVersion.String())
-	dSet(d, "kubernetes_version", cluster.KubernetesVersion.String())
-	dSet(d, "tkg_product_version", cluster.TkgVersion.String())
+	dSet(d, "cpi_version", cluster.CpiVersion.Original())
+	dSet(d, "csi_version", cluster.CsiVersion.Original())
+	dSet(d, "capvcd_version", cluster.CapvcdVersion.Original())
+	dSet(d, "kubernetes_version", cluster.KubernetesVersion.Original())
+	dSet(d, "tkg_product_version", cluster.TkgVersion.Original())
 	dSet(d, "pods_cidr", cluster.PodCidr)
 	dSet(d, "services_cidr", cluster.ServiceCidr)
 	dSet(d, "kubernetes_template_id", cluster.KubernetesTemplateOvaId)

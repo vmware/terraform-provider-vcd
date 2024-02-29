@@ -122,6 +122,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 			return nil
 		},
 		Steps: []resource.TestStep{
+			// Basic scenario of cluster creation
 			{
 				Config: step1,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -168,6 +169,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttrSet(clusterName, "kubeconfig"),
 				),
 			},
+			// Basic scenario of cluster creation
 			{
 				Config: step2,
 				Check: resource.ComposeAggregateTestCheckFunc(
