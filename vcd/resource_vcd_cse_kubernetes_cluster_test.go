@@ -134,7 +134,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttrPair(clusterName, "org", "data.vcd_org_vdc.vdc", "org"),
 					resource.TestCheckResourceAttrPair(clusterName, "vdc_id", "data.vcd_org_vdc.vdc", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "network_id", "data.vcd_network_routed_v2.routed", "id"),
-					resource.TestCheckResourceAttr(clusterName, "owner", ""), // It is taken from Provider config
+					resource.TestCheckNoResourceAttr(clusterName, "owner"), // It is taken from Provider config
 					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", ""),
 					resource.TestCheckResourceAttr(clusterName, "control_plane.0.machine_count", "1"),
 					resource.TestCheckResourceAttr(clusterName, "control_plane.0.disk_size_gi", "20"),
