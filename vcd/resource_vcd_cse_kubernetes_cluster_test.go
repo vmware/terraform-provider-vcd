@@ -409,6 +409,11 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					return cacheId.fieldValue, nil
 				},
+				// Ignore api_token_file and operations_timeout_minutes as these are not computed from VCD, so they are missing
+				// after any successful import.
+				// Ignore also owner and org as these may not be set in the resource configuration, but they are always
+				// computed.
+				ImportStateVerifyIgnore: []string{"api_token_file", "operations_timeout_minutes", "owner", "org"},
 			},
 		},
 	})
