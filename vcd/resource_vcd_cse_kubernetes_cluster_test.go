@@ -192,7 +192,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "control_plane.0.machine_count", "3"),
 
 					// Other things should remain the same
-					resource.TestCheckResourceAttr(clusterName, "id", cacheId.fieldValue),
+					cacheId.testCheckCachedResourceFieldValue(clusterName, "id"),
 					resource.TestCheckResourceAttr(clusterName, "cse_version", testConfig.Cse.Version),
 					resource.TestCheckResourceAttr(clusterName, "runtime", "tkg"),
 					resource.TestCheckResourceAttr(clusterName, "name", strings.ToLower(t.Name())),
@@ -248,7 +248,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.machine_count", "2"),
 
 					// Other things should remain the same
-					resource.TestCheckResourceAttr(clusterName, "id", cacheId.fieldValue),
+					cacheId.testCheckCachedResourceFieldValue(clusterName, "id"),
 					resource.TestCheckResourceAttr(clusterName, "cse_version", testConfig.Cse.Version),
 					resource.TestCheckResourceAttr(clusterName, "runtime", "tkg"),
 					resource.TestCheckResourceAttr(clusterName, "name", strings.ToLower(t.Name())),
@@ -303,7 +303,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "node_health_check", "false"),
 
 					// Other things should remain the same
-					resource.TestCheckResourceAttr(clusterName, "id", cacheId.fieldValue),
+					cacheId.testCheckCachedResourceFieldValue(clusterName, "id"),
 					resource.TestCheckResourceAttr(clusterName, "cse_version", testConfig.Cse.Version),
 					resource.TestCheckResourceAttr(clusterName, "runtime", "tkg"),
 					resource.TestCheckResourceAttr(clusterName, "name", strings.ToLower(t.Name())),
@@ -363,7 +363,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "node_health_check", "true"),
 
 					// Other things should remain the same
-					resource.TestCheckResourceAttr(clusterName, "id", cacheId.fieldValue),
+					cacheId.testCheckCachedResourceFieldValue(clusterName, "id"),
 					resource.TestCheckResourceAttr(clusterName, "cse_version", testConfig.Cse.Version),
 					resource.TestCheckResourceAttr(clusterName, "runtime", "tkg"),
 					resource.TestCheckResourceAttr(clusterName, "name", strings.ToLower(t.Name())),
