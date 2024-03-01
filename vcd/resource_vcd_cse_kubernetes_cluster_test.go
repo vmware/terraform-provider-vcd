@@ -42,8 +42,6 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// vcdClient := createSystemTemporaryVCDConnection()
-
 	tokenFilename := getCurrentDir() + t.Name() + ".json"
 	defer func() {
 		// Clean the API Token file
@@ -105,11 +103,6 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	params["NodeHealthCheck"] = true
 	params["ExtraWorkerPool"] = extraWorkerPool
 	step5 := templateFill(testAccVcdCseKubernetesCluster, params)
-
-	params["FuncName"] = t.Name() + "Step6"
-	//upgradeOvaId := ""
-	// This one is set dynamically by the Step6 pre-check itself
-	// step6 := ""
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -409,46 +402,14 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestMatchResourceAttr(clusterName, "events.#", regexp.MustCompile(`^[1-9][0-9]*$`)),
 				),
 			},
-			// Enable health check, add a worker pool
-			/*{
-				SkipFunc: func() (bool, error) {
-					cluster, err := vcdClient.CseGetKubernetesClusterById(cacheId.fieldValue)
-					if err != nil {
-						return true, err
-					}
-					ovas, err := cluster.GetSupportedUpgrades(true)
-					if err != nil {
-						return true, err
-					}
-					if len(ovas) == 0 {
-						fmt.Println("Skipping cluster upgrade step as there are no available OVAs to upgrade")
-						return true, nil
-					}
-					return false, nil
+			{
+				ResourceName:      clusterName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					return cacheId.fieldValue, nil
 				},
-				PreConfig: func() {
-					cluster, err := vcdClient.CseGetKubernetesClusterById(cacheId.fieldValue)
-					if err != nil {
-						t.Fatalf("failed pre-config of step 6: %s", err)
-					}
-					ovas, err := cluster.GetSupportedUpgrades(true)
-					if err != nil {
-						t.Fatalf("failed pre-config of step 6: %s", err)
-					}
-					if len(ovas) == 0 {
-						t.Fatalf("failed pre-config of step 6: there are no upgrade OVAs")
-						return
-					}
-					upgradeOvaId = ovas[0].ID
-					params["KubernetesOva"] = fmt.Sprintf("\"%s\"", upgradeOvaId)
-					step6 = templateFill(testAccVcdCseKubernetesCluster, params)
-				},
-				Config: step6,
-				Check: resource.ComposeAggregateTestCheckFunc(
-					// The OVA should be updated
-					resource.TestCheckResourceAttr(clusterName, "kubernetes_template_id", upgradeOvaId),
-				),
-			},*/
+			},
 		},
 	})
 	postTestChecks(t)
