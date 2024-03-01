@@ -3,13 +3,15 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 const maximumSynchronisationCheckDuration = 60 * time.Second
@@ -46,6 +48,36 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "vApp Template name",
+			},
+			"capture_vapp": {
+				Optional:    true,
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Description: "",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"source_id": {
+							Optional:    true,
+							Type:        schema.TypeString,
+							Description: "",
+						},
+						"overwrite_catalog_item_id": {
+							Optional:    true,
+							Type:        schema.TypeString,
+							Description: "",
+						},
+						"customize_on_instantiate": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "",
+						},
+						"copy_tpm_on_instantiate": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "VCD 10.4.2+",
+						},
+					},
+				},
 			},
 			"description": {
 				Type:          schema.TypeString,
@@ -127,14 +159,84 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 	}
 
 	var diagError diag.Diagnostics
+
+	ovaPath := d.Get("ova_path").(string)
+	ovfUrl := d.Get("ovf_url").(string)
 	vappTemplateName := d.Get("name").(string)
-	if d.Get("ova_path").(string) != "" {
+
+	capturevAppTemplate := d.Get("capture_vapp").([]interface{})
+
+	switch {
+	case ovaPath != "":
 		diagError = uploadOvaFromFilePath(d, catalog, vappTemplateName, "vcd_catalog_vapp_template")
-	} else if d.Get("ovf_url").(string) != "" {
+	case ovfUrl != "":
 		diagError = uploadFromUrl(d, catalog, vappTemplateName, "vcd_catalog_vapp_template")
-	} else {
-		diagError = diag.Errorf("`ova_path` or `ovf_url` value is missing %s", err)
+	case len(capturevAppTemplate) == 1:
+		ct := capturevAppTemplate[0].(map[string]interface{})
+		sourceId := ct["source_id"].(string)
+		overwriteCatalogItemId := ct["overwrite_catalog_item_id"].(string)
+		customizeOnInstantiate := ct["customize_on_instantiate"].(bool)
+
+		org, err := vcdClient.GetOrgFromResource(d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		url := vcdClient.Client.VCDHREF
+		vAppHref := fmt.Sprintf("%s://%s/api/vApp/vapp-%s", url.Scheme, url.Host, extractUuid(sourceId))
+		vapp, err := org.GetVAppByHref(vAppHref)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		vAppCaptureParams := &types.CaptureVAppParams{
+			Name:        d.Get("name").(string),
+			Description: d.Get("description").(string),
+			Source: &types.Reference{
+				HREF: vAppHref,
+			},
+			CustomizationSection: types.CaptureVAppParamsCustomizationSection{
+				Info:                   "CustomizeOnInstantiate Settings",
+				CustomizeOnInstantiate: customizeOnInstantiate,
+			},
+		}
+
+		// It is possible to overwrite an existing item
+		if overwriteCatalogItemId != "" {
+			overWriteItemHref := fmt.Sprintf("%s://%s/api/catalogItem/%s", url.Scheme, url.Host, overwriteCatalogItemId)
+			vAppCaptureParams.TargetCatalogItem = &types.Reference{
+				HREF: overWriteItemHref,
+			}
+		}
+
+		// TPM (Trusted Platform Module) setting 'CopyTpmOnInstantiate' is only available in VCD 10.4.2+
+		copyTpmOnInstantiate := ct["copy_tpm_on_instantiate"].(bool)
+		if vcdClient.Client.APIVCDMaxVersionIs(">= 37.2") {
+			vAppCaptureParams.CopyTpmOnInstantiate = &copyTpmOnInstantiate
+		} else if copyTpmOnInstantiate { // Throw an error if user set to `true`, but VCD is too old
+			return diag.Errorf("'copy_tpm_on_instantiate' is supported on VCD 10.4.2+")
+		}
+
+		parentVdc, err := vapp.GetParentVDC()
+		if err != nil {
+			return diag.Errorf("error retrieving parent VDC for vApp %s: %s", vapp.VApp.Name, err)
+		}
+
+		// Locking vApp as it becomes busy when an image is being created
+		unlock := vcdClient.lockVappWithName(org.Org.Name, parentVdc.Vdc.Name, vapp.VApp.Name)
+		defer unlock()
+
+		createdTemplate, err := catalog.CaptureVappTemplate(vAppCaptureParams)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		vappTemplateName = createdTemplate.VAppTemplate.Name
+	default:
+		diagError = diag.Errorf("`ova_path`, `ovf_url` or `capture_vapp` must be set: %s", err)
+
 	}
+
 	if diagError != nil {
 		return diagError
 	}
