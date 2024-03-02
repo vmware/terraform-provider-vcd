@@ -918,6 +918,7 @@ The following additional attributes are exported:
 * `thin_provisioned` - (*v2.7+*) Specifies whether the disk storage is pre-allocated or allocated on demand.
 * `iops` - (*v2.7+*) Specifies the IOPS for the disk. Default is 0.
 * `storage_profile` - (*v2.7+*) Storage profile which overrides the VM default one.
+* `vapp_id` - (*v3.12+*) Parent vApp ID.
 
 ## Hot and Cold update
 

@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -43,6 +44,11 @@ func datasourceVcdCatalogVappTemplate() *schema.Resource {
 				Computed:    true,
 				Description: "Timestamp of when the vApp Template was created",
 			},
+			"catalog_item_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Catalog Item ID of this vApp template",
+			},
 			"metadata": {
 				Type:        schema.TypeMap,
 				Computed:    true,
@@ -50,6 +56,11 @@ func datasourceVcdCatalogVappTemplate() *schema.Resource {
 				Deprecated:  "Use metadata_entry instead",
 			},
 			"metadata_entry": metadataEntryDatasourceSchema("vApp Template"),
+			"inherited_metadata": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "A map that contains metadata that is automatically added by VCD (10.5.1+) and provides details on the origin of the VM",
+			},
 			"vm_names": {
 				Type: schema.TypeSet,
 				Elem: &schema.Schema{

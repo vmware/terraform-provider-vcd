@@ -85,6 +85,11 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			ForceNew:    vmType == vappVmType,
 			Description: "The vApp this VM belongs to - Required, unless it is a standalone VM",
 		},
+		"vapp_id": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "ID of parent vApp",
+		},
 		"vm_type": {
 			Type:        schema.TypeString,
 			Computed:    true,
@@ -1099,6 +1104,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		}
 		util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
 		dSet(d, "vapp_name", vapp.VApp.Name)
+		dSet(d, "vapp_id", vapp.VApp.ID)
 		dSet(d, "vm_type", string(standaloneVmType))
 
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -1577,6 +1583,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 	}
 	util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
 	dSet(d, "vapp_name", vapp.VApp.Name)
+	dSet(d, "vapp_id", vapp.VApp.ID)
 
 	// Due to the Bug in VCD, VM creation works only with Org VDC networks, not vApp networks - we
 	// setup network configuration with update.
@@ -2173,6 +2180,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 	// org, vdc, and vapp_name are already implicitly set
 	dSet(d, "name", vm.VM.Name)
 	dSet(d, "vapp_name", vapp.VApp.Name)
+	dSet(d, "vapp_id", vapp.VApp.ID)
 	dSet(d, "description", vm.VM.Description)
 	d.SetId(vm.VM.ID)
 	dSet(d, "vm_type", computedVmType)

@@ -228,6 +228,18 @@ func (cli *VCDClient) unLockParentVapp(d *schema.ResourceData) {
 	vcdMutexKV.kvUnlock(key)
 }
 
+func (cli *VCDClient) lockVappWithName(org, vdc, vappName string) func() {
+	if vappName == "" {
+		panic("vApp name not found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", org, vdc, vappName)
+	vcdMutexKV.kvLock(key)
+
+	return func() {
+		vcdMutexKV.kvUnlock(key)
+	}
+}
+
 // lockParentVm locks using vapp_name and vm_name names existing in resource parameters.
 // Parent means the resource belongs to the VM being locked
 //
