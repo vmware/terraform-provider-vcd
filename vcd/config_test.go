@@ -232,14 +232,15 @@ type TestConfig struct {
 	} `json:"testEnvBuild"`
 	EnvVariables map[string]string `json:"envVariables,omitempty"`
 	Cse          struct {
-		Version       string `json:"version,omitempty"`
-		SolutionsOrg  string `json:"solutionsOrg,omitempty"`
-		TenantOrg     string `json:"tenantOrg,omitempty"`
-		Vdc           string `json:"vdc,omitempty"`
-		OvaCatalog    string `json:"ovaCatalog,omitempty"`
-		OvaName       string `json:"ovaName,omitempty"`
-		RoutedNetwork string `json:"routedNetwork,omitempty"`
-		EdgeGateway   string `json:"edgeGateway,omitempty"`
+		Version        string `json:"version,omitempty"`
+		StorageProfile string `json:"storageProfile,omitempty"`
+		SolutionsOrg   string `json:"solutionsOrg,omitempty"`
+		TenantOrg      string `json:"tenantOrg,omitempty"`
+		TenantVdc      string `json:"tenantVdc,omitempty"`
+		OvaCatalog     string `json:"ovaCatalog,omitempty"`
+		OvaName        string `json:"ovaName,omitempty"`
+		RoutedNetwork  string `json:"routedNetwork,omitempty"`
+		EdgeGateway    string `json:"edgeGateway,omitempty"`
 	} `json:"cse,omitempty"`
 }
 
