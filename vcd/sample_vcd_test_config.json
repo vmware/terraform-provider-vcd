@@ -226,11 +226,24 @@
     "VCD_ADD_PROVIDER": "",
     "REMOVE_ORG_VDC_FROM_TEMPLATE": ""
   },
+  "cse": {
+    "version": "4.1.0",
+    "solutionsOrg": "solutions_org",
+    "tenantOrg": "tenant_org",
+    "vdc": "tenant_vdc",
+    "routedNetwork": "tenant_net_routed",
+    "edgeGateway": "tenant_edgegateway",
+    "ovaCatalog": "tkgm_catalog",
+    "ovaName": "ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc"
+  },
+
   "cse" :{
     "//" : "Only needed to test Container Service Extension specific resources",
+    "version": "4.2.0",
     "solutionsOrg" : "solutions_org",
+    "storageProfile": "*",
     "tenantOrg" : "tenant_org",
-    "vdc": "tenant_vdc",
+    "tenantVdc": "tenant_vdc",
     "routedNetwork": "tenant_net_routed",
     "edgeGateway": "tenant_edgegateway",
     "ovaCatalog": "tkgm_catalog",
