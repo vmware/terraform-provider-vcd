@@ -74,6 +74,6 @@ func datasourceVcdVersionRead(_ context.Context, d *schema.ResourceData, meta in
 	}
 
 	// The ID is artificial, and we try to identify each data source instance unequivocally through its parameters.
-	d.SetId(fmt.Sprintf("vcd_version=%s,condition=%s,fail_if_not_match=%t", vcdVersion, d.Get("condition"), d.Get("fail_if_not_match")))
+	d.SetId(fmt.Sprintf("vcd_version='%s',condition='%s',fail_if_not_match='%t'", vcdVersion, d.Get("condition"), d.Get("fail_if_not_match")))
 	return nil
 }

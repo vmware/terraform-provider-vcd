@@ -33,11 +33,11 @@ func TestAccVcdVersion(t *testing.T) {
 
 	step1 := templateFill(testAccVcdVersion, params)
 
-	params["FuncName"] = params["FuncName"].(string) + "-step2"
+	params["FuncName"] = t.Name() + "-step2"
 	params["FailIfNotMatch"] = "true"
 	step2 := templateFill(testAccVcdVersion, params)
 
-	params["FuncName"] = params["FuncName"].(string) + "-step3"
+	params["FuncName"] = t.Name() + "-step3"
 	params["Condition"] = "= " + currentVersion
 	step3 := templateFill(testAccVcdVersion, params)
 
@@ -53,7 +53,7 @@ func TestAccVcdVersion(t *testing.T) {
 			{
 				Config: step1,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.vcd_version.version", "id", fmt.Sprintf("vcd_version=%s,condition=%s,fail_if_not_match=false", currentVersion, params["Condition"])),
+					resource.TestCheckResourceAttr("data.vcd_version.version", "id", fmt.Sprintf("vcd_version='%s',condition='>= 99.99.99',fail_if_not_match='false'", currentVersion)),
 					resource.TestCheckResourceAttr("data.vcd_version.version", "vcd_version", currentVersion),
 					resource.TestCheckResourceAttr("data.vcd_version.version", "api_version", apiVersion),
 					resource.TestCheckResourceAttr("data.vcd_version.version", "matches_condition", "false"),
@@ -66,7 +66,7 @@ func TestAccVcdVersion(t *testing.T) {
 			{
 				Config: step3,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.vcd_version.version", "id", fmt.Sprintf("vcd_version=%s,condition=%s,fail_if_not_match=true", currentVersion, params["Condition"])),
+					resource.TestCheckResourceAttr("data.vcd_version.version", "id", fmt.Sprintf("vcd_version='%s',condition='= %s',fail_if_not_match='true'", currentVersion, currentVersion)),
 					resource.TestCheckResourceAttr("data.vcd_version.version", "vcd_version", currentVersion),
 					resource.TestCheckResourceAttr("data.vcd_version.version", "api_version", apiVersion),
 					resource.TestCheckResourceAttr("data.vcd_version.version", "matches_condition", "true"),
