@@ -2,14 +2,12 @@ module github.com/vmware/terraform-provider-vcd/v3
 
 go 1.21
 
-toolchain go1.21.6
-
 require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.31.0
 	github.com/kr/pretty v0.2.1
-	github.com/vmware/go-vcloud-director/v2 v2.22.0
+	github.com/vmware/go-vcloud-director/v2 v2.23.0-alpha.3
 )
 
 require (
@@ -69,4 +67,4 @@ require (
 	google.golang.org/protobuf v1.31.0 // indirect
 )
 
-replace github.com/vmware/go-vcloud-director/v2 => github.com/adambarreiro/go-vcloud-director/v2 v2.17.0-alpha.1.0.20240301112016-5018bed64835
+replace github.com/vmware/go-vcloud-director/v2 => github.com/adambarreiro/go-vcloud-director/v2 v2.17.0-alpha.1.0.20240304135714-39b8d8535d91

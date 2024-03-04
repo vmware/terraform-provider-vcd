@@ -150,7 +150,8 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdVmObject(testConfig.VCD.Org, vdcName, vappName, vmName, "3000"),
 				// These fields can't be retrieved
-				ImportStateVerifyIgnore: []string{"org", "vdc", "allow_vm_reboot", "thin_provisioned"},
+				ImportStateVerifyIgnore: []string{"org", "vdc", "allow_vm_reboot", "thin_provisioned",
+					"consolidate_disks_on_create"},
 			},
 		},
 	})

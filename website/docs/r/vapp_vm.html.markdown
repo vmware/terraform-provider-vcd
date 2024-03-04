@@ -197,6 +197,10 @@ resource "vcd_vapp_vm" "internalDiskOverride" {
   cpus             = 2
   cpu_cores        = 1
 
+  # Fast provisioned VDCs require disks to be consolidated
+  # if their size is to be changed
+  # consolidate_disks_on_create = true 
+
   override_template_disk {
     bus_type        = "paravirtual"
     size_in_mb      = "22384"
@@ -479,6 +483,11 @@ example for usage details.
 * `description`  - (Optional; *v2.9+*) The VM description. Note: for VM from Template `description` is read only. Currently, this field has
   the description of the OVA used to create the VM.
 * `override_template_disk` - (Optional; *v2.7+*) Allows to update internal disk in template before first VM boot. Disk is matched by `bus_type`, `bus_number` and `unit_number`. See [Override template Disk](#override-template-disk) below for details.
+* `consolidate_disks_on_create` - (Optional; *3.12+*) Performs disk consolidation during creation.
+  The main use case is when one wants to grow template disk size using `override_template_disk` in
+  fast provisioned VDCs. **Note:** Consolidating disks requires right `vApp: VM Migrate, Force
+  Undeploy, Relocate, Consolidate`. This operation _may take long time_ depending on disk size and
+  storage performance.
 * `network_dhcp_wait_seconds` - (Optional; *v2.7+*) Optional number of seconds to try and wait for DHCP IP (only valid
   for adapters in `network` block with `ip_allocation_mode=DHCP`). It constantly checks if IP is present so the time given
   is a maximum. VM must be powered on and _at least one_ of the following _must be true_:
@@ -584,7 +593,8 @@ example for usage details.
 Allows to update internal disk in template before first VM boot. Disk is matched by `bus_type`, `bus_number` and `unit_number`.
 Changes are ignored on update. This part isn't reread on refresh. To manage internal disk later please use [`vcd_vm_internal_disk`](/providers/vmware/vcd/latest/docs/resources/vm_internal_disk) resource.
  
-~> **Note:** Managing disks in VM is possible only when VDC fast provisioned is disabled.
+~> **Note:** Managing disks in VM with fast provisioned VDC require
+[`consolidate_disks_on_create`](#consolidate_disks_on_create) option.
 
 * `bus_type` - (Required) The type of disk controller. Possible values: `ide`, `parallel`( LSI Logic Parallel SCSI),
   `sas`(LSI Logic SAS (SCSI)), `paravirtual`(Paravirtual (SCSI)), `sata`, `nvme`. **Note** `nvme` requires *v3.5.0+* and
