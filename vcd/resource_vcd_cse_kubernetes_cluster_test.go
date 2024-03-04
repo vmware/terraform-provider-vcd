@@ -450,7 +450,7 @@ func TestAccVcdCseKubernetesClusterFailure(t *testing.T) {
 		}
 	}()
 
-	clusterName := "cseKubernetesClusterFailure" // We can't use the test name as it is too long
+	clusterName := "cse-k8s-cluster-failure" // We can't use the test name as it is too long
 
 	var params = StringMap{
 		"CseVersion":         testConfig.Cse.Version,
