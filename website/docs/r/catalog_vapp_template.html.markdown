@@ -53,7 +53,7 @@ resource "vcd_catalog_vapp_template" "myNewVappTemplate" {
 
 -> If vApp Template upload fails, or you need to re-upload it, you can do a `terraform apply -replace=vcd_catalog_vapp_template.myNewVappTemplate`.
 
-## Capturing from existing vApp
+## Example Usage (Capturing from existing vApp)
 
 ```hcl
 data "vcd_catalog" "cat" {
@@ -65,7 +65,7 @@ resource "vcd_catalog_vapp_template" "from-vapp" {
   org        = "v51"
   catalog_id = data.vcd_catalog.cat.id
 
-  name        = "from-vapp"
+  name = "from-vapp"
 
   capture_vapp {
     source_id                = vcd_vapp.web.id
@@ -77,14 +77,14 @@ resource "vcd_catalog_vapp_template" "from-vapp" {
   }
 
   metadata = {
-    vapp_template_metadata  = "vApp Template Metadata"
+    vapp_template_metadata = "vApp Template Metadata"
   }
 
   depends_on = [vcd_vapp_vm.emptyVM] # ensuring all VMs are present in vApp
 }
 ```
 
-## Capturing from existing Standalone VM
+## Example Usage (Capturing from existing Standalone VM)
 
 ```hcl
 data "vcd_catalog" "cat" {
@@ -96,11 +96,11 @@ resource "vcd_catalog_vapp_template" "from-standalone-vm" {
   org        = "v51"
   catalog_id = data.vcd_catalog.cat.id
 
-  name        = "captured-vApp"
+  name = "captured-vApp"
 
   capture_vapp {
     source_id                = vcd_vm.standalone.vapp_id # parent hidden vApp must be referenced
-    customize_on_instantiate = true # can only be `true` if source vApp is powered off
+    customize_on_instantiate = true                      # can only be `true` if source vApp is powered off
   }
 }
 ```
@@ -135,14 +135,14 @@ The following arguments are supported:
 ## Capture vApp template from existing vApp or Standalone VM
 
 * `source_id` - (Required) Source vApp ID (can be referenced by `vcd_vapp.id` or
-  `vcd_vm.vapp_id`/`vcd_vapp_vm.vapp_id`).
+  `vcd_vm.vapp_id`/`vcd_vapp_vm.vapp_id`)
 * `overwrite_catalog_item_id` - (Optional) Optionally newly created template can overwrite. It can
   either be `id` field of `vcd_catalog_item` resource or `catalog_item_id` field of
-  `vcd_catalog_vapp_template` resource.
+  `vcd_catalog_vapp_template` resource
 * `customize_on_instantiate` - (Optional) Default `false` - means "Make identical copy". `true`
-  means "Customize VM settings". *Note* `true` can only be set when source vApp is powered off.
+  means "Customize VM settings". *Note* `true` can only be set when source vApp is powered off
 * `copy_tpm_on_instantiate` - (Optional; *vCD 10.4.2+*)  When `true` - enables TPM (Trusted Platform
-  Module) copy. `false` means new device is created.
+  Module) copy. `false` means new device is created. Default is `false`
 
 <a id="metadata"></a>
 ## Metadata

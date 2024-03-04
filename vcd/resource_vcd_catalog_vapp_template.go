@@ -53,30 +53,30 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Optional:    true,
 				Type:        schema.TypeList,
 				MaxItems:    1,
-				Description: "",
+				Description: "Provides configuration options for creating a template from existing vApp",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"source_id": {
 							Optional:    true,
 							Type:        schema.TypeString,
-							Description: "",
+							Description: "Source vApp ID (can be a vApp ID or 'vapp_id' field of standalone VM 'vcd_vm')",
 						},
 						"overwrite_catalog_item_id": {
 							Optional:    true,
 							Type:        schema.TypeString,
-							Description: "",
+							Description: "An existing catalog item ID to overwrite",
 						},
 						"customize_on_instantiate": {
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     false,
-							Description: "",
+							Description: "Marks if instantiating applies customization settings ('true'). Default is 'false` - create an identical copy.",
 						},
 						"copy_tpm_on_instantiate": {
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     false,
-							Description: "VCD 10.4.2+",
+							Description: "Defines if Trusted Platform Module should be copied (false) or created (true). Default 'false'. VCD 10.4.2+",
 						},
 					},
 				},

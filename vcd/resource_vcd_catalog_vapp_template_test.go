@@ -833,128 +833,128 @@ resource "vcd_vm" "captured" {
 // 	postTestChecks(t)
 // }
 
-const testAccVcdCatalogVAppTemplateCaptureEmptyPoweredOffEfiTpm = `
-data "vcd_catalog" "cat" {
-  org  = "{{.Org}}"
-  name = "{{.Catalog}}"
-}
+// const testAccVcdCatalogVAppTemplateCaptureEmptyPoweredOffEfiTpm = `
+// data "vcd_catalog" "cat" {
+//   org  = "{{.Org}}"
+//   name = "{{.Catalog}}"
+// }
 
-data "vcd_catalog_vapp_template" "three-vms" {
-  org        = "{{.Org}}"
-  catalog_id = data.vcd_catalog.cat.id
-  name       = "{{.CatalogItem}}"
-}
+// data "vcd_catalog_vapp_template" "three-vms" {
+//   org        = "{{.Org}}"
+//   catalog_id = data.vcd_catalog.cat.id
+//   name       = "{{.CatalogItem}}"
+// }
 
-resource "vcd_vapp" "web" {
-  org      = "{{.Org}}"
-  name     = "{{.TestName}}-vapp"
-  power_on = true
-}
+// resource "vcd_vapp" "web" {
+//   org      = "{{.Org}}"
+//   name     = "{{.TestName}}-vapp"
+//   power_on = true
+// }
 
-resource "vcd_vapp_vm" "emptyVM" {
-  org  = "{{.Org}}"
-  name = "{{.TestName}}-vm"
+// resource "vcd_vapp_vm" "emptyVM" {
+//   org  = "{{.Org}}"
+//   name = "{{.TestName}}-vm"
 
-  vapp_template_id = data.vcd_catalog_vapp_template.three-vms.id
-  
-  firmware = "efi"
-  
-  power_on      = true
-  vapp_name     = vcd_vapp.web.name
-  computer_name = "emptyVM"
-  memory        = 1024
-  cpus          = 2
-  cpu_cores     = 1 
-}
+//   vapp_template_id = data.vcd_catalog_vapp_template.three-vms.id
 
-resource "vcd_vm" "standalone" {
-  org      = "{{.Org}}"
-  name     = "{{.TestName}}-vm"
-  power_on = true
+//   firmware = "efi"
 
-  vapp_template_id = data.vcd_catalog_vapp_template.three-vms.id
+//   power_on      = true
+//   vapp_name     = vcd_vapp.web.name
+//   computer_name = "emptyVM"
+//   memory        = 1024
+//   cpus          = 2
+//   cpu_cores     = 1
+// }
 
-  firmware = "efi"
+// resource "vcd_vm" "standalone" {
+//   org      = "{{.Org}}"
+//   name     = "{{.TestName}}-vm"
+//   power_on = true
 
-  computer_name = "emptyVM"
-  memory        = 1024
-  cpus          = 2
-  cpu_cores     = 1
-}
+//   vapp_template_id = data.vcd_catalog_vapp_template.three-vms.id
 
-resource "vcd_catalog_vapp_template" "from-vapp-no-customization" {
-  org        = "{{.Org}}"
-  catalog_id = data.vcd_catalog.cat.id
+//   firmware = "efi"
 
-  name                    = "{{.VAppTemplateName}}-from-vapp-no-cust"
-  description             = "{{.Description}}"
+//   computer_name = "emptyVM"
+//   memory        = 1024
+//   cpus          = 2
+//   cpu_cores     = 1
+// }
 
-  capture_vapp {
-	source_id                = vcd_vapp.web.id
-	customize_on_instantiate = false
-	copy_tpm_on_instantiate  = true
-  }
+// resource "vcd_catalog_vapp_template" "from-vapp-no-customization" {
+//   org        = "{{.Org}}"
+//   catalog_id = data.vcd_catalog.cat.id
 
-  lease {
-	storage_lease_in_sec = 3600*24*3
-  }
+//   name                    = "{{.VAppTemplateName}}-from-vapp-no-cust"
+//   description             = "{{.Description}}"
 
-  depends_on = [ vcd_vapp_vm.emptyVM ]
-}
+//   capture_vapp {
+// 	source_id                = vcd_vapp.web.id
+// 	customize_on_instantiate = false
+// 	copy_tpm_on_instantiate  = true
+//   }
 
-resource "vcd_catalog_vapp_template" "from-standalone-vm-no-customization" {
-  org        = "{{.Org}}"
-  catalog_id = data.vcd_catalog.cat.id
+//   lease {
+// 	storage_lease_in_sec = 3600*24*3
+//   }
 
-  name                    = "{{.VAppTemplateName}}-from-standalone-no-cust"
-  description             = "{{.Description}}"
+//   depends_on = [ vcd_vapp_vm.emptyVM ]
+// }
 
-  capture_vapp {
-    source_id                = vcd_vm.standalone.vapp_id
-    customize_on_instantiate = false
-	copy_tpm_on_instantiate  = true
-  }
+// resource "vcd_catalog_vapp_template" "from-standalone-vm-no-customization" {
+//   org        = "{{.Org}}"
+//   catalog_id = data.vcd_catalog.cat.id
 
-  lease {
-	storage_lease_in_sec = 3600*24*3
-  }
-}
+//   name                    = "{{.VAppTemplateName}}-from-standalone-no-cust"
+//   description             = "{{.Description}}"
 
-resource "vcd_vapp" "captured" {
-  org      = "{{.Org}}"
-  name     = "{{.TestName}}-vapp-captured"
-  power_on = true
-}
+//   capture_vapp {
+//     source_id                = vcd_vm.standalone.vapp_id
+//     customize_on_instantiate = false
+// 	copy_tpm_on_instantiate  = true
+//   }
 
-resource "vcd_vapp_vm" "captured" {
-  org  = "{{.Org}}"
-  name = "{{.TestName}}-vm"
+//   lease {
+// 	storage_lease_in_sec = 3600*24*3
+//   }
+// }
 
-  vapp_template_id = vcd_catalog_vapp_template.from-vapp-no-customization.id
-  
-  firmware      = "efi"
-  power_on      = true
-  vapp_name     = vcd_vapp.captured.name
-  computer_name = "emptyVM"
-  memory        = 1024
-  cpus          = 2
-  cpu_cores     = 1 
-}
+// resource "vcd_vapp" "captured" {
+//   org      = "{{.Org}}"
+//   name     = "{{.TestName}}-vapp-captured"
+//   power_on = true
+// }
 
-resource "vcd_vm" "captured" {
-  org      = "{{.Org}}"
-  name     = "{{.TestName}}-vm"
-  power_on = true
+// resource "vcd_vapp_vm" "captured" {
+//   org  = "{{.Org}}"
+//   name = "{{.TestName}}-vm"
 
-  vapp_template_id = vcd_catalog_vapp_template.from-standalone-vm-no-customization.id
+//   vapp_template_id = vcd_catalog_vapp_template.from-vapp-no-customization.id
 
-  firmware      = "efi"
-  computer_name = "emptyVM"
-  memory        = 1024
-  cpus          = 2
-  cpu_cores     = 1
-}
-`
+//   firmware      = "efi"
+//   power_on      = true
+//   vapp_name     = vcd_vapp.captured.name
+//   computer_name = "emptyVM"
+//   memory        = 1024
+//   cpus          = 2
+//   cpu_cores     = 1
+// }
+
+// resource "vcd_vm" "captured" {
+//   org      = "{{.Org}}"
+//   name     = "{{.TestName}}-vm"
+//   power_on = true
+
+//   vapp_template_id = vcd_catalog_vapp_template.from-standalone-vm-no-customization.id
+
+//   firmware      = "efi"
+//   computer_name = "emptyVM"
+//   memory        = 1024
+//   cpus          = 2
+//   cpu_cores     = 1
+// }
+// `
 
 func TestAccVcdCatalogVAppTemplateOverwriteExistingItem(t *testing.T) {
 	preTestChecks(t)
