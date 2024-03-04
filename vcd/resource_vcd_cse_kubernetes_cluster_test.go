@@ -64,13 +64,16 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 		"Vdc":                testConfig.Cse.Vdc,
 		"EdgeGateway":        testConfig.Cse.EdgeGateway,
 		"Network":            testConfig.Cse.RoutedNetwork,
-		"TokenName":          t.Name() + "2", // FIXME: Remove suffix
+		"TokenName":          t.Name(),
 		"TokenFile":          tokenFilename,
 		"ControlPlaneCount":  1,
 		"NodePoolCount":      1,
 		"ExtraWorkerPool":    " ",
+		"PodsCidr":           "100.96.0.0/11",
+		"ServicesCidr":       "100.64.0.0/13",
 		"AutoRepairOnErrors": true,
 		"NodeHealthCheck":    true,
+		"Timeout":            150,
 	}
 	testParamsNotEmpty(t, params)
 
@@ -420,6 +423,86 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	postTestChecks(t)
 }
 
+func TestAccVcdCseKubernetesClusterFailure(t *testing.T) {
+	preTestChecks(t)
+	requireCseConfig(t, testConfig)
+
+	vcdClient := createSystemTemporaryVCDConnection()
+
+	cseVersion, err := semver.NewVersion(testConfig.Cse.Version)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tokenFilename := getCurrentDir() + t.Name() + ".json"
+	defer func() {
+		// Clean the API Token file
+		if fileExists(tokenFilename) {
+			err := os.Remove(tokenFilename)
+			if err != nil {
+				fmt.Printf("could not delete API token file '%s', please delete it manually", tokenFilename)
+			}
+		}
+	}()
+
+	clusterName := strings.ToLower(t.Name())
+
+	var params = StringMap{
+		"CseVersion":         testConfig.Cse.Version,
+		"Name":               clusterName,
+		"OvaCatalog":         testConfig.Cse.OvaCatalog,
+		"OvaName":            testConfig.Cse.OvaName,
+		"KubernetesOva":      "data.vcd_catalog_vapp_template.tkg_ova.id",
+		"SolutionsOrg":       testConfig.Cse.SolutionsOrg,
+		"TenantOrg":          testConfig.Cse.TenantOrg,
+		"Vdc":                testConfig.Cse.Vdc,
+		"EdgeGateway":        testConfig.Cse.EdgeGateway,
+		"Network":            testConfig.Cse.RoutedNetwork,
+		"TokenName":          t.Name(),
+		"TokenFile":          tokenFilename,
+		"ControlPlaneCount":  1,
+		"NodePoolCount":      1,
+		"ExtraWorkerPool":    " ",
+		"PodsCidr":           "1.2.3.4/24", // This will make the cluster to fail
+		"ServicesCidr":       "5.6.7.8/24", // This will make the cluster to fail
+		"AutoRepairOnErrors": true,
+		"NodeHealthCheck":    true,
+		"Timeout":            150,
+	}
+	testParamsNotEmpty(t, params)
+
+	step1 := templateFill(testAccVcdCseKubernetesCluster, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy: func(state *terraform.State) error {
+			org, err := vcdClient.GetOrgByName(testConfig.Cse.TenantOrg)
+			if err != nil {
+				return fmt.Errorf("could not check cluster deletion: %s", err)
+			}
+			clusters, err := org.CseGetKubernetesClustersByName(*cseVersion, clusterName)
+			if err != nil {
+				return fmt.Errorf("could not check cluster deletion: %s", err)
+			}
+			if len(clusters) != 0 {
+				return fmt.Errorf("there are still %d clusters with name '%s': %s", len(clusters), clusterName, err)
+			}
+			return nil
+		},
+		Steps: []resource.TestStep{
+			{
+				Config:      step1,
+				ExpectError: regexp.MustCompile("asd"),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
 const testAccVcdCseKubernetesCluster = `
 # skip-binary-test - This one requires a very special setup
 
@@ -501,9 +584,12 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
     filesystem         = "ext4"
   }
 
+  pods_cidr     = "{{.PodsCidr}}"
+  services_cidr = "{{.ServicesCidr}}"
+
   auto_repair_on_errors = {{.AutoRepairOnErrors}}
   node_health_check     = {{.NodeHealthCheck}}
 
-  operations_timeout_minutes = 150
+  operations_timeout_minutes = {{.Timeout}}
 }
 `
