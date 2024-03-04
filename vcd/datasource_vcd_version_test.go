@@ -41,11 +41,19 @@ func TestAccVcdVersion(t *testing.T) {
 	params["Condition"] = "= " + currentVersion
 	step3 := templateFill(testAccVcdVersion, params)
 
+	params["FuncName"] = t.Name() + "-step4"
+	params["Condition"] = " " // Not used, but illustrates the point of this check
+	params["FailIfNotMatch"] = " "
+	step4 := templateFill(testAccVcdVersionWithoutArguments, params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION step1: %s", step1)
+	debugPrintf("#[DEBUG] CONFIGURATION step2: %s", step2)
+	debugPrintf("#[DEBUG] CONFIGURATION step3: %s", step3)
+	debugPrintf("#[DEBUG] CONFIGURATION step4: %s", step4)
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -72,6 +80,15 @@ func TestAccVcdVersion(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_version.version", "matches_condition", "true"),
 				),
 			},
+			{
+				Config: step4,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("data.vcd_version.version", "id", fmt.Sprintf("vcd_version='%s',condition='',fail_if_not_match='false'", currentVersion)),
+					resource.TestCheckResourceAttr("data.vcd_version.version", "vcd_version", currentVersion),
+					resource.TestCheckResourceAttr("data.vcd_version.version", "api_version", apiVersion),
+					resource.TestCheckNoResourceAttr("data.vcd_version.version", "matches_condition"),
+				),
+			},
 		},
 	})
 	postTestChecks(t)
@@ -81,5 +98,10 @@ const testAccVcdVersion = `
 data "vcd_version" "version" {
   condition         = "{{.Condition}}"
   fail_if_not_match = {{.FailIfNotMatch}}
+}
+`
+
+const testAccVcdVersionWithoutArguments = `
+data "vcd_version" "version" {
 }
 `
