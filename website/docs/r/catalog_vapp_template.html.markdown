@@ -141,8 +141,6 @@ The following arguments are supported:
   `vcd_catalog_vapp_template` resource
 * `customize_on_instantiate` - (Optional) Default `false` - means "Make identical copy". `true`
   means "Customize VM settings". *Note* `true` can only be set when source vApp is powered off
-* `copy_tpm_on_instantiate` - (Optional; *vCD 10.4.2+*)  When `true` - enables TPM (Trusted Platform
-  Module) copy. `false` means new device is created. Default is `false`
 
 <a id="metadata"></a>
 ## Metadata
