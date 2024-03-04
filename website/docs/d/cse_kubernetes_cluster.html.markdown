@@ -27,7 +27,7 @@ the desired cluster and obtaining the ID from the displayed information.
 
 ```hcl
 data "vcd_cse_kubernetes_cluster" "my_cluster" {
-  cluster_id  = "urn:vcloud:entity:vmware:capvcdCluster:e8e82bcc-50a1-484f-9dd0-20965ab3e865"
+  cluster_id = "urn:vcloud:entity:vmware:capvcdCluster:e8e82bcc-50a1-484f-9dd0-20965ab3e865"
 }
 ```
 
