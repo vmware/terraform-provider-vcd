@@ -32,28 +32,28 @@ func TestAccVcdVersion(t *testing.T) {
 	testParamsNotEmpty(t, params)
 
 	step1 := templateFill(testAccVcdVersion, params)
+	debugPrintf("#[DEBUG] CONFIGURATION step1: %s", step1)
 
 	params["FuncName"] = t.Name() + "-step2"
 	params["FailIfNotMatch"] = "true"
 	step2 := templateFill(testAccVcdVersion, params)
+	debugPrintf("#[DEBUG] CONFIGURATION step2: %s", step2)
 
 	params["FuncName"] = t.Name() + "-step3"
 	params["Condition"] = "= " + currentVersion
 	step3 := templateFill(testAccVcdVersion, params)
+	debugPrintf("#[DEBUG] CONFIGURATION step3: %s", step3)
 
 	params["FuncName"] = t.Name() + "-step4"
 	params["Condition"] = " " // Not used, but illustrates the point of this check
 	params["FailIfNotMatch"] = " "
 	step4 := templateFill(testAccVcdVersionWithoutArguments, params)
+	debugPrintf("#[DEBUG] CONFIGURATION step4: %s", step4)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION step1: %s", step1)
-	debugPrintf("#[DEBUG] CONFIGURATION step2: %s", step2)
-	debugPrintf("#[DEBUG] CONFIGURATION step3: %s", step3)
-	debugPrintf("#[DEBUG] CONFIGURATION step4: %s", step4)
 
 	resource.ParallelTest(t, resource.TestCase{
 		ProviderFactories: testAccProviders,

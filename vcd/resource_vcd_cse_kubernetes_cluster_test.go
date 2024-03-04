@@ -78,21 +78,25 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	testParamsNotEmpty(t, params)
 
 	step1 := templateFill(testAccVcdCseKubernetesCluster, params)
+	debugPrintf("#[DEBUG] CONFIGURATION step1: %s", step1)
 
 	params["FuncName"] = t.Name() + "Step2"
 	params["ControlPlaneCount"] = 3
 	step2 := templateFill(testAccVcdCseKubernetesCluster, params)
+	debugPrintf("#[DEBUG] CONFIGURATION step2: %s", step2)
 
 	params["FuncName"] = t.Name() + "Step3"
 	params["ControlPlaneCount"] = 1
 	params["NodePoolCount"] = 2
 	step3 := templateFill(testAccVcdCseKubernetesCluster, params)
+	debugPrintf("#[DEBUG] CONFIGURATION step3: %s", step3)
 
 	params["FuncName"] = t.Name() + "Step4"
 	params["ControlPlaneCount"] = 1
 	params["NodePoolCount"] = 1
 	params["NodeHealthCheck"] = false
 	step4 := templateFill(testAccVcdCseKubernetesCluster, params)
+	debugPrintf("#[DEBUG] CONFIGURATION step4: %s", step4)
 
 	extraWorkerPool := "  worker_pool {\n" +
 		"    name               = \"worker-pool-2\"\n" +
@@ -106,6 +110,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	params["NodeHealthCheck"] = true
 	params["ExtraWorkerPool"] = extraWorkerPool
 	step5 := templateFill(testAccVcdCseKubernetesCluster, params)
+	debugPrintf("#[DEBUG] CONFIGURATION step5: %s", step5)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -472,6 +477,7 @@ func TestAccVcdCseKubernetesClusterFailure(t *testing.T) {
 	testParamsNotEmpty(t, params)
 
 	step1 := templateFill(testAccVcdCseKubernetesCluster, params)
+	debugPrintf("#[DEBUG] CONFIGURATION step1: %s", step1)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -496,7 +502,7 @@ func TestAccVcdCseKubernetesClusterFailure(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      step1,
-				ExpectError: regexp.MustCompile("asd"),
+				ExpectError: regexp.MustCompile(`Kubernetes cluster creation finished, but it is not in 'provisioned' state \(it ended in 'error' state\)`),
 			},
 		},
 	})

@@ -479,7 +479,7 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 	d.SetId(cluster.ID)
 
 	if cluster.State != "provisioned" {
-		return diag.Errorf("Kubernetes cluster creation finished, but it is not in 'provisioned' state: '%s'", err)
+		return diag.Errorf("Kubernetes cluster creation finished, but it is not in 'provisioned' state (it ended in '%s' state): %s", cluster.State, err)
 	}
 
 	return resourceVcdCseKubernetesRead(ctx, d, meta)
