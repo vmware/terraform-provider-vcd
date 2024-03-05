@@ -113,6 +113,10 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	step5 := templateFill(testAccVcdCseKubernetesCluster, params)
 	debugPrintf("#[DEBUG] CONFIGURATION step5: %s", step5)
 
+	params["FuncName"] = t.Name() + "Step6"
+	step6 := templateFill(testAccVcdCseKubernetesCluster+testAccVcdCseKubernetesClusterDS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION step6: %s", step5)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -411,6 +415,15 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestMatchResourceAttr(clusterName, "events.#", regexp.MustCompile(`^[1-9][0-9]*$`)),
 				),
 			},
+			// Test data sources
+			{
+				Config: step6,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resourceFieldsEqual(clusterName, "data.vcd_cse_kubernetes_cluster.with_id_ds", []string{"org_id", "org", "operations_timeout_minutes", "api_token_file"}),
+					resourceFieldsEqual(clusterName, "data.vcd_cse_kubernetes_cluster.with_name_ds", []string{"org_id", "org", "operations_timeout_minutes", "api_token_file"}),
+					resourceFieldsEqual("data.vcd_cse_kubernetes_cluster.with_id_ds", "data.vcd_cse_kubernetes_cluster.with_name_ds", nil),
+				),
+			},
 			{
 				ResourceName:      clusterName,
 				ImportState:       true,
@@ -421,7 +434,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 				// Ignore api_token_file and operations_timeout_minutes as these are not computed from VCD, so they are missing
 				// after any successful import.
 				// Ignore also owner and org as these may not be set in the resource configuration, but they are always
-				// computed.
+				// set on imports.
 				ImportStateVerifyIgnore: []string{"api_token_file", "operations_timeout_minutes", "owner", "org"},
 			},
 		},
@@ -464,7 +477,7 @@ func TestAccVcdCseKubernetesClusterFailure(t *testing.T) {
 		"Vdc":                testConfig.Cse.TenantVdc,
 		"EdgeGateway":        testConfig.Cse.EdgeGateway,
 		"Network":            testConfig.Cse.RoutedNetwork,
-		"TokenName":          t.Name(),
+		"TokenName":          t.Name() + "3",
 		"TokenFile":          tokenFilename,
 		"ControlPlaneCount":  1,
 		"NodePoolCount":      1,
@@ -598,5 +611,23 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
   node_health_check     = {{.NodeHealthCheck}}
 
   operations_timeout_minutes = {{.Timeout}}
+}
+`
+
+const testAccVcdCseKubernetesClusterDS = `
+# skip-binary-test - This one requires a very special setup
+
+data "vcd_org" "tenant_org" {
+  name = "tenant_org"
+}
+
+data "vcd_cse_kubernetes_cluster" "with_id_ds" {
+  cluster_id = vcd_cse_kubernetes_cluster.my_cluster.id
+}
+
+data "vcd_cse_kubernetes_cluster" "with_name_ds" {
+  org_id      = data.vcd_org.tenant_org.id
+  cse_version = vcd_cse_kubernetes_cluster.my_cluster.cse_version
+  name        = vcd_cse_kubernetes_cluster.my_cluster.name
 }
 `
