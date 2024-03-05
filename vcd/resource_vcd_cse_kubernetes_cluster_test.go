@@ -470,7 +470,7 @@ func TestAccVcdCseKubernetesClusterFailure(t *testing.T) {
 		"ExtraWorkerPool":    " ",
 		"PodsCidr":           "1.2.3.4/24", // This will make the cluster to fail
 		"ServicesCidr":       "5.6.7.8/24", // This will make the cluster to fail
-		"AutoRepairOnErrors": false,
+		"AutoRepairOnErrors": false,        // This must be false
 		"NodeHealthCheck":    false,
 		"Timeout":            150,
 	}
