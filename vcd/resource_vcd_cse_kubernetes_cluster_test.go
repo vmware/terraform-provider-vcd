@@ -7,6 +7,7 @@ import (
 	semver "github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"os"
 	"reflect"
 	"regexp"
@@ -491,13 +492,13 @@ func TestAccVcdCseKubernetesClusterFailure(t *testing.T) {
 				return fmt.Errorf("could not check cluster deletion: %s", err)
 			}
 			clusters, err := org.CseGetKubernetesClustersByName(*cseVersion, clusterName)
-			if err != nil {
+			if err != nil && !govcd.IsNotFound(err) {
 				return fmt.Errorf("could not check cluster deletion: %s", err)
 			}
-			if len(clusters) != 0 {
-				return fmt.Errorf("there are still %d clusters with name '%s': %s", len(clusters), clusterName, err)
+			if len(clusters) == 0 || govcd.IsNotFound(err) {
+				return nil
 			}
-			return nil
+			return fmt.Errorf("there are still %d clusters with name '%s': %s", len(clusters), clusterName, err)
 		},
 		Steps: []resource.TestStep{
 			{
