@@ -271,12 +271,12 @@ such as `terraform plan`. Each comment in the code gives some context about how 
 # This must NOT be created with Terraform beforehand, it is just a shell that will receive the information
 # None of the arguments are required during the Import phase, but they will be asked when operating it afterwards
 resource "vcd_cse_kubernetes_cluster" "imported_cluster" {
-  name              = "test2"                                   # The name of the existing cluster
-  cse_version       = "4.2.0"                                   # The CSE version installed in your VCD
-  kubernetes_template_id            = data.vcd_catalog_vapp_template.tkg_ova.id # See below data sources
-  vdc_id            = data.vcd_org_vdc.vdc.id                   # See below data sources
-  network_id        = data.vcd_network_routed_v2.routed.id      # See below data sources
-  node_health_check = true                                      # Whether the existing cluster has Machine Health Check enabled or not, this can be checked in UI
+  name                   = "test2"                                   # The name of the existing cluster
+  cse_version            = "4.2.0"                                   # The CSE version installed in your VCD
+  kubernetes_template_id = data.vcd_catalog_vapp_template.tkg_ova.id # See below data sources
+  vdc_id                 = data.vcd_org_vdc.vdc.id                   # See below data sources
+  network_id             = data.vcd_network_routed_v2.routed.id      # See below data sources
+  node_health_check      = true                                      # Whether the existing cluster has Machine Health Check enabled or not, this can be checked in UI
 
   control_plane {
     machine_count      = 5                                      # This is optional, but not setting it to the current value will make subsequent plans to try to scale our existing cluster to the default one
