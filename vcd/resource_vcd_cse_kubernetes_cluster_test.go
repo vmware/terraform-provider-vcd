@@ -505,10 +505,10 @@ func TestAccVcdCseKubernetesClusterFailure(t *testing.T) {
 				return fmt.Errorf("could not check cluster deletion: %s", err)
 			}
 			clusters, err := org.CseGetKubernetesClustersByName(*cseVersion, clusterName)
-			if err != nil && !govcd.IsNotFound(err) {
+			if err != nil && !govcd.ContainsNotFound(err) {
 				return fmt.Errorf("could not check cluster deletion: %s", err)
 			}
-			if len(clusters) == 0 || govcd.IsNotFound(err) {
+			if len(clusters) == 0 || govcd.ContainsNotFound(err) {
 				return nil
 			}
 			return fmt.Errorf("there are still %d clusters with name '%s': %s", len(clusters), clusterName, err)
