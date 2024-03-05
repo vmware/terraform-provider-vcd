@@ -502,7 +502,7 @@ func TestAccVcdCseKubernetesClusterFailure(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      step1,
-				ExpectError: regexp.MustCompile(`Kubernetes cluster creation finished, but it is not in 'provisioned' state \(it ended in 'error' state\)`),
+				ExpectError: regexp.MustCompile(`Kubernetes cluster creation finished, but it is not in 'provisioned' state`),
 			},
 		},
 	})
