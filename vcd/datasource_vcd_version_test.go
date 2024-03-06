@@ -5,6 +5,7 @@ package vcd
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -45,10 +46,21 @@ func TestAccVcdVersion(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION step3: %s", step3)
 
 	params["FuncName"] = t.Name() + "-step4"
+	versionTokens := strings.Split(currentVersion, ".")
+	params["Condition"] = fmt.Sprintf("~> %s.%s", versionTokens[0], versionTokens[1])
+	step4 := templateFill(testAccVcdVersion, params)
+	debugPrintf("#[DEBUG] CONFIGURATION step4: %s", step4)
+
+	params["FuncName"] = t.Name() + "-step5"
+	params["Condition"] = "!= 10.3.0"
+	step5 := templateFill(testAccVcdVersion, params)
+	debugPrintf("#[DEBUG] CONFIGURATION step5: %s", step5)
+
+	params["FuncName"] = t.Name() + "-step6"
 	params["Condition"] = " " // Not used, but illustrates the point of this check
 	params["FailIfNotMatch"] = " "
-	step4 := templateFill(testAccVcdVersionWithoutArguments, params)
-	debugPrintf("#[DEBUG] CONFIGURATION step4: %s", step4)
+	step6 := templateFill(testAccVcdVersionWithoutArguments, params)
+	debugPrintf("#[DEBUG] CONFIGURATION step6: %s", step6)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -82,6 +94,24 @@ func TestAccVcdVersion(t *testing.T) {
 			},
 			{
 				Config: step4,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("data.vcd_version.version", "id", fmt.Sprintf("vcd_version='%s',condition='~> %s.%s',fail_if_not_match='true'", currentVersion, versionTokens[0], versionTokens[1])),
+					resource.TestCheckResourceAttr("data.vcd_version.version", "vcd_version", currentVersion),
+					resource.TestCheckResourceAttr("data.vcd_version.version", "api_version", apiVersion),
+					resource.TestCheckResourceAttr("data.vcd_version.version", "matches_condition", "true"),
+				),
+			},
+			{
+				Config: step5,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("data.vcd_version.version", "id", fmt.Sprintf("vcd_version='%s',condition='!= 10.3.0',fail_if_not_match='true'", currentVersion)),
+					resource.TestCheckResourceAttr("data.vcd_version.version", "vcd_version", currentVersion),
+					resource.TestCheckResourceAttr("data.vcd_version.version", "api_version", apiVersion),
+					resource.TestCheckResourceAttr("data.vcd_version.version", "matches_condition", "true"),
+				),
+			},
+			{
+				Config: step6,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.vcd_version.version", "id", fmt.Sprintf("vcd_version='%s',condition='',fail_if_not_match='false'", currentVersion)),
 					resource.TestCheckResourceAttr("data.vcd_version.version", "vcd_version", currentVersion),
