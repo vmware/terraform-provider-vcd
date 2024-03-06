@@ -53,7 +53,7 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Optional:    true,
 				Type:        schema.TypeList,
 				MaxItems:    1,
-				Description: "Provides configuration options for creating a template from existing vApp",
+				Description: "Provides configuration options for creating a vApp Template from existing vApp",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"source_id": {

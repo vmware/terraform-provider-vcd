@@ -80,7 +80,7 @@ resource "vcd_catalog_vapp_template" "from-vapp" {
     vapp_template_metadata = "vApp Template Metadata"
   }
 
-  depends_on = [vcd_vapp_vm.emptyVM] # ensuring all VMs are present in vApp
+  depends_on = [vcd_vapp_vm.emptyVM] # Ensuring all VMs are present in vApp
 }
 ```
 
@@ -99,8 +99,8 @@ resource "vcd_catalog_vapp_template" "from-standalone-vm" {
   name = "captured-vApp"
 
   capture_vapp {
-    source_id                = vcd_vm.standalone.vapp_id # parent hidden vApp must be referenced
-    customize_on_instantiate = true                      # can only be `true` if source vApp is powered off
+    source_id                = vcd_vm.standalone.vapp_id # Parent hidden vApp must be referenced
+    customize_on_instantiate = true                      # Can only be `true` if source vApp is powered off
   }
 }
 ```
@@ -137,7 +137,7 @@ The following arguments are supported:
 * `source_id` - (Required) Source vApp ID (can be referenced by `vcd_vapp.id` or
   `vcd_vm.vapp_id`/`vcd_vapp_vm.vapp_id`)
 * `overwrite_catalog_item_id` - (Optional) Optionally newly created template can overwrite. It can
-  either be `id` field of `vcd_catalog_item` resource or `catalog_item_id` field of
+  either be `id` of `vcd_catalog_item` resource or `catalog_item_id` of
   `vcd_catalog_vapp_template` resource
 * `customize_on_instantiate` - (Optional) Default `false` - means "Make identical copy". `true`
   means "Customize VM settings". *Note* `true` can only be set when source vApp is powered off
