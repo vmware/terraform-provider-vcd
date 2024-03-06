@@ -790,7 +790,7 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluste
 	} else {
 		warnings = append(warnings, fmt.Errorf("the Kubernetes cluster with ID '%s' is in '%s' state, meaning that "+
 			"the Kubeconfig cannot be retrieved and "+
-			"some attributes could be unavailable", d.Id(), cluster.State))
+			"some attributes could be unavailable", cluster.ID, cluster.State))
 	}
 
 	d.SetId(cluster.ID)
