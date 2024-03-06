@@ -739,14 +739,16 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluste
 		return nil, err
 	}
 
-	err = d.Set("default_storage_class", []map[string]interface{}{{
-		"storage_profile_id": cluster.DefaultStorageClass.StorageProfileId,
-		"name":               cluster.DefaultStorageClass.Name,
-		"reclaim_policy":     cluster.DefaultStorageClass.ReclaimPolicy,
-		"filesystem":         cluster.DefaultStorageClass.Filesystem,
-	}})
-	if err != nil {
-		return nil, err
+	if cluster.DefaultStorageClass != nil {
+		err = d.Set("default_storage_class", []map[string]interface{}{{
+			"storage_profile_id": cluster.DefaultStorageClass.StorageProfileId,
+			"name":               cluster.DefaultStorageClass.Name,
+			"reclaim_policy":     cluster.DefaultStorageClass.ReclaimPolicy,
+			"filesystem":         cluster.DefaultStorageClass.Filesystem,
+		}})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	dSet(d, "state", cluster.State)
