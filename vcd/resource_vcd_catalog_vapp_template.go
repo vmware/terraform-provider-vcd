@@ -50,10 +50,11 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Description: "vApp Template name",
 			},
 			"capture_vapp": {
-				Optional:    true,
-				Type:        schema.TypeList,
-				MaxItems:    1,
-				Description: "Provides configuration options for creating a vApp Template from existing vApp",
+				Optional:      true,
+				Type:          schema.TypeList,
+				MaxItems:      1,
+				Description:   "Provides configuration options for creating a vApp Template from existing vApp",
+				ConflictsWith: []string{"ovf_url", "ova_path"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"source_id": {
@@ -107,16 +108,17 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Description: "Set of VM names within the vApp template",
 			},
 			"ova_path": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "Absolute or relative path to OVA",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				Description:   "Absolute or relative path to OVA",
+				ConflictsWith: []string{"ovf_url", "capture_vapp"},
 			},
 			"ovf_url": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      true,
-				ConflictsWith: []string{"description"}, // This is to avoid the bug mentioned above.
+				ConflictsWith: []string{"description", "ova_path", "capture_vapp"}, // This is to avoid the bug mentioned above.
 				Description:   "URL of OVF file",
 			},
 			"upload_piece_size": {
