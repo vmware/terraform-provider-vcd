@@ -492,7 +492,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataWithId, "worker_pool.0.disk_size_gi", dataWithName, "worker_pool.0.disk_size_gi"),
 					resource.TestCheckResourceAttrPair(dataWithId, "worker_pool.0.sizing_policy_id", dataWithName, "worker_pool.0.sizing_policy_id"),
 					resource.TestCheckResourceAttrPair(dataWithId, "worker_pool.0.storage_profile_id", dataWithName, "worker_pool.0.storage_profile_id"),
-					resource.TestCheckResourceAttrPair(dataWithId, "default_storage_class.0.storage_profile_id", dataWithName, "id"),
+					resource.TestCheckResourceAttrPair(dataWithId, "default_storage_class.0.storage_profile_id", dataWithName, "default_storage_class.0.storage_profile_id"),
 					resource.TestCheckResourceAttrPair(dataWithId, "default_storage_class.0.name", dataWithName, "default_storage_class.0.name"),
 					resource.TestCheckResourceAttrPair(dataWithId, "default_storage_class.0.reclaim_policy", dataWithName, "default_storage_class.0.reclaim_policy"),
 					resource.TestCheckResourceAttrPair(dataWithId, "default_storage_class.0.filesystem", dataWithName, "default_storage_class.0.filesystem"),
