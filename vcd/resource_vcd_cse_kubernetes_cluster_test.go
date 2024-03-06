@@ -87,6 +87,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION step2: %s", step2)
 
 	params["FuncName"] = t.Name() + "Step3"
+	params["AutoRepairOnErrors"] = "false" // Deactivate it to avoid non-empty plans. Also, it is recommended after cluster creation
 	params["ControlPlaneCount"] = 1
 	params["NodePoolCount"] = 2
 	step3 := templateFill(testAccVcdCseKubernetesCluster, params)
@@ -140,6 +141,15 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 			// Basic scenario of cluster creation
 			{
 				Config: step1,
+				ExpectNonEmptyPlan: func() bool {
+					// Auto Repair on Errors gets automatically deactivated after cluster creation since CSE 4.1.1,
+					// so it will return a non-empty plan
+					if cseVersion.GreaterThanOrEqual(v411) {
+						return true
+					} else {
+						return false
+					}
+				}(),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					cacheId.cacheTestResourceFieldValue(clusterName, "id"),
 					resource.TestMatchResourceAttr(clusterName, "id", regexp.MustCompile(`^urn:vcloud:entity:vmware:capvcdCluster:.+$`)),
