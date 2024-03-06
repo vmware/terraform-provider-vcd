@@ -17,6 +17,7 @@ Supports the following **Container Service Extension** versions:
 * 4.1.0
 * 4.1.1
 * 4.2.0
+* 4.2.1
 
 -> To install CSE in VMware Cloud Director, please follow [this guide](/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install)
 
@@ -45,7 +46,7 @@ locals {
 data "vcd_cse_kubernetes_cluster" "my_clusters" {
   for_each    = local.my_clusters
   org_id      = data.vcd_org.org.id
-  cse_version = "4.2.0"
+  cse_version = "4.2.1"
   name        = each.key
 }
 ```

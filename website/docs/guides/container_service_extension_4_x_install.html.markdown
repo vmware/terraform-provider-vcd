@@ -29,7 +29,7 @@ In order to complete the steps described in this guide, please be aware:
 
 ## Installation process
 
--> To install CSE 4.2, this guide will make use of the example Terraform configuration located [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.2.0/install).
+-> To install CSE 4.2, this guide will make use of the example Terraform configuration located [here](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.2/install).
 You can check it, customise it to your needs and apply. However, reading this guide first is recommended to understand what it does and how to use it.
 
 The installation process is split in two independent steps that must be run one after the other:
@@ -76,7 +76,7 @@ To customise it, the [step 1 configuration][step1] asks for the following variab
 
 * `vcdkeconfig_template_filepath` references a local file that defines the `VCDKEConfig` [RDE][rde] contents.
   It should be a JSON file with template variables that Terraform can interpret, like
-  [the RDE template file for CSE 4.2](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.2.0/entities/vcdkeconfig.json.template)
+  [the RDE template file for CSE 4.2](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.2/entities/vcdkeconfig.json.template)
   used in the step 1 configuration, that can be rendered correctly with the Terraform built-in function `templatefile`.
   (Note: In `terraform.tfvars.example` the path for the CSE 4.2 RDE contents is already provided).
 * `capvcd_version`: The version for CAPVCD. The default value is **"1.1.0"** for CSE 4.2.
@@ -172,7 +172,7 @@ Then it will upload the required OVAs to them. The OVAs can be specified in `ter
 * `tkgm_ova_folder`: This will reference the path to the TKGm OVA, as an absolute or relative path. It should **not** end with a trailing `/`.
 * `tkgm_ova_files`: This will reference the file names of the TKGm OVAs, like `[ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc.ova, ubuntu-2004-kube-v1.24.11+vmware.1-tkg.1-2ccb2a001f8bd8f15f1bfbc811071830.ova]`.
 * `cse_ova_folder`: This will reference the path to the CSE OVA, as an absolute or relative path. It should **not** end with a trailing `/`.
-* `cse_ova_file`: This will reference the file name of the CSE OVA, like `VMware_Cloud_Director_Container_Service_Extension-4.2.0.ova`.
+* `cse_ova_file`: This will reference the file name of the CSE OVA, like `VMware_Cloud_Director_Container_Service_Extension-4.2.1.ova`.
 
 -> To download the required OVAs, please refer to the [CSE documentation][cse_docs]. 
 You can also check the [Product Interoperability Matrix][product_matrix] to confirm the appropriate version of TKGm.
@@ -355,7 +355,7 @@ resource "vcd_rde_type" "capvcdcluster_type_v130" {
   # Same attributes as 4.1, except for:
   version = "1.3.0" # New version
   # New schema:
-  schema_url = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.2.0/schemas/capvcd-type-schema-v1.3.0.json"
+  schema_url = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.2/schemas/capvcd-type-schema-v1.3.0.json"
   # Behaviors need to be created before any RDE Type
   depends_on = [vcd_rde_interface_behavior.capvcd_behavior]
 }
@@ -504,8 +504,8 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [role]: /providers/vmware/vcd/latest/docs/resources/role
 [routed_network]: /providers/vmware/vcd/latest/docs/resources/network_routed_v2
 [sizing]: /providers/vmware/vcd/latest/docs/resources/vm_sizing_policy
-[step1]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.2.0/install/step1
-[step2]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.2.0/install/step2
+[step1]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.2/install/step1
+[step2]: https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.2/install/step2
 [tkgm_docs]: https://docs.vmware.com/en/VMware-Tanzu-Kubernetes-Grid/index.html
 [user]: /providers/vmware/vcd/latest/docs/resources/org_user
 [ui_plugin]: /providers/vmware/vcd/latest/docs/resources/ui_plugin

@@ -28,7 +28,7 @@ cse_admin_password = "change-me"
 
 # These are required to create the Runtime Defined Entity that will contain the CSE Server configuration (vcdKeConfig)
 # To know more about the specific versions, please refer to the CSE documentation.
-# The values set here correspond to CSE 4.2.0:
+# The values set here correspond to CSE 4.2:
 vcdkeconfig_template_filepath = "../../entities/vcdkeconfig.json.template"
 capvcd_version                = "1.2.0"
 cpi_version                   = "1.5.0"

@@ -28,7 +28,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"4.1.0", "4.1.1", "4.2.0"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"4.1.0", "4.1.1", "4.2.0", "4.2.1"}, false),
 				Description:  "The CSE version to use",
 				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
 					// This custom diff function allows to correctly compare versions.

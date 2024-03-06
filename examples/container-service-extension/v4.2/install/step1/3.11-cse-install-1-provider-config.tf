@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------------------------------------
-# CSE 4.2.0 installation, step 2:
+# CSE 4.2 installation, step 1:
 #
 # * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install
 #   before applying this configuration.
@@ -18,14 +18,6 @@ terraform {
       source  = "vmware/vcd"
       version = ">= 3.12"
     }
-    time = {
-      source  = "hashicorp/time"
-      version = "0.9.1"
-    }
-    local = {
-      source  = "hashicorp/local"
-      version = "2.4.0"
-    }
   }
 }
 
@@ -38,11 +30,17 @@ provider "vcd" {
   org                  = var.administrator_org
   allow_unverified_ssl = var.insecure_login
   logging              = true
-  logging_file         = "cse_install_step2.log"
+  logging_file         = "cse_install_step1.log"
 }
 
 # Minimum supported version for CSE
 data "vcd_version" "cse_minimum_supported" {
   condition         = ">= 10.4.2"
   fail_if_not_match = true
+}
+
+# There are some special rights and elements introduced in VCD 10.5.1
+data "vcd_version" "gte_1051" {
+  condition         = ">= 10.5.1"
+  fail_if_not_match = false
 }

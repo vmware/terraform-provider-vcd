@@ -17,6 +17,7 @@ Supports the following **Container Service Extension** versions:
 * 4.1.0
 * 4.1.1
 * 4.2.0
+* 4.2.1
 
 -> To install CSE in VMware Cloud Director, please follow [this guide](/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install)
 
@@ -72,7 +73,7 @@ resource "vcd_api_token" "token" {
 }
 
 resource "vcd_cse_kubernetes_cluster" "my_cluster" {
-  cse_version            = "4.2.0"
+  cse_version            = "4.2.1"
   runtime                = "tkg"
   name                   = "test2"
   kubernetes_template_id = data.vcd_catalog_vapp_template.tkg_ova.id
@@ -118,7 +119,7 @@ output "kubeconfig" {
 
 The following arguments are supported:
 
-* `cse_version` - (Required) Specifies the CSE version to use. Accepted versions: `4.1.0`, `4.1.1` and `4.2.0`
+* `cse_version` - (Required) Specifies the CSE version to use. Accepted versions: `4.1.0`, `4.1.1`, `4.2.0` and `4.2.1`
 * `runtime` - (Optional) Specifies the Kubernetes runtime to use. Defaults to `tkg` (Tanzu Kubernetes Grid)
 * `name` - (Required) The name of the Kubernetes cluster. It must contain only lowercase alphanumeric characters or "-",
   start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters
@@ -225,7 +226,7 @@ Only the following arguments can be updated:
 * `machine_count` of any `worker_pool`: Supports scaling up and down. Use caution when resizing down to 0 nodes.
   The cluster must always have at least 1 running node, or else the cluster will enter an unrecoverable error state.
 * `auto_repair_on_errors`: Can only be updated in CSE 4.1.0, and it is recommended to set it to `false` when the cluster is created.
-  In versions 4.1.1 and 4.2.0, this is automatically done by the CSE Server, so this flag cannot be updated.
+  In versions higher than 4.1.0, this is automatically done by the CSE Server, so this flag cannot be updated.
 * `node_health_check`: Can be turned on/off.
 * `operations_timeout_minutes`: Does not require modifying the existing cluster
 
@@ -272,7 +273,7 @@ such as `terraform plan`. Each comment in the code gives some context about how 
 # None of the arguments are required during the Import phase, but they will be asked when operating it afterwards
 resource "vcd_cse_kubernetes_cluster" "imported_cluster" {
   name                   = "test2"                                   # The name of the existing cluster
-  cse_version            = "4.2.0"                                   # The CSE version installed in your VCD
+  cse_version            = "4.2.1"                                   # The CSE version installed in your VCD
   kubernetes_template_id = data.vcd_catalog_vapp_template.tkg_ova.id # See below data sources
   vdc_id                 = data.vcd_org_vdc.vdc.id                   # See below data sources
   network_id             = data.vcd_network_routed_v2.routed.id      # See below data sources
