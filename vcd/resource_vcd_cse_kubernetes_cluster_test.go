@@ -429,9 +429,9 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 			{
 				Config: step6,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resourceFieldsEqual(clusterName, "data.vcd_cse_kubernetes_cluster.with_id_ds", []string{"org_id", "org", "operations_timeout_minutes", "api_token_file"}),
-					resourceFieldsEqual(clusterName, "data.vcd_cse_kubernetes_cluster.with_name_ds", []string{"org_id", "org", "operations_timeout_minutes", "api_token_file"}),
-					resourceFieldsEqual("data.vcd_cse_kubernetes_cluster.with_id_ds", "data.vcd_cse_kubernetes_cluster.with_name_ds", nil),
+					resourceFieldsEqual(clusterName, "data.vcd_cse_kubernetes_cluster.with_id_ds", []string{"org_id", "org", "operations_timeout_minutes", "api_token_file", "events"}),
+					resourceFieldsEqual(clusterName, "data.vcd_cse_kubernetes_cluster.with_name_ds", []string{"org_id", "org", "operations_timeout_minutes", "api_token_file", "events"}),
+					resourceFieldsEqual("data.vcd_cse_kubernetes_cluster.with_id_ds", "data.vcd_cse_kubernetes_cluster.with_name_ds", []string{"events"}),
 				),
 			},
 			{

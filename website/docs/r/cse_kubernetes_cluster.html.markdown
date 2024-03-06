@@ -251,7 +251,7 @@ output "kubeconfig" {
 Then, creating a file turns out to be trivial:
 
 ```shell
-terraform output kubeconfig > $HOME/kubeconfig
+terraform output -raw kubeconfig > $HOME/kubeconfig
 ```
 
 The Kubeconfig can now be used with `kubectl` and the Kubernetes cluster can be used.
