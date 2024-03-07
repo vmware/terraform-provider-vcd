@@ -237,14 +237,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "pods_cidr", "100.96.0.0/11"),
 					resource.TestCheckResourceAttr(clusterName, "services_cidr", "100.64.0.0/13"),
 					resource.TestCheckResourceAttr(clusterName, "virtual_ip_subnet", ""),
-					func() resource.TestCheckFunc {
-						// Auto Repair on Errors gets automatically deactivated after cluster creation since CSE 4.1.1
-						if cseVersion.GreaterThanOrEqual(v411) {
-							return resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "false")
-						} else {
-							return resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "true")
-						}
-					}(),
+					resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "false"),
 					resource.TestCheckResourceAttr(clusterName, "node_health_check", "true"),
 					resource.TestMatchResourceAttr(clusterName, "kubernetes_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+\+vmware\.[0-9]$`)),
 					resource.TestMatchResourceAttr(clusterName, "tkg_product_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)),
@@ -292,14 +285,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "pods_cidr", "100.96.0.0/11"),
 					resource.TestCheckResourceAttr(clusterName, "services_cidr", "100.64.0.0/13"),
 					resource.TestCheckResourceAttr(clusterName, "virtual_ip_subnet", ""),
-					func() resource.TestCheckFunc {
-						// Auto Repair on Errors gets automatically deactivated after cluster creation since CSE 4.1.1
-						if cseVersion.GreaterThanOrEqual(v411) {
-							return resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "false")
-						} else {
-							return resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "true")
-						}
-					}(),
+					resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "false"),
 					resource.TestCheckResourceAttr(clusterName, "node_health_check", "true"),
 					resource.TestMatchResourceAttr(clusterName, "kubernetes_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+\+vmware\.[0-9]$`)),
 					resource.TestMatchResourceAttr(clusterName, "tkg_product_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)),
@@ -348,14 +334,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "pods_cidr", "100.96.0.0/11"),
 					resource.TestCheckResourceAttr(clusterName, "services_cidr", "100.64.0.0/13"),
 					resource.TestCheckResourceAttr(clusterName, "virtual_ip_subnet", ""),
-					func() resource.TestCheckFunc {
-						// Auto Repair on Errors gets automatically deactivated after cluster creation since CSE 4.1.1
-						if cseVersion.GreaterThanOrEqual(v411) {
-							return resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "false")
-						} else {
-							return resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "true")
-						}
-					}(),
+					resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "false"),
 					resource.TestMatchResourceAttr(clusterName, "kubernetes_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+\+vmware\.[0-9]$`)),
 					resource.TestMatchResourceAttr(clusterName, "tkg_product_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)),
 					resource.TestMatchResourceAttr(clusterName, "capvcd_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)),
@@ -408,14 +387,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "pods_cidr", "100.96.0.0/11"),
 					resource.TestCheckResourceAttr(clusterName, "services_cidr", "100.64.0.0/13"),
 					resource.TestCheckResourceAttr(clusterName, "virtual_ip_subnet", ""),
-					func() resource.TestCheckFunc {
-						// Auto Repair on Errors gets automatically deactivated after cluster creation since CSE 4.1.1
-						if cseVersion.GreaterThanOrEqual(v411) {
-							return resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "false")
-						} else {
-							return resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "true")
-						}
-					}(),
+					resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "false"),
 					resource.TestMatchResourceAttr(clusterName, "kubernetes_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+\+vmware\.[0-9]$`)),
 					resource.TestMatchResourceAttr(clusterName, "tkg_product_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)),
 					resource.TestMatchResourceAttr(clusterName, "capvcd_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)),
