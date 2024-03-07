@@ -412,7 +412,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestMatchResourceAttr(dataWithName, "org_id", regexp.MustCompile(`^urn:vcloud:org:.+$`)),
 					resource.TestCheckResourceAttrPair(dataWithName, "vdc_id", clusterName, "vdc_id"),
 					resource.TestCheckResourceAttrPair(dataWithName, "network_id", clusterName, "network_id"),
-					resource.TestCheckResourceAttrPair(dataWithName, "owner", clusterName, "owner"),
+					resource.TestCheckResourceAttrSet(dataWithName, "owner"), // This time the owner can be obtained
 					resource.TestCheckResourceAttrPair(dataWithName, "ssh_public_key", clusterName, "ssh_public_key"),
 					resource.TestCheckResourceAttrPair(dataWithName, "control_plane.0.disk_size_gi", clusterName, "control_plane.0.disk_size_gi"),
 					resource.TestCheckResourceAttrPair(dataWithName, "control_plane.0.sizing_policy_id", clusterName, "control_plane.0.sizing_policy_id"),
