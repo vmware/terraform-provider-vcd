@@ -25,13 +25,21 @@ const (
 	vappVmType       typeOfVm = "vcd_vapp_vm"
 )
 
+// vmImageSource defines if the VM source image is a catalog template or an existing VM
+type vmImageSource string
+
+const (
+	vmSourceCatalogTemplate vmImageSource = "catalog_template"
+	vmSourceVmCopy          vmImageSource = "vm_copy"
+)
+
 // Maintenance guide for VM code
 //
 // VM codebase grew to be quite complicated because of a few reasons:
 // * It is a resource with many API quirks
 // * There are 4 different go-vcloud-director SDK types for creating VM
-//   * `types.InstantiateVmTemplateParams` (Standalone VM from template)
-//   * `types.ReComposeVAppParams` (vApp VM from template)
+//   * `types.InstantiateVmTemplateParams` (Standalone VM from template or VM Copy from another VM)
+//   * `types.ReComposeVAppParams` (vApp VM from template or VM Copy from another VM)
 //   * `types.RecomposeVAppParamsForEmptyVm` (Empty vApp VM)
 //   * `types.CreateVmParams` (Empty Standalone VM)
 // They also use different functions. All VM types are directly populated in resource code instead of
@@ -142,6 +150,13 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Deprecated:    "You should use `vapp_template_id` or `boot_image_id` without the need of a catalog name",
 			Description:   "The catalog name in which to find the given vApp Template or media for boot_image",
 			ConflictsWith: []string{"vapp_template_id", "boot_image_id"},
+		},
+		"copy_from_vm_id": {
+			Type:          schema.TypeString,
+			Optional:      true,
+			ForceNew:      true,
+			Description:   "Source VM that should be copied from",
+			ConflictsWith: []string{"template_name", "vapp_template_id", "catalog_name"},
 		},
 		"description": {
 			Type:        schema.TypeString,
@@ -742,7 +757,8 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	isVmFromTemplateDeprecated := d.Get("catalog_name").(string) != "" && d.Get("template_name").(string) != ""
 
 	isVmFromTemplate := d.Get("vapp_template_id").(string) != ""
-	isEmptyVm := !isVmFromTemplate && !isVmFromTemplateDeprecated
+	isVmCopy := d.Get("copy_from_vm_id").(string) != "" // Copy VM functionality
+	isEmptyVm := !isVmFromTemplate && !isVmFromTemplateDeprecated && !isVmCopy
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// This part of code conditionally calls functions for VM creation from template and empty VMs
@@ -754,9 +770,15 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	switch {
 	case isVmFromTemplateDeprecated || isVmFromTemplate:
 		util.Logger.Printf("[DEBUG] [VM create] creating VM from template")
-		vm, err = createVmFromTemplate(d, meta, vmType)
+		vm, err = createVmFromImage(d, meta, vmType, vmSourceCatalogTemplate)
 		if err != nil {
 			return diag.Errorf("error creating VM from template: %s", err)
+		}
+	case isVmCopy:
+		util.Logger.Printf("[DEBUG] [VM create] creating VM copy")
+		vm, err = createVmFromImage(d, meta, vmType, vmSourceVmCopy)
+		if err != nil {
+			return diag.Errorf("error creating VM copy: %s", err)
 		}
 	case isEmptyVm:
 		util.Logger.Printf("[DEBUG] [VM create] creating empty VM")
@@ -967,13 +989,13 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	return nil
 }
 
-// createVmFromTemplate is responsible for create VMs from template of two types:
+// createVmFromImage is responsible for create VMs from template of two types:
 // * Standalone VMs
 // * VMs inside vApp (vApp VMs)
 //
 // Code flow has 3 layers:
 // 1. Lookup common information, required for both types of VMs (Standalone and vApp child). Things such as
-//   - Template to be used
+//   - VM Source Image - Catalog Template or VM (for VM Copy operation) to be used
 //   - Network adapter configuration
 //   - Storage profile configuration
 //   - VM compute policy configuration
@@ -987,7 +1009,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 // 3. Perform additional operations which are common for both types of VMs
 //
 // Note. VM Power ON (if it wasn't disabled in HCL configuration) occurs as last step after all configuration is done.
-func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*govcd.VM, error) {
+func createVmFromImage(d *schema.ResourceData, meta interface{}, vmType typeOfVm, sourceImageType vmImageSource) (*govcd.VM, error) {
 	vcdClient := meta.(*VCDClient)
 
 	// Step 1 - lookup common information
@@ -996,11 +1018,12 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	// Look up VM template inside vApp template - either specified by `vm_name_in_template` or the
-	// first one in vApp
-	vmTemplate, err := lookupvAppTemplateforVm(d, vcdClient, org, vdc)
+	// Non empty VMs can be based on one of two things:
+	// * Catalog VM template (regular way for creating VMs)
+	// * Already running VM templates (VM Copy)
+	vmSourceImage, err := getVmSourceImage(sourceImageType, d, vcdClient, org, vdc)
 	if err != nil {
-		return nil, fmt.Errorf("error finding vApp template: %s", err)
+		return nil, err
 	}
 
 	// Look up vApp before setting up network configuration. Having a vApp set, will enable
@@ -1064,12 +1087,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
 			ComputePolicy:    vmComputePolicy,
 			SourcedVmTemplateItem: &types.SourcedVmTemplateParams{
-				Source: &types.Reference{
-					HREF: vmTemplate.VAppTemplate.HREF,
-					ID:   vmTemplate.VAppTemplate.ID,
-					Type: vmTemplate.VAppTemplate.Type,
-					Name: vmTemplate.VAppTemplate.Name,
-				},
+				Source: vmSourceImage,
 				VmGeneralParams: &types.VMGeneralParams{
 					Description: d.Get("description").(string),
 				},
@@ -1123,7 +1141,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			PowerOn:          false, // VM will be powered on after all configuration is done
 			SourcedItem: &types.SourcedCompositionItemParam{
 				Source: &types.Reference{
-					HREF: vmTemplate.VAppTemplate.HREF,
+					HREF: vmSourceImage.HREF,
 					Name: vmName, // This VM name defines the VM name after creation
 				},
 				VMGeneralParams: &types.VMGeneralParams{

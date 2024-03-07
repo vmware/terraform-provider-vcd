@@ -116,7 +116,7 @@ func datasourceVcdNetworkRouted() *schema.Resource {
 						"max_lease_time": {
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Description: "HThe maximum DHCP lease time to use",
+							Description: "The maximum DHCP lease time to use",
 						},
 					},
 				},

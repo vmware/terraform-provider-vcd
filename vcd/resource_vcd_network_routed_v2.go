@@ -137,6 +137,12 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 				ConflictsWith: []string{"metadata_entry"},
 			},
 			"metadata_entry": metadataEntryResourceSchemaDeprecated("Network"),
+			"route_advertisement_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Whether this network is advertised so that it can be routed out to the external networks.",
+			},
 		},
 	}
 }
@@ -357,6 +363,12 @@ func setOpenApiOrgVdcRoutedNetworkData(d *schema.ResourceData, orgVdcNetwork *ty
 		dSet(d, "guest_vlan_allowed", false)
 	}
 
+	if orgVdcNetwork.RouteAdvertised != nil {
+		dSet(d, "route_advertisement_enabled", *orgVdcNetwork.RouteAdvertised)
+	} else {
+		dSet(d, "route_advertisement_enabled", false)
+	}
+
 	if orgVdcNetwork.Connection != nil {
 		dSet(d, "edge_gateway_id", orgVdcNetwork.Connection.RouterRef.ID)
 		dSet(d, "interface_type", orgVdcNetwork.Connection.ConnectionType)
@@ -408,6 +420,7 @@ func getOpenApiOrgVdcRoutedNetworkType(d *schema.ResourceData, vcdClient *VCDCli
 		Description:             d.Get("description").(string),
 		OwnerRef:                &types.OpenApiReference{ID: anyEdgeGateway.EdgeGateway.OwnerRef.ID},
 		GuestVlanTaggingAllowed: addrOf(d.Get("guest_vlan_allowed").(bool)),
+		RouteAdvertised:         addrOf(d.Get("route_advertisement_enabled").(bool)),
 
 		NetworkType: types.OrgVdcNetworkTypeRouted,
 

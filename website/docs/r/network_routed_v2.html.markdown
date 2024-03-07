@@ -166,6 +166,10 @@ The following arguments are supported:
   virtual machines; see [IP Pools](#ip-pools) below for details.
 * `guest_vlan_allowed` - (Optional) Set to `true` if network should allow guest VLAN tagging.
   Default `false`.
+* `route_advertisement_enabled` - (Optional; *v3.12+*, *VCD 10.4.1+*) Enables route advertising for
+  this network. **Note** This requires Edge Gateway to use IP Spaces and IP Space *must have* [route
+  advertisement](https://registry.terraform.io/providers/vmware/vcd/latest/docs/resources/ip_space#route_advertisement_enabled)
+  enabled.
 * `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata to assign to this network. **Not supported** if the owner edge gateway belongs to a VDC Group.
 * `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 * `dual_stack_enabled` - (Optional; *v3.10+*) Enables Dual-Stack mode so that one can configure one

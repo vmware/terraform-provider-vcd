@@ -442,7 +442,40 @@ resource "vcd_vapp_vm" "advancedVM" {
   cpu_reservation = "200"
   cpu_limit       = "1000"
 }
+```
 
+## Example Usage (VM copy)
+This example shows how to create a copy of an existing VM
+
+```hcl
+data "vcd_vapp_vm" "existing" {
+  vapp_name = data.vcd_vapp.web.name
+  name      = "web1"
+}
+
+data "vcd_vapp_org_network" "net1" {
+  vapp_name        = web1
+  org_network_name = "my-vapp-org-network"
+}
+
+resource "vcd_vapp_vm" "vm-copy" {
+  org = "org"
+  vdc = "vdc"
+
+  copy_from_vm_id = data.vcd_vapp_vm.existing.id # source VM ID
+  vapp_name       = data.vcd_vapp_vm.existing.vapp_name
+  name            = "VM Copy"
+  power_on        = false
+
+  network {
+    type               = "org"
+    name               = data.vcd_vapp_org_network.net1.org_network_name
+    adapter_type       = "VMXNET3"
+    ip_allocation_mode = "POOL"
+  }
+
+  prevent_update_power_off = true
+}
 ```
 
 ## Argument Reference
@@ -456,6 +489,10 @@ The following arguments are supported:
 * `computer_name` - (Optional; *v2.5+*) Computer name to assign to this virtual machine.
 * `vapp_template_id` - (Optional; *v3.8+*) The URN of the vApp Template to use. You can fetch it using a [`vcd_catalog_vapp_template`](/providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template) data source.
 * `vm_name_in_template` - (Optional; *v2.9+*) The name of the VM in vApp Template to use. For cases when vApp template has more than one VM.
+* `copy_from_vm_id` - (Optional; *v3.12+*) The ID of *an existing VM* to make a copy of it (it
+  cannot be a vApp template). The source VM *must be in the same Org* (but can be in different VDC).
+  *Note:* `sizing_policy_id` must be specified when creating a standalone VM (using `vcd_vm`
+  resource) and using different source/destination VDCs.
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM. If `memory_hot_add_enabled` is true, then memory will be increased without VM power off
 * `memory_reservation` - The amount of RAM (in MB) reservation on the underlying virtualization infrastructure
 * `memory_priority` - Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload
