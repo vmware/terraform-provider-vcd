@@ -134,6 +134,11 @@ func datasourceVcdNetworkRoutedV2() *schema.Resource {
 				Deprecated:  "Use metadata_entry instead",
 			},
 			"metadata_entry": metadataEntryDatasourceSchema("Network"),
+			"route_advertisement_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether this network is advertised so that it can be routed out to the external networks.",
+			},
 		},
 	}
 }
