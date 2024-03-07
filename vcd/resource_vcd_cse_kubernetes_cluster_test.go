@@ -537,7 +537,7 @@ func TestAccVcdCseKubernetesClusterFailure(t *testing.T) {
 		"Vdc":                testConfig.Cse.TenantVdc,
 		"EdgeGateway":        testConfig.Cse.EdgeGateway,
 		"Network":            testConfig.Cse.RoutedNetwork,
-		"TokenName":          t.Name() + "3",
+		"TokenName":          t.Name(),
 		"TokenFile":          tokenFilename,
 		"ControlPlaneCount":  1,
 		"NodePoolCount":      1,
