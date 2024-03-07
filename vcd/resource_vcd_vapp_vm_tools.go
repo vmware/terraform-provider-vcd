@@ -23,6 +23,45 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
+// getVmSourceImage retrieves non-empty VM source image reference. It can be one of:
+// * Catalog VM template (regular way for creating VMs)
+// * Already running VM templates (for VM Copy). The VM must be within the same Org
+// There is no difference in how these VMs are created apart from having different source image
+func getVmSourceImage(sourceImageType vmImageSource, d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vdc *govcd.Vdc) (*types.Reference, error) {
+	// Source image is a catalog template
+	if sourceImageType == vmSourceCatalogTemplate {
+		vmTemplate, err := lookupvAppTemplateforVm(d, vcdClient, org, vdc)
+		if err != nil {
+			return nil, fmt.Errorf("error finding vApp template: %s", err)
+		}
+		return &types.Reference{
+			HREF: vmTemplate.VAppTemplate.HREF,
+			ID:   vmTemplate.VAppTemplate.ID,
+			Type: vmTemplate.VAppTemplate.Type,
+			Name: vmTemplate.VAppTemplate.Name,
+		}, nil
+
+	}
+
+	// If source image is another VM
+	if sourceImageType == vmSourceVmCopy {
+		identifier := d.Get("copy_from_vm_id").(string)
+		sourceVm, err := org.QueryVmById(identifier)
+		if err != nil {
+			return nil, fmt.Errorf("[VM create copy] error retrieving VM %s by ID: %s", identifier, err)
+		}
+
+		return &types.Reference{
+			HREF: sourceVm.VM.HREF,
+			ID:   sourceVm.VM.ID,
+			Type: sourceVm.VM.Type,
+			Name: sourceVm.VM.Name,
+		}, nil
+	}
+
+	return nil, fmt.Errorf("unrecognized VM source image type: %s", sourceImageType)
+}
+
 // lookupvAppTemplateforVm will do the following
 // evaluate if optional parameter `vm_name_in_template` was specified.
 //
