@@ -217,7 +217,12 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 
 		// It is possible to overwrite an existing item
 		if overwriteCatalogItemId != "" {
-			overWriteItemHref := fmt.Sprintf("%s://%s/api/catalogItem/%s", url.Scheme, url.Host, extractUuid(overwriteCatalogItemId))
+			catalogItemUuid := extractUuid(overwriteCatalogItemId)
+			if !govcd.IsUuid(catalogItemUuid) {
+				return diag.Errorf("expected Catalog Item ID to contain UUID, got: %s", overwriteCatalogItemId)
+			}
+
+			overWriteItemHref := fmt.Sprintf("%s://%s/api/catalogItem/%s", url.Scheme, url.Host, catalogItemUuid)
 			vAppCaptureParams.TargetCatalogItem = &types.Reference{
 				HREF: overWriteItemHref,
 			}
