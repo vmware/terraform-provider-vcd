@@ -15,7 +15,7 @@ Supported in provider *v3.12+*
 Supports the following **Container Service Extension** versions:
 
 * 4.1.0
-* 4.1.1
+* 4.1.1 / 4.1.1a
 * 4.2.0
 * 4.2.1
 

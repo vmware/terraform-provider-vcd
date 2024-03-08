@@ -15,7 +15,7 @@ Supported in provider *v3.12+*
 Supports the following **Container Service Extension** versions:
 
 * 4.1.0
-* 4.1.1
+* 4.1.1 / 4.1.1a
 * 4.2.0
 * 4.2.1
 
@@ -119,7 +119,7 @@ output "kubeconfig" {
 
 The following arguments are supported:
 
-* `cse_version` - (Required) Specifies the CSE version to use. Accepted versions: `4.1.0`, `4.1.1`, `4.2.0` and `4.2.1`
+* `cse_version` - (Required) Specifies the CSE version to use. Accepted versions: `4.1.0`, `4.1.1` (also for *4.1.1a*), `4.2.0` and `4.2.1`
 * `runtime` - (Optional) Specifies the Kubernetes runtime to use. Defaults to `tkg` (Tanzu Kubernetes Grid)
 * `name` - (Required) The name of the Kubernetes cluster. It must contain only lowercase alphanumeric characters or "-",
   start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters
