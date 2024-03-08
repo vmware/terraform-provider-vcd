@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_cse_kubernetes_cluster"
 sidebar_current: "docs-vcd-data-source-cse-kubernetes-cluster"
 description: |-
-  Provides a resource to read Kubernetes clusters from VMware Cloud Director with Container Service Extension installed and running.
+  Provides a data source to read Kubernetes clusters from VMware Cloud Director with Container Service Extension installed and running.
 ---
 
 # vcd\_cse\_kubernetes\_cluster
@@ -34,7 +34,7 @@ data "vcd_cse_kubernetes_cluster" "my_cluster" {
 
 ## Example Usage with Name
 
-Sometimes using the cluster ID is not convenient, so this data source allows to use the cluster name.
+Sometimes using the cluster ID is not convenient, so this data source allows using the cluster name.
 As VCD allows to have multiple clusters with the same name, this option must be used with caution as it will fail
 if there is more than one Kubernetes cluster with the same name in the same Organization:
 

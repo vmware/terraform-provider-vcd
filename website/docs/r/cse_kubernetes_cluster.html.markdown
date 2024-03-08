@@ -230,10 +230,10 @@ Only the following arguments can be updated:
 * `node_health_check`: Can be turned on/off.
 * `operations_timeout_minutes`: Does not require modifying the existing cluster
 
-You can also add more `worker_pool` blocks to add more worker pools to the cluster. **You can't delete Worker Pools**, but they can
+You can also add more `worker_pool` blocks to add more Worker Pools to the cluster. **You can't delete Worker Pools**, but they can
 be scaled down to zero.
 
-Updating any other argument will delete the existing cluster and create a new one, if the Terraform plan is applied.
+Updating any other argument will delete the existing cluster and create a new one, when the Terraform plan is applied.
 
 Upgrading CSE version with `cse_version` is not supported as this operation would require human intervention,
 as stated [in the official documentation](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1/VMware-Cloud-Director-Container-Service-Extension-Using-Tenant-4.1/GUID-092C40B4-D0BA-4B90-813F-D36929F2F395.html).

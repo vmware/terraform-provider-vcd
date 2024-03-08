@@ -15,6 +15,11 @@ import (
 )
 
 func resourceVcdCseKubernetesCluster() *schema.Resource {
+	// This regular expression matches strings with at most 31 characters, composed only by lowercase alphanumeric characters or '-',
+	// that must start with an alphabetic character, and end with an alphanumeric.
+	// This is used for any "name" property in CSE, like cluster name, worker pool name or storage class name.
+	const kubernetesNameRegex = `^[a-z](?:[a-z0-9-]{0,29}[a-z0-9])?$`
+
 	return &schema.Resource{
 		CreateContext: resourceVcdCseKubernetesClusterCreate,
 		ReadContext:   resourceVcdCseKubernetesRead,
@@ -57,7 +62,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "The name of the Kubernetes cluster",
-				ValidateDiagFunc: matchRegex(`^[a-z](?:[a-z0-9-]{0,29}[a-z0-9])?$`, "name must contain only lowercase alphanumeric characters or '-',"+
+				ValidateDiagFunc: matchRegex(kubernetesNameRegex, "name must contain only lowercase alphanumeric characters or '-',"+
 					"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters"),
 			},
 			"kubernetes_template_id": {
@@ -169,7 +174,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				// we need to be careful on reads to guarantee that order is respected.
 				Type:        schema.TypeList,
 				Required:    true,
-				Description: "Defines a node pool for the cluster",
+				Description: "Defines a worker pool for the cluster",
 				Elem: &schema.Resource{
 					// Ideally, all of these sub-attributes should have ForceNew: true except for "machine_count", as
 					// they can't be changed. However, this doesn't work well, so we check this at runtime.
@@ -178,14 +183,14 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "The name of this worker pool. Must be unique",
-							ValidateDiagFunc: matchRegex(`^[a-z](?:[a-z0-9-]{0,29}[a-z0-9])?$`, "name must contain only lowercase alphanumeric characters or '-',"+
+							ValidateDiagFunc: matchRegex(kubernetesNameRegex, "name must contain only lowercase alphanumeric characters or '-',"+
 								"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters"),
 						},
 						"machine_count": {
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Default:          1, // As suggested in UI
-							Description:      "The number of nodes that this worker pool has. Must be higher than 0",
+							Description:      "The number of nodes that this worker pool has. Must be higher than or equal to 0",
 							ValidateDiagFunc: minimumValue(0, "number of nodes must be higher than or equal to 0"),
 						},
 						"disk_size_gi": {
@@ -236,7 +241,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							ForceNew:    true,
 							Type:        schema.TypeString,
 							Description: "Name to give to this storage class",
-							ValidateDiagFunc: matchRegex(`^[a-z](?:[a-z0-9-]{0,29}[a-z0-9])?$`, "name must contain only lowercase alphanumeric characters or '-',"+
+							ValidateDiagFunc: matchRegex(kubernetesNameRegex, "name must contain only lowercase alphanumeric characters or '-',"+
 								"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters"),
 						},
 						"reclaim_policy": {
@@ -244,7 +249,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							ForceNew:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: validation.StringInSlice([]string{"delete", "retain"}, false),
-							Description:  "'delete' deletes the volume when the PersistentVolumeClaim is deleted. 'retain' does not, and the volume can be manually reclaimed",
+							Description:  "Reclaim policy. Possible values are: `delete` deletes the volume when the `PersistentVolumeClaim` is deleted; `retain` does not delete, and the volume can be manually reclaimed",
 						},
 						"filesystem": {
 							Required:     true,
@@ -474,7 +479,7 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 	// If we get here, it means we got either a successful created cluster, a timeout or a cluster in "error" state.
 	// Either way, from this point we should go to the Update logic as the cluster is definitely present in VCD, so we store the ID.
 	// Also, we need to set the ID to be able to distinguish this cluster from all the others that may have the same name and RDE Type.
-	// We could use some other ways of filtering, but ID is the only accurate.
+	// We could use some other ways of filtering, but ID is the only accurate one.
 	// If the cluster can't be created due to errors, users should delete it and retry, like in UI.
 	d.SetId(cluster.ID)
 
