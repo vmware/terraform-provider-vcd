@@ -69,7 +69,7 @@ func datasourceVcdVersionRead(_ context.Context, d *schema.ResourceData, meta in
 		matchesCondition := constraints.Check(checkVer)
 		dSet(d, "matches_condition", matchesCondition)
 		if !matchesCondition && d.Get("fail_if_not_match").(bool) {
-			return diag.Errorf("the VCD version doesn't match the version constraint '%s'", condition)
+			return diag.Errorf("the VCD version '%s' doesn't match the version constraint '%s'", vcdVersion, condition)
 		}
 	}
 

@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------------------------------
 # CSE 4.1 TKGm cluster creation:
 #
-# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_cluster_management
+# * Please read the guide at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_cluster_management
 #   before applying this configuration.
 #
 # * Please make sure to have CSE v4.1 installed in your VCD appliance and the CSE Server is correctly running.
