@@ -81,7 +81,7 @@ func TestAccVcdVersion(t *testing.T) {
 			},
 			{
 				Config:      step2,
-				ExpectError: regexp.MustCompile(`the VCD version doesn't match the version constraint '>= 99.99.99'`),
+				ExpectError: regexp.MustCompile(fmt.Sprintf(`the VCD version '%s' doesn't match the version constraint '>= 99.99.99'`, currentVersion)),
 			},
 			{
 				Config: step3,
