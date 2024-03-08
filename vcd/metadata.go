@@ -2,6 +2,9 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
+
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -9,8 +12,6 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
-	"regexp"
-	"strings"
 )
 
 var (
@@ -396,7 +397,7 @@ func updateMetadataInStateDeprecated(d *schema.ResourceData, vcdClient *VCDClien
 	}
 
 	// VMs can have special metadata automatically set by VCD that require to be filtered out
-	if resourceType == "vcd_vapp" || resourceType == "vcd_vapp_vm" || resourceType == "vcd_vm" {
+	if resourceType == "vcd_vapp" || resourceType == "vcd_vapp_vm" || resourceType == "vcd_vm" || resourceType == "vcd_catalog_vapp_template" {
 		_ = filterAndGetVcdInheritedMetadata(deprecatedMetadata)
 	}
 
@@ -434,7 +435,7 @@ func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourc
 
 	// VMs can have special metadata automatically set by VCD that require to be filtered out and
 	// set into a different attribute.
-	if resourceType == "vcd_vapp" || resourceType == "vcd_vapp_vm" || resourceType == "vcd_vm" {
+	if resourceType == "vcd_vapp" || resourceType == "vcd_vapp_vm" || resourceType == "vcd_vm" || resourceType == "vcd_catalog_vapp_template" {
 		inheritedMetadataBlock := filterAndGetVcdInheritedMetadata(metadata)
 		err = d.Set("inherited_metadata", inheritedMetadataBlock)
 		if err != nil {
