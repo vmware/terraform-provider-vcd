@@ -20,6 +20,11 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    vmType == standaloneVmType,
 			Description: "The vApp this VM belongs to - Required, unless it is a standalone VM",
 		},
+		"vapp_id": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "ID of parent vApp",
+		},
 		"vm_type": {
 			Type:        schema.TypeString,
 			Computed:    true,

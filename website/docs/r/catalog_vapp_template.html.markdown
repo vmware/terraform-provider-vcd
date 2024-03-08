@@ -12,7 +12,7 @@ Provides a VMware Cloud Director vApp Template resource. This can be used to upl
 
 Supported in provider *v3.8+*
 
-## Example Usage
+## Example Usage (OVA upload)
 
 ```hcl
 data "vcd_catalog" "my-catalog" {
@@ -53,6 +53,58 @@ resource "vcd_catalog_vapp_template" "myNewVappTemplate" {
 
 -> If vApp Template upload fails, or you need to re-upload it, you can do a `terraform apply -replace=vcd_catalog_vapp_template.myNewVappTemplate`.
 
+## Example Usage (Capturing from existing vApp)
+
+```hcl
+data "vcd_catalog" "cat" {
+  org  = "v51"
+  name = "cat-v51-nsxt-backed"
+}
+
+resource "vcd_catalog_vapp_template" "from-vapp" {
+  org        = "v51"
+  catalog_id = data.vcd_catalog.cat.id
+
+  name = "from-vapp"
+
+  capture_vapp {
+    source_id                = vcd_vapp.web.id
+    customize_on_instantiate = false
+  }
+
+  lease {
+    storage_lease_in_sec = 3600 * 24 * 3
+  }
+
+  metadata = {
+    vapp_template_metadata = "vApp Template Metadata"
+  }
+
+  depends_on = [vcd_vapp_vm.emptyVM] # Ensuring all VMs are present in vApp
+}
+```
+
+## Example Usage (Capturing from existing Standalone VM)
+
+```hcl
+data "vcd_catalog" "cat" {
+  org  = "v51"
+  name = "cat-v51-nsxt-backed"
+}
+
+resource "vcd_catalog_vapp_template" "from-standalone-vm" {
+  org        = "v51"
+  catalog_id = data.vcd_catalog.cat.id
+
+  name = "captured-vApp"
+
+  capture_vapp {
+    source_id                = vcd_vm.standalone.vapp_id # Parent hidden vApp must be referenced
+    customize_on_instantiate = true                      # Can only be `true` if source vApp is powered off
+  }
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -63,6 +115,8 @@ The following arguments are supported:
 * `description` - (Optional) Description of the vApp Template. Not to be used with `ovf_url` when target OVA has a description
 * `ova_path` - (Optional) Absolute or relative path to file to upload
 * `ovf_url` - (Optional) URL to OVF file. Only OVF (not OVA) files are supported by VCD uploading by URL
+* `capture_vapp` - (Optional; *v3.12+*) A configuration [block to create template from existing
+  vApp](#capture-vapp) (Standalone VM or vApp)
 * `upload_piece_size` - (Optional) - Size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB
 * `metadata` -  (Deprecated) Use `metadata_entry` instead. Key/value map of metadata to assign to the associated vApp Template
 * `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
@@ -75,6 +129,18 @@ The following arguments are supported:
 * `vdc_id` - The VDC ID to which this vApp Template belongs
 * `vm_names` - Set of VM names within the vApp template
 * `created` - Timestamp of when the vApp Template was created
+* `catalog_item_id` - Catalog Item ID
+
+<a id="capture-vapp"></a>
+## Capture vApp template from existing vApp or Standalone VM
+
+* `source_id` - (Required) Source vApp ID (can be referenced by `vcd_vapp.id` or
+  `vcd_vm.vapp_id`/`vcd_vapp_vm.vapp_id`)
+* `overwrite_catalog_item_id` - (Optional) Optionally newly created template can overwrite. It can
+  either be `id` of `vcd_catalog_item` resource or `catalog_item_id` of
+  `vcd_catalog_vapp_template` resource
+* `customize_on_instantiate` - (Optional) Default `false` - means "Make identical copy". `true`
+  means "Customize VM settings". *Note* `true` can only be set when source vApp is powered off
 
 <a id="metadata"></a>
 ## Metadata

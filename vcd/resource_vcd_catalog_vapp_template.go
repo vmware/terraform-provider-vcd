@@ -3,13 +3,15 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 const maximumSynchronisationCheckDuration = 60 * time.Second
@@ -47,6 +49,39 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Required:    true,
 				Description: "vApp Template name",
 			},
+			"capture_vapp": {
+				Optional:      true,
+				Type:          schema.TypeList,
+				MaxItems:      1,
+				Description:   "Provides configuration options for creating a vApp Template from existing vApp",
+				ConflictsWith: []string{"ovf_url", "ova_path"},
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"source_id": {
+							Optional:    true,
+							Type:        schema.TypeString,
+							Description: "Source vApp ID (can be a vApp ID or 'vapp_id' field of standalone VM 'vcd_vm')",
+						},
+						"overwrite_catalog_item_id": {
+							Optional:    true,
+							Type:        schema.TypeString,
+							Description: "An existing catalog item ID to overwrite",
+						},
+						"customize_on_instantiate": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "Marks if instantiating applies customization settings ('true'). Default is 'false` - create an identical copy.",
+						},
+						"copy_tpm_on_instantiate": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "Defines if Trusted Platform Module should be copied (false) or created (true). Default 'false'. VCD 10.4.2+",
+						},
+					},
+				},
+			},
 			"description": {
 				Type:          schema.TypeString,
 				Optional:      true,
@@ -59,6 +94,11 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Computed:    true,
 				Description: "Timestamp of when the vApp Template was created",
 			},
+			"catalog_item_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Catalog Item ID of this vApp template",
+			},
 			"vm_names": {
 				Type: schema.TypeSet,
 				Elem: &schema.Schema{
@@ -68,16 +108,17 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				Description: "Set of VM names within the vApp template",
 			},
 			"ova_path": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "Absolute or relative path to OVA",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
+				Description:   "Absolute or relative path to OVA",
+				ConflictsWith: []string{"ovf_url", "capture_vapp"},
 			},
 			"ovf_url": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      true,
-				ConflictsWith: []string{"description"}, // This is to avoid the bug mentioned above.
+				ConflictsWith: []string{"description", "ova_path", "capture_vapp"}, // This is to avoid the bug mentioned above.
 				Description:   "URL of OVF file",
 			},
 			"upload_piece_size": {
@@ -112,6 +153,11 @@ func resourceVcdCatalogVappTemplate() *schema.Resource {
 				ConflictsWith: []string{"metadata_entry"},
 			},
 			"metadata_entry": metadataEntryResourceSchemaDeprecated("vApp Template"),
+			"inherited_metadata": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "A map that contains metadata that is automatically added by VCD (10.5.1+) and provides details on the origin of the VM",
+			},
 		},
 	}
 }
@@ -127,14 +173,97 @@ func resourceVcdCatalogVappTemplateCreate(ctx context.Context, d *schema.Resourc
 	}
 
 	var diagError diag.Diagnostics
+
+	ovaPath := d.Get("ova_path").(string)
+	ovfUrl := d.Get("ovf_url").(string)
 	vappTemplateName := d.Get("name").(string)
-	if d.Get("ova_path").(string) != "" {
+
+	capturevAppTemplate := d.Get("capture_vapp").([]interface{})
+
+	switch {
+	case ovaPath != "":
 		diagError = uploadOvaFromFilePath(d, catalog, vappTemplateName, "vcd_catalog_vapp_template")
-	} else if d.Get("ovf_url").(string) != "" {
+	case ovfUrl != "":
 		diagError = uploadFromUrl(d, catalog, vappTemplateName, "vcd_catalog_vapp_template")
-	} else {
-		diagError = diag.Errorf("`ova_path` or `ovf_url` value is missing %s", err)
+	case len(capturevAppTemplate) == 1:
+		templateCaptureSettings := capturevAppTemplate[0].(map[string]interface{})
+		sourceId := templateCaptureSettings["source_id"].(string)
+		overwriteCatalogItemId := templateCaptureSettings["overwrite_catalog_item_id"].(string)
+		customizeOnInstantiate := templateCaptureSettings["customize_on_instantiate"].(bool)
+
+		org, err := vcdClient.GetOrgFromResource(d)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		url := vcdClient.Client.VCDHREF
+		vAppHref := fmt.Sprintf("%s://%s/api/vApp/vapp-%s", url.Scheme, url.Host, extractUuid(sourceId))
+		vapp, err := org.GetVAppByHref(vAppHref)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		vAppCaptureParams := &types.CaptureVAppParams{
+			Name:        d.Get("name").(string),
+			Description: d.Get("description").(string),
+			Source: &types.Reference{
+				HREF: vAppHref,
+			},
+			CustomizationSection: types.CaptureVAppParamsCustomizationSection{
+				Info:                   "CustomizeOnInstantiate Settings",
+				CustomizeOnInstantiate: customizeOnInstantiate,
+			},
+		}
+
+		// It is possible to overwrite an existing item
+		if overwriteCatalogItemId != "" {
+			catalogItemUuid := extractUuid(overwriteCatalogItemId)
+			if !govcd.IsUuid(catalogItemUuid) {
+				return diag.Errorf("expected Catalog Item ID to contain UUID, got: %s", overwriteCatalogItemId)
+			}
+
+			overWriteItemHref := fmt.Sprintf("%s://%s/api/catalogItem/%s", url.Scheme, url.Host, catalogItemUuid)
+			vAppCaptureParams.TargetCatalogItem = &types.Reference{
+				HREF: overWriteItemHref,
+			}
+		}
+
+		// TPM (Trusted Platform Module) setting 'CopyTpmOnInstantiate' is only available in VCD 10.4.2+
+		copyTpmOnInstantiate := templateCaptureSettings["copy_tpm_on_instantiate"].(bool)
+		if vcdClient.Client.APIVCDMaxVersionIs(">= 37.2") {
+			vAppCaptureParams.CopyTpmOnInstantiate = &copyTpmOnInstantiate
+		} else if copyTpmOnInstantiate { // Throw an error if user set to `true`, but VCD is too old
+			return diag.Errorf("'copy_tpm_on_instantiate' is supported on VCD 10.4.2+")
+		}
+
+		parentVdc, err := vapp.GetParentVDC()
+		if err != nil {
+			return diag.Errorf("error retrieving parent VDC for vApp %s: %s", vapp.VApp.Name, err)
+		}
+
+		// Locking vApp as it becomes busy when an image is being created
+		unlock := vcdClient.lockVappWithName(org.Org.Name, parentVdc.Vdc.Name, vapp.VApp.Name)
+		defer unlock()
+
+		createdTemplate, err := catalog.CaptureVappTemplate(vAppCaptureParams)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		// Explicitly rename created template to what is specified in `name` field because by
+		// default it will have the name of overwritten template
+		createdTemplate.VAppTemplate.Name = d.Get("name").(string)
+		updatedTemplate, err := createdTemplate.Update()
+		if err != nil {
+			return diag.Errorf("error renaming template after overwrite: %s", err)
+		}
+
+		vappTemplateName = updatedTemplate.VAppTemplate.Name
+	default:
+		diagError = diag.Errorf("`ova_path`, `ovf_url` or `capture_vapp` must be set: %s", err)
+
 	}
+
 	if diagError != nil {
 		return diagError
 	}
@@ -225,7 +354,14 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.Errorf("unable to set lease information in state: %s", err)
 	}
+
 	d.SetId(vAppTemplate.VAppTemplate.ID)
+
+	catalogItemId, err := vAppTemplate.GetCatalogItemId()
+	if err != nil {
+		return diag.Errorf("error retrieving Catalog Item ID for vApp template: %s", err)
+	}
+	dSet(d, "catalog_item_id", catalogItemId)
 
 	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_catalog_vapp_template", vAppTemplate)...)
 	if diags != nil && diags.HasError() {
