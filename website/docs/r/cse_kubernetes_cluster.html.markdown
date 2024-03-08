@@ -258,9 +258,6 @@ The Kubeconfig can now be used with `kubectl` and the Kubernetes cluster can be 
 
 ## Importing
 
-~> The current implementation of Terraform import can only import resources into the state.
-It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
-
 An existing Kubernetes cluster can be [imported][docs-import] into this resource via supplying the **Cluster ID** for it.
 The ID can be easily obtained in VCD UI, in the CSE Kubernetes Container Clusters plugin.
 
@@ -360,5 +357,25 @@ you can check the Kubernetes Container Clusters UI plugin, where all the availab
 
 After that, you can expand the configuration file and either update or delete the Kubernetes cluster. Running `terraform plan`
 at this stage will show the difference between the minimal configuration file and the Kubernetes cluster stored properties.
+
+### Importing with Import blocks (Terraform v1.5+)
+
+~> Terraform warns that this procedure is considered **experimental**. Read more [here](/providers/vmware/vcd/latest/docs/guides/importing_resources)
+
+Given a Cluster ID, like `urn:vcloud:entity:vmware:capvcdCluster:f2d88194-3745-47ef-a6e1-5ee0bbce38f6`, you can write 
+the following HCL block in your Terraform configuration:
+
+```hcl
+import {
+  to = vcd_cse_kubernetes_cluster.imported_cluster
+  id = "urn:vcloud:entity:vmware:capvcdCluster:f2d88194-3745-47ef-a6e1-5ee0bbce38f6"
+}
+```
+
+Instead of using the suggested snippet in the section above, executing the command
+`terraform plan -generate-config-out=generated_resources.tf` will generate a similar code, automatically.
+
+Once the code is validated, running `terraform apply` will perform the import operation and save the Kubernetes cluster
+into the Terraform state. The Kubernetes cluster can now be operated with Terraform.
 
 [docs-import]:https://www.terraform.io/docs/import/
