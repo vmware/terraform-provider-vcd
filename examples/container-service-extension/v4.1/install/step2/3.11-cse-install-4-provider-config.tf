@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------------------------------
 # CSE v4.1 installation, step 2:
 #
-# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install
+# * Please read the guide at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install
 #   before applying this configuration.
 #
 # * The installation process is split into two steps as the first one creates a CSE admin user that needs to be
@@ -11,12 +11,12 @@
 #   Other than that, this snippet should be applied as it is.
 # ------------------------------------------------------------------------------------------------------------
 
-# VCD Provider configuration. It must be at least v3.11.0 and configured with a System administrator account.
+# VCD Provider configuration. It must be at least v3.12.0 and configured with a System administrator account.
 terraform {
   required_providers {
     vcd = {
       source  = "vmware/vcd"
-      version = ">= 3.11"
+      version = ">= 3.12"
     }
     time = {
       source  = "hashicorp/time"
@@ -39,4 +39,10 @@ provider "vcd" {
   allow_unverified_ssl = var.insecure_login
   logging              = true
   logging_file         = "cse_install_step2.log"
+}
+
+# Minimum supported version for CSE
+data "vcd_version" "cse_minimum_supported" {
+  condition         = ">= 10.4.2"
+  fail_if_not_match = true
 }

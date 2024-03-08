@@ -8,6 +8,11 @@ description: |-
 
 # Container Service Extension v4.1 Kubernetes clusters management
 
+~> **This guide is DEPRECATED since v3.12+**. You should use the resource
+[`vcd_cse_kubernetes_cluster`](/providers/vmware/vcd/latest/docs/resources/cse_kubernetes_cluster)
+to provision and manage Kubernetes clusters in a VCD appliance where Container Service Extension is installed
+and running.
+
 ## About
 
 This guide explains how to create, update and delete **Tanzu Kubernetes Grid multicloud (TKGm)** clusters in a VCD appliance with Container Service Extension v4.1

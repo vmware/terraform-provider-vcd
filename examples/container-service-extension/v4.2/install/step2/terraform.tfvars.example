@@ -1,0 +1,106 @@
+# Change configuration to your needs and rename to 'terraform.tfvars'
+# For more details about the variables specified here, please read the guide first:
+# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install
+
+# ------------------------------------------------
+# VCD Provider config
+# ------------------------------------------------
+
+vcd_url                = "https://vcd.my-awesome-corp.com"
+administrator_user     = "administrator"
+administrator_password = "change-me"
+administrator_org      = "System"
+insecure_login         = "false"
+
+# ------------------------------------------------
+# Infrastructure
+# ------------------------------------------------
+
+# These variables are required to create both the Solutions NSX-T VDC and Tenant NSX-T VDC
+# The values here need to exist already in your VCD appliance.
+provider_vdc_name      = "change-me" # Name of an existing PVDC that can be used to create VDCs
+nsxt_edge_cluster_name = "change-me" # Name of an existing NSX-T Edge Cluster that can be used to create VDCs
+network_pool_name      = "change-me" # Name of an existing network pool that can be used to create VDCs
+
+# These variables are used to build a basic networking setup to run the CSE Server
+# and the TKGm clusters
+nsxt_manager_name = "change-me" # Name of an existing NSX-T manager, required to create the Provider Gateways
+
+# These are all required to create the Solutions Organization Provider Gateway.
+# Please adjust these to your needs, as the values here are just examples, and review the Terraform configuration if needed.
+solutions_nsxt_tier0_router_name                 = "change-me"    # The name of an existing NSX-T Tier 0 router
+solutions_provider_gateway_gateway_ip            = "10.20.30.250" # Gateway IP to use in the Solutions Provider Gateway
+solutions_provider_gateway_gateway_prefix_length = "19"           # Prefix length to use in the Solutions Provider Gateway
+solutions_provider_gateway_static_ip_ranges = [                   # IP ranges to use in the Solutions Provider Gateway
+  ["10.20.30.16", "10.20.30.16"],                                 # Single IP
+  ["10.20.30.20", "10.20.30.25"],                                 # Many IPs
+]
+
+# These are all required to create the Tenant Organization Provider Gateway.
+# Please adjust these to your needs, as the values here are just examples, and review the Terraform configuration if needed.
+tenant_nsxt_tier0_router_name                 = "change-me"    # The name of an existing NSX-T Tier 0 router
+tenant_provider_gateway_gateway_ip            = "10.30.20.150" # Gateway IP to use in the Tenant Provider Gateway
+tenant_provider_gateway_gateway_prefix_length = "19"           # Prefix length to use in the Tenant Provider Gateway
+tenant_provider_gateway_static_ip_ranges = [                   # IP ranges to use in the Tenant Provider Gateway
+  ["10.30.20.14", "10.30.20.14"],                              # Single IP
+  ["10.30.20.30", "10.30.20.37"],                              # Many IPs
+]
+
+# These will configure the Routed network for the Solutions Organization VDC.
+# Please adjust these to your needs, as the values here are just examples, and review the Terraform configuration if needed.
+solutions_routed_network_gateway_ip            = "192.168.0.1"    # Required. Gateway IP for the Routed network inside the Solutions Organization
+solutions_routed_network_prefix_length         = "24"             # Required. Prefix length for the Routed network inside the Solutions Organization
+solutions_routed_network_ip_pool_start_address = "192.168.0.2"    # Required. First IP for the Routed network pool
+solutions_routed_network_ip_pool_end_address   = "192.168.0.254"  # Required. Last IP for the Routed network pool
+solutions_snat_external_ip                     = "10.20.30.25"    # Required. For example, pick the last IP from solutions_provider_gateway_static_ip_ranges
+solutions_snat_internal_network_cidr           = "192.168.0.0/24" # Required. It should match the Routed network IP addresses
+solutions_routed_network_dns                   = ""               # Optional, if you need DNS
+solutions_routed_network_dns_suffix            = ""               # Optional, if you need DNS
+
+# These will configure the Routed network for the Tenant Organization VDC.
+# Please adjust these to your needs, as the values here are just examples, and review the Terraform configuration if needed.
+tenant_routed_network_gateway_ip            = "10.0.0.1"     # Required. Gateway IP for the Routed network inside the Tenant Organization
+tenant_routed_network_prefix_length         = "16"           # Required. Prefix length for the Routed network inside the Tenant Organization
+tenant_routed_network_ip_pool_start_address = "10.0.0.2"     # Required. First IP for the Routed network pool
+tenant_routed_network_ip_pool_end_address   = "10.0.255.254" # Required. Last IP for the Routed network pool
+tenant_snat_external_ip                     = "10.30.20.37"  # Required. For example, pick the last IP from tenant_provider_gateway_static_ip_ranges
+tenant_snat_internal_network_cidr           = "10.0.0.0/16"  # Required. It should match the Routed network IP addresses
+tenant_routed_network_dns                   = ""             # Optional, if you need DNS
+tenant_routed_network_dns_suffix            = ""             # Optional, if you need DNS
+
+# These are required to create a new ALB setup in VCD that will be used by TKGm clusters.
+# Your VCD should have an existing ALB deployment that will be imported, the values below must correspond to
+# the existing controller to be imported into VCD:
+alb_controller_username   = "admin"                                # Username to access the ALB Controller
+alb_controller_password   = "change-me"                            # Password to access the ALB Controller
+alb_controller_url        = "https://alb-ctrl.my-awesome-corp.com" # URL of the ALB Controller
+alb_importable_cloud_name = "change-me"                            # Name of the Cloud to import to create a Service Engine Group
+
+# ------------------------------------------------
+# Catalog and OVAs
+# ------------------------------------------------
+
+# These variables are required to upload the necessary OVAs to the Solutions Organization shared catalog.
+# You can find the download links in the guide referenced at the top of this file.
+tkgm_ova_folder = "/home/changeme/tkgm-folder" # An existing absolute path to a folder containing TKGm OVAs
+tkgm_ova_files = [                             # Existing TKGm OVAs
+  "ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc.ova"
+]
+cse_ova_folder = "/home/changeme/cse-folder"                                   # An existing absolute path to a folder containing CSE Server OVAs
+cse_ova_file   = "VMware_Cloud_Director_Container_Service_Extension-4.1.0.ova" # An existing CSE Server OVA
+
+# ------------------------------------------------
+# CSE Server initialization
+# ------------------------------------------------
+
+cse_admin_username       = "cse_admin"                # This must be the same user created in step 1
+cse_admin_password       = "change-me"                # This must be the same password of the user created in step 1
+cse_admin_api_token_file = "cse_admin_api_token.json" # This file will contain the API token of the CSE Admin user, store it carefully.
+
+# ------------------------------------------------
+# Other configuration
+# ------------------------------------------------
+# This path points to the .zip file that contains the bundled Kubernetes Container Clusters UI Plugin.
+# It is optional: if not set, it won't be installed.
+# Remember to remove older CSE UI plugins if present (for example 3.x plugins) before installing this one.
+k8s_container_clusters_ui_plugin_path = "/home/change-me/container-ui-plugin-4.1.zip"

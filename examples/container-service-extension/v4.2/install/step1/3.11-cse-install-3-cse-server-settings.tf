@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------------------------------------
-# CSE v4.1 installation, step 1:
+# CSE 4.2 installation, step 1:
 #
 # * Please read the guide at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install
 #   before applying this configuration.
@@ -27,6 +27,7 @@ resource "vcd_rde" "vcdkeconfig_instance" {
     capvcd_version                = var.capvcd_version
     cpi_version                   = var.cpi_version
     csi_version                   = var.csi_version
+    rde_projector_version         = var.rde_projector_version
     github_personal_access_token  = var.github_personal_access_token
     bootstrap_vm_sizing_policy    = vcd_vm_sizing_policy.tkg_s.name # References the small VM Sizing Policy, it can be changed.
     no_proxy                      = var.no_proxy

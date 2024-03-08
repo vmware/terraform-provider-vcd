@@ -352,5 +352,5 @@ func runWithRetry(operationDescription, errorMessage string, timeout time.Durati
 		elapsed = time.Since(start)
 		attempts++
 	}
-	return nil, fmt.Errorf(errorMessage+" :%s", err)
+	return nil, fmt.Errorf(errorMessage+": %s", err)
 }

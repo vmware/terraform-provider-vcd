@@ -1,0 +1,94 @@
+{
+    "profiles": [
+        {
+            "name": "production",
+            "active": true,
+            "serverConfig": {
+                "rdePollIntervalInMin": 1,
+                "heartbeatWatcherTimeoutInMin": 10,
+                "staleHeartbeatIntervalInMin": 30
+            },
+            "vcdKeInstances": [
+              {
+                "name": "vcd-container-service-extension"
+              }
+            ],
+            "K8Config": {
+                "certificateAuthorities": [
+                    ${k8s_cluster_certificates}
+                ],
+                "cni": {
+                    "name": "antrea",
+                    "version": ""
+                },
+                "cpi": {
+                    "name": "cpi for cloud director",
+                    "version": "${cpi_version}"
+                },
+                "csi": [
+                    {
+                        "name": "csi for cloud director",
+                        "version": "${csi_version}"
+                    }
+                ],
+                "mhc": {
+                    "maxUnhealthyNodes": ${max_unhealthy_node_percentage},
+                    "nodeStartupTimeout": "${node_startup_timeout}",
+                    "nodeNotReadyTimeout": "${node_not_ready_timeout}",
+                    "nodeUnknownTimeout": "${node_unknown_timeout}"
+                },
+                "rdeProjectorVersion": "${rde_projector_version}"
+            },
+        "vcdConfig": {
+            "sysLogger": {
+                "host": "${syslog_host}",
+                "port": "${syslog_port}"
+            }
+        },
+        "githubConfig": {
+            "githubPersonalAccessToken": ""
+        },
+        "bootstrapClusterConfig": {
+            "capiEcosystem": {
+                "infraProvider": {
+                    "name": "capvcd",
+                    "version": "v${capvcd_version}",
+                    "capvcdRde": {
+                        "nss": "capvcdCluster",
+                        "vendor": "vmware",
+                        "version": "1.3.0"
+                    }
+                },
+                "coreCapiVersion": "v1.4.0",
+                "bootstrapProvider": {
+                    "name": "CAPBK",
+                    "version": "v1.4.0"
+                },
+                "controlPlaneProvider": {
+                    "name": "KCP",
+                    "version": "v1.4.0"
+                },
+                "certManagerVersion": "v1.11.1"
+            },
+            "certificateAuthorities": [
+                ${bootstrap_vm_certificates}
+            ],
+            "clusterctl": {
+                "version": "v1.4.0",
+                "clusterctlyaml": ""
+            },
+            "dockerVersion": "",
+            "kindVersion": "v0.19.0",
+            "kindestNodeVersion": "v1.27.1",
+            "kubectlVersion": "",
+            "proxyConfig": {
+                "noProxy": "${no_proxy}",
+                "httpProxy": "${http_proxy}",
+                "httpsProxy": "${https_proxy}"
+            },
+            "sizingPolicy": "${bootstrap_vm_sizing_policy}"
+        },
+        "containerRegistryUrl": "${container_registry_url}"
+        }
+    ]
+}
