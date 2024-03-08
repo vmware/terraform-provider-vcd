@@ -679,7 +679,7 @@ const testAccVcdCseKubernetesClusterDS = `
 # skip-binary-test - This one requires a very special setup
 
 data "vcd_org" "tenant_org" {
-  name = "tenant_org"
+  name = "{{.TenantOrg}}"
 }
 
 data "vcd_cse_kubernetes_cluster" "with_id_ds" {

@@ -46,6 +46,10 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 				dataSourceName: "vcd_nsxt_global_default_segment_profile_template",
 				reason:         "Global Default Segment Profile Template configuration is always available",
 			},
+			{
+				dataSourceName: "vcd_cse_kubernetes_cluster",
+				reason:         "CSE Kubernetes cluster requires its own particular VCD setup",
+			},
 		}
 		for _, skip := range skipAlwaysSlice {
 			if dataSourceName == skip.dataSourceName {
