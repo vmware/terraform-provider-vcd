@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-// TestAccCseKubernetesClusterDataSourceNotFound checks that the CSE Kubernetes Cluster data source always return error
+// TestAccCseKubernetesClusterDataSourceNotFound checks that the CSE Kubernetes Cluster data source always returns an error
 // and substring 'govcd.ErrorEntityNotFound' in it when a cluster is not found.
 func TestAccCseKubernetesClusterDataSourceNotFound(t *testing.T) {
 	preTestChecks(t)
