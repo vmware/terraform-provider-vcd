@@ -50,6 +50,10 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 				dataSourceName: "vcd_cse_kubernetes_cluster",
 				reason:         "CSE Kubernetes cluster requires its own particular VCD setup",
 			},
+			{
+				dataSourceName: "vcd_version",
+				reason:         "The VCD version is always available",
+			},
 		}
 		for _, skip := range skipAlwaysSlice {
 			if dataSourceName == skip.dataSourceName {

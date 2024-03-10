@@ -1,4 +1,4 @@
-//go:build cse || ALL
+//go:build cse || ALL || functional
 
 package vcd
 
