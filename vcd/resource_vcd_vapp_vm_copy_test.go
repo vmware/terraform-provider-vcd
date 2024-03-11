@@ -310,6 +310,7 @@ resource "vcd_vm" "copy" {
 
 func TestAccVcdVAppVmCopyDifferentVdc(t *testing.T) {
 	preTestChecks(t)
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
 		"TestName":       t.Name(),

@@ -217,6 +217,7 @@ resource "vcd_network_routed_v2" "net1" {
 
 func TestAccVcdNetworkRoutedV2NsxtRouteAdvertisement(t *testing.T) {
 	preTestChecks(t)
+	skipIfNotSysAdmin(t)
 
 	if checkVersion(testConfig.Provider.ApiVersion, "< 37.1") {
 		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
