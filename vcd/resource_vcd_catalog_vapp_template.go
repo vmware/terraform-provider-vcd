@@ -357,7 +357,15 @@ func genericVcdCatalogVappTemplateRead(_ context.Context, d *schema.ResourceData
 
 	d.SetId(vAppTemplate.VAppTemplate.ID)
 
-	catalogItemId, err := vAppTemplate.GetCatalogItemId()
+	catalogItemId, err := runWithRetry("retrieving catalog item ID",
+		"error retrieving Catalog Item ID for vApp template",
+		10*time.Second,
+		func() error {
+			return vAppTemplate.Refresh()
+		},
+		func() (any, error) {
+			return vAppTemplate.GetCatalogItemId()
+		})
 	if err != nil {
 		return diag.Errorf("error retrieving Catalog Item ID for vApp template: %s", err)
 	}
