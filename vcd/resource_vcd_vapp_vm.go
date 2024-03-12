@@ -724,17 +724,59 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 // other functions that need to be run
 func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	startTime := time.Now()
-	util.Logger.Printf("[DEBUG] [VM create] started VM creation in vApp")
 
 	vappName := d.Get("vapp_name").(string)
 	if vappName == "" {
 		return diag.Errorf("vApp name is mandatory for vApp VM (resource `vcd_vapp_vm`)")
 	}
+	vmName := d.Get("name").(string)
+	util.Logger.Printf("[DEBUG] [VM create] started VM creation in vApp (vApp name: %s, VM Name: %s)", vappName, vmName)
 
 	// vApp lock must be acquired for VMs that are vApp members
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
+
+	// If VM is a copy of another VM (has 'copy_from_vm_id' specified), parent vApp lock of source
+	// VM must also be acquired because when a copy is being made - that vApp becomes busy
+	isVmCopy := d.Get("copy_from_vm_id").(string) != "" // Copy VM functionality
+	if isVmCopy {
+		identifier := d.Get("copy_from_vm_id").(string)
+		util.Logger.Printf("[DEBUG] [VM create] VM will be copied from %s. Checking if additional lock is needed", identifier)
+
+		destinationOrg, destinationVdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return diag.Errorf("[VM create copy] error retrieving Org: %s", err)
+		}
+
+		sourceVm, err := destinationOrg.QueryVmById(identifier)
+		if err != nil {
+			return diag.Errorf("[VM create copy] error retrieving VM %s by ID: %s", identifier, err)
+		}
+
+		parentSourceVapp, err := sourceVm.GetParentVApp()
+		if err != nil {
+			return diag.Errorf("[VM create copy] error retrieving parent vApp: %s", err)
+		}
+
+		// Parent VDC might different than destination VDC
+		parentSourceVdc, err := sourceVm.GetParentVdc()
+		if err != nil {
+			return diag.Errorf("[VM create copy] error retrieving parent VDC: %s", err)
+		}
+
+		// Only lock source vApp if its name and parent VDC are different
+		// Parent Org will always be the same because one cannot copy VM from different Org
+		if parentSourceVapp.VApp.Name != vappName || parentSourceVdc.Vdc.Name != destinationVdc.Vdc.Name {
+			util.Logger.Printf("[DEBUG] [VM create] locking parent vApp for source VM  (Org Name: '%s', VDC Name: '%s', vApp name: '%s', VM Name: '%s')",
+				destinationOrg.Org.Name, parentSourceVdc.Vdc.Name, parentSourceVapp.VApp.Name, sourceVm.VM.Name)
+			unlock := vcdClient.lockVappWithName(destinationOrg.Org.Name, parentSourceVdc.Vdc.Name, parentSourceVapp.VApp.Name)
+			defer unlock()
+		} else {
+			util.Logger.Printf("[DEBUG] [VM create] not locking parent vApp for source VM because source and destination are the same (Source vApp: '%s', Destination vApp: '%s')  (Source VDC: '%s', Destination VDC: '%s')",
+				parentSourceVapp.VApp.Name, parentSourceVdc.Vdc.Name, parentSourceVdc.Vdc.Name, destinationVdc.Vdc.Name)
+		}
+	}
 
 	diags := genericResourceVmCreate(d, meta, vappVmType)
 	// We need to check if there were errors, as genericResourceVmCreate can also return a warning
@@ -743,7 +785,7 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 	}
 
 	timeElapsed := time.Since(startTime)
-	util.Logger.Printf("[DEBUG] [VM create] finished VM creation in vApp [took %f seconds]", timeElapsed.Seconds())
+	util.Logger.Printf("[DEBUG] [VM create] finished VM creation in vApp  (vApp name: %s, VM Name: %s) [took %f seconds]", vappName, vmName, timeElapsed.Seconds())
 
 	if len(diags) != 0 {
 		return append(diags, genericVcdVmRead(d, meta, "resource")...)
@@ -1030,6 +1072,33 @@ func createVmFromImage(d *schema.ResourceData, meta interface{}, vmType typeOfVm
 	if err != nil {
 		return nil, err
 	}
+
+	// // For VM Copy lock source image parent vApp as it also becomes busy
+	// if sourceImageType == vmSourceVmCopy {
+	// 	identifier := d.Get("copy_from_vm_id").(string)
+	// 	sourceVm, err := org.QueryVmById(identifier)
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("[VM create copy] error retrieving VM %s by ID: %s", identifier, err)
+	// 	}
+
+	// 	parentSourceVapp, err := sourceVm.GetParentVApp()
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+
+	// 	// Parent VDC might different than destination VDC
+	// 	parentSourceVdc, err := sourceVm.GetParentVdc()
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+
+	// 	util.Logger.Printf("[DEBUG] [VM create] locking parent vApp for source VM  (Org Name: %s, VDC Name: %s, vApp name: %s, VM Name: %s)",
+	// 		org.Org.Name, parentSourceVdc.Vdc.Name, parentSourceVapp.VApp.Name, sourceVm.VM.Name)
+
+	// 	unlock := vcdClient.lockVappWithName(org.Org.Name, parentSourceVdc.Vdc.Name, parentSourceVapp.VApp.Name)
+	// 	defer unlock()
+
+	// }
 
 	// Look up vApp before setting up network configuration. Having a vApp set, will enable
 	// additional network availability in vApp validations in `networksToConfig` function.
