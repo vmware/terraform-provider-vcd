@@ -25,13 +25,21 @@ const (
 	vappVmType       typeOfVm = "vcd_vapp_vm"
 )
 
+// vmImageSource defines if the VM source image is a catalog template or an existing VM
+type vmImageSource string
+
+const (
+	vmSourceCatalogTemplate vmImageSource = "catalog_template"
+	vmSourceVmCopy          vmImageSource = "vm_copy"
+)
+
 // Maintenance guide for VM code
 //
 // VM codebase grew to be quite complicated because of a few reasons:
 // * It is a resource with many API quirks
 // * There are 4 different go-vcloud-director SDK types for creating VM
-//   * `types.InstantiateVmTemplateParams` (Standalone VM from template)
-//   * `types.ReComposeVAppParams` (vApp VM from template)
+//   * `types.InstantiateVmTemplateParams` (Standalone VM from template or VM Copy from another VM)
+//   * `types.ReComposeVAppParams` (vApp VM from template or VM Copy from another VM)
 //   * `types.RecomposeVAppParamsForEmptyVm` (Empty vApp VM)
 //   * `types.CreateVmParams` (Empty Standalone VM)
 // They also use different functions. All VM types are directly populated in resource code instead of
@@ -84,6 +92,11 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    vmType == standaloneVmType,
 			ForceNew:    vmType == vappVmType,
 			Description: "The vApp this VM belongs to - Required, unless it is a standalone VM",
+		},
+		"vapp_id": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "ID of parent vApp",
 		},
 		"vm_type": {
 			Type:        schema.TypeString,
@@ -142,6 +155,13 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Deprecated:    "You should use `vapp_template_id` or `boot_image_id` without the need of a catalog name",
 			Description:   "The catalog name in which to find the given vApp Template or media for boot_image",
 			ConflictsWith: []string{"vapp_template_id", "boot_image_id"},
+		},
+		"copy_from_vm_id": {
+			Type:          schema.TypeString,
+			Optional:      true,
+			ForceNew:      true,
+			Description:   "Source VM that should be copied from",
+			ConflictsWith: []string{"template_name", "vapp_template_id", "catalog_name"},
 		},
 		"description": {
 			Type:        schema.TypeString,
@@ -380,6 +400,13 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			}},
 			Optional: true,
 			Set:      resourceVcdVmIndependentDiskHash,
+		},
+		"consolidate_disks_on_create": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			ForceNew:    true,
+			Description: "Consolidates disks during creation and allows to change disk size using 'override_template_disk' in fast provisioned VDCs",
 		},
 		"override_template_disk": {
 			Type:        schema.TypeSet,
@@ -697,17 +724,62 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 // other functions that need to be run
 func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	startTime := time.Now()
-	util.Logger.Printf("[DEBUG] [VM create] started VM creation in vApp")
 
 	vappName := d.Get("vapp_name").(string)
 	if vappName == "" {
 		return diag.Errorf("vApp name is mandatory for vApp VM (resource `vcd_vapp_vm`)")
 	}
+	vmName := d.Get("name").(string)
+	util.Logger.Printf("[DEBUG] [VM create] started VM creation in vApp (vApp name: %s, VM Name: %s)", vappName, vmName)
 
 	// vApp lock must be acquired for VMs that are vApp members
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
+
+	// If VM is a copy of another VM (has 'copy_from_vm_id' specified), parent vApp lock of source
+	// VM must also be acquired because when a copy is being made - that vApp becomes busy
+	// For example creating multiple VMs from the same source cannot be done in parallel because VCD
+	// will return VDC_RECOMPOSE_VAPP
+	isVmCopy := d.Get("copy_from_vm_id").(string) != "" // Copy VM functionality
+	if isVmCopy {
+		identifier := d.Get("copy_from_vm_id").(string)
+		util.Logger.Printf("[DEBUG] [VM create] VM will be copied from %s. Checking if additional lock is needed", identifier)
+
+		destinationOrg, destinationVdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return diag.Errorf("[VM create copy] error retrieving Org: %s", err)
+		}
+
+		sourceVm, err := destinationOrg.QueryVmById(identifier)
+		if err != nil {
+			return diag.Errorf("[VM create copy] error retrieving VM %s by ID: %s", identifier, err)
+		}
+
+		parentSourceVapp, err := sourceVm.GetParentVApp()
+		if err != nil {
+			return diag.Errorf("[VM create copy] error retrieving parent vApp: %s", err)
+		}
+
+		// Parent VDC might different than destination VDC
+		parentSourceVdc, err := sourceVm.GetParentVdc()
+		if err != nil {
+			return diag.Errorf("[VM create copy] error retrieving parent VDC: %s", err)
+		}
+
+		// Only lock source vApp if its name and parent VDC are different
+		// Parent Org will always be the same because one cannot copy VM from different Org
+		// There may be a case where source and destination vApp names are the same, but VDCs differ
+		if parentSourceVapp.VApp.Name != vappName || parentSourceVdc.Vdc.Name != destinationVdc.Vdc.Name {
+			util.Logger.Printf("[DEBUG] [VM create] locking parent vApp for source VM  (Org Name: '%s', VDC Name: '%s', vApp name: '%s', VM Name: '%s')",
+				destinationOrg.Org.Name, parentSourceVdc.Vdc.Name, parentSourceVapp.VApp.Name, sourceVm.VM.Name)
+			unlock := vcdClient.lockVappWithName(destinationOrg.Org.Name, parentSourceVdc.Vdc.Name, parentSourceVapp.VApp.Name)
+			defer unlock()
+		} else {
+			util.Logger.Printf("[DEBUG] [VM create] not locking parent vApp for source VM because source and destination are the same (Source vApp: '%s', Destination vApp: '%s')  (Source VDC: '%s', Destination VDC: '%s')",
+				parentSourceVapp.VApp.Name, parentSourceVdc.Vdc.Name, parentSourceVdc.Vdc.Name, destinationVdc.Vdc.Name)
+		}
+	}
 
 	diags := genericResourceVmCreate(d, meta, vappVmType)
 	// We need to check if there were errors, as genericResourceVmCreate can also return a warning
@@ -716,7 +788,7 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 	}
 
 	timeElapsed := time.Since(startTime)
-	util.Logger.Printf("[DEBUG] [VM create] finished VM creation in vApp [took %f seconds]", timeElapsed.Seconds())
+	util.Logger.Printf("[DEBUG] [VM create] finished VM creation in vApp  (vApp name: %s, VM Name: %s) [took %f seconds]", vappName, vmName, timeElapsed.Seconds())
 
 	if len(diags) != 0 {
 		return append(diags, genericVcdVmRead(d, meta, "resource")...)
@@ -735,7 +807,8 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	isVmFromTemplateDeprecated := d.Get("catalog_name").(string) != "" && d.Get("template_name").(string) != ""
 
 	isVmFromTemplate := d.Get("vapp_template_id").(string) != ""
-	isEmptyVm := !isVmFromTemplate && !isVmFromTemplateDeprecated
+	isVmCopy := d.Get("copy_from_vm_id").(string) != "" // Copy VM functionality
+	isEmptyVm := !isVmFromTemplate && !isVmFromTemplateDeprecated && !isVmCopy
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// This part of code conditionally calls functions for VM creation from template and empty VMs
@@ -747,9 +820,15 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	switch {
 	case isVmFromTemplateDeprecated || isVmFromTemplate:
 		util.Logger.Printf("[DEBUG] [VM create] creating VM from template")
-		vm, err = createVmFromTemplate(d, meta, vmType)
+		vm, err = createVmFromImage(d, meta, vmType, vmSourceCatalogTemplate)
 		if err != nil {
 			return diag.Errorf("error creating VM from template: %s", err)
+		}
+	case isVmCopy:
+		util.Logger.Printf("[DEBUG] [VM create] creating VM copy")
+		vm, err = createVmFromImage(d, meta, vmType, vmSourceVmCopy)
+		if err != nil {
+			return diag.Errorf("error creating VM copy: %s", err)
 		}
 	case isEmptyVm:
 		util.Logger.Printf("[DEBUG] [VM create] creating empty VM")
@@ -960,13 +1039,13 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 	return nil
 }
 
-// createVmFromTemplate is responsible for create VMs from template of two types:
+// createVmFromImage is responsible for create VMs from template of two types:
 // * Standalone VMs
 // * VMs inside vApp (vApp VMs)
 //
 // Code flow has 3 layers:
 // 1. Lookup common information, required for both types of VMs (Standalone and vApp child). Things such as
-//   - Template to be used
+//   - VM Source Image - Catalog Template or VM (for VM Copy operation) to be used
 //   - Network adapter configuration
 //   - Storage profile configuration
 //   - VM compute policy configuration
@@ -980,7 +1059,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 // 3. Perform additional operations which are common for both types of VMs
 //
 // Note. VM Power ON (if it wasn't disabled in HCL configuration) occurs as last step after all configuration is done.
-func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*govcd.VM, error) {
+func createVmFromImage(d *schema.ResourceData, meta interface{}, vmType typeOfVm, sourceImageType vmImageSource) (*govcd.VM, error) {
 	vcdClient := meta.(*VCDClient)
 
 	// Step 1 - lookup common information
@@ -989,11 +1068,12 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	// Look up VM template inside vApp template - either specified by `vm_name_in_template` or the
-	// first one in vApp
-	vmTemplate, err := lookupvAppTemplateforVm(d, vcdClient, org, vdc)
+	// Non empty VMs can be based on one of two things:
+	// * Catalog VM template (regular way for creating VMs)
+	// * Already running VM templates (VM Copy)
+	vmSourceImage, err := getVmSourceImage(sourceImageType, d, vcdClient, org, vdc)
 	if err != nil {
-		return nil, fmt.Errorf("error finding vApp template: %s", err)
+		return nil, err
 	}
 
 	// Look up vApp before setting up network configuration. Having a vApp set, will enable
@@ -1057,12 +1137,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			AllEULAsAccepted: d.Get("accept_all_eulas").(bool),
 			ComputePolicy:    vmComputePolicy,
 			SourcedVmTemplateItem: &types.SourcedVmTemplateParams{
-				Source: &types.Reference{
-					HREF: vmTemplate.VAppTemplate.HREF,
-					ID:   vmTemplate.VAppTemplate.ID,
-					Type: vmTemplate.VAppTemplate.Type,
-					Name: vmTemplate.VAppTemplate.Name,
-				},
+				Source: vmSourceImage,
 				VmGeneralParams: &types.VMGeneralParams{
 					Description: d.Get("description").(string),
 				},
@@ -1092,6 +1167,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 		}
 		util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
 		dSet(d, "vapp_name", vapp.VApp.Name)
+		dSet(d, "vapp_id", vapp.VApp.ID)
 		dSet(d, "vm_type", string(standaloneVmType))
 
 	////////////////////////////////////////////////////////////////////////////////////////////
@@ -1116,7 +1192,7 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 			PowerOn:          false, // VM will be powered on after all configuration is done
 			SourcedItem: &types.SourcedCompositionItemParam{
 				Source: &types.Reference{
-					HREF: vmTemplate.VAppTemplate.HREF,
+					HREF: vmSourceImage.HREF,
 					Name: vmName, // This VM name defines the VM name after creation
 				},
 				VMGeneralParams: &types.VMGeneralParams{
@@ -1166,6 +1242,26 @@ func createVmFromTemplate(d *schema.ResourceData, meta interface{}, vmType typeO
 	}
 
 	// Refresh VM to have the latest structure
+	if err := vm.Refresh(); err != nil {
+		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
+	}
+
+	// Check if disk consolidation is requested - it is a required operation in fast provisioned
+	// VDCs when override_template_disk tries to increase disk size, but there can also be other use
+	// cases.
+	// Such fields are processed:
+	// * consolidate_disks_on_create
+	//
+	// Note. Consolidating disks requires "vApp: VM Migrate, Force Undeploy, Relocate, Consolidate"
+	// right
+	if d.Get("consolidate_disks_on_create").(bool) {
+		util.Logger.Printf("[INFO] disk consolidation is requested with field 'consolidate_disks_on_create': %s", err)
+		err := vm.ConsolidateDisks()
+		if err != nil {
+			return nil, fmt.Errorf("error occurred while consolidating disks for VM '%s': %s", vm.VM.Name, err)
+		}
+	}
+
 	if err := vm.Refresh(); err != nil {
 		return nil, fmt.Errorf("error refreshing VM %s : %s", vmName, err)
 	}
@@ -1550,6 +1646,7 @@ func createVmEmpty(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*
 	}
 	util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
 	dSet(d, "vapp_name", vapp.VApp.Name)
+	dSet(d, "vapp_id", vapp.VApp.ID)
 
 	// Due to the Bug in VCD, VM creation works only with Org VDC networks, not vApp networks - we
 	// setup network configuration with update.
@@ -2146,6 +2243,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 	// org, vdc, and vapp_name are already implicitly set
 	dSet(d, "name", vm.VM.Name)
 	dSet(d, "vapp_name", vapp.VApp.Name)
+	dSet(d, "vapp_id", vapp.VApp.ID)
 	dSet(d, "description", vm.VM.Description)
 	d.SetId(vm.VM.ID)
 	dSet(d, "vm_type", computedVmType)

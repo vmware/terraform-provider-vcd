@@ -155,6 +155,10 @@ func checkOvaPath(t *testing.T) {
 }
 
 func testAccCheckVcdVAppTemplateExists(vAppTemplateName string) resource.TestCheckFunc {
+	return testAccCheckVcdVAppTemplateExistsInCatalog(testSuiteCatalogName, vAppTemplateName)
+}
+
+func testAccCheckVcdVAppTemplateExistsInCatalog(catalogName, vAppTemplateName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		vAppTemplateRs, ok := s.RootModule().Resources[vAppTemplateName]
 		if !ok {
@@ -172,9 +176,9 @@ func testAccCheckVcdVAppTemplateExists(vAppTemplateName string) resource.TestChe
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		catalog, err := org.GetCatalogByName(testSuiteCatalogName, false)
+		catalog, err := org.GetCatalogByName(catalogName, false)
 		if err != nil {
-			return fmt.Errorf("catalog %s does not exist: %s", testSuiteCatalogName, err)
+			return fmt.Errorf("catalog %s does not exist: %s", catalogName, err)
 		}
 
 		_, err = catalog.GetVAppTemplateByName(vAppTemplateRs.Primary.Attributes["name"])
@@ -394,3 +398,570 @@ func TestAccVcdCatalogVAppTemplateMetadataIgnore(t *testing.T) {
 			"OvfUrl":  testConfig.Ova.OvfUrl,
 		})
 }
+
+func TestAccVcdCatalogVAppTemplateCaptureEmptyPoweredOffVms(t *testing.T) {
+	preTestChecks(t)
+	vAppTemplateName := t.Name()
+	vAppTemplateDescription := vAppTemplateName + "Description"
+
+	if testConfig.Ova.OvfUrl == "" {
+		t.Skip("Variable Ova.OvfUrl must be set in test configuration")
+	}
+
+	var params = StringMap{
+		"Org":              testConfig.VCD.Org,
+		"Vdc":              testConfig.Nsxt.Vdc,
+		"Catalog":          testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"CatalogItem":      testConfig.VCD.Catalog.CatalogItemWithMultiVms,
+		"VAppTemplateName": vAppTemplateName,
+		"Description":      vAppTemplateDescription,
+		"TestName":         t.Name(),
+	}
+	config1 := templateFill(testAccVcdCatalogVAppTemplateCaptureEmptyVms, params)
+	params["FuncName"] = t.Name() + "-step2"
+	config2 := templateFill(testAccVcdCatalogVAppTemplateCaptureEmptyVmsDS, params)
+
+	ignoreDatasourceCheckFields := []string{"%", "capture_vapp.0.copy_tpm_on_instantiate", "capture_vapp.0.source_id",
+		"capture_vapp.0.customize_on_instantiate", "capture_vapp.0.%", "capture_vapp.#", "upload_piece_size"}
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", config1)
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { preRunChecks(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: config1,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdVAppTemplateExistsInCatalog(testConfig.VCD.Catalog.NsxtBackedCatalogName, "vcd_catalog_vapp_template.from-vapp-no-customization"),
+					testAccCheckVcdVAppTemplateExistsInCatalog(testConfig.VCD.Catalog.NsxtBackedCatalogName, "vcd_catalog_vapp_template.from-standalone-vm-no-customization"),
+					testAccCheckVcdVAppTemplateExistsInCatalog(testConfig.VCD.Catalog.NsxtBackedCatalogName, "vcd_catalog_vapp_template.from-vapp-customization"),
+					testAccCheckVcdVAppTemplateExistsInCatalog(testConfig.VCD.Catalog.NsxtBackedCatalogName, "vcd_catalog_vapp_template.from-standalone-vm-customization"),
+
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-vapp-no-customization", "name", vAppTemplateName+"-from-vapp-no-cust"),
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-vapp-no-customization", "description", vAppTemplateDescription),
+					resource.TestCheckResourceAttrSet("vcd_catalog_vapp_template.from-vapp-no-customization", "vm_names.0"),
+
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-standalone-vm-no-customization", "name", vAppTemplateName+"-from-standalone-no-cust"),
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-standalone-vm-no-customization", "description", vAppTemplateDescription),
+					resource.TestCheckResourceAttrSet("vcd_catalog_vapp_template.from-standalone-vm-no-customization", "vm_names.0"),
+
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-vapp-customization", "name", vAppTemplateName+"-from-vapp-cust"),
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-vapp-customization", "description", vAppTemplateDescription),
+					resource.TestCheckResourceAttrSet("vcd_catalog_vapp_template.from-vapp-customization", "vm_names.0"),
+
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-standalone-vm-customization", "name", vAppTemplateName+"-from-standalone-cust"),
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-standalone-vm-customization", "description", vAppTemplateDescription),
+					resource.TestCheckResourceAttrSet("vcd_catalog_vapp_template.from-standalone-vm-customization", "vm_names.0"),
+				),
+			},
+			{
+				Config: config2,
+				Check: resource.ComposeTestCheckFunc(
+					resourceFieldsEqual("vcd_catalog_vapp_template.from-vapp-no-customization", "data.vcd_catalog_vapp_template.from-vapp-no-customization", ignoreDatasourceCheckFields),
+					resourceFieldsEqual("vcd_catalog_vapp_template.from-standalone-vm-no-customization", "data.vcd_catalog_vapp_template.from-standalone-vm-no-customization", ignoreDatasourceCheckFields),
+					resourceFieldsEqual("vcd_catalog_vapp_template.from-vapp-customization", "data.vcd_catalog_vapp_template.from-vapp-customization", ignoreDatasourceCheckFields),
+					resourceFieldsEqual("vcd_catalog_vapp_template.from-standalone-vm-customization", "data.vcd_catalog_vapp_template.from-standalone-vm-customization", ignoreDatasourceCheckFields),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdCatalogVAppTemplateCaptureEmptyVms = `
+data "vcd_catalog" "cat" {
+  org  = "{{.Org}}"
+  name = "{{.Catalog}}"
+}
+
+resource "vcd_vapp" "web" {
+  org      = "{{.Org}}"
+  name     = "{{.TestName}}-vapp"
+  power_on = false
+}
+
+resource "vcd_vapp_vm" "emptyVM" {
+  org  = "{{.Org}}"
+  name = "{{.TestName}}-vm"
+  
+  power_on      = false
+  vapp_name     = vcd_vapp.web.name
+  computer_name = "emptyVM"
+  memory        = 1024
+  cpus          = 2
+  cpu_cores     = 1
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+}
+
+resource "vcd_vm" "standalone" {
+  org      = "{{.Org}}"
+  name     = "{{.TestName}}-vm"
+  power_on = false
+
+  computer_name = "emptyVM"
+  memory        = 1024
+  cpus          = 2
+  cpu_cores     = 1
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+}
+
+resource "vcd_catalog_vapp_template" "from-vapp-no-customization" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.cat.id
+
+  name              = "{{.VAppTemplateName}}-from-vapp-no-cust"
+  description       = "{{.Description}}"
+
+  capture_vapp {
+	source_id                = vcd_vapp.web.id
+	customize_on_instantiate = false
+  }
+
+  depends_on = [ vcd_vapp_vm.emptyVM ]
+}
+
+resource "vcd_catalog_vapp_template" "from-standalone-vm-no-customization" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.cat.id
+
+  name              = "{{.VAppTemplateName}}-from-standalone-no-cust"
+  description       = "{{.Description}}"
+
+  capture_vapp {
+    source_id                = vcd_vm.standalone.vapp_id
+    customize_on_instantiate = false
+  }
+}
+
+resource "vcd_catalog_vapp_template" "from-vapp-customization" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.cat.id
+  
+  name        = "{{.VAppTemplateName}}-from-vapp-cust"
+  description = "{{.Description}}"
+  
+  capture_vapp {
+    source_id                = vcd_vapp.web.id
+    customize_on_instantiate = true
+  }
+
+  depends_on = [ vcd_vapp_vm.emptyVM ]
+}
+  
+resource "vcd_catalog_vapp_template" "from-standalone-vm-customization" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.cat.id
+
+  name        = "{{.VAppTemplateName}}-from-standalone-cust"
+  description = "{{.Description}}"
+  
+  capture_vapp {
+    source_id                = vcd_vm.standalone.vapp_id
+    customize_on_instantiate = true
+  }
+}
+`
+
+const testAccVcdCatalogVAppTemplateCaptureEmptyVmsDS = testAccVcdCatalogVAppTemplateCaptureEmptyVms + `
+data "vcd_catalog_vapp_template" "from-vapp-no-customization" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.cat.id
+  name       = vcd_catalog_vapp_template.from-vapp-no-customization.name
+}
+
+data "vcd_catalog_vapp_template" "from-standalone-vm-no-customization" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.cat.id
+  name       = vcd_catalog_vapp_template.from-standalone-vm-no-customization.name
+}
+
+data "vcd_catalog_vapp_template" "from-vapp-customization" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.cat.id
+  name       = vcd_catalog_vapp_template.from-vapp-customization.name
+}
+
+data "vcd_catalog_vapp_template" "from-standalone-vm-customization" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.cat.id
+  name       = vcd_catalog_vapp_template.from-standalone-vm-customization.name
+}
+`
+
+func TestAccVcdCatalogVAppTemplateCaptureTemplatePoweredOnVms(t *testing.T) {
+	preTestChecks(t)
+	vAppTemplateName := t.Name()
+	vAppTemplateDescription := vAppTemplateName + "Description"
+
+	if testConfig.Ova.OvfUrl == "" {
+		t.Skip("Variable Ova.OvfUrl must be set in test configuration")
+	}
+
+	var params = StringMap{
+		"Org":              testConfig.VCD.Org,
+		"Vdc":              testConfig.Nsxt.Vdc,
+		"Catalog":          testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"CatalogItem":      testConfig.VCD.Catalog.CatalogItemWithMultiVms,
+		"VAppTemplateName": vAppTemplateName,
+		"Description":      vAppTemplateDescription,
+		"TestName":         t.Name(),
+	}
+	config1 := templateFill(testAccVcdCatalogVAppTemplateCaptureTemplateVmsStep1, params)
+	params["FuncName"] = t.Name() + "-step2"
+	config2 := templateFill(testAccVcdCatalogVAppTemplateCaptureTemplateVmsStep2, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", config1)
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { preRunChecks(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: config1,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdVAppTemplateExistsInCatalog(testConfig.VCD.Catalog.NsxtBackedCatalogName, "vcd_catalog_vapp_template.from-vapp-no-customization"),
+					testAccCheckVcdVAppTemplateExistsInCatalog(testConfig.VCD.Catalog.NsxtBackedCatalogName, "vcd_catalog_vapp_template.from-standalone-vm-no-customization"),
+
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-vapp-no-customization", "name", vAppTemplateName+"-from-vapp-no-cust"),
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-vapp-no-customization", "description", vAppTemplateDescription),
+					resource.TestCheckResourceAttrSet("vcd_catalog_vapp_template.from-vapp-no-customization", "vm_names.0"),
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-vapp-no-customization", "lease.0.storage_lease_in_sec", fmt.Sprintf("%d", 3600*24*3)),
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-vapp-no-customization", "metadata.vapp_template_metadata", "vApp Template Metadata"),
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-vapp-no-customization", "metadata.vapp_template_metadata2", "vApp Template Metadata2"),
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-vapp-no-customization", "metadata.vapp_template_metadata3", "vApp Template Metadata3"),
+
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-standalone-vm-no-customization", "name", vAppTemplateName+"-from-standalone-no-cust"),
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-standalone-vm-no-customization", "description", vAppTemplateDescription),
+					resource.TestCheckResourceAttrSet("vcd_catalog_vapp_template.from-standalone-vm-no-customization", "vm_names.0"),
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-standalone-vm-no-customization", "lease.0.storage_lease_in_sec", fmt.Sprintf("%d", 3600*24*3)),
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-standalone-vm-no-customization", "metadata.vapp_template_metadata", "vApp Template Metadata"),
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-standalone-vm-no-customization", "metadata.vapp_template_metadata2", "vApp Template Metadata2"),
+					resource.TestCheckResourceAttr("vcd_catalog_vapp_template.from-standalone-vm-no-customization", "metadata.vapp_template_metadata3", "vApp Template Metadata3"),
+				),
+			},
+			{
+				Config: config2,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_vapp.captured", "name", t.Name()+"-vapp-captured"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.captured", "name", t.Name()+"-vm"),
+					resource.TestCheckResourceAttr("vcd_vm.captured", "name", t.Name()+"-vm"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdCatalogVAppTemplateCaptureTemplateVmsStep1 = `
+data "vcd_catalog" "cat" {
+  org  = "{{.Org}}"
+  name = "{{.Catalog}}"
+}
+
+data "vcd_catalog_vapp_template" "three-vms" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.cat.id
+  name       = "{{.CatalogItem}}"
+}
+
+resource "vcd_vapp" "web" {
+  org      = "{{.Org}}"
+  name     = "{{.TestName}}-vapp"
+  power_on = true
+}
+
+resource "vcd_vapp_vm" "emptyVM" {
+  org  = "{{.Org}}"
+  name = "{{.TestName}}-vm"
+
+  vapp_template_id = data.vcd_catalog_vapp_template.three-vms.id
+  
+  power_on      = true
+  vapp_name     = vcd_vapp.web.name
+  computer_name = "emptyVM"
+  memory        = 1024
+  cpus          = 2
+  cpu_cores     = 1 
+}
+
+resource "vcd_vm" "standalone" {
+  org      = "{{.Org}}"
+  name     = "{{.TestName}}-vm"
+  power_on = true
+
+  vapp_template_id = data.vcd_catalog_vapp_template.three-vms.id
+
+  computer_name = "emptyVM"
+  memory        = 1024
+  cpus          = 2
+  cpu_cores     = 1
+}
+
+resource "vcd_catalog_vapp_template" "from-vapp-no-customization" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.cat.id
+
+  name              = "{{.VAppTemplateName}}-from-vapp-no-cust"
+  description       = "{{.Description}}"
+
+  capture_vapp {
+	source_id                = vcd_vapp.web.id
+	customize_on_instantiate = false
+  }
+
+  lease {
+	storage_lease_in_sec = 3600*24*3
+  }
+
+  metadata = {
+    vapp_template_metadata  = "vApp Template Metadata"
+    vapp_template_metadata2 = "vApp Template Metadata2"
+    vapp_template_metadata3 = "vApp Template Metadata3"
+  }
+
+  depends_on = [ vcd_vapp_vm.emptyVM ]
+}
+
+resource "vcd_catalog_vapp_template" "from-standalone-vm-no-customization" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.cat.id
+
+  name              = "{{.VAppTemplateName}}-from-standalone-no-cust"
+  description       = "{{.Description}}"
+
+  capture_vapp {
+    source_id                = vcd_vm.standalone.vapp_id
+    customize_on_instantiate = false
+  }
+
+  lease {
+	storage_lease_in_sec = 3600*24*3
+  }
+
+  metadata = {
+    vapp_template_metadata  = "vApp Template Metadata"
+    vapp_template_metadata2 = "vApp Template Metadata2"
+    vapp_template_metadata3 = "vApp Template Metadata3"
+  }
+}
+`
+
+const testAccVcdCatalogVAppTemplateCaptureTemplateVmsStep2 = testAccVcdCatalogVAppTemplateCaptureTemplateVmsStep1 + `
+resource "vcd_vapp" "captured" {
+  org      = "{{.Org}}"
+  name     = "{{.TestName}}-vapp-captured"
+  power_on = true
+}
+
+resource "vcd_vapp_vm" "captured" {
+  org  = "{{.Org}}"
+  name = "{{.TestName}}-vm"
+
+  vapp_template_id = vcd_catalog_vapp_template.from-vapp-no-customization.id
+  
+  power_on      = true
+  vapp_name     = vcd_vapp.captured.name
+  computer_name = "emptyVM"
+  memory        = 1024
+  cpus          = 2
+  cpu_cores     = 1 
+}
+
+resource "vcd_vm" "captured" {
+  org      = "{{.Org}}"
+  name     = "{{.TestName}}-vm"
+  power_on = true
+
+  vapp_template_id = vcd_catalog_vapp_template.from-standalone-vm-no-customization.id
+
+  computer_name = "emptyVM"
+  memory        = 1024
+  cpus          = 2
+  cpu_cores     = 1
+}
+`
+
+func TestAccVcdCatalogVAppTemplateOverwriteExistingItem(t *testing.T) {
+	preTestChecks(t)
+
+	// The test uses SDK to upload an item
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	// Get the data from configuration file. This client is still inactive at this point
+	vcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken, testConfig.Provider.ApiTokenFile, testConfig.Provider.ServiceAccountTokenFile)
+	if err != nil {
+		t.Fatalf("authentication error: %s", err)
+	}
+	org, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+	if err != nil {
+		t.Fatalf("org not found : %s", err)
+	}
+
+	catalog, err := org.GetCatalogByName(testConfig.VCD.Catalog.NsxtBackedCatalogName, false)
+	if err != nil {
+		t.Fatalf("catalog not found : %s", err)
+	}
+
+	itemName1 := t.Name() + "-1"
+	itemName2 := t.Name() + "-2"
+	description := t.Name() + "-description"
+	uploadTask1, err := catalog.UploadOvfByLink(testConfig.Ova.OvfUrl, itemName1, description)
+	if err != nil {
+		t.Fatalf("upload failed : %s", err)
+	}
+	uploadTask2, err := catalog.UploadOvfByLink(testConfig.Ova.OvfUrl, itemName2, description)
+	if err != nil {
+		t.Fatalf("upload failed : %s", err)
+	}
+	err = uploadTask1.WaitTaskCompletion()
+	if err != nil {
+		t.Fatalf("upload task failed : %s", err)
+	}
+	err = uploadTask2.WaitTaskCompletion()
+	if err != nil {
+		t.Fatalf("upload task failed : %s", err)
+	}
+	vAppTemplate, err := catalog.GetVAppTemplateByName(itemName1)
+	if err != nil {
+		t.Fatalf("error retrieving vApp template after upload : %s", err)
+	}
+
+	//
+	vappTemplateId := vAppTemplate.VAppTemplate.ID
+	catalogItemId, err := vAppTemplate.GetCatalogItemId()
+	if err != nil {
+		t.Fatalf("error catalog item ID for vApp : %s", err)
+	}
+
+	var params = StringMap{
+		"Org":                    testConfig.VCD.Org,
+		"Vdc":                    testConfig.Nsxt.Vdc,
+		"Catalog":                testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"CatalogItem":            testConfig.VCD.Catalog.CatalogItemWithMultiVms,
+		"VAppTemplateName":       t.Name(),
+		"Description":            t.Name() + "-description",
+		"TestName":               t.Name(),
+		"ExistingVappTemplateId": vappTemplateId,
+		"ExistingCatalogItemId":  catalogItemId,
+		"UploadedItemName1":      itemName1,
+		"UploadedItemName2":      itemName2,
+	}
+	config1 := templateFill(testAccVcdCatalogVAppTemplateOverwriteItem, params)
+	params["FuncName"] = t.Name() + "-step2"
+	config2 := templateFill(testAccVcdCatalogVAppTemplateOverwriteItem2, params)
+
+	cachePrecreatedTemplateId1 := &testCachedFieldValue{}
+	cachePrecreatedTemplateId2 := &testCachedFieldValue{}
+
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", config1)
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { preRunChecks(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: config1,
+				Check: resource.ComposeTestCheckFunc(
+					cachePrecreatedTemplateId1.cacheTestResourceFieldValue("data.vcd_catalog_item.existing", "id"),
+					cachePrecreatedTemplateId2.cacheTestResourceFieldValue("data.vcd_catalog_vapp_template.existing", "catalog_item_id"),
+				),
+			},
+			{
+				Config: config2,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdVAppTemplateExistsInCatalog(testConfig.VCD.Catalog.NsxtBackedCatalogName, "vcd_catalog_vapp_template.catalog-item-overwrite"),
+					testAccCheckVcdVAppTemplateExistsInCatalog(testConfig.VCD.Catalog.NsxtBackedCatalogName, "vcd_catalog_vapp_template.vapp-template-overwrite"),
+
+					// Catalog item ID remains the same
+					cachePrecreatedTemplateId1.testCheckCachedResourceFieldValue("vcd_catalog_vapp_template.catalog-item-overwrite", "catalog_item_id"),
+					cachePrecreatedTemplateId2.testCheckCachedResourceFieldValue("vcd_catalog_vapp_template.vapp-template-overwrite", "catalog_item_id"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdCatalogVAppTemplateOverwriteItem = `
+data "vcd_catalog" "cat" {
+  org  = "{{.Org}}"
+  name = "{{.Catalog}}"
+}
+
+resource "vcd_vm" "standalone" {
+  org      = "{{.Org}}"
+  name     = "{{.TestName}}-vm"
+  power_on = false
+
+  computer_name = "emptyVM"
+  memory        = 1024
+  cpus          = 2
+  cpu_cores     = 1
+
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+}
+
+data "vcd_catalog_item" "existing" {
+  org     = "{{.Org}}"
+  catalog = "{{.Catalog}}"
+  name    = "{{.UploadedItemName1}}"
+}
+
+data "vcd_catalog_vapp_template" "existing" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.cat.id
+  name       = "{{.UploadedItemName2}}"
+}
+`
+
+const testAccVcdCatalogVAppTemplateOverwriteItem2 = testAccVcdCatalogVAppTemplateOverwriteItem + `
+resource "vcd_catalog_vapp_template" "catalog-item-overwrite" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.cat.id
+  
+  name        = "{{.UploadedItemName1}}"
+  description = "{{.Description}}"
+  
+  capture_vapp {
+    source_id                 = vcd_vm.standalone.vapp_id
+    customize_on_instantiate  = true
+
+	# check that 'vcd_catalog_item' id can be used
+	overwrite_catalog_item_id = data.vcd_catalog_item.existing.id	
+  }
+}
+
+resource "vcd_catalog_vapp_template" "vapp-template-overwrite" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.cat.id
+	
+  name        = "{{.UploadedItemName2}}"
+  description = "{{.Description}}"
+	
+  capture_vapp {
+    source_id                 = vcd_vm.standalone.vapp_id
+    customize_on_instantiate  = true
+
+	# check that 'catalog_item_id' from 'vcd_catalog_vapp_template' can be used
+    overwrite_catalog_item_id = data.vcd_catalog_vapp_template.existing.catalog_item_id
+  }
+}
+`

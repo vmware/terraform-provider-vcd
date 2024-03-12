@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------------------------------
 # CSE v4.1 installation, step 1:
 #
-# * Please read the guide present at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install
+# * Please read the guide at https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install
 #   before applying this configuration.
 #
 # * The installation process is split into two steps as the first one creates a CSE admin user that needs to be
@@ -94,7 +94,7 @@ resource "vcd_role" "cse_admin_role" {
   org         = var.administrator_org
   name        = "CSE Admin Role"
   description = "Used for administrative purposes"
-  rights = [
+  rights = concat([
     "API Tokens: Manage",
     "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: Administrator Full access",
     "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: Administrator View",
@@ -106,7 +106,7 @@ resource "vcd_role" "cse_admin_role" {
     "${vcd_rde_type.capvcdcluster_type.vendor}:${vcd_rde_type.capvcdcluster_type.nss}: Full Access",
     "${vcd_rde_type.capvcdcluster_type.vendor}:${vcd_rde_type.capvcdcluster_type.nss}: Modify",
     "${vcd_rde_type.capvcdcluster_type.vendor}:${vcd_rde_type.capvcdcluster_type.nss}: View"
-  ]
+  ], data.vcd_version.gte_1051.matches_condition ? ["Organization: Traversal"] : [])
 }
 
 # This will allow to have a user with a limited set of rights that can access the Provider area of VCD.

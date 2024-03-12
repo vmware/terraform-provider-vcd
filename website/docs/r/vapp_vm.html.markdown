@@ -197,6 +197,10 @@ resource "vcd_vapp_vm" "internalDiskOverride" {
   cpus             = 2
   cpu_cores        = 1
 
+  # Fast provisioned VDCs require disks to be consolidated
+  # if their size is to be changed
+  # consolidate_disks_on_create = true 
+
   override_template_disk {
     bus_type        = "paravirtual"
     size_in_mb      = "22384"
@@ -438,7 +442,40 @@ resource "vcd_vapp_vm" "advancedVM" {
   cpu_reservation = "200"
   cpu_limit       = "1000"
 }
+```
 
+## Example Usage (VM copy)
+This example shows how to create a copy of an existing VM
+
+```hcl
+data "vcd_vapp_vm" "existing" {
+  vapp_name = data.vcd_vapp.web.name
+  name      = "web1"
+}
+
+data "vcd_vapp_org_network" "net1" {
+  vapp_name        = web1
+  org_network_name = "my-vapp-org-network"
+}
+
+resource "vcd_vapp_vm" "vm-copy" {
+  org = "org"
+  vdc = "vdc"
+
+  copy_from_vm_id = data.vcd_vapp_vm.existing.id # source VM ID
+  vapp_name       = data.vcd_vapp_vm.existing.vapp_name
+  name            = "VM Copy"
+  power_on        = false
+
+  network {
+    type               = "org"
+    name               = data.vcd_vapp_org_network.net1.org_network_name
+    adapter_type       = "VMXNET3"
+    ip_allocation_mode = "POOL"
+  }
+
+  prevent_update_power_off = true
+}
 ```
 
 ## Argument Reference
@@ -452,6 +489,10 @@ The following arguments are supported:
 * `computer_name` - (Optional; *v2.5+*) Computer name to assign to this virtual machine.
 * `vapp_template_id` - (Optional; *v3.8+*) The URN of the vApp Template to use. You can fetch it using a [`vcd_catalog_vapp_template`](/providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template) data source.
 * `vm_name_in_template` - (Optional; *v2.9+*) The name of the VM in vApp Template to use. For cases when vApp template has more than one VM.
+* `copy_from_vm_id` - (Optional; *v3.12+*) The ID of *an existing VM* to make a copy of it (it
+  cannot be a vApp template). The source VM *must be in the same Org* (but can be in different VDC).
+  *Note:* `sizing_policy_id` must be specified when creating a standalone VM (using `vcd_vm`
+  resource) and using different source/destination VDCs.
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM. If `memory_hot_add_enabled` is true, then memory will be increased without VM power off
 * `memory_reservation` - The amount of RAM (in MB) reservation on the underlying virtualization infrastructure
 * `memory_priority` - Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload
@@ -479,6 +520,11 @@ example for usage details.
 * `description`  - (Optional; *v2.9+*) The VM description. Note: for VM from Template `description` is read only. Currently, this field has
   the description of the OVA used to create the VM.
 * `override_template_disk` - (Optional; *v2.7+*) Allows to update internal disk in template before first VM boot. Disk is matched by `bus_type`, `bus_number` and `unit_number`. See [Override template Disk](#override-template-disk) below for details.
+* `consolidate_disks_on_create` - (Optional; *3.12+*) Performs disk consolidation during creation.
+  The main use case is when one wants to grow template disk size using `override_template_disk` in
+  fast provisioned VDCs. **Note:** Consolidating disks requires right `vApp: VM Migrate, Force
+  Undeploy, Relocate, Consolidate`. This operation _may take long time_ depending on disk size and
+  storage performance.
 * `network_dhcp_wait_seconds` - (Optional; *v2.7+*) Optional number of seconds to try and wait for DHCP IP (only valid
   for adapters in `network` block with `ip_allocation_mode=DHCP`). It constantly checks if IP is present so the time given
   is a maximum. VM must be powered on and _at least one_ of the following _must be true_:
@@ -584,7 +630,8 @@ example for usage details.
 Allows to update internal disk in template before first VM boot. Disk is matched by `bus_type`, `bus_number` and `unit_number`.
 Changes are ignored on update. This part isn't reread on refresh. To manage internal disk later please use [`vcd_vm_internal_disk`](/providers/vmware/vcd/latest/docs/resources/vm_internal_disk) resource.
  
-~> **Note:** Managing disks in VM is possible only when VDC fast provisioned is disabled.
+~> **Note:** Managing disks in VM with fast provisioned VDC require
+[`consolidate_disks_on_create`](#consolidate_disks_on_create) option.
 
 * `bus_type` - (Required) The type of disk controller. Possible values: `ide`, `parallel`( LSI Logic Parallel SCSI),
   `sas`(LSI Logic SAS (SCSI)), `paravirtual`(Paravirtual (SCSI)), `sata`, `nvme`. **Note** `nvme` requires *v3.5.0+* and
@@ -908,6 +955,7 @@ The following additional attributes are exported:
 * `thin_provisioned` - (*v2.7+*) Specifies whether the disk storage is pre-allocated or allocated on demand.
 * `iops` - (*v2.7+*) Specifies the IOPS for the disk. Default is 0.
 * `storage_profile` - (*v2.7+*) Storage profile which overrides the VM default one.
+* `vapp_id` - (*v3.12+*) Parent vApp ID.
 
 ## Hot and Cold update
 

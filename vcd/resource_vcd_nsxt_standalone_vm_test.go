@@ -125,7 +125,8 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 				// it is reported during import
 				// "network_dhcp_wait_seconds" is a user setting and cannot be imported
 				ImportStateVerifyIgnore: []string{"template_name", "catalog_name",
-					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off", "network.1.ip", "network_dhcp_wait_seconds"},
+					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off", "network.1.ip",
+					"network_dhcp_wait_seconds", "consolidate_disks_on_create"},
 			},
 			// This step ensures that VM and disk are removed, but networks are left
 			{

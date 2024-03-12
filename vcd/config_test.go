@@ -1,4 +1,4 @@
-//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || uiPlugin || providerVdc || ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || uiPlugin || providerVdc || cse || ALL
 
 package vcd
 
@@ -231,6 +231,17 @@ type TestConfig struct {
 		OrgUserPassword              string `json:"orgUserPassword"`              // Password for the Org User to be created within the organization
 	} `json:"testEnvBuild"`
 	EnvVariables map[string]string `json:"envVariables,omitempty"`
+	Cse          struct {
+		Version        string `json:"version,omitempty"`
+		StorageProfile string `json:"storageProfile,omitempty"`
+		SolutionsOrg   string `json:"solutionsOrg,omitempty"`
+		TenantOrg      string `json:"tenantOrg,omitempty"`
+		TenantVdc      string `json:"tenantVdc,omitempty"`
+		OvaCatalog     string `json:"ovaCatalog,omitempty"`
+		OvaName        string `json:"ovaName,omitempty"`
+		RoutedNetwork  string `json:"routedNetwork,omitempty"`
+		EdgeGateway    string `json:"edgeGateway,omitempty"`
+	} `json:"cse,omitempty"`
 }
 
 // names for created resources for all the tests
