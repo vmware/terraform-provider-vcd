@@ -1073,33 +1073,6 @@ func createVmFromImage(d *schema.ResourceData, meta interface{}, vmType typeOfVm
 		return nil, err
 	}
 
-	// // For VM Copy lock source image parent vApp as it also becomes busy
-	// if sourceImageType == vmSourceVmCopy {
-	// 	identifier := d.Get("copy_from_vm_id").(string)
-	// 	sourceVm, err := org.QueryVmById(identifier)
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("[VM create copy] error retrieving VM %s by ID: %s", identifier, err)
-	// 	}
-
-	// 	parentSourceVapp, err := sourceVm.GetParentVApp()
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	// Parent VDC might different than destination VDC
-	// 	parentSourceVdc, err := sourceVm.GetParentVdc()
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	util.Logger.Printf("[DEBUG] [VM create] locking parent vApp for source VM  (Org Name: %s, VDC Name: %s, vApp name: %s, VM Name: %s)",
-	// 		org.Org.Name, parentSourceVdc.Vdc.Name, parentSourceVapp.VApp.Name, sourceVm.VM.Name)
-
-	// 	unlock := vcdClient.lockVappWithName(org.Org.Name, parentSourceVdc.Vdc.Name, parentSourceVapp.VApp.Name)
-	// 	defer unlock()
-
-	// }
-
 	// Look up vApp before setting up network configuration. Having a vApp set, will enable
 	// additional network availability in vApp validations in `networksToConfig` function.
 	// It is only possible for vApp VMs, as empty VMs will get their hidden vApps created after the
