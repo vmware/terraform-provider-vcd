@@ -767,6 +767,7 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 
 		// Only lock source vApp if its name and parent VDC are different
 		// Parent Org will always be the same because one cannot copy VM from different Org
+		// There may be a case where source and destination vApp names are the same, but VDCs differ
 		if parentSourceVapp.VApp.Name != vappName || parentSourceVdc.Vdc.Name != destinationVdc.Vdc.Name {
 			util.Logger.Printf("[DEBUG] [VM create] locking parent vApp for source VM  (Org Name: '%s', VDC Name: '%s', vApp name: '%s', VM Name: '%s')",
 				destinationOrg.Org.Name, parentSourceVdc.Vdc.Name, parentSourceVapp.VApp.Name, sourceVm.VM.Name)
