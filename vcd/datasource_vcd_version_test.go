@@ -27,6 +27,7 @@ func TestAccVcdVersion(t *testing.T) {
 	}
 
 	var params = StringMap{
+		"SkipBinaryTest": " ",
 		"Condition":      ">= 99.99.99",
 		"FailIfNotMatch": "false",
 	}
@@ -37,11 +38,13 @@ func TestAccVcdVersion(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "-step2"
 	params["FailIfNotMatch"] = "true"
+	params["SkipBinaryTest"] = "# skip-binary-test - This one triggers an error"
 	step2 := templateFill(testAccVcdVersion, params)
 	debugPrintf("#[DEBUG] CONFIGURATION step2: %s", step2)
 
 	params["FuncName"] = t.Name() + "-step3"
 	params["Condition"] = "= " + currentVersion
+	params["SkipBinaryTest"] = " "
 	step3 := templateFill(testAccVcdVersion, params)
 	debugPrintf("#[DEBUG] CONFIGURATION step3: %s", step3)
 
@@ -125,6 +128,7 @@ func TestAccVcdVersion(t *testing.T) {
 }
 
 const testAccVcdVersion = `
+{{.SkipBinaryTest}}
 data "vcd_version" "version" {
   condition         = "{{.Condition}}"
   fail_if_not_match = {{.FailIfNotMatch}}
