@@ -2,4 +2,4 @@
 * Resource `vcd_catalog_vapp_template` supports creating templates from existing vApps and
   standalone VMs using new `capture_vapp` configuration block [GH-1215]
 * Resource `vcd_catalog_vapp_template` exposes attribute `catalog_item_id` for related Catalog Item
-  ID [GH-1215]
+  ID [GH-1215, GH-1219]
