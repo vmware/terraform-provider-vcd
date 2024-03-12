@@ -739,6 +739,8 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 
 	// If VM is a copy of another VM (has 'copy_from_vm_id' specified), parent vApp lock of source
 	// VM must also be acquired because when a copy is being made - that vApp becomes busy
+	// For example creating multiple VMs from the same source cannot be done in parallel because VCD
+	// will return VDC_RECOMPOSE_VAPP
 	isVmCopy := d.Get("copy_from_vm_id").(string) != "" // Copy VM functionality
 	if isVmCopy {
 		identifier := d.Get("copy_from_vm_id").(string)
