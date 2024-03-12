@@ -51,7 +51,7 @@ func TestAccCseKubernetesClusterDataSourceNotFound(t *testing.T) {
 }
 
 const testAccNotExistingCluster1 = `
-# skip-binary-test: data source not found test only works in acceptance tests
+# skip-binary-test: data-source-not-found test only works in acceptance tests
 
 data vcd_cse_kubernetes_cluster "not-existing1" {
   cluster_id = "urn:vcloud:entity:vmware:capvcdCluster:00000000-0000-0000-0000-000000000000"
@@ -59,7 +59,7 @@ data vcd_cse_kubernetes_cluster "not-existing1" {
 `
 
 const testAccNotExistingCluster2 = `
-# skip-binary-test: data source not found test only works in acceptance tests
+# skip-binary-test: data-source-not-found test only works in acceptance tests
 
 data "vcd_org" "tenant_org" {
   name = "{{.TenantOrg}}"
