@@ -103,6 +103,10 @@ To customise it, the [step 1 configuration][step1] asks for the following variab
   For example, when pulling images from a container registry. Optional in the step 1 configuration.
 * `k8s_cluster_certificates`: Certificate(s) to allow clusters to authenticate with.
   For example, when pulling images from a container registry. Optional in the step 1 configuration.
+  Sample values for the certificates in the configuration:
+  ```hcl
+  k8s_cluster_certificates = ["\"-----BEGIN CERTIFICATE-----\nABCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPQR\nzYCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPUs\nABCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPQR\nzYCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPUs\nABCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPQR\nwx9hlaXT2MoiuKcZvEVaQcNdpH2L/uGMa4F3oebnN2CBi2WRsIhOliofk2rPbn6f\nABCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPQR\nzYCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPUs\nUWsC8Umor8Zwou6wg3eg6GjyRY4LxKzpuJR0SkWxAlO5EryGtGFqtjSgWqkXTjM0\nzYCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPUs\nABCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPQR\nzYCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPUs\nABCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPQR\nzYCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPUs\nABCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPQR\nzYCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPUs\nABCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPQR\n6CvtoftKcCTQtACVrj7Ntr8lKSkN6kLhBYBPqOW+fkUOhrCh+S+pd8PzGz4=\n-----END CERTIFICATE-----\""]
+  ```
 
 #### Rights, Roles and VM Sizing Policies
 
@@ -386,11 +390,11 @@ resource "vcd_role" "cse_admin_role" {
   name = "CSE Admin Role"
   # ...omitted
   rights = [
-    "API Tokens: Manage",
+API Tokens: Manage",
     # ...omitted
-    "IP Spaces: Allocate",
-    "Private IP Spaces: View",
-    "Private IP Spaces: Manage",
+IP Spaces: Allocate",
+Private IP Spaces: View",
+Private IP Spaces: Manage",
   ]
 }
 
@@ -398,11 +402,11 @@ resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
   name = "Kubernetes Clusters Rights Bundle"
   # ...omitted
   rights = [
-    "API Tokens: Manage",
+API Tokens: Manage",
     # ...omitted
-    "IP Spaces: Allocate",
-    "Private IP Spaces: View",
-    "Private IP Spaces: Manage",
+IP Spaces: Allocate",
+Private IP Spaces: View",
+Private IP Spaces: Manage",
   ]
 }
 
@@ -410,11 +414,11 @@ resource "vcd_global_role" "k8s_cluster_author" {
   name = "Kubernetes Cluster Author"
   # ...omitted
   rights = [
-    "API Tokens: Manage",
+API Tokens: Manage",
     # ...omitted
-    "IP Spaces: Allocate",
-    "Private IP Spaces: View",
-    "Private IP Spaces: Manage",
+IP Spaces: Allocate",
+Private IP Spaces: View",
+Private IP Spaces: Manage",
   ]
 }
 ```
