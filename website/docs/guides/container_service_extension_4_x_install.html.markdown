@@ -388,7 +388,9 @@ resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
   rights = [
     "API Tokens: Manage",
     # ...omitted
-    
+    "IP Spaces: Allocate",
+    "Private IP Spaces: View",
+    "Private IP Spaces: Manage",
   ]
 }
 
@@ -398,7 +400,9 @@ resource "vcd_global_role" "k8s_cluster_author" {
   rights = [
     "API Tokens: Manage",
     # ...omitted
-    
+    "IP Spaces: Allocate",
+    "Private IP Spaces: View",
+    "Private IP Spaces: Manage",
   ]
 }
 ```
