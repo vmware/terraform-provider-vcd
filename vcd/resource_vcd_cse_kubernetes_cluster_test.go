@@ -122,6 +122,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
+	vcdClient := createSystemTemporaryVCDConnection()
 	cacheId := testCachedFieldValue{}
 	clusterName := "vcd_cse_kubernetes_cluster.my_cluster"
 	dataWithName := "data.vcd_cse_kubernetes_cluster.with_name_ds"
@@ -129,15 +130,18 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy: func(state *terraform.State) error {
-			if cacheId.fieldValue == "" {
-				return fmt.Errorf("cached ID '%s' is empty", cacheId.fieldValue)
+			org, err := vcdClient.GetOrgByName(testConfig.Cse.TenantOrg)
+			if err != nil {
+				return fmt.Errorf("could not check cluster deletion: %s", err)
 			}
-			conn := testAccProvider.Meta().(*VCDClient)
-			_, err := conn.GetRdeById(cacheId.fieldValue)
-			if err == nil {
-				return fmt.Errorf("cluster with ID '%s' still exists", cacheId.fieldValue)
+			clusters, err := org.CseGetKubernetesClustersByName(*cseVersion, strings.ToLower(t.Name()))
+			if err != nil && !govcd.ContainsNotFound(err) {
+				return fmt.Errorf("could not check cluster deletion: %s", err)
 			}
-			return nil
+			if len(clusters) == 0 || govcd.ContainsNotFound(err) {
+				return nil
+			}
+			return fmt.Errorf("there are still %d clusters with name '%s': %s", len(clusters), clusterName, err)
 		},
 		Steps: []resource.TestStep{
 			// Basic scenario of cluster creation
