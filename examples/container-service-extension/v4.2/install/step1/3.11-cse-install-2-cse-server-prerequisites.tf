@@ -94,7 +94,7 @@ resource "vcd_role" "cse_admin_role" {
   org         = var.administrator_org
   name        = "CSE Admin Role"
   description = "Used for administrative purposes"
-  rights = concat([
+  rights = concat(concat([
     "API Tokens: Manage",
     "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: Administrator Full access",
     "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: Administrator View",
@@ -106,7 +106,9 @@ resource "vcd_role" "cse_admin_role" {
     "${vcd_rde_type.capvcdcluster_type.vendor}:${vcd_rde_type.capvcdcluster_type.nss}: Full Access",
     "${vcd_rde_type.capvcdcluster_type.vendor}:${vcd_rde_type.capvcdcluster_type.nss}: Modify",
     "${vcd_rde_type.capvcdcluster_type.vendor}:${vcd_rde_type.capvcdcluster_type.nss}: View"
-  ], data.vcd_version.gte_1051.matches_condition ? ["Organization: Traversal"] : [])
+    ], data.vcd_version.gte_1051.matches_condition ? ["Organization: Traversal"] : []),
+    # CSE 4.2.1 requires a few extra rights for IP Spaces
+  local.is_cse_420 ? [] : ["IP Spaces: Allocate", "Private IP Spaces: View", "Private IP Spaces: Manage"])
 }
 
 # This will allow to have a user with a limited set of rights that can access the Provider area of VCD.
