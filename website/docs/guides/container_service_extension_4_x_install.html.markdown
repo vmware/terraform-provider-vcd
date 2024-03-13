@@ -394,11 +394,11 @@ resource "vcd_role" "cse_admin_role" {
   name = "CSE Admin Role"
   # ...omitted
   rights = [
-API Tokens: Manage",
+    "API Tokens: Manage",
     # ...omitted
-IP Spaces: Allocate",
-Private IP Spaces: View",
-Private IP Spaces: Manage",
+    "IP Spaces: Allocate",
+    "Private IP Spaces: View",
+    "Private IP Spaces: Manage",
   ]
 }
 
@@ -406,11 +406,11 @@ resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
   name = "Kubernetes Clusters Rights Bundle"
   # ...omitted
   rights = [
-API Tokens: Manage",
+    "API Tokens: Manage",
     # ...omitted
-IP Spaces: Allocate",
-Private IP Spaces: View",
-Private IP Spaces: Manage",
+    "IP Spaces: Allocate",
+    "Private IP Spaces: View",
+    "Private IP Spaces: Manage",
   ]
 }
 
@@ -418,11 +418,11 @@ resource "vcd_global_role" "k8s_cluster_author" {
   name = "Kubernetes Cluster Author"
   # ...omitted
   rights = [
-API Tokens: Manage",
+    "API Tokens: Manage",
     # ...omitted
-IP Spaces: Allocate",
-Private IP Spaces: View",
-Private IP Spaces: Manage",
+    "IP Spaces: Allocate",
+    "Private IP Spaces: View",
+    "Private IP Spaces: Manage",
   ]
 }
 ```
