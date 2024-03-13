@@ -124,7 +124,7 @@ resource "vcd_org_user" "cse_admin" {
 resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
   name        = "Kubernetes Clusters Rights Bundle"
   description = "Rights bundle with required rights for managing Kubernetes clusters"
-  rights = [
+  rights = concat([
     "API Tokens: Manage",
     "Access All Organization VDCs",
     "Catalog: View Published Catalogs",
@@ -140,9 +140,6 @@ resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
     "Organization vDC Named Disk: Edit Properties",
     "Organization vDC Named Disk: View Properties",
     "Organization vDC Shared Named Disk: Create",
-    "IP Spaces: Allocate",
-    "Private IP Spaces: View",
-    "Private IP Spaces: Manage",
     "vApp: Allow All Extra Config",
     "${vcd_rde_type.vcdkeconfig_type.vendor}:${vcd_rde_type.vcdkeconfig_type.nss}: View",
     "${vcd_rde_type.capvcdcluster_type.vendor}:${vcd_rde_type.capvcdcluster_type.nss}: Administrator Full access",
@@ -155,7 +152,8 @@ resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
     "vmware:tkgcluster: View",
     "vmware:tkgcluster: Administrator View",
     "vmware:tkgcluster: Administrator Full access",
-  ]
+    # CSE 4.2.1 requires a few extra rights for IP Spaces
+  ], local.is_cse_420 ? [] : ["IP Spaces: Allocate", "Private IP Spaces: View", "Private IP Spaces: Manage"])
   publish_to_all_tenants = true # This needs to be published to all the Organizations
 }
 
@@ -166,7 +164,7 @@ resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
 resource "vcd_global_role" "k8s_cluster_author" {
   name        = "Kubernetes Cluster Author"
   description = "Role to create Kubernetes clusters"
-  rights = [
+  rights = concat([
     "API Tokens: Manage",
     "Access All Organization VDCs",
     "Catalog: Add vApp from My Cloud",
@@ -189,9 +187,6 @@ resource "vcd_global_role" "k8s_cluster_author" {
     "Organization vDC Shared Named Disk: Create",
     "Organization vDC: VM-VM Affinity Edit",
     "Organization: View",
-    "IP Spaces: Allocate",
-    "Private IP Spaces: View",
-    "Private IP Spaces: Manage",
     "UI Plugins: View",
     "VAPP_VM_METADATA_TO_VCENTER",
     "vApp Template / Media: Copy",
@@ -229,7 +224,8 @@ resource "vcd_global_role" "k8s_cluster_author" {
     "vmware:tkgcluster: Full Access",
     "vmware:tkgcluster: Modify",
     "vmware:tkgcluster: View",
-  ]
+    # CSE 4.2.1 requires a few extra rights for IP Spaces
+  ], local.is_cse_420 ? [] : ["IP Spaces: Allocate", "Private IP Spaces: View", "Private IP Spaces: Manage"])
 
   publish_to_all_tenants = true # This needs to be published to all the Organizations
 

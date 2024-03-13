@@ -44,3 +44,8 @@ data "vcd_version" "gte_1051" {
   condition         = ">= 10.5.1"
   fail_if_not_match = false
 }
+
+# There are some differences between CSE 4.2.0 and 4.2.1, like in the Kubernetes Cluster Rights Bundle and the Kubernetes Cluster Author rights.
+locals {
+  is_cse_420 = var.capvcd_version == "1.2.0" && var.cpi_version == "1.5.0" && var.csi_version == "1.5.0"
+}
