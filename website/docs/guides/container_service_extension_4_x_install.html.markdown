@@ -395,7 +395,7 @@ resource "vcd_role" "cse_admin_role" {
 }
 
 resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
-  name  = "Kubernetes Clusters Rights Bundle"
+  name = "Kubernetes Clusters Rights Bundle"
   # ...omitted
   rights = [
     "API Tokens: Manage",
