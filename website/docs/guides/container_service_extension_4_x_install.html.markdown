@@ -379,7 +379,7 @@ resource "vcd_rde" "vcdkeconfig_instance" {
   # Same values as before, except:
   input_entity = templatefile(var.vcdkeconfig_template_filepath, {
     # Same values as before, except:
-    capvcd_version        = "1.2.0" 
+    capvcd_version        = "1.2.0"
     cpi_version           = "1.5.0"
     csi_version           = "1.5.0"
     rde_projector_version = "0.7.0"
