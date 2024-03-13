@@ -59,19 +59,16 @@ variable "vcdkeconfig_template_filepath" {
 variable "capvcd_version" {
   type        = string
   description = "Version of CAPVCD"
-  default     = "1.2.0"
 }
 
 variable "cpi_version" {
   type        = string
   description = "VCDKEConfig: Cloud Provider Interface version"
-  default     = "1.5.0"
 }
 
 variable "csi_version" {
   type        = string
   description = "VCDKEConfig: Container Storage Interface version"
-  default     = "1.5.0"
 }
 
 variable "rde_projector_version" {

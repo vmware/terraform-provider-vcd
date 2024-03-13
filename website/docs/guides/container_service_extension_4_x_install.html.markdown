@@ -79,12 +79,11 @@ To customise it, the [step 1 configuration][step1] asks for the following variab
   [the RDE template file for CSE 4.2](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.2/entities/vcdkeconfig.json.template)
   used in the step 1 configuration, that can be rendered correctly with the Terraform built-in function `templatefile`.
   (Note: In `terraform.tfvars.example` the path for the CSE 4.2 RDE contents is already provided).
-* `capvcd_version`: The version for CAPVCD. The default value is **"1.1.0"** for CSE 4.2.
-  (Note: Do not confuse with the version of the `capvcdCluster` [RDE Type][rde_type],
-  which **must be "1.3.0"** for CSE 4.2 and cannot be changed through a variable).
-* `cpi_version`: The version for CPI (Cloud Provider Interface). The default value is **"1.5.0"** for CSE 4.2.
-* `csi_version`: The version for CSI (Cloud Storage Interface). The default value is **"1.5.0"** for CSE 4.2.
-* `rde_projector_version`: The version for the RDE Projector. The default value is **"0.7.0"** for CSE 4.2.
+* `capvcd_version`: The version for CAPVCD. Must be **"1.5.0"** for CSE 4.2.0, or **"1.6.0"** for CSE 4.2.1.
+  (Note: Do not confuse with the version of the `capvcdCluster` [RDE Type][rde_type], which **must be "1.3.0"** for CSE 4.2, and cannot be changed through a variable).
+* `cpi_version`: The version for CPI (Cloud Provider Interface). Must be **"1.5.0"** for CSE 4.2.0, or **"1.6.0"** for CSE 4.2.1.
+* `csi_version`: The version for CSI (Cloud Storage Interface). Must be **"1.5.0"** for CSE 4.2.0, or **"1.6.0"** for CSE 4.2.1.
+* `rde_projector_version`: The version for the RDE Projector. The default value is **"0.7.0"** for CSE 4.2.x.
 * `github_personal_access_token`: Create this one [here](https://github.com/settings/tokens),
   this will avoid installation errors caused by GitHub rate limiting, as the TKGm cluster creation process requires downloading
   some Kubernetes components from GitHub.
@@ -338,9 +337,9 @@ The most common issues are:
 * Cluster creation is failing:
   * Please visit the [CSE documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
 
-## Upgrade from CSE 4.1 to 4.2
+## Upgrade from CSE 4.1 to 4.2.0
 
-In this section you can find the required steps to update from CSE 4.1 to 4.2.
+In this section you can find the required steps to update from CSE 4.1 to 4.2.0.
 
 ~> This section assumes that the old CSE 4.1 installation was done with Terraform by following the 4.1 guide steps.
 Also, you need to meet [the pre-requisites criteria](#pre-requisites).
@@ -358,6 +357,49 @@ resource "vcd_rde_type" "capvcdcluster_type_v130" {
   schema_url = "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/examples/container-service-extension/v4.2/schemas/capvcd-type-schema-v1.3.0.json"
   # Behaviors need to be created before any RDE Type
   depends_on = [vcd_rde_interface_behavior.capvcd_behavior]
+}
+```
+
+## Upgrade from CSE 4.2.0 to 4.2.1
+
+In this section you can find the required steps to update from CSE 4.2.0 to 4.2.1.
+
+Change the `VCDKEConfig` [RDE][rde] to update the `capvcd_version`, `cpi_version` and `csi_version` (follow [the instructions
+in the section below](#upgrade-the-vcdkeconfig-rde-cse-server-configuration) to know how to upgrade this configuration):
+
+```hcl
+resource "vcd_rde" "vcdkeconfig_instance" {
+  # ...omitted
+  input_entity = templatefile(var.vcdkeconfig_template_filepath, {
+    # ...omitted
+    capvcd_version = "1.3.0" # It was 1.3.0 in 4.2.0
+    cpi_version    = "1.6.0" # It was 1.5.0 in 4.2.0
+    csi_version    = "1.6.0" # It was 1.5.0 in 4.2.0
+  })
+}
+```
+
+The Kubernetes Clusters Right bundle and Kubernetes Cluster Author role need to have the right to view and manage IP Spaces:
+
+```hcl
+resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
+  name  = "Kubernetes Clusters Rights Bundle"
+  # ...omitted
+  rights = [
+    "API Tokens: Manage",
+    # ...omitted
+    
+  ]
+}
+
+resource "vcd_global_role" "k8s_cluster_author" {
+  name = "Kubernetes Cluster Author"
+  # ...omitted
+  rights = [
+    "API Tokens: Manage",
+    # ...omitted
+    
+  ]
 }
 ```
 
