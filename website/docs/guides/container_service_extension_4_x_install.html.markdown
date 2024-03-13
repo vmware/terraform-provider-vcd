@@ -382,6 +382,18 @@ resource "vcd_rde" "vcdkeconfig_instance" {
 The Kubernetes Clusters Right bundle and Kubernetes Cluster Author role need to have the right to view and manage IP Spaces:
 
 ```hcl
+resource "vcd_role" "cse_admin_role" {
+  name = "CSE Admin Role"
+  # ...omitted
+  rights = [
+    "API Tokens: Manage",
+    # ...omitted
+    "IP Spaces: Allocate",
+    "Private IP Spaces: View",
+    "Private IP Spaces: Manage",
+  ]
+}
+
 resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
   name  = "Kubernetes Clusters Rights Bundle"
   # ...omitted
