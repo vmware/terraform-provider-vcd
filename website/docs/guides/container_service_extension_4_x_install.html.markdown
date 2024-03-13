@@ -100,10 +100,10 @@ To customise it, the [step 1 configuration][step1] asks for the following variab
   (100% means that unhealthy nodes will always be remediated, while 0% means that unhealthy nodes will never be remediated). Defaults to 100 in the step 1 configuration.
 * `container_registry_url`: URL from where TKG clusters will fetch container images, useful for VCD appliances that are completely isolated from Internet. Defaults to "projects.registry.vmware.com" in the step 1 configuration.
 * `bootstrap_vm_certificates`: Certificate(s) to allow the ephemeral VM (created during cluster creation) to authenticate with.
-  For example, when pulling images from a container registry. Optional in the step 1 configuration.
+  For instance, when pulling images from a container registry. Optional in the step 1 configuration.
 * `k8s_cluster_certificates`: Certificate(s) to allow clusters to authenticate with.
-  For example, when pulling images from a container registry. Optional in the step 1 configuration.
-  Sample values for the certificates in the configuration:
+  For instance, when pulling images from a container registry. Optional in the step 1 configuration.
+  Here is an example value for the certificates in the configuration:
   ```hcl
   k8s_cluster_certificates = [
     "\"-----BEGIN CERTIFICATE-----\\nABCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPQR\\nzYCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPUs\\n...\\n-----END CERTIFICATE-----\"",
