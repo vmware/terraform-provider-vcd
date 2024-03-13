@@ -40,7 +40,7 @@ resource "vcd_rde" "vcdkeconfig_instance" {
     node_unknown_timeout          = var.node_unknown_timeout
     max_unhealthy_node_percentage = var.max_unhealthy_node_percentage
     container_registry_url        = var.container_registry_url
-    k8s_cluster_certificates      = jsonencode(join(",", var.k8s_cluster_certificates))
-    bootstrap_vm_certificates     = jsonencode(join(",", var.bootstrap_vm_certificates))
+    k8s_cluster_certificates      = join(",", var.k8s_cluster_certificates)
+    bootstrap_vm_certificates     = join(",", var.bootstrap_vm_certificates)
   })
 }
