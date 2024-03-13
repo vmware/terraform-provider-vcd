@@ -368,12 +368,62 @@ resource "vcd_rde_type" "capvcdcluster_type_v130" {
 }
 ```
 
+### Upgrade the VCDKEConfig RDE (CSE Server configuration)
+
+With the new [RDE Types][rde_type] in place, you need to perform an upgrade of the existing `VCDKEConfig` [RDE][rde], which
+stores the CSE Server configuration. By using the v3.12.0 of the VCD Terraform Provider, you can do this update without forcing
+a replacement:
+
+```hcl
+resource "vcd_rde" "vcdkeconfig_instance" {
+  # Same values as before, except:
+  input_entity = templatefile(var.vcdkeconfig_template_filepath, {
+    # Same values as before, except:
+    capvcd_version        = "1.2.0" 
+    cpi_version           = "1.5.0"
+    csi_version           = "1.5.0"
+    rde_projector_version = "0.7.0"
+  })
+}
+```
+
+You can find the meaning of these values in the section ["RDE (CSE Server configuration / VCDKEConfig)"](#rde-cse-server-configuration--vcdkeconfig).
+
+### Upload the new CSE 4.2.0 OVA
+
+You need to upload the new CSE 4.2.0 OVA to the `cse_catalog` that already hosts the CSE 4.1 one.
+To download the required OVAs, please refer to the [CSE documentation][cse_docs].
+
+```hcl
+resource "vcd_catalog_vapp_template" "cse_ova_4_2_0" {
+  org        = vcd_org.solutions_organization.name # References the Solutions Organization that already exists from 4.1
+  catalog_id = vcd_catalog.cse_catalog.id          # References the CSE Catalog that already exists from 4.1
+
+  name        = "VMware_Cloud_Director_Container_Service_Extension-4.2.0"
+  description = "VMware_Cloud_Director_Container_Service_Extension-4.2.0"
+  ova_path    = "VMware_Cloud_Director_Container_Service_Extension-4.2.0.ova"
+}
+```
+
+### Update CSE Server
+
+To update the CSE Server, just change the referenced OVA:
+
+```hcl
+resource "vcd_vapp_vm" "cse_server_vm" {
+  # All values remain the same, except:
+  vapp_template_id = vcd_catalog_vapp_template.cse_ova_4_2_0.id # Reference the 4.2.0 OVA
+}
+```
+
+This will re-deploy the VM with the new CSE 4.2.0 Server.
+
 ## Upgrade from CSE 4.2.0 to 4.2.1
 
 In this section you can find the required steps to update from CSE 4.2.0 to 4.2.1.
 
 Change the `VCDKEConfig` [RDE][rde] to update the `capvcd_version`, `cpi_version` and `csi_version` (follow [the instructions
-in the section below](#upgrade-the-vcdkeconfig-rde-cse-server-configuration) to know how to upgrade this configuration):
+in the section below](#update-cse-server-configuration) to know how to upgrade this configuration):
 
 ```hcl
 resource "vcd_rde" "vcdkeconfig_instance" {
@@ -387,7 +437,7 @@ resource "vcd_rde" "vcdkeconfig_instance" {
 }
 ```
 
-The Kubernetes Clusters Right bundle and Kubernetes Cluster Author role need to have the right to view and manage IP Spaces:
+The **Kubernetes Clusters Rights Bundle** and **Kubernetes Cluster Author Role** need to have the Right to view and manage IP Spaces:
 
 ```hcl
 resource "vcd_role" "cse_admin_role" {
@@ -427,53 +477,8 @@ resource "vcd_global_role" "k8s_cluster_author" {
 }
 ```
 
-### Upgrade the VCDKEConfig RDE (CSE Server configuration)
-
-With the new [RDE Types][rde_type] in place, you need to perform an upgrade of the existing `VCDKEConfig` [RDE][rde], which
-stores the CSE Server configuration. By using the v3.12.0 of the VCD Terraform Provider, you can do this update without forcing
-a replacement:
-
-```hcl
-resource "vcd_rde" "vcdkeconfig_instance" {
-  # Same values as before, except:
-  input_entity = templatefile(var.vcdkeconfig_template_filepath, {
-    # Same values as before, except:
-    rde_projector_version = "0.7.0"
-  })
-}
-```
-
-You can find the meaning of these values in the section ["RDE (CSE Server configuration / VCDKEConfig)"](#rde-cse-server-configuration--vcdkeconfig).
-Please notice that you need to upgrade the CAPVCD, CPI and CSI versions. The new values are stated in the same section.
-
-### Upload the new CSE 4.2 OVA
-
-You need to upload the new CSE 4.2 OVA to the `cse_catalog` that already hosts the CSE 4.1 one.
-To download the required OVAs, please refer to the [CSE documentation][cse_docs].
-
-```hcl
-resource "vcd_catalog_vapp_template" "cse_ova_4_2" {
-  org        = vcd_org.solutions_organization.name # References the Solutions Organization that already exists from 4.1
-  catalog_id = vcd_catalog.cse_catalog.id          # References the CSE Catalog that already exists from 4.1
-
-  name        = "VMware_Cloud_Director_Container_Service_Extension-4.2.0"
-  description = "VMware_Cloud_Director_Container_Service_Extension-4.2.0"
-  ova_path    = "VMware_Cloud_Director_Container_Service_Extension-4.2.0.ova"
-}
-```
-
-### Update CSE Server
-
-To update the CSE Server, just change the referenced OVA:
-
-```hcl
-resource "vcd_vapp_vm" "cse_server_vm" {
-  # All values remain the same, except:
-  vapp_template_id = vcd_catalog_vapp_template.cse_ova_4_2.id # Reference the 4.2 OVA
-}
-```
-
-This will re-deploy the VM with the new CSE 4.2 Server.
+After applying the changes with `terraform apply`, you also need to update the CSE Server OVA to 4.2.1 and restart,
+like it was done [in the previous section](#update-cse-server).
 
 ## Update CSE Server Configuration
 
