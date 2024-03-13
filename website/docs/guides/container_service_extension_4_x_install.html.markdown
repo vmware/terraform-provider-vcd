@@ -372,7 +372,7 @@ resource "vcd_rde" "vcdkeconfig_instance" {
   # ...omitted
   input_entity = templatefile(var.vcdkeconfig_template_filepath, {
     # ...omitted
-    capvcd_version = "1.3.0" # It was 1.3.0 in 4.2.0
+    capvcd_version = "1.3.0" # It was 1.2.0 in 4.2.0
     cpi_version    = "1.6.0" # It was 1.5.0 in 4.2.0
     csi_version    = "1.6.0" # It was 1.5.0 in 4.2.0
   })
