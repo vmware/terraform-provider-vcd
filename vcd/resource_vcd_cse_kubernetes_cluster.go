@@ -664,8 +664,8 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluste
 	var warnings []error
 
 	dSet(d, "name", cluster.Name)
-	dSet(d, "cse_version", cluster.CseVersion.String())
-	dSet(d, "runtime", "tkg") // Only one supported
+	dSet(d, "cse_version", cluster.CseVersion.String()) // Don't use .Original() as we need to remove possible suffixes
+	dSet(d, "runtime", "tkg")                           // Only one supported
 	dSet(d, "vdc_id", cluster.VdcId)
 	dSet(d, "network_id", cluster.NetworkId)
 	dSet(d, "cpi_version", cluster.CpiVersion.Original())
