@@ -754,6 +754,7 @@ func (c *Config) Client() (*VCDClient, error) {
 			govcd.WithSamlAdfs(c.UseSamlAdfs, c.CustomAdfsRptId),
 			govcd.WithHttpUserAgent(userAgent),
 			govcd.WithIgnoredMetadata(c.IgnoredMetadata),
+			govcd.WithVcloudRequestIdFunc(govcd.VcloudRequestIdBuilderFunc),
 		),
 		SysOrg:          c.SysOrg,
 		Org:             c.Org,
