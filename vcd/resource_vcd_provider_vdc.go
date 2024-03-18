@@ -223,9 +223,7 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	//if rawNetworkPoolIds.Len() == 0 {
-	//	return diag.Errorf("no network pool was provided")
-	//}
+	// The provider VDC can be created without network pools. We don't test for rawNetworkPoolIds.Len() == 0
 	if rawNetworkPoolIds.Len() > 1 {
 		return diag.Errorf("only one network pool can be used to create a Provider VDC")
 	}
