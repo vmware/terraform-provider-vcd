@@ -72,7 +72,7 @@ func datasourceVcdNetworkPool() *schema.Resource {
 							Description: "Transport Zone Backing",
 							Elem:        resourceNetworkPoolBacking("resource"),
 						},
-						"port_groups": {
+						"port_group": {
 							Type:        schema.TypeList,
 							Computed:    true,
 							Description: "Port Group backing",

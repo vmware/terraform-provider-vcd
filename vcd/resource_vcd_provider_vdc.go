@@ -128,7 +128,7 @@ func resourceVcdProviderVdc() *schema.Resource {
 			},
 			"nsxt_manager_id": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "ID of the registered NSX-T Manager that backs networking operations for this Provider VDC",
 			},
@@ -214,10 +214,6 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 	hwVersion := d.Get("highest_supported_hardware_version").(string)
 	rawNetworkPoolIds := d.Get("network_pool_ids").(*schema.Set)
 	rawResourcePoolIds := d.Get("resource_pool_ids").(*schema.Set)
-	managerHref, err := url.JoinPath(vcdClient.Client.VCDHREF.String(), "admin", "extension", "nsxtManagers", managerid)
-	if err != nil {
-		return diag.FromErr(err)
-	}
 
 	vcenter, err := vcdClient.GetVCenterById(vcenterId)
 	if err != nil {
@@ -227,9 +223,7 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if rawNetworkPoolIds.Len() == 0 {
-		return diag.Errorf("no network pool was provided")
-	}
+	// The provider VDC can be created without network pools. We don't test for rawNetworkPoolIds.Len() == 0
 	if rawNetworkPoolIds.Len() > 1 {
 		return diag.Errorf("only one network pool can be used to create a Provider VDC")
 	}
@@ -239,8 +233,11 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 	if rawResourcePoolIds.Len() > 1 {
 		return diag.Errorf("only one resource pool can be used to create a Provider VDC")
 	}
+	var networkPoolId string
 	resourcePoolId := rawResourcePoolIds.List()[0].(string)
-	networkPoolId := rawNetworkPoolIds.List()[0].(string)
+	if len(rawNetworkPoolIds.List()) > 0 {
+		networkPoolId = rawNetworkPoolIds.List()[0].(string)
+	}
 
 	resourcePool, err := vcenter.GetResourcePoolById(resourcePoolId)
 	if err != nil {
@@ -262,23 +259,45 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.Errorf("no storage profiles were indicated")
 	}
 
-	nsxtManagers, err := vcdClient.QueryNsxtManagerByHref(managerHref)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if len(nsxtManagers) == 0 {
-		return diag.Errorf("no NSX-T managers found with ID %s", managerid)
-	}
-	if len(nsxtManagers) > 1 {
-		return diag.Errorf("more than one NSX-T manager found with ID %s", managerid)
-	}
-	networkPool, err := vcdClient.GetNetworkPoolById(networkPoolId)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	networkPoolHref, err := networkPool.GetOpenApiUrl()
-	if err != nil {
-		return diag.FromErr(err)
+	var managerHref string
+	var networkPoolHref string
+	var managerReference *types.Reference
+	var networkPoolReference *types.Reference
+	if managerid != "" {
+		managerHref, err = url.JoinPath(vcdClient.Client.VCDHREF.String(), "admin", "extension", "nsxtManagers", managerid)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		nsxtManagers, err := vcdClient.QueryNsxtManagerByHref(managerHref)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if len(nsxtManagers) == 0 {
+			return diag.Errorf("no NSX-T managers found with ID %s", managerid)
+		}
+		if len(nsxtManagers) > 1 {
+			return diag.Errorf("more than one NSX-T manager found with ID %s", managerid)
+		}
+
+		networkPool, err := vcdClient.GetNetworkPoolById(networkPoolId)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		networkPoolHref, err = networkPool.GetOpenApiUrl()
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		networkPoolReference = &types.Reference{
+			HREF: networkPoolHref,
+			Name: networkPool.NetworkPool.Name,
+			ID:   extractUuid(networkPool.NetworkPool.Id),
+			Type: networkPool.NetworkPool.PoolType,
+		}
+		managerReference = &types.Reference{
+			HREF: nsxtManagers[0].HREF,
+			ID:   extractUuid(nsxtManagers[0].HREF),
+			Name: nsxtManagers[0].Name,
+		}
 	}
 
 	providerVdcCreation := types.ProviderVdcCreation{
@@ -306,18 +325,9 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 				},
 			},
 		},
-		StorageProfile: wantedStorageProfiles,
-		NsxTManagerReference: &types.Reference{
-			HREF: nsxtManagers[0].HREF,
-			ID:   extractUuid(nsxtManagers[0].HREF),
-			Name: nsxtManagers[0].Name,
-		},
-		NetworkPool: &types.Reference{
-			HREF: networkPoolHref,
-			Name: networkPool.NetworkPool.Name,
-			ID:   extractUuid(networkPool.NetworkPool.Id),
-			Type: networkPool.NetworkPool.PoolType,
-		},
+		StorageProfile:        wantedStorageProfiles,
+		NsxTManagerReference:  managerReference,
+		NetworkPool:           networkPoolReference,
 		AutoCreateNetworkPool: false,
 	}
 	providerVdc, err := vcdClient.CreateProviderVdc(&providerVdcCreation)
