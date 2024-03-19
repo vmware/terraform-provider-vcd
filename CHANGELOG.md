@@ -30,7 +30,6 @@
 
 ### NOTES
 * Bump terraform-plugin-sdk to v2.31.0 ([#1193](https://github.com/vmware/terraform-provider-vcd/pull/1193))
-* Improve stability of test TestAccVcdAnyAccessControlGroups ([#1194](https://github.com/vmware/terraform-provider-vcd/pull/1194))
 
 ## 3.11.0 (December 12, 2023)
 
