@@ -29,7 +29,6 @@
   so users should not use `vcd_rde` resources to create a Kubernetes cluster anymore ([#1195](https://github.com/vmware/terraform-provider-vcd/pull/1195))
 
 ### NOTES
-* Improve the Container Service Extension guide section that explains how to update the Kubernetes clusters ([#1182](https://github.com/vmware/terraform-provider-vcd/pull/1182))
 * Bump terraform-plugin-sdk to v2.31.0 ([#1193](https://github.com/vmware/terraform-provider-vcd/pull/1193))
 * Improve stability of test TestAccVcdAnyAccessControlGroups ([#1194](https://github.com/vmware/terraform-provider-vcd/pull/1194))
 
