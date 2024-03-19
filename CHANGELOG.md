@@ -1,6 +1,37 @@
-## 3.12.0 (Unreleased)
+## 3.12.0 (Pending)
 
-Changes in progress for v3.12.0 are available at [.changes/v3.12.0](https://github.com/vmware/terraform-provider-vcd/tree/main/.changes/v3.12.0) until the release.
+### FEATURES
+* **New Resource:** `vcd_cse_kubernetes_cluster` to create and manage Kubernetes clusters in a VCD with Container Service Extension
+  4.2.1, 4.2.0, 4.1.1 or 4.1.0 installed and running ([#1195](https://github.com/vmware/terraform-provider-vcd/pull/1195), [#1218](https://github.com/vmware/terraform-provider-vcd/pull/1218), [#1222](https://github.com/vmware/terraform-provider-vcd/pull/1222))
+* **New Data Source:** `vcd_cse_kubernetes_cluster` to read Kubernetes clusters from a VCD with Container Service Extension
+  4.2.1, 4.2.0, 4.1.1 or 4.1.0 installed and running ([#1195](https://github.com/vmware/terraform-provider-vcd/pull/1195), [#1218](https://github.com/vmware/terraform-provider-vcd/pull/1218), [#1222](https://github.com/vmware/terraform-provider-vcd/pull/1222))
+* **New Data Source:** `vcd_version` to get the VCD version and perform additional checks with version constraints ([#1195](https://github.com/vmware/terraform-provider-vcd/pull/1195), [#1218](https://github.com/vmware/terraform-provider-vcd/pull/1218))
+
+### IMPROVEMENTS
+* Resource `vcd_provider_vdc` adds ability of creating a provider VDC without network pool or NSX-T manager (issue [#1186](https://github.com/vmware/terraform-provider-vcd/issues/1186)) ([#1220](https://github.com/vmware/terraform-provider-vcd/pull/1220))
+* Add route advertisement support to `vcd_network_routed_v2` via field `route_advertisement_enabled`
+  ([#1203](https://github.com/vmware/terraform-provider-vcd/pull/1203))
+* `vcd_vapp_vm` and `vcd_vm` add field `consolidate_disks_on_create` that  helps to change template
+  disk sizes using `override_template_disk` in fast provisioned VDCs ([#1206](https://github.com/vmware/terraform-provider-vcd/pull/1206))
+* `vcd_vapp_vm` and `vcd_vm` add support for VM Copy operation by using `copy_from_vm_id` field
+  ([#1210](https://github.com/vmware/terraform-provider-vcd/pull/1210), [#1218](https://github.com/vmware/terraform-provider-vcd/pull/1218), [#1219](https://github.com/vmware/terraform-provider-vcd/pull/1219))
+* Resources and data sources `vcd_vapp_vm`/`vcd_vm` expose computed field `vapp_id` ([#1215](https://github.com/vmware/terraform-provider-vcd/pull/1215))
+* Resource `vcd_catalog_vapp_template` supports creating templates from existing vApps and
+  standalone VMs using new `capture_vapp` configuration block ([#1215](https://github.com/vmware/terraform-provider-vcd/pull/1215))
+* Resource `vcd_catalog_vapp_template` exposes attribute `catalog_item_id` for related Catalog Item
+  ID ([#1215](https://github.com/vmware/terraform-provider-vcd/pull/1215), [#1219](https://github.com/vmware/terraform-provider-vcd/pull/1219))
+
+### BUG FIXES
+* Fix [Issue #1121](https://github.com/vmware/terraform-provider-vcd/issues/1221) Portgroup backed network pool can't have a data source ([#1220](https://github.com/vmware/terraform-provider-vcd/pull/1220))
+
+### DEPRECATIONS
+* Resource `vcd_cse_kubernetes_cluster` deprecates the Container Service Extension cluster management guide,
+  so users should not use `vcd_rde` resources to create a Kubernetes cluster anymore ([#1195](https://github.com/vmware/terraform-provider-vcd/pull/1195))
+
+### NOTES
+* Improve the Container Service Extension guide section that explains how to update the Kubernetes clusters ([#1182](https://github.com/vmware/terraform-provider-vcd/pull/1182))
+* Bump terraform-plugin-sdk to v2.31.0 ([#1193](https://github.com/vmware/terraform-provider-vcd/pull/1193))
+* Improve stability of test TestAccVcdAnyAccessControlGroups ([#1194](https://github.com/vmware/terraform-provider-vcd/pull/1194))
 
 ## 3.11.0 (December 12, 2023)
 
