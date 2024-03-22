@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -84,6 +85,18 @@ func resourceVcdVApp() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Shows the status of the vApp",
+			},
+			"vm_names": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of VMs in this vApp",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"network_names": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of networks connected to this vApp",
+				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"lease": {
 				Type:        schema.TypeList,
@@ -310,6 +323,32 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	err = d.Set("lease", leaseData)
 	if err != nil {
 		return diag.Errorf("unable to set lease information in state: %s", err)
+	}
+	var vmNames []string
+	if vapp.VApp.Children != nil {
+		for _, vm := range vapp.VApp.Children.VM {
+			vmNames = append(vmNames, vm.Name)
+		}
+		sort.Strings(vmNames)
+	}
+	err = d.Set("vm_names", vmNames)
+	if err != nil {
+		return diag.Errorf("error setting VM names for vApp %s: %s", vapp.VApp.Name, err)
+	}
+	var networkNames []string
+	vappNetworks, err := vapp.QueryVappNetworks()
+	if err != nil {
+		return diag.Errorf("error querying vApp networks for vApp %s: %s", vapp.VApp.Name, err)
+	}
+	if len(vappNetworks) > 0 {
+		for _, net := range vappNetworks {
+			networkNames = append(networkNames, net.Name)
+		}
+		sort.Strings(networkNames)
+	}
+	err = d.Set("network_names", networkNames)
+	if err != nil {
+		return diag.Errorf("error setting vApp network names for vApp %s: %s", vapp.VApp.Name, err)
 	}
 
 	statusText, err := vapp.GetStatus()

@@ -59,6 +59,18 @@ func datasourceVcdVApp() *schema.Resource {
 				Computed:    true,
 				Description: "Shows the status of the vApp",
 			},
+			"vm_names": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of VMs in this vApp",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"network_names": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of networks connected to this vApp",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"lease": {
 				Type:        schema.TypeList,
 				Computed:    true,
