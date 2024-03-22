@@ -30,6 +30,8 @@
 
 ### NOTES
 * Bump terraform-plugin-sdk to v2.31.0 ([#1193](https://github.com/vmware/terraform-provider-vcd/pull/1193))
+* Bump [`go-vcloud-director`](https://github.com/vmware/go-vcloud-director) to v2.23.0 (SDK this provider uses for low level access 
+  to the VCD) ([#1225](https://github.com/vmware/terraform-provider-vcd/pull/1225))
 
 ## 3.11.0 (December 12, 2023)
 
