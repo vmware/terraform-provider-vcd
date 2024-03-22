@@ -1,4 +1,4 @@
-## 3.12.0 (Pending)
+## 3.12.0 (March 22, 2024)
 
 ### FEATURES
 * **New Resource:** `vcd_cse_kubernetes_cluster` to create and manage Kubernetes clusters in a VCD with Container Service Extension
