@@ -79,12 +79,11 @@ To customise it, the [step 1 configuration][step1] asks for the following variab
   [the RDE template file for CSE 4.2](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/container-service-extension/v4.2/entities/vcdkeconfig.json.template)
   used in the step 1 configuration, that can be rendered correctly with the Terraform built-in function `templatefile`.
   (Note: In `terraform.tfvars.example` the path for the CSE 4.2 RDE contents is already provided).
-* `capvcd_version`: The version for CAPVCD. The default value is **"1.1.0"** for CSE 4.2.
-  (Note: Do not confuse with the version of the `capvcdCluster` [RDE Type][rde_type],
-  which **must be "1.3.0"** for CSE 4.2 and cannot be changed through a variable).
-* `cpi_version`: The version for CPI (Cloud Provider Interface). The default value is **"1.5.0"** for CSE 4.2.
-* `csi_version`: The version for CSI (Cloud Storage Interface). The default value is **"1.5.0"** for CSE 4.2.
-* `rde_projector_version`: The version for the RDE Projector. The default value is **"0.7.0"** for CSE 4.2.
+* `capvcd_version`: The version for CAPVCD. Must be **"1.2.0"** for CSE 4.2.0, or **"1.3.0"** for CSE 4.2.1.
+  (Note: Do not confuse with the version of the `capvcdCluster` [RDE Type][rde_type], which **must be "1.3.0"** for CSE 4.2.X, and cannot be changed through a variable).
+* `cpi_version`: The version for CPI (Cloud Provider Interface). Must be **"1.5.0"** for CSE 4.2.0, or **"1.6.0"** for CSE 4.2.1.
+* `csi_version`: The version for CSI (Cloud Storage Interface). Must be **"1.5.0"** for CSE 4.2.0, or **"1.6.0"** for CSE 4.2.1.
+* `rde_projector_version`: The version for the RDE Projector. The default value is **"0.7.0"** for CSE 4.2.X.
 * `github_personal_access_token`: Create this one [here](https://github.com/settings/tokens),
   this will avoid installation errors caused by GitHub rate limiting, as the TKGm cluster creation process requires downloading
   some Kubernetes components from GitHub.
@@ -101,9 +100,17 @@ To customise it, the [step 1 configuration][step1] asks for the following variab
   (100% means that unhealthy nodes will always be remediated, while 0% means that unhealthy nodes will never be remediated). Defaults to 100 in the step 1 configuration.
 * `container_registry_url`: URL from where TKG clusters will fetch container images, useful for VCD appliances that are completely isolated from Internet. Defaults to "projects.registry.vmware.com" in the step 1 configuration.
 * `bootstrap_vm_certificates`: Certificate(s) to allow the ephemeral VM (created during cluster creation) to authenticate with.
-  For example, when pulling images from a container registry. Optional in the step 1 configuration.
+  For instance, when pulling images from a container registry. Optional in the step 1 configuration.
 * `k8s_cluster_certificates`: Certificate(s) to allow clusters to authenticate with.
-  For example, when pulling images from a container registry. Optional in the step 1 configuration.
+  For instance, when pulling images from a container registry. Optional in the step 1 configuration.
+  Here is an example value for the certificates in the configuration:
+  ```hcl
+  k8s_cluster_certificates = [
+    "\"-----BEGIN CERTIFICATE-----\\nABCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPQR\\nzYCDEDCCFkgAAhiJkgLUm+1234567aBcdEfghiJKLMNAVZyABCDEFoZIhvcNAPUs\\n...\\n-----END CERTIFICATE-----\"",
+    "\"-----BEGIN CERTIFICATE-----\\n...\\n-----END CERTIFICATE-----\"",
+    # ... more certificates
+  ]
+  ```
 
 #### Rights, Roles and VM Sizing Policies
 
@@ -338,9 +345,9 @@ The most common issues are:
 * Cluster creation is failing:
   * Please visit the [CSE documentation][cse_docs] to learn how to monitor the logs and troubleshoot possible problems.
 
-## Upgrade from CSE 4.1 to 4.2
+## Upgrade from CSE 4.1 to 4.2.0
 
-In this section you can find the required steps to update from CSE 4.1 to 4.2.
+In this section you can find the required steps to update from CSE 4.1 to 4.2.0.
 
 ~> This section assumes that the old CSE 4.1 installation was done with Terraform by following the 4.1 guide steps.
 Also, you need to meet [the pre-requisites criteria](#pre-requisites).
@@ -372,21 +379,23 @@ resource "vcd_rde" "vcdkeconfig_instance" {
   # Same values as before, except:
   input_entity = templatefile(var.vcdkeconfig_template_filepath, {
     # Same values as before, except:
+    capvcd_version        = "1.2.0"
+    cpi_version           = "1.5.0"
+    csi_version           = "1.5.0"
     rde_projector_version = "0.7.0"
   })
 }
 ```
 
 You can find the meaning of these values in the section ["RDE (CSE Server configuration / VCDKEConfig)"](#rde-cse-server-configuration--vcdkeconfig).
-Please notice that you need to upgrade the CAPVCD, CPI and CSI versions. The new values are stated in the same section.
 
-### Upload the new CSE 4.2 OVA
+### Upload the new CSE 4.2.0 OVA
 
-You need to upload the new CSE 4.2 OVA to the `cse_catalog` that already hosts the CSE 4.1 one.
+You need to upload the new CSE 4.2.0 OVA to the `cse_catalog` that already hosts the CSE 4.1 one.
 To download the required OVAs, please refer to the [CSE documentation][cse_docs].
 
 ```hcl
-resource "vcd_catalog_vapp_template" "cse_ova_4_2" {
+resource "vcd_catalog_vapp_template" "cse_ova_4_2_0" {
   org        = vcd_org.solutions_organization.name # References the Solutions Organization that already exists from 4.1
   catalog_id = vcd_catalog.cse_catalog.id          # References the CSE Catalog that already exists from 4.1
 
@@ -403,11 +412,73 @@ To update the CSE Server, just change the referenced OVA:
 ```hcl
 resource "vcd_vapp_vm" "cse_server_vm" {
   # All values remain the same, except:
-  vapp_template_id = vcd_catalog_vapp_template.cse_ova_4_2.id # Reference the 4.2 OVA
+  vapp_template_id = vcd_catalog_vapp_template.cse_ova_4_2_0.id # Reference the 4.2.0 OVA
 }
 ```
 
-This will re-deploy the VM with the new CSE 4.2 Server.
+This will re-deploy the VM with the new CSE 4.2.0 Server.
+
+## Upgrade from CSE 4.2.0 to 4.2.1
+
+In this section you can find the required steps to update from CSE 4.2.0 to 4.2.1.
+
+Change the `VCDKEConfig` [RDE][rde] to update the `capvcd_version`, `cpi_version` and `csi_version` (follow [the instructions
+in the section below](#update-cse-server-configuration) to know how to upgrade this configuration):
+
+```hcl
+resource "vcd_rde" "vcdkeconfig_instance" {
+  # ...omitted
+  input_entity = templatefile(var.vcdkeconfig_template_filepath, {
+    # ...omitted
+    capvcd_version = "1.3.0" # It was 1.2.0 in 4.2.0
+    cpi_version    = "1.6.0" # It was 1.5.0 in 4.2.0
+    csi_version    = "1.6.0" # It was 1.5.0 in 4.2.0
+  })
+}
+```
+
+The **Kubernetes Clusters Rights Bundle** and **Kubernetes Cluster Author Role** need to have the Right to view and manage IP Spaces:
+
+```hcl
+resource "vcd_role" "cse_admin_role" {
+  name = "CSE Admin Role"
+  # ...omitted
+  rights = [
+    "API Tokens: Manage",
+    # ...omitted
+    "IP Spaces: Allocate",
+    "Private IP Spaces: View",
+    "Private IP Spaces: Manage",
+  ]
+}
+
+resource "vcd_rights_bundle" "k8s_clusters_rights_bundle" {
+  name = "Kubernetes Clusters Rights Bundle"
+  # ...omitted
+  rights = [
+    "API Tokens: Manage",
+    # ...omitted
+    "IP Spaces: Allocate",
+    "Private IP Spaces: View",
+    "Private IP Spaces: Manage",
+  ]
+}
+
+resource "vcd_global_role" "k8s_cluster_author" {
+  name = "Kubernetes Cluster Author"
+  # ...omitted
+  rights = [
+    "API Tokens: Manage",
+    # ...omitted
+    "IP Spaces: Allocate",
+    "Private IP Spaces: View",
+    "Private IP Spaces: Manage",
+  ]
+}
+```
+
+After applying the changes with `terraform apply`, you also need to update the CSE Server OVA to 4.2.1 and restart,
+like it was done [in the previous section](#update-cse-server).
 
 ## Update CSE Server Configuration
 

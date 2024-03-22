@@ -48,26 +48,43 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 		"FuncName":                t.Name() + "_step1",
 	}
 	testParamsNotEmpty(t, params)
+	params["FuncName"] = t.Name() + "_no-network-pool"
+	params["SkipMessage"] = "# "
+	configTextNoNetworkPool := templateFill(testAccVcdResourceProviderVdcVcenterPrerequisites+
+		testAccVcdResourceProviderVdcNoNetworkPool, params)
+	debugPrintf("#[DEBUG] Configuration no network pool: %s", configTextNoNetworkPool)
+
+	params["FuncName"] = t.Name()
 	params["SkipMessage"] = "# skip-binary-test: redundant"
-	configText := templateFill(testAccVcdResourceProviderVdcPrerequisites+testAccVcdResourceProviderVdcStep1, params)
+	configText := templateFill(testAccVcdResourceProviderVdcVcenterPrerequisites+
+		testAccVcdResourceProviderVdcManagerPrerequisites+
+		testAccVcdResourceProviderVdcStep1, params)
 	debugPrintf("#[DEBUG] Configuration: %s", configText)
 
 	params["FuncName"] = t.Name() + "_step2"
-	configTextRename := templateFill(testAccVcdResourceProviderVdcPrerequisites+testAccVcdResourceProviderVdcStep2, params)
+	configTextRename := templateFill(testAccVcdResourceProviderVdcVcenterPrerequisites+
+		testAccVcdResourceProviderVdcManagerPrerequisites+
+		testAccVcdResourceProviderVdcStep2, params)
 	debugPrintf("#[DEBUG] Rename 1: %s", configTextRename)
 
 	params["FuncName"] = t.Name() + "_step3"
-	configTextUpdate := templateFill(testAccVcdResourceProviderVdcPrerequisites+testAccVcdResourceProviderVdcStep3, params)
+	configTextUpdate := templateFill(testAccVcdResourceProviderVdcVcenterPrerequisites+
+		testAccVcdResourceProviderVdcManagerPrerequisites+
+		testAccVcdResourceProviderVdcStep3, params)
 	debugPrintf("#[DEBUG] Update 1: %s", configTextUpdate)
 
 	params["FuncName"] = t.Name() + "_step4"
-	configTextDisable := templateFill(testAccVcdResourceProviderVdcPrerequisites+testAccVcdResourceProviderVdcStep4, params)
+	configTextDisable := templateFill(testAccVcdResourceProviderVdcVcenterPrerequisites+
+		testAccVcdResourceProviderVdcManagerPrerequisites+
+		testAccVcdResourceProviderVdcStep4, params)
 	debugPrintf("#[DEBUG] disable: %s", configTextDisable)
 
 	params["SkipMessage"] = ""
 	params["FuncName"] = t.Name() + "_step5"
-	configTextOrgVdc := templateFill(testAccVcdResourceProviderVdcPrerequisites+
-		testAccVcdResourceProviderVdcStep1+testAccVcdResourceProviderVdcStep5, params)
+	configTextOrgVdc := templateFill(testAccVcdResourceProviderVdcVcenterPrerequisites+
+		testAccVcdResourceProviderVdcManagerPrerequisites+
+		testAccVcdResourceProviderVdcStep1+
+		testAccVcdResourceProviderVdcStep5, params)
 	debugPrintf("#[DEBUG] Add VDC: %s", configTextOrgVdc)
 
 	if vcdShortTest {
@@ -90,11 +107,30 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeTestCheckFunc(
 			checkProviderVdcExists(providerVdcName1, false),
+			checkProviderVdcExists(providerVdcName1+"-no-network-pool", false),
 			checkNetworkPoolExists(newNetworkPoolName, false),
 			checkOrgVdcExists(orgName, orgVdcName, false),
 		),
 		Steps: []resource.TestStep{
-			// step 0 - Create provider VDC
+			// step 0 - Create provider VDC without network pool
+			{
+				Config:    configTextNoNetworkPool,
+				PreConfig: makeFunc("create (no-network pool)"),
+				Check: resource.ComposeTestCheckFunc(
+					checkProviderVdcExists(providerVdcName1+"-no-network-pool", true),
+					resource.TestCheckResourceAttr(resourceDef+"nnp", "name", providerVdcName1+"-no-network-pool"),
+					resource.TestCheckResourceAttr(resourceDef+"nnp", "description", providerVdcDescription1+" no network pool"),
+					resource.TestMatchResourceAttr(resourceDef+"nnp", "id", getProviderVdcDatasourceAttributeUrnRegex("providervdc")),
+					resource.TestCheckResourceAttr(resourceDef+"nnp", "is_enabled", "true"),
+					resource.TestCheckResourceAttr(resourceDef+"nnp", "status", "1"),
+					resource.TestMatchResourceAttr(resourceDef+"nnp", "highest_supported_hardware_version", regexp.MustCompile(`vmx-[\d]+`)),
+					resource.TestCheckResourceAttr(resourceDef+"nnp", "compute_provider_scope", testConfig.Networking.Vcenter),
+					resource.TestCheckResourceAttr(resourceDef+"nnp", "resource_pool_ids.#", "1"),
+					resource.TestCheckResourceAttr(resourceDef+"nnp", "network_pool_ids.#", "0"),
+					resource.TestCheckResourceAttr(resourceDef+"nnp", "storage_profile_names.#", "1"),
+				),
+			},
+			// step 1 - Create provider VDC with network pool
 			{
 				Config:    configText,
 				PreConfig: makeFunc("create"),
@@ -113,7 +149,7 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceDef, "storage_profile_names.#", "1"),
 				),
 			},
-			// step 1 - Rename the provider VDC
+			// step 2 - Rename the provider VDC
 			{
 				Config:    configTextRename,
 				PreConfig: makeFunc("rename"),
@@ -131,7 +167,7 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceDef, "storage_profile_names.#", "1"),
 				),
 			},
-			// step 2 - Rename back to original name and description
+			// step 3 - Rename back to original name and description
 			{
 				Config:    configText,
 				PreConfig: makeFunc("rename back"),
@@ -149,7 +185,7 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceDef, "storage_profile_names.#", "1"),
 				),
 			},
-			// step 3 - Add resource pool and storage profile
+			// step 4 - Add resource pool and storage profile
 			{
 				Config:    configTextUpdate,
 				PreConfig: makeFunc("add resource pool and storage profile"),
@@ -167,7 +203,7 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceDef, "storage_profile_names.#", "2"),
 				),
 			},
-			// step 4 - remove resource pool and storage profile
+			// step 5 - remove resource pool and storage profile
 			{
 				Config:    configText,
 				PreConfig: makeFunc("remove resource pool and storage profile"),
@@ -185,7 +221,7 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceDef, "storage_profile_names.#", "1"),
 				),
 			},
-			// step 5 -Disable provider VDC
+			// step 6 -Disable provider VDC
 			{
 				Config:    configTextDisable,
 				PreConfig: makeFunc("disable provider VDC"),
@@ -203,7 +239,7 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceDef, "storage_profile_names.#", "1"),
 				),
 			},
-			// step 6 - Enable provider VDC
+			// step 7 - Enable provider VDC
 			{
 				Config:    configText,
 				PreConfig: makeFunc("enable provider VDC"),
@@ -221,7 +257,7 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceDef, "storage_profile_names.#", "1"),
 				),
 			},
-			// step 7 - Add Org VDC
+			// step 8 - Add Org VDC
 			{
 				Config:    configTextOrgVdc,
 				PreConfig: makeFunc("create depending org VDC"),
@@ -241,7 +277,7 @@ func TestAccVcdResourceProviderVdc(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_org_vdc.testVdc", "name", orgVdcName),
 				),
 			},
-			// step 8 - import
+			// step 9 - import
 			{
 				PreConfig:         makeFunc("import provider VDC"),
 				ResourceName:      resourceDef,
@@ -311,7 +347,7 @@ func checkProviderVdcExists(providerVdcName string, wantExisting bool) resource.
 	}
 }
 
-const testAccVcdResourceProviderVdcPrerequisites = `
+const testAccVcdResourceProviderVdcVcenterPrerequisites = `
 data "vcd_vcenter" "vcenter1" {
   name = "{{.Vcenter}}"
 }
@@ -325,7 +361,8 @@ data "vcd_resource_pool" "rp2" {
   name       = "{{.ResourcePool2}}"
   vcenter_id = data.vcd_vcenter.vcenter1.id
 }
-
+`
+const testAccVcdResourceProviderVdcManagerPrerequisites = `
 data "vcd_nsxt_manager" "mgr1" {
   name = "{{.NsxtManager}}"
 }
@@ -336,6 +373,18 @@ resource "vcd_network_pool" "np1" {
   type                = "GENEVE" # provider VDC needs either a GENEVE (NSX-T) or a VXLAN (NSX-V) network pool
 
   backing_selection_constraint = "use-first-available"
+}
+`
+const testAccVcdResourceProviderVdcNoNetworkPool = `
+{{.SkipMessage}}
+resource "vcd_provider_vdc" "pvdc1nnp" {
+  name                               = "{{.ProviderVdcName1}}-no-network-pool"
+  description                        = "{{.ProviderVdcDescription1}} no network pool"
+  is_enabled                         = true
+  vcenter_id                         = data.vcd_vcenter.vcenter1.id
+  resource_pool_ids                  = [data.vcd_resource_pool.rp1.id]
+  storage_profile_names              = ["{{.StorageProfile1}}"]
+  highest_supported_hardware_version = data.vcd_resource_pool.rp1.hardware_version
 }
 `
 
