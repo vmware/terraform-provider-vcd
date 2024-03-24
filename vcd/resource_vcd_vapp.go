@@ -92,10 +92,16 @@ func resourceVcdVApp() *schema.Resource {
 				Description: "List of VMs in this vApp",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"network_names": {
+			"vapp_network_names": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "List of networks connected to this vApp",
+				Description: "List of vApp networks connected to this vApp",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"vapp_org_network_names": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of vApp Org networks connected to this vApp",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"lease": {
@@ -335,22 +341,36 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	if err != nil {
 		return diag.Errorf("error setting VM names for vApp %s: %s", vapp.VApp.Name, err)
 	}
-	var networkNames []string
-	vappNetworks, err := vapp.QueryVappNetworks()
+	var vappNetworkNames []string
+	var vappOrgNetworkNames []string
+	vappNetworks, err := vapp.QueryVappNetworks(nil)
 	if err != nil {
 		return diag.Errorf("error querying vApp networks for vApp %s: %s", vapp.VApp.Name, err)
 	}
 	if len(vappNetworks) > 0 {
 		for _, net := range vappNetworks {
-			networkNames = append(networkNames, net.Name)
+			vappNetworkNames = append(vappNetworkNames, net.Name)
 		}
-		sort.Strings(networkNames)
+		sort.Strings(vappNetworkNames)
 	}
-	err = d.Set("network_names", networkNames)
+	err = d.Set("vapp_network_names", vappNetworkNames)
 	if err != nil {
 		return diag.Errorf("error setting vApp network names for vApp %s: %s", vapp.VApp.Name, err)
 	}
-
+	vappOrgNetworks, err := vapp.QueryVappOrgNetworks(nil)
+	if err != nil {
+		return diag.Errorf("error querying vApp Org networks for vApp %s: %s", vapp.VApp.Name, err)
+	}
+	if len(vappOrgNetworks) > 0 {
+		for _, net := range vappOrgNetworks {
+			vappOrgNetworkNames = append(vappOrgNetworkNames, net.Name)
+		}
+		sort.Strings(vappOrgNetworkNames)
+	}
+	err = d.Set("vapp_org_network_names", vappOrgNetworkNames)
+	if err != nil {
+		return diag.Errorf("error setting vApp Org network names for vApp %s: %s", vapp.VApp.Name, err)
+	}
 	statusText, err := vapp.GetStatus()
 	if err != nil {
 		statusText = vAppUnknownStatus

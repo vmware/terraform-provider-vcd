@@ -25,6 +25,14 @@ type resourceRef struct {
 	importId     bool
 }
 
+type vappNetworkType int
+
+const (
+	vntVappNetwork vappNetworkType = iota
+	vntVappOrgNetwork
+	vntVappAllNetworks
+)
+
 func datasourceVcdResourceList() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdResourceListRead,
@@ -968,7 +976,7 @@ func vmList(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (list []s
 	return genericResourceList(d, "vcd_vm", []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
-func vappNetworkList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+func vappNetworkList(d *schema.ResourceData, vnt vappNetworkType, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
 	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
@@ -982,13 +990,23 @@ func vappNetworkList(d *schema.ResourceData, meta interface{}) (list []string, e
 	if err != nil {
 		return nil, err
 	}
-	vappNetworks, err := vapp.QueryVappNetworks()
+	var networks []*types.QueryResultVappNetworkRecordType
+
+	switch vnt {
+	case vntVappNetwork:
+		networks, err = vapp.QueryVappNetworks(nil)
+	case vntVappOrgNetwork:
+		networks, err = vapp.QueryVappOrgNetworks(nil)
+	case vntVappAllNetworks:
+		networks, err = vapp.QueryAllVappNetworks(nil)
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
 	var items []resourceRef
-	for _, net := range vappNetworks {
+	for _, net := range networks {
 		items = append(items, resourceRef{
 			name:     net.Name,
 			id:       extractUuid(net.HREF),
@@ -1359,7 +1377,11 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 	case "vcd_vapp_vm", "vapp_vm", "vapp_vms":
 		list, err = vmList(d, meta, vappVmType)
 	case "vcd_vapp_network", "vapp_network", "vapp_networks":
-		list, err = vappNetworkList(d, meta)
+		list, err = vappNetworkList(d, vntVappNetwork, meta)
+	case "vcd_vapp_org_network", "vapp_org_network", "vapp_org_networks":
+		list, err = vappNetworkList(d, vntVappOrgNetwork, meta)
+	case "vcd_vapp_all_network", "vapp_all_network", "vapp_all_networks":
+		list, err = vappNetworkList(d, vntVappAllNetworks, meta)
 	case "vcd_vm", "standalone_vm":
 		list, err = vmList(d, meta, standaloneVmType)
 	case "vcd_all_vm", "vm", "vms":
