@@ -65,10 +65,16 @@ func datasourceVcdVApp() *schema.Resource {
 				Description: "List of VMs in this vApp",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"network_names": {
+			"vapp_network_names": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "List of networks connected to this vApp",
+				Description: "List of vApp networks connected to this vApp",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"vapp_org_network_names": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of vApp Org networks connected to this vApp",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 			"lease": {
