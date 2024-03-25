@@ -203,6 +203,9 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.mac", "00:00:00:11:11:11"),
 					resource.TestCheckResourceAttr("vcd_vapp."+netVappName, "vapp_network_names.#", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp."+netVappName, "vapp_org_network_names.#", "3"),
+
+					resource.TestCheckResourceAttr("vcd_vapp."+netVappName, "vm_names.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp."+netVappName, "vm_names.0", "TestAccVcdVAppVmMultiNICVM"),
 					// Names of vApp networks are stored in alphabetic order
 					resource.TestCheckResourceAttr("vcd_vapp."+netVappName, "vapp_network_names.0", "vapp-net"),
 					resource.TestCheckResourceAttr("vcd_vapp."+netVappName, "vapp_org_network_names.0", "multinic-net"),
