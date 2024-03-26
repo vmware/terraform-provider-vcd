@@ -1,4 +1,4 @@
-//go:build network || nsxt || gateway || org || catalog || access_control || networkPool || providerVdc || vm || vapp || user || ALL || functional
+//go:build network || nsxt || gateway || org || catalog || access_control || networkPool || providerVdc || vm || vapp || standaloneVm || user || ALL || functional
 
 package vcd
 
