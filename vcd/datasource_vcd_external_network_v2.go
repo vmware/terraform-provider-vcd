@@ -33,6 +33,11 @@ func datasourceVcdExternalNetworkV2() *schema.Resource {
 				Computed:    true,
 				Description: "Defines if this network uses IP Spaces (VCD 10.4.1+)",
 			},
+			"nat_and_firewall_service_intention": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Defines different types of intentions to configure NAT and Firewall rules (only with IP Spaces, VCD 10.5.1+) One of `PROVIDER_GATEWAY`,`EDGE_GATEWAY`,`PROVIDER_AND_EDGE_GATEWAY`",
+			},
 			"ip_scope": {
 				Type:        schema.TypeSet,
 				Computed:    true,

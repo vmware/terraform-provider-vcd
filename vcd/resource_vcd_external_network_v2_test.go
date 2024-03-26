@@ -1202,3 +1202,155 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
   dedicated_org_id = data.vcd_org.org1.id
 }
 `
+
+func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionEdgeGateway(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	if checkVersion(testConfig.Provider.ApiVersion, "< 38.1") {
+		t.Skipf("This test tests VCD 10.5.1+ (API V38.1+) features. Skipping.")
+	}
+	var params = StringMap{
+		"Org":                 testConfig.VCD.Org,
+		"NsxtManager":         testConfig.Nsxt.Manager,
+		"NsxtTier0Router":     testConfig.Nsxt.Tier0router,
+		"ExternalNetworkName": t.Name(),
+		"NatAndFwIntention":   "EDGE_GATEWAY",
+
+		"Tags": "network extnetwork nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "step1"
+	configText1 := templateFill(testAccVcdExternalNetworkV2NsxtNatAndFirewallIntention, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "vsphere_network.#", "0"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nsxt_network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "ip_scope.#", "0"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nsxt_network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "use_ip_spaces", "true"),
+					resource.TestCheckNoResourceAttr("vcd_external_network_v2.ext-net-nsxt", "dedicated_org_id"),
+				),
+			}},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdExternalNetworkV2NsxtNatAndFirewallIntention = testAccCheckVcdExternalNetworkV2NsxtDS + `
+resource "vcd_external_network_v2" "ext-net-nsxt" {
+  name = "{{.ExternalNetworkName}}"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  use_ip_spaces                      = true
+  nat_and_firewall_service_intention = "{{.NatAndFwIntention}}"
+}
+`
+
+func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionProviderGateway(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	if checkVersion(testConfig.Provider.ApiVersion, "< 38.1") {
+		t.Skipf("This test tests VCD 10.5.1+ (API V38.1+) features. Skipping.")
+	}
+	var params = StringMap{
+		"Org":                 testConfig.VCD.Org,
+		"NsxtManager":         testConfig.Nsxt.Manager,
+		"NsxtTier0Router":     testConfig.Nsxt.Tier0routerVrf, // It must be active-standby
+		"ExternalNetworkName": t.Name(),
+		"NatAndFwIntention":   "PROVIDER_GATEWAY",
+
+		"Tags": "network extnetwork nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "step1"
+	configText1 := templateFill(testAccVcdExternalNetworkV2NsxtNatAndFirewallIntention, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "vsphere_network.#", "0"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nsxt_network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "ip_scope.#", "0"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nsxt_network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "use_ip_spaces", "true"),
+					resource.TestCheckNoResourceAttr("vcd_external_network_v2.ext-net-nsxt", "dedicated_org_id"),
+				),
+			}},
+	})
+	postTestChecks(t)
+}
+
+func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionProviderAndEdgeGateways(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	if checkVersion(testConfig.Provider.ApiVersion, "< 38.1") {
+		t.Skipf("This test tests VCD 10.5.1+ (API V38.1+) features. Skipping.")
+	}
+	var params = StringMap{
+		"Org":                 testConfig.VCD.Org,
+		"NsxtManager":         testConfig.Nsxt.Manager,
+		"NsxtTier0Router":     testConfig.Nsxt.Tier0routerVrf,
+		"ExternalNetworkName": t.Name(),
+		"NatAndFwIntention":   "PROVIDER_AND_EDGE_GATEWAY",
+
+		"Tags": "network extnetwork nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "step1"
+	configText1 := templateFill(testAccVcdExternalNetworkV2NsxtNatAndFirewallIntention, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "vsphere_network.#", "0"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nsxt_network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "ip_scope.#", "0"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nsxt_network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "use_ip_spaces", "true"),
+					resource.TestCheckNoResourceAttr("vcd_external_network_v2.ext-net-nsxt", "dedicated_org_id"),
+				),
+			}},
+	})
+	postTestChecks(t)
+}
