@@ -1203,7 +1203,7 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
 }
 `
 
-func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionEdgeGateway(t *testing.T) {
+func TestAccVcdExternalNetworkV2NsxtTopologyIntentionEdgeAndStrict(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
@@ -1223,8 +1223,12 @@ func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionEdgeGateway(t *testin
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
-	configText1 := templateFill(testAccVcdExternalNetworkV2NsxtNatAndFirewallIntention, params)
+	configText1 := templateFill(testAccVcdExternalNetworkV2NsxtTopologyIntention, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
+
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccVcdExternalNetworkV2NsxtTopologyIntentionDS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -1247,12 +1251,19 @@ func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionEdgeGateway(t *testin
 					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "route_advertisement_intention", params["RouteAdvertisementIntention"].(string)),
 					resource.TestCheckNoResourceAttr("vcd_external_network_v2.ext-net-nsxt", "dedicated_org_id"),
 				),
-			}},
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resourceFieldsEqual("vcd_external_network_v2.ext-net-nsxt", "data.vcd_external_network_v2.ext-net-nsxt", nil),
+				),
+			},
+		},
 	})
 	postTestChecks(t)
 }
 
-const testAccVcdExternalNetworkV2NsxtNatAndFirewallIntention = testAccCheckVcdExternalNetworkV2NsxtDS + `
+const testAccVcdExternalNetworkV2NsxtTopologyIntention = testAccCheckVcdExternalNetworkV2NsxtDS + `
 resource "vcd_external_network_v2" "ext-net-nsxt" {
   name = "{{.ExternalNetworkName}}"
 
@@ -1267,7 +1278,14 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
 }
 `
 
-func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionProviderGateway(t *testing.T) {
+const testAccVcdExternalNetworkV2NsxtTopologyIntentionDS = testAccVcdExternalNetworkV2NsxtTopologyIntention + `
+# skip-binary-test: data source test
+data "vcd_external_network_v2" "ext-net-nsxt" {
+  name = vcd_external_network_v2.ext-net-nsxt.name
+}
+`
+
+func TestAccVcdExternalNetworkV2NsxtTopologyIntentionProviderAndFlexible(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
@@ -1287,8 +1305,12 @@ func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionProviderGateway(t *te
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
-	configText1 := templateFill(testAccVcdExternalNetworkV2NsxtNatAndFirewallIntention, params)
+	configText1 := templateFill(testAccVcdExternalNetworkV2NsxtTopologyIntention, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
+
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccVcdExternalNetworkV2NsxtTopologyIntentionDS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -1311,12 +1333,19 @@ func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionProviderGateway(t *te
 					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "route_advertisement_intention", params["RouteAdvertisementIntention"].(string)),
 					resource.TestCheckNoResourceAttr("vcd_external_network_v2.ext-net-nsxt", "dedicated_org_id"),
 				),
-			}},
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resourceFieldsEqual("vcd_external_network_v2.ext-net-nsxt", "data.vcd_external_network_v2.ext-net-nsxt", nil),
+				),
+			},
+		},
 	})
 	postTestChecks(t)
 }
 
-func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionProviderAndEdgeGateways(t *testing.T) {
+func TestAccVcdExternalNetworkV2NsxtTopologyIntentionProviderAndEdgeAllNetworks(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
@@ -1336,8 +1365,12 @@ func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionProviderAndEdgeGatewa
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
-	configText1 := templateFill(testAccVcdExternalNetworkV2NsxtNatAndFirewallIntention, params)
+	configText1 := templateFill(testAccVcdExternalNetworkV2NsxtTopologyIntention, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
+
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccVcdExternalNetworkV2NsxtTopologyIntentionDS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -1360,7 +1393,14 @@ func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionProviderAndEdgeGatewa
 					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "route_advertisement_intention", params["RouteAdvertisementIntention"].(string)),
 					resource.TestCheckNoResourceAttr("vcd_external_network_v2.ext-net-nsxt", "dedicated_org_id"),
 				),
-			}},
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resourceFieldsEqual("vcd_external_network_v2.ext-net-nsxt", "data.vcd_external_network_v2.ext-net-nsxt", nil),
+				),
+			},
+		},
 	})
 	postTestChecks(t)
 }
