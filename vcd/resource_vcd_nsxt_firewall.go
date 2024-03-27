@@ -252,7 +252,6 @@ func resourceVcdNsxtFirewallImport(_ context.Context, d *schema.ResourceData, me
 }
 
 func setNsxtFirewallData(fwRules []*types.NsxtFirewallRule, d *schema.ResourceData, edgeGatewayId string) error {
-
 	dSet(d, "edge_gateway_id", edgeGatewayId)
 
 	result := make([]interface{}, len(fwRules))
