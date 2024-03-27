@@ -202,6 +202,19 @@ The following arguments are supported:
  * `PROVIDER_GATEWAY` - Allow management of NAT and firewall rules only on Provider Gateways.
  * `PROVIDER_AND_EDGE_GATEWAY` - Allow management of NAT and firewall rules on both the Provider and
  Edge gateways.
+* `route_advertisement_intention` - (Optional; *TBC+*; *VCD 10.5.1+*) Configure intentions for
+ Org VDC network Route Advertisement:
+ * `IP_SPACE_UPLINKS_ADVERTISED_STRICT` - All networks within IP Space associated with IP Space
+    Uplink will be advertised by default. This can be changed on an individual network level later,
+    if necessary. All other networks outside of IP Spaces associated with IP Space Uplinks cannot be
+    configured to be advertised. This is the default behavior.
+ * `IP_SPACE_UPLINKS_ADVERTISED_FLEXIBLE` - All networks within IP Space associated with IP Space
+	  Uplink will be advertised by default. This can be changed on an individual network level later,
+	  if necessary. All other networks outside of IP Spaces associated with IP Space Uplinks are not
+	  advertised by default but can be configured to be advertised after creation.
+ * `ALL_NETWORKS_ADVERTISED` - All networks, regardless on whether they fall inside of any IP Spaces
+	  associated with IP Space Uplinks, will be advertised by default. This can be changed on an
+	  individual network level later, if necessary.
 
 <a id="ipscope"></a>
 ## IP Scope

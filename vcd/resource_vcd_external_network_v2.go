@@ -158,7 +158,13 @@ func resourceVcdExternalNetworkV2() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Defines different types of intentions to configure NAT and Firewall rules (only with IP Spaces, VCD 10.5.1+) One of `PROVIDER_GATEWAY`,`EDGE_GATEWAY`,`PROVIDER_AND_EDGE_GATEWAY`",
+				Description: "Defines intentions to configure NAT and Firewall rules (only with IP Spaces, VCD 10.5.1+) One of `PROVIDER_GATEWAY`,`EDGE_GATEWAY`,`PROVIDER_AND_EDGE_GATEWAY`",
+			},
+			"route_advertisement_intention": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Defines intentions to configure route advertisement (only with IP Spaces, VCD 10.5.1+) One of `IP_SPACE_UPLINKS_ADVERTISED_STRICT`,`IP_SPACE_UPLINKS_ADVERTISED_FLEXIBLE`,`ALL_NETWORKS_ADVERTISED`",
 			},
 			"ip_scope": {
 				Type:        schema.TypeSet,
@@ -308,11 +314,12 @@ func getExternalNetworkV2Type(vcdClient *VCDClient, d *schema.ResourceData, know
 	}
 
 	newExtNet := &types.ExternalNetworkV2{
-		Name:                           d.Get("name").(string),
-		Description:                    d.Get("description").(string),
-		NetworkBackings:                networkBackings,
-		DedicatedOrg:                   &types.OpenApiReference{ID: d.Get("dedicated_org_id").(string)},
-		NatAndFirewallServiceIntention: d.Get("nat_and_firewall_service_intention").(string),
+		Name:                               d.Get("name").(string),
+		Description:                        d.Get("description").(string),
+		NetworkBackings:                    networkBackings,
+		DedicatedOrg:                       &types.OpenApiReference{ID: d.Get("dedicated_org_id").(string)},
+		NatAndFirewallServiceIntention:     d.Get("nat_and_firewall_service_intention").(string),
+		NetworkRouteAdvertisementIntention: d.Get("route_advertisement_intention").(string),
 	}
 
 	usingIpSpace := d.Get("use_ip_spaces").(bool)
@@ -497,6 +504,7 @@ func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetwork
 	dSet(d, "name", net.Name)
 	dSet(d, "description", net.Description)
 	dSet(d, "nat_and_firewall_service_intention", net.NatAndFirewallServiceIntention)
+	dSet(d, "route_advertisement_intention", net.NetworkRouteAdvertisementIntention)
 
 	if net.DedicatedOrg != nil && net.DedicatedOrg.ID != "" {
 		dSet(d, "dedicated_org_id", net.DedicatedOrg.ID)

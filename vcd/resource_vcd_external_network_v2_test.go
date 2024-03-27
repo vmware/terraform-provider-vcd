@@ -1211,11 +1211,12 @@ func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionEdgeGateway(t *testin
 		t.Skipf("This test tests VCD 10.5.1+ (API V38.1+) features. Skipping.")
 	}
 	var params = StringMap{
-		"Org":                 testConfig.VCD.Org,
-		"NsxtManager":         testConfig.Nsxt.Manager,
-		"NsxtTier0Router":     testConfig.Nsxt.Tier0router,
-		"ExternalNetworkName": t.Name(),
-		"NatAndFwIntention":   "EDGE_GATEWAY",
+		"Org":                         testConfig.VCD.Org,
+		"NsxtManager":                 testConfig.Nsxt.Manager,
+		"NsxtTier0Router":             testConfig.Nsxt.Tier0router,
+		"ExternalNetworkName":         t.Name(),
+		"NatAndFwIntention":           "EDGE_GATEWAY",
+		"RouteAdvertisementIntention": "IP_SPACE_UPLINKS_ADVERTISED_STRICT",
 
 		"Tags": "network extnetwork nsxt",
 	}
@@ -1242,6 +1243,8 @@ func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionEdgeGateway(t *testin
 					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "ip_scope.#", "0"),
 					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nsxt_network.#", "1"),
 					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "use_ip_spaces", "true"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nat_and_firewall_service_intention", params["NatAndFwIntention"].(string)),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "route_advertisement_intention", params["RouteAdvertisementIntention"].(string)),
 					resource.TestCheckNoResourceAttr("vcd_external_network_v2.ext-net-nsxt", "dedicated_org_id"),
 				),
 			}},
@@ -1260,6 +1263,7 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
 
   use_ip_spaces                      = true
   nat_and_firewall_service_intention = "{{.NatAndFwIntention}}"
+  route_advertisement_intention      = "{{.RouteAdvertisementIntention}}"
 }
 `
 
@@ -1271,11 +1275,12 @@ func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionProviderGateway(t *te
 		t.Skipf("This test tests VCD 10.5.1+ (API V38.1+) features. Skipping.")
 	}
 	var params = StringMap{
-		"Org":                 testConfig.VCD.Org,
-		"NsxtManager":         testConfig.Nsxt.Manager,
-		"NsxtTier0Router":     testConfig.Nsxt.Tier0routerVrf, // It must be active-standby
-		"ExternalNetworkName": t.Name(),
-		"NatAndFwIntention":   "PROVIDER_GATEWAY",
+		"Org":                         testConfig.VCD.Org,
+		"NsxtManager":                 testConfig.Nsxt.Manager,
+		"NsxtTier0Router":             testConfig.Nsxt.Tier0routerVrf, // It must be active-standby
+		"ExternalNetworkName":         t.Name(),
+		"NatAndFwIntention":           "PROVIDER_GATEWAY",
+		"RouteAdvertisementIntention": "IP_SPACE_UPLINKS_ADVERTISED_FLEXIBLE",
 
 		"Tags": "network extnetwork nsxt",
 	}
@@ -1302,6 +1307,8 @@ func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionProviderGateway(t *te
 					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "ip_scope.#", "0"),
 					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nsxt_network.#", "1"),
 					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "use_ip_spaces", "true"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nat_and_firewall_service_intention", params["NatAndFwIntention"].(string)),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "route_advertisement_intention", params["RouteAdvertisementIntention"].(string)),
 					resource.TestCheckNoResourceAttr("vcd_external_network_v2.ext-net-nsxt", "dedicated_org_id"),
 				),
 			}},
@@ -1317,11 +1324,12 @@ func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionProviderAndEdgeGatewa
 		t.Skipf("This test tests VCD 10.5.1+ (API V38.1+) features. Skipping.")
 	}
 	var params = StringMap{
-		"Org":                 testConfig.VCD.Org,
-		"NsxtManager":         testConfig.Nsxt.Manager,
-		"NsxtTier0Router":     testConfig.Nsxt.Tier0routerVrf,
-		"ExternalNetworkName": t.Name(),
-		"NatAndFwIntention":   "PROVIDER_AND_EDGE_GATEWAY",
+		"Org":                         testConfig.VCD.Org,
+		"NsxtManager":                 testConfig.Nsxt.Manager,
+		"NsxtTier0Router":             testConfig.Nsxt.Tier0routerVrf,
+		"ExternalNetworkName":         t.Name(),
+		"NatAndFwIntention":           "PROVIDER_AND_EDGE_GATEWAY",
+		"RouteAdvertisementIntention": "ALL_NETWORKS_ADVERTISED",
 
 		"Tags": "network extnetwork nsxt",
 	}
@@ -1348,6 +1356,8 @@ func TestAccVcdExternalNetworkV2NsxtNatAndFirewallIntentionProviderAndEdgeGatewa
 					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "ip_scope.#", "0"),
 					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nsxt_network.#", "1"),
 					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "use_ip_spaces", "true"),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "nat_and_firewall_service_intention", params["NatAndFwIntention"].(string)),
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "route_advertisement_intention", params["RouteAdvertisementIntention"].(string)),
 					resource.TestCheckNoResourceAttr("vcd_external_network_v2.ext-net-nsxt", "dedicated_org_id"),
 				),
 			}},
