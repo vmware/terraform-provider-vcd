@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_alb_virtual_service"
 sidebar_current: "docs-vcd-datasource-nsxt-alb-virtual-service"
 description: |-
-  Provides a data source to read NSX-T ALB Virtual services for particular NSX-T Edge Gateway. A virtual service
+  Provides a data source to read ALB Virtual services for particular NSX-T Edge Gateway. A virtual service
   advertises an IP address and ports to the external world and listens for client traffic. When a virtual service receives
   traffic, it directs it to members in ALB Pool.
 ---
@@ -12,7 +12,7 @@ description: |-
 
 Supported in provider *v3.5+* and VCD 10.2+ with NSX-T and ALB.
 
-Provides a data source to read NSX-T ALB Virtual services for particular NSX-T Edge Gateway. A virtual service
+Provides a data source to read ALB Virtual services for particular NSX-T Edge Gateway. A virtual service
 advertises an IP address and ports to the external world and listens for client traffic. When a virtual service receives
 traffic, it directs it to members in ALB Pool.
 

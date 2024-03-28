@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_alb_cloud"
 sidebar_current: "docs-vcd-resource-nsxt-alb-cloud"
 description: |-
-  Provides a resource to manage NSX-T ALB Clouds for Providers. An NSX-T Cloud is a service provider-level construct that
+  Provides a resource to manage ALB Clouds for Providers. An NSX-T Cloud is a service provider-level construct that
   consists of an NSX-T Manager and an NSX-T Data Center transport zone.
 ---
 
@@ -11,7 +11,7 @@ description: |-
 
 Supported in provider *v3.4+* and VCD 10.2+ with NSX-T and ALB.
 
-Provides a resource to manage NSX-T ALB Clouds for Providers. An NSX-T Cloud is a service provider-level construct that
+Provides a resource to manage ALB Clouds for Providers. An NSX-T Cloud is a service provider-level construct that
 consists of an NSX-T Manager and an NSX-T Data Center transport zone.
 
 ~> Only `System Administrator` can create this resource.
@@ -21,7 +21,7 @@ consists of an NSX-T Manager and an NSX-T Data Center transport zone.
 Controller is created. This data should be available 15 minutes after the Controller is created.
 
 
-## Example Usage (Adding NSX-T ALB Cloud)
+## Example Usage (Adding ALB Cloud)
 
 ```hcl
 data "vcd_nsxt_alb_controller" "main" {
@@ -35,7 +35,7 @@ data "vcd_nsxt_alb_importable_cloud" "cld" {
 
 resource "vcd_nsxt_alb_cloud" "first" {
   name        = "nsxt-cloud"
-  description = "NSX-T ALB Cloud"
+  description = "ALB Cloud"
 
   controller_id       = data.vcd_nsxt_alb_controller.main.id
   importable_cloud_id = data.vcd_nsxt_alb_importable_cloud.cld.id
@@ -47,8 +47,8 @@ resource "vcd_nsxt_alb_cloud" "first" {
 
 The following arguments are supported:
 
-* `name` - (Required) A name for NSX-T ALB Cloud
-* `description` - (Optional) An optional description NSX-T ALB Cloud
+* `name` - (Required) A name for ALB Cloud
+* `description` - (Optional) An optional description ALB Cloud
 * `controller_id` - (Required) ALB Controller ID
 * `importable_cloud_id` - (Required) Importable Cloud ID. Can be looked up using `vcd_nsxt_alb_importable_cloud` data
   source
@@ -75,7 +75,7 @@ The following attributes are exported on this resource:
 ~> The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
-An existing NSX-T ALB Cloud configuration can be [imported][docs-import] into this resource
+An existing ALB Cloud configuration can be [imported][docs-import] into this resource
 via supplying path for it. An example is below:
 
 [docs-import]: https://www.terraform.io/docs/import/
@@ -84,4 +84,4 @@ via supplying path for it. An example is below:
 terraform import vcd_nsxt_alb_cloud.imported my-alb-cloud-name
 ```
 
-The above would import the `my-alb-cloud-name` NSX-T ALB cloud settings that are defined at provider level.
+The above would import the `my-alb-cloud-name` ALB cloud settings that are defined at provider level.

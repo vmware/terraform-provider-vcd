@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_alb_service_engine_group"
 sidebar_current: "docs-vcd-resource-nsxt-alb-service-engine-group"
 description: |-
-  Provides a resource to manage NSX-T ALB Service Engine Groups. A Service Engine Group is an isolation domain that also
+  Provides a resource to manage ALB Service Engine Groups. A Service Engine Group is an isolation domain that also
   defines shared service engine properties, such as size, network access, and failover. Resources in a service engine
   group can be used for different virtual services, depending on your tenant needs. These resources cannot be shared
   between different service engine groups.
@@ -13,18 +13,18 @@ description: |-
 
 Supported in provider *v3.4+* and VCD 10.2+ with NSX-T and ALB.
 
-Provides a resource to manage NSX-T ALB Service Engine Groups. A Service Engine Group is an isolation domain that also
+Provides a resource to manage ALB Service Engine Groups. A Service Engine Group is an isolation domain that also
 defines shared service engine properties, such as size, network access, and failover. Resources in a service engine
 group can be used for different virtual services, depending on your tenant needs. These resources cannot be shared
 between different service engine groups.
 
 ~> Only `System Administrator` can create this resource.
 
-## Example Usage (Adding NSX-T ALB Service Engine Group)
+## Example Usage (Adding ALB Service Engine Group)
 
 ```hcl
 # Local variable is used to avoid direct reference and cover Terraform core bug https://github.com/hashicorp/terraform/issues/29484
-# Even changing NSX-T ALB Controller name in UI, plan will cause to recreate all resources depending 
+# Even changing ALB Controller name in UI, plan will cause to recreate all resources depending 
 # on `vcd_nsxt_alb_importable_cloud` data source if this indirect reference (via local) variable is not used.
 locals {
   controller_id = vcd_nsxt_alb_controller.first.id
@@ -67,9 +67,9 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
 
 The following arguments are supported:
 
-* `name` - (Required) A name for NSX-T ALB Service Engine Group
-* `description` - (Optional) An optional description NSX-T ALB Service Engine Group
-* `alb_cloud_id` - (Required) A reference NSX-T ALB Cloud. Can be looked up using `vcd_nsxt_alb_cloud` resource or data
+* `name` - (Required) A name for ALB Service Engine Group
+* `description` - (Optional) An optional description ALB Service Engine Group
+* `alb_cloud_id` - (Required) A reference ALB Cloud. Can be looked up using `vcd_nsxt_alb_cloud` resource or data
   source
 * `reservation_model` - (Required) Definition if the Service Engine Group is `DEDICATED` or `SHARED`
 * `importable_service_engine_group_name` - (Required) Name of available Service Engine Group in ALB
@@ -84,7 +84,7 @@ The following arguments are supported:
 
 The following attributes are exported on this resource:
 
-* `max_virtual_services` - Maximum number of virtual services this NSX-T ALB Service Engine Group can run
+* `max_virtual_services` - Maximum number of virtual services this ALB Service Engine Group can run
 * `reserved_virtual_services` - Number of reserved virtual services
 * `deployed_virtual_services` - Number of deployed virtual services
 * `ha_mode` defines High Availability Mode for Service Engine Group. One off:
@@ -98,7 +98,7 @@ The following attributes are exported on this resource:
 ~> The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
-An existing NSX-T ALB Service Engine Group configuration can be [imported][docs-import] into this resource
+An existing ALB Service Engine Group configuration can be [imported][docs-import] into this resource
 via supplying path for it. An example is
 below:
 
@@ -108,5 +108,5 @@ below:
 terraform import vcd_nsxt_alb_service_engine_group.imported my-service-engine-group-name
 ```
 
-The above would import the `my-service-engine-group-name` NSX-T ALB controller settings that are defined at provider
+The above would import the `my-service-engine-group-name` ALB controller settings that are defined at provider
 level.

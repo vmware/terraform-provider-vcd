@@ -226,7 +226,7 @@ resource "vcd_nsxt_nat_rule" "snat" {
 
 ### Step 3: Configure ALB
 
-Advanced Load Balancers are required for CSE to be able to handle Kubernetes services and other internal capabilities.
+Avi Load Balancers are required for CSE to be able to handle Kubernetes services and other internal capabilities.
 You need the following resources:
 
 * [ALB Controller](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_controller)

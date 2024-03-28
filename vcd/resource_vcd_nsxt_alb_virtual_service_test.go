@@ -750,7 +750,7 @@ func testAccCheckVcdAlbVirtualServiceDestroy(resource string) resource.TestCheck
 }
 
 // TestAccVcdNsxtAlbVirtualServiceTransparentMode tests two explicitly 10.4.1+ features:
-// * Transparent mode (uses Legacy Active-Standby Service Engine Group in AVI as it is the only way
+// * Transparent mode (uses Legacy Active-Standby Service Engine Group in Avi as it is the only way
 // to support Transparent mode)
 // * ALB Pools with member groups (IP Set)
 func TestAccVcdNsxtAlbVirtualServiceTransparentMode(t *testing.T) {

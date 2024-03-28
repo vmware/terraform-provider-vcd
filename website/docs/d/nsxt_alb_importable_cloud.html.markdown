@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_alb_importable_cloud"
 sidebar_current: "docs-vcd-datasource-nsxt-alb-importable-cloud"
 description: |-
-  Provides a data source to reference existing NSX-T ALB Importable Clouds. An NSX-T Importable Cloud is a reference to a
+  Provides a data source to reference existing ALB Importable Clouds. An NSX-T Importable Cloud is a reference to a
   Cloud configured in ALB Controller.
 ---
 
@@ -11,7 +11,7 @@ description: |-
 
 Supported in provider *v3.4+* and VCD 10.2+ with NSX-T and ALB.
 
-Provides a data source to reference existing NSX-T ALB Importable Clouds. An NSX-T Importable Cloud is a reference to a
+Provides a data source to reference existing ALB Importable Clouds. An NSX-T Importable Cloud is a reference to a
 Cloud configured in ALB Controller.
 
 ~> Only `System Administrator` can use this data source.
@@ -37,8 +37,8 @@ data "vcd_nsxt_alb_importable_cloud" "cld" {
 
 The following arguments are supported:
 
-* `name` - (Required)  - Name of NSX-T ALB Importable Cloud
-* `controller_id` - (Required)  - NSX-T ALB Controller ID
+* `name` - (Required)  - Name of ALB Importable Cloud
+* `controller_id` - (Required)  - ALB Controller ID
 
 ## Attribute Reference
 
