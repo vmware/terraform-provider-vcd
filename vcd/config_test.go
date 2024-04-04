@@ -960,9 +960,7 @@ func getTestVCDFromJson(testConfig TestConfig) (*govcd.VCDClient, error) {
 	}
 	vcdClient := govcd.NewVCDClient(*configUrl, true,
 		govcd.WithSamlAdfs(testConfig.Provider.UseSamlAdfs, testConfig.Provider.CustomAdfsRptId),
-		govcd.WithHttpUserAgent(buildUserAgent("test", testConfig.Provider.SysOrg)),
-		govcd.WithVcloudRequestIdFunc(govcd.VcloudRequestIdBuilderFunc),
-	)
+		govcd.WithHttpUserAgent(buildUserAgent("test", testConfig.Provider.SysOrg)))
 	return vcdClient, nil
 }
 
