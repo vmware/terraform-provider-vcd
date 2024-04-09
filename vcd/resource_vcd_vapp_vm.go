@@ -665,6 +665,32 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 				},
 			},
 		},
+		"extra_config": {
+			Type:        schema.TypeSet,
+			Optional:    true,
+			Computed:    true,
+			Description: "A block to retrieve and set extra configuration fields",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"key": {
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "The key of the extra field",
+					},
+					"value": {
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "The value of the extra field",
+					},
+					"required": {
+						Type:        schema.TypeBool,
+						Optional:    true,
+						Default:     false,
+						Description: "Whether the extra field is required",
+					},
+				},
+			},
+		},
 		"cpu_hot_add_enabled": {
 			Type:        schema.TypeBool,
 			Optional:    true,
@@ -2349,6 +2375,10 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 
 	if err := setGuestCustomizationData(d, vm); err != nil {
 		return diag.Errorf("error storing customization block: %s", err)
+	}
+
+	if err := setExtraCustomizationData(d, vm); err != nil {
+		return diag.Errorf("error storing extra customization block: %s", err)
 	}
 
 	if vm.VM.ComputePolicy != nil {

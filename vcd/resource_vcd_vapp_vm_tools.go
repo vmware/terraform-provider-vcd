@@ -1098,7 +1098,31 @@ func setGuestCustomizationData(d *schema.ResourceData, vm *govcd.VM) error {
 
 	err = d.Set("customization", customizationBlock)
 	if err != nil {
-		return fmt.Errorf("")
+		return fmt.Errorf("error setting 'customization' values: %s", err)
+	}
+
+	return nil
+}
+
+func setExtraCustomizationData(d *schema.ResourceData, vm *govcd.VM) error {
+	extraConfig, err := vm.GetExtraConfig()
+	if err != nil {
+		return fmt.Errorf("unable to get extra customization section: %s", err)
+	}
+
+	extraBlock := make([]interface{}, len(extraConfig))
+
+	for i, ec := range extraConfig {
+		extraBlock[i] = map[string]interface{}{
+			"key":      ec.Key,
+			"value":    ec.Value,
+			"required": ec.Required,
+		}
+	}
+
+	err = d.Set("extra_config", extraBlock)
+	if err != nil {
+		return fmt.Errorf("error setting 'extra_config' values: %s", err)
 	}
 
 	return nil

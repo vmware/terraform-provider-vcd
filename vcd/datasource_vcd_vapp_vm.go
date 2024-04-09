@@ -404,6 +404,30 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 				},
 			},
 		},
+		"extra_config": {
+			Type:        schema.TypeSet,
+			Computed:    true,
+			Description: "A block to retrieve and set extra configuration fields",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"key": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The key of the extra field",
+					},
+					"value": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The value of the extra field",
+					},
+					"required": {
+						Type:        schema.TypeBool,
+						Computed:    true,
+						Description: "Whether the extra field is required",
+					},
+				},
+			},
+		},
 		"cpu_hot_add_enabled": {
 			Type:        schema.TypeBool,
 			Computed:    true,
