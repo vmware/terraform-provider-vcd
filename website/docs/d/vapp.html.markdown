@@ -65,7 +65,6 @@ The following arguments are supported:
   * `storage_lease_in_sec` - How long the vApp is available before being automatically deleted or marked as expired. 0 means never expires.
 * `inherited_metadata` - (*v3.11+*; *VCD 10.5.1+*) A map that contains read-only metadata that is automatically added by VCD (10.5.1+) and provides
   details on the origin of the vApp (e.g. `vapp.origin.id`, `vapp.origin.name`, `vapp.origin.type`).
-<!-- TODO: update version number in items below --> 
 * `vm_names` - (*v3.13.0+*) A list of VM names included in this vApp
 * `vapp_network_names` - (*3.13.0+*) A list of vApp network names included in this vApp
 * `vapp_org_network_names` - (*v3.13.0+*) A list of vApp Org network names included in this vApp
