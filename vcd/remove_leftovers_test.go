@@ -84,6 +84,7 @@ var alsoDelete = entityList{
 	{Type: "vcd_vapp", Name: "Vapp-AC-2", Comment: "from vcd.TestAccVcdVappAccessControl-update.tf: Vapp-AC-2"},
 	{Type: "vcd_vapp", Name: "Vapp-AC-3", Comment: "from vcd.TestAccVcdVappAccessControl-update.tf: Vapp-AC-3"},
 	{Type: "vcd_org_vdc", Name: "ForInternalDiskTest", Comment: "from vcd.TestAccVcdVmInternalDisk-CreateALl.tf: ForInternalDiskTest"},
+	{Type: "vcd_solution_landing_zone", Name: "urn:vcloud:type:vmware:solutions_organization:1.0.0", Comment: "Solution Landing Zone"},
 }
 
 // isTest is a regular expression that tells if an entity needs to be deleted
@@ -112,6 +113,24 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		err := removeLeftoversNsxtAlb(govcdClient, verbose)
 		if err != nil {
 			return fmt.Errorf("error removing NSX-T ALB leftovers: %s", err)
+		}
+	}
+
+	// --------------------------------------------------------------
+	// Solution Landing Zone (SLZ)
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		// TODO TODO TODO - UI uses query https://HOSTcloudapi/1.0.0/entities/types/vmware/solutions_organization -> Does this fetch RDEs for all versions?
+		allSlzs, err := govcdClient.GetAllSolutionLandingZones(nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving all SLZs: %s", err)
+		}
+		for _, slz := range allSlzs {
+			_ = shouldDeleteEntity(alsoDelete, doNotDelete, slz.DefinedEntity.DefinedEntity.EntityType, "vcd_solution_landing_zone", 0, verbose)
+			err := slz.Delete()
+			if err != nil {
+				return fmt.Errorf("error removing SLZ: %s", err)
+			}
 		}
 	}
 
