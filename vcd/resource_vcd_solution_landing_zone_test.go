@@ -3,12 +3,9 @@
 package vcd
 
 import (
-	"fmt"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccVcdSolutionLandingZone(t *testing.T) {
@@ -28,8 +25,11 @@ func TestAccVcdSolutionLandingZone(t *testing.T) {
 
 	configText := templateFill(testAccSolutionLandingZoneStep1, params)
 
-	params["FuncName"] = t.Name() + "-update"
-	configTextUpdate := templateFill(testAccSolutionLandingZoneStep2, params)
+	params["FuncName"] = t.Name() + "-step2"
+	configTextStep2 := templateFill(testAccSolutionLandingZoneStep2, params)
+
+	params["FuncName"] = t.Name() + "-step3DS"
+	configTextStep3DS := templateFill(testAccSolutionLandingZoneStep3DS, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	if vcdShortTest {
@@ -50,20 +50,24 @@ func TestAccVcdSolutionLandingZone(t *testing.T) {
 				),
 			},
 			{
-				Config: configTextUpdate,
-				Check: resource.ComposeTestCheckFunc(
-					sleepTester(2 * time.Minute),
+				Config: configTextStep2,
+				Check:  resource.ComposeTestCheckFunc(
+				// sleepTester(2 * time.Minute),
 				// testAccCheckSecurityTagCreated(tag1, tag2),
 				// testAccCheckSecurityTagOnVMCreated(tag1, vAppName, firstVMName),
 				// testAccCheckSecurityTagOnVMCreated(tag1, vAppName, secondVMName),
 				),
 			},
-			// {
-			// 	ResourceName:      fmt.Sprintf("vcd_security_tag.%s", tag1),
-			// 	ImportState:       true,
-			// 	ImportStateVerify: true,
-			// 	ImportStateId:     testConfig.VCD.Org + "." + tag1,
-			// },
+			{
+				Config: configTextStep3DS,
+				Check: resource.ComposeTestCheckFunc(
+					resourceFieldsEqual("data.vcd_solution_landing_zone.slz", "vcd_solution_landing_zone.slz", nil),
+				// sleepTester(2 * time.Minute),
+				// testAccCheckSecurityTagCreated(tag1, tag2),
+				// testAccCheckSecurityTagOnVMCreated(tag1, vAppName, firstVMName),
+				// testAccCheckSecurityTagOnVMCreated(tag1, vAppName, secondVMName),
+				),
+			},
 		},
 	})
 	postTestChecks(t)
@@ -96,7 +100,8 @@ resource "vcd_solution_landing_zone" "slz" {
   org = "{{.Org}}"
 
   catalog {
-	id = data.vcd_catalog.nsxt.id
+	id           = data.vcd_catalog.nsxt.id
+	capabilities = ["one", "two", "three"]
   }
 
   vdc {
@@ -177,11 +182,6 @@ resource "vcd_solution_landing_zone" "slz" {
 }
 `
 
-func sleepTester(d time.Duration) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		fmt.Printf("sleeping %s\n", d.String())
-		time.Sleep(d)
-		fmt.Println("finished sleeping")
-		return nil
-	}
-}
+const testAccSolutionLandingZoneStep3DS = testAccSolutionLandingZoneStep2 + `
+data "vcd_solution_landing_zone" "slz" {}
+`

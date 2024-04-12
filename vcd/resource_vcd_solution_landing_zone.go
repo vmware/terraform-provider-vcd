@@ -71,6 +71,7 @@ func resourceVcdSolutionLandingZone() *schema.Resource {
 				Type:        schema.TypeSet,
 				Required:    true,
 				Description: "IP Address of pool member",
+				MaxItems:    1, // Solution add-ons support only single element
 				// 	// Warning: This catalog stores all executable .ISO files for your solution add-ons.
 				// 	//
 				// 	// Selecting another catalog to use in the Solution Add-On Landing Zone does not affect the solution add-ons that you already installed, but prevents you from running day-2 operations on them. То ensure that you can run day-2 operations on the add-ons that are already installed, reupload their original add-on .ISO files.
@@ -82,6 +83,7 @@ func resourceVcdSolutionLandingZone() *schema.Resource {
 							Required:    true,
 							Description: "Shows is the member is enabled or not",
 						},
+						// This field is not documented because it is not currently used
 						"capabilities": {
 							Type:        schema.TypeSet,
 							Optional:    true,
@@ -96,6 +98,7 @@ func resourceVcdSolutionLandingZone() *schema.Resource {
 				Type:        schema.TypeSet,
 				Required:    true,
 				Description: "",
+				MaxItems:    1, // Solution add-ons support only single element
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
