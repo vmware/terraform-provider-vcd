@@ -217,14 +217,14 @@ The following arguments are supported:
 * `ip_scope` - (Optional) One or more IP scopes for the network. See [IP Scope](#ipscope) below for details.
 * `vsphere_network` - (Optional) One or more blocks of [vSphere Network](#vspherenetwork)..
 * `nsxt_network` - (Optional) NSX-T network definition. See [NSX-T Network](#nsxtnetwork) below for details.
-* `nat_and_firewall_service_intention` - (Optional; *TBC+*; *VCD 10.5.1+*) Configure intentions for
+* `nat_and_firewall_service_intention` - (Optional; *v3.13+*; *VCD 10.5.1+*) Configure intentions for
  NAT and Firewall rule configuration:
  * `EDGE_GATEWAY` - Allow management of NAT and firewall rules only on Edge Gateways. This is the
    default behavior.
  * `PROVIDER_GATEWAY` - Allow management of NAT and firewall rules only on Provider Gateways.
  * `PROVIDER_AND_EDGE_GATEWAY` - Allow management of NAT and firewall rules on both the Provider and
  Edge gateways.
-* `route_advertisement_intention` - (Optional; *TBC+*; *VCD 10.5.1+*) Configure intentions for
+* `route_advertisement_intention` - (Optional; *v3.13+*; *VCD 10.5.1+*) Configure intentions for
  Org VDC network Route Advertisement:
  * `IP_SPACE_UPLINKS_ADVERTISED_STRICT` - All networks within IP Space associated with IP Space
   Uplink will be advertised by default. This can be changed on an individual network level later,
