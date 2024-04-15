@@ -49,11 +49,9 @@ func datasourceVcdSolutionLandingZone() *schema.Resource {
 			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
-
-				// Description: "The name of organization to use, optional if defined at provider " +
-				// 	"level. Useful when connected as sysadmin working across different organizations",
+				Description: "The name of organization to use, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
 			},
-
 			"state": {
 				Type:        schema.TypeString,
 				Description: "State reports RDE state",
@@ -62,17 +60,13 @@ func datasourceVcdSolutionLandingZone() *schema.Resource {
 			"catalog": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "IP Address of pool member",
-				// 	// Warning: This catalog stores all executable .ISO files for your solution add-ons.
-				// 	//
-				// 	// Selecting another catalog to use in the Solution Add-On Landing Zone does not affect the solution add-ons that you already installed, but prevents you from running day-2 operations on them. То ensure that you can run day-2 operations on the add-ons that are already installed, reupload their original add-on .ISO files.
-				// 	// Capabilities???
+				Description: "Catalog definition for storing executable .ISO files",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Shows is the member is enabled or not",
+							Description: "ID of catalog",
 						},
 						"name": {
 							Type:        schema.TypeString,
@@ -82,7 +76,7 @@ func datasourceVcdSolutionLandingZone() *schema.Resource {
 						"capabilities": {
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Description: "",
+							Description: "Capability set for catalog",
 							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
 					},
@@ -98,7 +92,12 @@ func datasourceVcdSolutionLandingZone() *schema.Resource {
 						"id": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "",
+							Description: "VDC ID",
+						},
+						"name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "VDC Name",
 						},
 						"is_default": {
 							Type:        schema.TypeBool,

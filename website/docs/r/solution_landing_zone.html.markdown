@@ -12,7 +12,7 @@ Supported in provider *v3.13+* and VCD 10.4+.
 
 Provides a resource to configure VCD Solution Add-on Landing Zone.
 
-~> Only `System Administrator` can create this resource.
+~> Only `System Administrator` can create this resource and there can *be only one resource per VCD*.
 
 ## Example Solution Landing Zone configuration
 
@@ -51,15 +51,18 @@ resource "vcd_solution_landing_zone" "slz" {
     is_default = true
 
     org_vdc_network {
-      id = data.vcd_network_routed_v2.r1.id
+      id         = data.vcd_network_routed_v2.r1.id
+      is_default = true
     }
 
     compute_policy {
-      id = data.vcd_org_vdc.vdc1.default_compute_policy_id
+      id         = data.vcd_org_vdc.vdc1.default_compute_policy_id
+      is_default = true
     }
 
     storage_policy {
-      id = data.vcd_storage_profile.sp.id
+      id         = data.vcd_storage_profile.sp.id
+      is_default = true
     }
   }
 }
@@ -75,7 +78,7 @@ The following arguments are supported:
 * `vdc` - (Required)  A single [vdc](#vdc) block that defines landing VDC configuration
 
 <a id="vdc"></a>
-## vdc configuration block
+## VDC configuration block
 
 * `id` - (Required) Destination VDC ID for Solution Add-ons
 * `org_vdc_network` - (Required) At least one Org VDC Network is required. See [vdc
@@ -87,7 +90,7 @@ The following arguments are supported:
 
 
 <a id="vdc-child"></a>
-## vdc child configuration block
+## VDC child configuration block
 
 * `id` - (Required) ID of child entity (Org VDC Network, Compute Policy, Storage Policy)
 * `is_default` - (Optional) Defines which of the child entities is default (only one default is

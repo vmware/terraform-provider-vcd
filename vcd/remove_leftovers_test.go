@@ -120,7 +120,6 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	// Solution Landing Zone (SLZ)
 	// --------------------------------------------------------------
 	if govcdClient.Client.IsSysAdmin {
-		// TODO TODO TODO - UI uses query https://HOSTcloudapi/1.0.0/entities/types/vmware/solutions_organization -> Does this fetch RDEs for all versions?
 		allSlzs, err := govcdClient.GetAllSolutionLandingZones(nil)
 		if err != nil {
 			return fmt.Errorf("error retrieving all SLZs: %s", err)

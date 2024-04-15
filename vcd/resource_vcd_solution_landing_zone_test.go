@@ -53,11 +53,11 @@ func TestAccVcdSolutionLandingZone(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_solution_landing_zone.slz", "catalog.#", "1"),
 
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "catalog.*", map[string]string{"name": testConfig.VCD.Catalog.NsxtBackedCatalogName}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.compute_policy.*", map[string]string{"name": "System Default"}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.org_vdc_network.*", map[string]string{"name": testConfig.Nsxt.RoutedNetwork}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.storage_policy.*", map[string]string{"name": "*"}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.compute_policy.*", map[string]string{"name": "System Default", "is_default": "true"}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.org_vdc_network.*", map[string]string{"name": testConfig.Nsxt.RoutedNetwork, "is_default": "true"}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.storage_policy.*", map[string]string{"name": "*", "is_default": "true"}),
 					resource.TestCheckResourceAttr("vcd_solution_landing_zone.slz", "vdc.#", "1"),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*", map[string]string{"is_default": "true"}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*", map[string]string{"is_default": "true", "name": testConfig.Nsxt.Vdc}),
 				),
 			},
 			{
@@ -69,11 +69,11 @@ func TestAccVcdSolutionLandingZone(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_solution_landing_zone.slz", "catalog.#", "1"),
 
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "catalog.*", map[string]string{"name": testConfig.VCD.Catalog.NsxtBackedCatalogName}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.compute_policy.*", map[string]string{"name": "System Default"}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.org_vdc_network.*", map[string]string{"name": testConfig.Nsxt.IsolatedNetwork}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.storage_policy.*", map[string]string{"name": "*"}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.compute_policy.*", map[string]string{"name": "System Default", "is_default": "true"}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.org_vdc_network.*", map[string]string{"name": testConfig.Nsxt.IsolatedNetwork, "is_default": "true"}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.storage_policy.*", map[string]string{"name": "*", "is_default": "true"}),
 					resource.TestCheckResourceAttr("vcd_solution_landing_zone.slz", "vdc.#", "1"),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*", map[string]string{"is_default": "true"}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*", map[string]string{"is_default": "true", "name": testConfig.Nsxt.Vdc}),
 				),
 			},
 			{
@@ -120,7 +120,6 @@ resource "vcd_solution_landing_zone" "slz" {
 
   catalog {
 	id           = data.vcd_catalog.nsxt.id
-	// capabilities = ["one", "two", "three"]
   }
 
   vdc {
@@ -128,15 +127,18 @@ resource "vcd_solution_landing_zone" "slz" {
 	is_default = true
 
 	org_vdc_network {
-	  id = data.vcd_network_routed_v2.r1.id
+	  id         = data.vcd_network_routed_v2.r1.id
+	  is_default = true
 	}
 
 	compute_policy {
-	  id = data.vcd_org_vdc.vdc1.default_compute_policy_id
+	  id         = data.vcd_org_vdc.vdc1.default_compute_policy_id
+	  is_default = true
 	}
 
 	storage_policy {
-	  id = data.vcd_storage_profile.sp.id
+	  id         = data.vcd_storage_profile.sp.id
+	  is_default = true
 	}
   }
 }

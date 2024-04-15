@@ -14,7 +14,6 @@ func slcChildComponent(title string) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeSet,
 		Required:    true,
-		MaxItems:    1, // Solution add-ons support only single element
 		Description: fmt.Sprintf("Structure for %s", title),
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
@@ -60,8 +59,8 @@ func resourceVcdSolutionLandingZone() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				// Description: "The name of organization to use, optional if defined at provider " +
-				// 	"level. Useful when connected as sysadmin working across different organizations",
+				Description: "The name of organization to use, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
 			},
 
 			"state": {
@@ -72,18 +71,14 @@ func resourceVcdSolutionLandingZone() *schema.Resource {
 			"catalog": {
 				Type:        schema.TypeSet,
 				Required:    true,
-				Description: "IP Address of pool member",
+				Description: "Catalog definition for storing executable .ISO files",
 				MaxItems:    1, // Solution add-ons support only single element
-				// 	// Warning: This catalog stores all executable .ISO files for your solution add-ons.
-				// 	//
-				// 	// Selecting another catalog to use in the Solution Add-On Landing Zone does not affect the solution add-ons that you already installed, but prevents you from running day-2 operations on them. То ensure that you can run day-2 operations on the add-ons that are already installed, reupload their original add-on .ISO files.
-				// 	// Capabilities???
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "Shows is the member is enabled or not",
+							Description: "ID of catalog",
 						},
 						"name": {
 							Type:        schema.TypeString,
@@ -94,41 +89,43 @@ func resourceVcdSolutionLandingZone() *schema.Resource {
 						"capabilities": {
 							Type:        schema.TypeSet,
 							Optional:    true,
-							Description: "",
+							Description: "Capability set for catalog",
 							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
 					},
 				},
 			},
-
 			"vdc": {
 				Type:        schema.TypeSet,
 				Required:    true,
-				Description: "",
-				MaxItems:    1, // Solution add-ons support only single element
+				Description: "VDC definition ",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "",
+							Description: "ID of VDC",
+						},
+						"name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "VDC Name",
 						},
 						"is_default": {
 							Type:        schema.TypeBool,
 							Required:    true,
-							Description: "Shows is the member is enabled or not",
+							Description: "Defines if the entity should be considered as default",
 						},
 						// This is a future reserved field that is not effective at the moment
 						"capabilities": {
 							Type:        schema.TypeSet,
 							Optional:    true,
-							Description: "",
+							Description: "Capability set for VDC",
 							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
 						"org_vdc_network": slcChildComponent("Org VDC Network"),
-						// Storage policy ID should be in format: urn:vcloud:vdcstorageProfile:7d96d911-548e-46bf-b863-8a30d7027c0c
-						"storage_policy": slcChildComponent("Storage Policy"),
-						"compute_policy": slcChildComponent("Compute Policy"),
+						"storage_policy":  slcChildComponent("Storage Policy"),
+						"compute_policy":  slcChildComponent("Compute Policy"),
 					},
 				},
 			},
@@ -371,6 +368,7 @@ func setSlzData(d *schema.ResourceData, slz *govcd.SolutionLandingZone) error {
 		vdcEntry := make(map[string]interface{})
 
 		vdcEntry["id"] = singleVdc.ID
+		vdcEntry["name"] = singleVdc.Name
 		vdcEntry["is_default"] = singleVdc.IsDefault
 		vdcEntry["capabilities"] = convertStringsToTypeSet(singleVdc.Capabilities)
 
