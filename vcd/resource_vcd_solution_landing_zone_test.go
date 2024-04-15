@@ -3,9 +3,11 @@
 package vcd
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccVcdSolutionLandingZone(t *testing.T) {
@@ -15,15 +17,14 @@ func TestAccVcdSolutionLandingZone(t *testing.T) {
 		"Org":     testConfig.VCD.Org,
 		"VdcName": testConfig.Nsxt.Vdc,
 
+		"TestName":            t.Name(),
 		"CatalogName":         testConfig.VCD.Catalog.NsxtBackedCatalogName,
 		"RoutedNetworkName":   testConfig.Nsxt.RoutedNetwork,
 		"IsolatedNetworkName": testConfig.Nsxt.IsolatedNetwork,
-
-		"TestName": t.Name(),
 	}
 	testParamsNotEmpty(t, params)
 
-	configText := templateFill(testAccSolutionLandingZoneStep1, params)
+	configTextStep1 := templateFill(testAccSolutionLandingZoneStep1, params)
 
 	params["FuncName"] = t.Name() + "-step2"
 	configTextStep2 := templateFill(testAccSolutionLandingZoneStep2, params)
@@ -31,7 +32,9 @@ func TestAccVcdSolutionLandingZone(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step3DS"
 	configTextStep3DS := templateFill(testAccSolutionLandingZoneStep3DS, params)
 
-	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION step 1: %s\n", configTextStep1)
+	debugPrintf("#[DEBUG] CONFIGURATION step 2: %s\n", configTextStep2)
+	debugPrintf("#[DEBUG] CONFIGURATION step 3: %s\n", configTextStep3DS)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -39,34 +42,50 @@ func TestAccVcdSolutionLandingZone(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		// CheckDestroy:      testAccCheckSecurityTagDestroy(tag1),
+		CheckDestroy:      testAccCheckSlzDestroy(),
 		Steps: []resource.TestStep{
 			{
-				Config: configText,
-				Check:  resource.ComposeTestCheckFunc(
-				// testAccCheckSecurityTagCreated(tag1),
-				// testAccCheckSecurityTagOnVMCreated(tag1, vAppName, firstVMName),
-				// testAccCheckSecurityTagOnVMCreated(tag1, vAppName, secondVMName),
+				Config: configTextStep1,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_solution_landing_zone.slz", "org", testConfig.VCD.Org),
+					resource.TestCheckResourceAttrSet("vcd_solution_landing_zone.slz", "id"),
+					resource.TestCheckResourceAttr("vcd_solution_landing_zone.slz", "state", "RESOLVED"),
+					resource.TestCheckResourceAttr("vcd_solution_landing_zone.slz", "catalog.#", "1"),
+
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "catalog.*", map[string]string{"name": testConfig.VCD.Catalog.NsxtBackedCatalogName}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.compute_policy.*", map[string]string{"name": "System Default"}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.org_vdc_network.*", map[string]string{"name": testConfig.Nsxt.RoutedNetwork}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.storage_policy.*", map[string]string{"name": "*"}),
+					resource.TestCheckResourceAttr("vcd_solution_landing_zone.slz", "vdc.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*", map[string]string{"is_default": "true"}),
 				),
 			},
 			{
 				Config: configTextStep2,
-				Check:  resource.ComposeTestCheckFunc(
-				// sleepTester(2 * time.Minute),
-				// testAccCheckSecurityTagCreated(tag1, tag2),
-				// testAccCheckSecurityTagOnVMCreated(tag1, vAppName, firstVMName),
-				// testAccCheckSecurityTagOnVMCreated(tag1, vAppName, secondVMName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_solution_landing_zone.slz", "org", testConfig.VCD.Org),
+					resource.TestCheckResourceAttrSet("vcd_solution_landing_zone.slz", "id"),
+					resource.TestCheckResourceAttr("vcd_solution_landing_zone.slz", "state", "RESOLVED"),
+					resource.TestCheckResourceAttr("vcd_solution_landing_zone.slz", "catalog.#", "1"),
+
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "catalog.*", map[string]string{"name": testConfig.VCD.Catalog.NsxtBackedCatalogName}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.compute_policy.*", map[string]string{"name": "System Default"}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.org_vdc_network.*", map[string]string{"name": testConfig.Nsxt.IsolatedNetwork}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.storage_policy.*", map[string]string{"name": "*"}),
+					resource.TestCheckResourceAttr("vcd_solution_landing_zone.slz", "vdc.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*", map[string]string{"is_default": "true"}),
 				),
 			},
 			{
 				Config: configTextStep3DS,
 				Check: resource.ComposeTestCheckFunc(
 					resourceFieldsEqual("data.vcd_solution_landing_zone.slz", "vcd_solution_landing_zone.slz", nil),
-				// sleepTester(2 * time.Minute),
-				// testAccCheckSecurityTagCreated(tag1, tag2),
-				// testAccCheckSecurityTagOnVMCreated(tag1, vAppName, firstVMName),
-				// testAccCheckSecurityTagOnVMCreated(tag1, vAppName, secondVMName),
 				),
+			},
+			{
+				ResourceName:      "vcd_solution_landing_zone.slz",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -101,7 +120,7 @@ resource "vcd_solution_landing_zone" "slz" {
 
   catalog {
 	id           = data.vcd_catalog.nsxt.id
-	capabilities = ["one", "two", "three"]
+	// capabilities = ["one", "two", "three"]
   }
 
   vdc {
@@ -164,10 +183,6 @@ resource "vcd_solution_landing_zone" "slz" {
 	is_default = true
 
 	org_vdc_network {
-	  id = data.vcd_network_routed_v2.r1.id
-	}
-
-	org_vdc_network {
 	  id = data.vcd_network_isolated_v2.i1.id
 	}
 
@@ -185,3 +200,15 @@ resource "vcd_solution_landing_zone" "slz" {
 const testAccSolutionLandingZoneStep3DS = testAccSolutionLandingZoneStep2 + `
 data "vcd_solution_landing_zone" "slz" {}
 `
+
+func testAccCheckSlzDestroy() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+		slz, err := conn.GetExactlyOneSolutionLandingZone()
+		if err == nil {
+			return fmt.Errorf("there is still an RDE for Solution Landing Zone: %s", slz.Id())
+		}
+
+		return nil
+	}
+}

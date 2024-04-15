@@ -74,6 +74,11 @@ func datasourceVcdSolutionLandingZone() *schema.Resource {
 							Computed:    true,
 							Description: "Shows is the member is enabled or not",
 						},
+						"name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Catalog Name",
+						},
 						"capabilities": {
 							Type:        schema.TypeSet,
 							Computed:    true,

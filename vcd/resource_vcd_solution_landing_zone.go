@@ -14,7 +14,8 @@ func slcChildComponent(title string) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeSet,
 		Required:    true,
-		Description: "",
+		MaxItems:    1, // Solution add-ons support only single element
+		Description: fmt.Sprintf("Structure for %s", title),
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"id": {
@@ -32,6 +33,7 @@ func slcChildComponent(title string) *schema.Schema {
 					Optional:    true,
 					Description: fmt.Sprintf("Boolean value that marks if this %s should be default", title),
 				},
+				// This is a future reserved field that is not effective at the moment
 				"capabilities": {
 					Type:        schema.TypeSet,
 					Optional:    true,
@@ -83,7 +85,12 @@ func resourceVcdSolutionLandingZone() *schema.Resource {
 							Required:    true,
 							Description: "Shows is the member is enabled or not",
 						},
-						// This field is not documented because it is not currently used
+						"name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Catalog Name",
+						},
+						// This is a future reserved field that is not effective at the moment
 						"capabilities": {
 							Type:        schema.TypeSet,
 							Optional:    true,
@@ -111,6 +118,7 @@ func resourceVcdSolutionLandingZone() *schema.Resource {
 							Required:    true,
 							Description: "Shows is the member is enabled or not",
 						},
+						// This is a future reserved field that is not effective at the moment
 						"capabilities": {
 							Type:        schema.TypeSet,
 							Optional:    true,
@@ -118,8 +126,9 @@ func resourceVcdSolutionLandingZone() *schema.Resource {
 							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
 						"org_vdc_network": slcChildComponent("Org VDC Network"),
-						"storage_policy":  slcChildComponent("Storage Policy"),
-						"compute_policy":  slcChildComponent("Compute Policy"),
+						// Storage policy ID should be in format: urn:vcloud:vdcstorageProfile:7d96d911-548e-46bf-b863-8a30d7027c0c
+						"storage_policy": slcChildComponent("Storage Policy"),
+						"compute_policy": slcChildComponent("Compute Policy"),
 					},
 				},
 			},
@@ -201,8 +210,18 @@ func resourceVcdSolutionLandingZoneDelete(ctx context.Context, d *schema.Resourc
 }
 
 func resourceVcdSolutionLandingZoneImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	// TODO TODO
-	// Can there be more than 1 SLZ?
+	vcdClient := meta.(*VCDClient)
+
+	slz, err := vcdClient.GetExactlyOneSolutionLandingZone()
+	if err != nil {
+		return nil, fmt.Errorf("error finding Solution Landing Zone: %s", err)
+	}
+
+	if slz != nil && slz.SolutionLandingZoneType != nil {
+		dSet(d, "org", slz.SolutionLandingZoneType.Name)
+	}
+	d.SetId(slz.Id())
+
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -336,6 +355,7 @@ func setSlzData(d *schema.ResourceData, slz *govcd.SolutionLandingZone) error {
 		catalogEntry := make(map[string]interface{})
 
 		catalogEntry["id"] = singleCatalog.ID
+		catalogEntry["name"] = singleCatalog.Name
 		catalogEntry["capabilities"] = convertStringsToTypeSet(singleCatalog.Capabilities)
 
 		catalogSchema[catalogIndex] = catalogEntry
