@@ -62,11 +62,16 @@ func genericVcdOrgOidcRead(_ context.Context, d *schema.ResourceData, meta inter
 		d.SetId("")
 		return nil
 	}
-
 	if err != nil {
 		return diag.Errorf("[Organization Open ID Connect read] unable to find Organization '%s': %s", orgId, err)
 	}
 
+	settings, err := adminOrg.GetOpenIdConnectSettings()
+	if err != nil {
+		return diag.Errorf("[Organization Open ID Connect read] unable to read Organization '%s' OIDC settings: %s", orgId, err)
+	}
+
+	dSet(d, "client_id", settings.ClientId)
 	d.SetId(adminOrg.AdminOrg.ID)
 
 	return nil

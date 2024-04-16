@@ -155,6 +155,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_vm_vgpu_policy":                               datasourceVcdVmVgpuPolicy(),                            // 3.11
 	"vcd_cse_kubernetes_cluster":                       datasourceVcdCseKubernetesCluster(),                    // 3.12
 	"vcd_version":                                      datasourceVcdVersion(),                                 // 3.12
+	"vcd_org_oidc":                                     datasourceVcdOrgOidc(),                                 // 3.13
 }
 
 var globalResourceMap = map[string]*schema.Resource{
