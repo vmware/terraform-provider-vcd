@@ -949,6 +949,11 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		return diag.Errorf("error setting guest properties: %s", err)
 	}
 
+	err = addRemoveExtraConfiguration(d, vm)
+	if err != nil {
+		return diag.Errorf("error setting extra configuration: %s", err)
+	}
+
 	// vm.VM structure contains ProductSection so it needs to be refreshed after
 	// `addRemoveGuestProperties`
 	if err = vm.Refresh(); err != nil {
@@ -1769,6 +1774,11 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 	err = addRemoveGuestProperties(d, vm)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	err = addRemoveExtraConfiguration(d, vm)
+	if err != nil {
+		return diag.Errorf("error setting extra configuration: %s", err)
 	}
 
 	sizingId, newSizingId := d.GetChange("sizing_policy_id")

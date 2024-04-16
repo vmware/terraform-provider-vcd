@@ -368,6 +368,28 @@ func getVmIndependentDisks(vm govcd.VM) []string {
 	return disks
 }
 
+func addRemoveExtraConfiguration(d *schema.ResourceData, vm *govcd.VM) error {
+	if d.HasChange("extra_config") {
+		rawExtraConfig := d.Get("extra_config")
+		var inputExtraConfig []*types.ExtraConfigMarshal
+		for _, rawEc := range rawExtraConfig.(*schema.Set).List() {
+			mapEc := rawEc.(map[string]interface{})
+			inputExtraConfig = append(inputExtraConfig, &types.ExtraConfigMarshal{
+				Key:      mapEc["key"].(string),
+				Value:    mapEc["value"].(string),
+				Required: mapEc["required"].(bool),
+			})
+		}
+
+		log.Printf("[TRACE] Updating VM extra configuration")
+		_, err := vm.UpdateExtraConfig(inputExtraConfig)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func addRemoveGuestProperties(d *schema.ResourceData, vm *govcd.VM) error {
 	if d.HasChange("guest_properties") {
 		vmProperties, err := getGuestProperties(d)
