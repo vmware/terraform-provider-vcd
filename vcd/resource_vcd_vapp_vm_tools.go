@@ -369,8 +369,8 @@ func getVmIndependentDisks(vm govcd.VM) []string {
 }
 
 func addRemoveExtraConfiguration(d *schema.ResourceData, vm *govcd.VM) error {
-	if d.HasChange("extra_config") {
-		rawExtraConfig := d.Get("extra_config")
+	if d.HasChange("set_extra_config") {
+		rawExtraConfig := d.Get("set_extra_config")
 		var inputExtraConfig []*types.ExtraConfigMarshal
 		for _, rawEc := range rawExtraConfig.(*schema.Set).List() {
 			mapEc := rawEc.(map[string]interface{})

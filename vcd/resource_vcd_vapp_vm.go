@@ -665,11 +665,10 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 				},
 			},
 		},
-		"extra_config": {
+		"set_extra_config": {
 			Type:        schema.TypeSet,
 			Optional:    true,
-			Computed:    true,
-			Description: "A block to retrieve and set extra configuration key-value pairs",
+			Description: "A block to set extra configuration key-value pairs",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"key": {
@@ -686,6 +685,30 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 						Type:        schema.TypeBool,
 						Optional:    true,
 						Default:     false,
+						Description: "Whether the extra configuration item is required",
+					},
+				},
+			},
+		},
+		"extra_config": {
+			Type:        schema.TypeSet,
+			Computed:    true,
+			Description: "A block to retrieve extra configuration key-value pairs",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"key": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The key of the extra configuration item",
+					},
+					"value": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The value of the extra configuration item",
+					},
+					"required": {
+						Type:        schema.TypeBool,
+						Computed:    true,
 						Description: "Whether the extra configuration item is required",
 					},
 				},
