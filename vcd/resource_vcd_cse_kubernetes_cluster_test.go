@@ -170,7 +170,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttrPair(clusterName, "vdc_id", "data.vcd_org_vdc.vdc", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "network_id", "data.vcd_network_routed_v2.routed", "id"),
 					resource.TestCheckNoResourceAttr(clusterName, "owner"), // It is taken from Provider config
-					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", ""),
+					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", sshPublicKey),
 					resource.TestCheckResourceAttr(clusterName, "control_plane.0.machine_count", "1"),
 					resource.TestCheckResourceAttr(clusterName, "control_plane.0.disk_size_gi", "20"),
 					resource.TestCheckResourceAttrPair(clusterName, "control_plane.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
@@ -198,7 +198,6 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 						}
 					}(),
 					resource.TestCheckResourceAttr(clusterName, "node_health_check", "true"),
-					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", sshPublicKey),
 					resource.TestMatchResourceAttr(clusterName, "kubernetes_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+\+vmware\.[0-9]$`)),
 					resource.TestMatchResourceAttr(clusterName, "tkg_product_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)),
 					resource.TestMatchResourceAttr(clusterName, "capvcd_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)),
