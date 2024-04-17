@@ -3,6 +3,9 @@
 package vcd
 
 import (
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -25,11 +28,13 @@ func TestAccVcdVAppVm_extraconfig(t *testing.T) {
 		"ExtraConfigValue2": initialValue + "2",
 		"FuncName":          t.Name() + "-step1",
 		"Tags":              "vapp vm",
+		"SkipMessage":       " ",
 	}
 	testParamsNotEmpty(t, params)
 
 	configTextStep1 := templateFill(testAccVcdVAppVm_extraconfig, params)
 
+	params["SkipMessage"] = "# skip-binary-test: only for updates"
 	params["ExtraConfigValue1"] = updatedValue + "1"
 	params["ExtraConfigValue2"] = updatedValue + "2"
 	params["FuncName"] = t.Name() + "-step2"
@@ -204,9 +209,6 @@ func TestAccVcdVAppVm_extraconfig(t *testing.T) {
 			// Update extra configuration items
 			{
 				Config: configTextStep2,
-			},
-			{
-				Config: configTextStep2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_vapp_vm.template-vm", "extra_config.*", map[string]string{
 						"key":   "template-vapp-vm-1",
@@ -245,14 +247,73 @@ func TestAccVcdVAppVm_extraconfig(t *testing.T) {
 			// Remove extra configuration items
 			{
 				Config: configTextStep3,
-				Check:  resource.ComposeAggregateTestCheckFunc(),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					checkExtraConfigExists(testConfig.Nsxt.Vdc, t.Name()+"-template-vapp-vm", map[string]string{"template-vapp-vm1": ""}, false),
+					checkExtraConfigExists(testConfig.Nsxt.Vdc, t.Name()+"-template-standalone-vm", map[string]string{"template-vm1": ""}, false),
+					checkExtraConfigExists(testConfig.Nsxt.Vdc, t.Name()+"-empty-vapp-vm", map[string]string{"empty-vapp-vm1": ""}, false),
+					checkExtraConfigExists(testConfig.Nsxt.Vdc, t.Name()+"-empty-standalone-vm", map[string]string{"empty-vm1": ""}, false),
+					checkExtraConfigExists(testConfig.Nsxt.Vdc, t.Name()+"-template-vapp-vm", map[string]string{"template-vapp-vm2": ""}, false),
+					checkExtraConfigExists(testConfig.Nsxt.Vdc, t.Name()+"-template-standalone-vm", map[string]string{"template-vm2": ""}, false),
+					checkExtraConfigExists(testConfig.Nsxt.Vdc, t.Name()+"-empty-vapp-vm", map[string]string{"empty-vapp-vm2": ""}, false),
+					checkExtraConfigExists(testConfig.Nsxt.Vdc, t.Name()+"-empty-standalone-vm", map[string]string{"empty-vm2": ""}, false),
+				),
 			},
 		},
 	})
 	postTestChecks(t)
 }
 
+func checkExtraConfigExists(vdcName, vmName string, data map[string]string, wantExist bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		vms, err := conn.Client.QueryVmList(types.VmQueryFilterOnlyDeployed)
+		if err != nil {
+			return err
+		}
+		vmHref := ""
+
+		for _, vmRef := range vms {
+			if vmRef.VdcName == vdcName && vmRef.Name == vmName {
+				vmHref = vmRef.HREF
+				break
+			}
+		}
+		if vmHref == "" {
+			return fmt.Errorf("could not find VM %s in VDC %s", vmName, vdcName)
+		}
+
+		vm, err := conn.Client.GetVMByHref(vmHref)
+		if err != nil {
+			return err
+		}
+		if vm.VM.VirtualHardwareSection == nil || len(vm.VM.VirtualHardwareSection.ExtraConfig) == 0 {
+			return fmt.Errorf("no extra configuration found for VM %s", vmName)
+		}
+		for _, ec := range vm.VM.VirtualHardwareSection.ExtraConfig {
+			found := 0
+			for key, value := range data {
+				if ec.Key == key {
+					if wantExist {
+						if ec.Value == value {
+							found++
+						}
+					} else {
+						return fmt.Errorf("key '%s' should not exist, but found in VM %s", key, vmName)
+					}
+				}
+			}
+			if wantExist && found < len(data) {
+				return fmt.Errorf("key/value combinations not found in VM extra-config: wanted %d - found %d", len(data), found)
+			}
+		}
+		return nil
+	}
+}
+
 const testAccVcdVAppVm_extraconfig = `
+{{.SkipMessage}}
 data "vcd_org_vdc" "nsxt" {
   org  = "{{.Org}}"
   name = "{{.Vdc}}"

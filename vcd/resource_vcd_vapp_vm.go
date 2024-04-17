@@ -691,7 +691,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			},
 		},
 		"extra_config": {
-			Type:        schema.TypeSet,
+			Type:        schema.TypeList,
 			Computed:    true,
 			Description: "A block to retrieve extra configuration key-value pairs",
 			Elem: &schema.Resource{
