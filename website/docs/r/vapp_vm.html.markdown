@@ -553,6 +553,7 @@ example for usage details.
 * `security_tags` - (Optional; *v3.9+*) Set of security tags to be managed by the `vcd_vapp_vm` resource.
   To remove `security_tags` you must set `security_tags = []` and do not remove the attribute. Removing the attribute will cause the tags to remain unchanged and just stop being managed by this resource.
   This is to be consistent with existing security tags that were created by the `vcd_security_tags` resource.
+* `set_extra_config` - (Optional; *v3.13+*) Set of extra configuration key/values to be added or modified. See [Extra Configuration](#extra-configuration)
 
 ~> **Note:** Only one of `security_tags` attribute or [`vcd_security_tag`](/providers/vmware/vcd/latest/docs/resources/security_tag) resource
   should be used. Using both would cause a behavioral conflict.
@@ -568,6 +569,7 @@ example for usage details.
 * `status_text` - (*v3.8+*) The vApp status as text.
 * `inherited_metadata` - (*v3.11+*; *VCD 10.5.1+*) A map that contains read-only metadata that is automatically added by VCD (10.5.1+) and provides
   details on the origin of the VM (e.g. `vm.origin.id`, `vm.origin.name`, `vm.origin.type`).
+* `extra_config` - (*v3.13.+*) The VM extra configuration. See [Extra Configuration](#extra-configuration) for more detail.
 
 <a id="disk"></a>
 ## Disk
@@ -972,6 +974,48 @@ Notes about **removing** `network`:
 
 * Guest OS must support hot NIC removal for NICs to be removed using network definition. If Guest OS doesn't support it - `power_on=false` can be used to power off the VM before removing NICs.
 * VCD 10.1 has a bug and all NIC removals will be performed in cold manner.
+
+## Extra Configuration
+
+We can add, modify, and remove VM extra configuration items using the property `set_extra_config`, which consists on one or
+more blocks with the following fields:
+
+* `key` - (Required) Is the unique identifier of this item. It must not contain any spaces.
+* `value` - (Optional) is the value for this item. You can use it to insert new items or modify existing ones. Setting
+  the value to an empty string will remove the item.
+* `required` - (Optional) indicates whether the item is required. It's currently ignored.
+
+Notes:
+
+1. We should only insert or modify the fields we want to handle, without touching the ones already present in the VM.
+   VCD uses the extra-config items for its own purposes, and modifying them could lead to unpleasant side effects.
+2. To remove an item, we need to use the same `key` with which it was inserted, and set its `value` to `""`.
+3. The property `set_extra_config` is only used as input. The state of the existing or modified configuration is reported
+   in the read-only property `extra_config`.
+
+## Example of extra configuration
+
+```hcl
+resource "vcd_vapp_vm" "web2" {
+  # ...
+
+  network {
+    type               = "org"
+    name               = "net"
+    ip_allocation_mode = "DHCP"
+  }
+
+  set_extra_config {
+    key   = "some-key"
+    value = "some-value"
+  }
+
+  set_extra_config {
+    key   = "some-other-key"
+    value = "some-other-value"
+  }
+}
+```
 
 <a id="metadata"></a>
 ## Metadata
