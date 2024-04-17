@@ -977,7 +977,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		return diag.Errorf("error setting extra configuration: %s", err)
 	}
 
-	// vm.VM structure contains ProductSection so it needs to be refreshed after
+	// vm.VM structure contains ProductSection, so it needs to be refreshed after
 	// `addRemoveGuestProperties`
 	if err = vm.Refresh(); err != nil {
 		return diag.Errorf("error refreshing VM: %s", err)

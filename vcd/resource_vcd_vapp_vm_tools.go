@@ -386,6 +386,7 @@ func addRemoveExtraConfiguration(d *schema.ResourceData, vm *govcd.VM) error {
 		if err != nil {
 			return err
 		}
+		return vm.Refresh()
 	}
 	return nil
 }
