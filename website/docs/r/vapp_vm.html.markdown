@@ -981,17 +981,20 @@ We can add, modify, and remove VM extra configuration items using the property `
 more blocks with the following fields:
 
 * `key` - (Required) Is the unique identifier of this item. It must not contain any spaces.
-* `value` - (Optional) is the value for this item. You can use it to insert new items or modify existing ones. Setting
+* `value` - (Optional) A value for this item. You can use it to insert new items or modify existing ones. Setting
   the value to an empty string will remove the item.
-* `required` - (Optional) indicates whether the item is required. It's currently ignored.
+
+~> We should only insert or modify the fields we want to handle, without touching the ones already present in the VM.
+   VCD uses the extra-config items for its own purposes, and modifying them could lead to destabilising side effects.
 
 Notes:
 
-1. We should only insert or modify the fields we want to handle, without touching the ones already present in the VM.
-   VCD uses the extra-config items for its own purposes, and modifying them could lead to unpleasant side effects.
-2. To remove an item, we need to use the same `key` with which it was inserted, and set its `value` to `""`.
-3. The property `set_extra_config` is only used as input. The state of the existing or modified configuration is reported
-   in the read-only property `extra_config`.
+1. To remove an item, we need to use the same `key` with which it was inserted, and set its `value` to `""`.
+1. The property `set_extra_config` is only used as input. The state of the existing or modified configuration is reported
+   in the read-only property `extra_config`, which has the following fields:
+   * `key` - The key that identifies this entry
+   * `value` - The value for this entry
+   * `required` - Whether the entry is required
 
 ## Example of extra configuration
 
@@ -1006,13 +1009,13 @@ resource "vcd_vapp_vm" "web2" {
   }
 
   set_extra_config {
-    key   = "some-key"
-    value = "some-value"
+    key   = "some-new-key"
+    value = "some-new-value"
   }
 
   set_extra_config {
-    key   = "some-other-key"
-    value = "some-other-value"
+    key   = "some-other-new--key"
+    value = "some-other-new-value"
   }
 }
 ```

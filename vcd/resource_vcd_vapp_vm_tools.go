@@ -375,9 +375,8 @@ func addRemoveExtraConfiguration(d *schema.ResourceData, vm *govcd.VM) error {
 		for _, rawEc := range rawExtraConfig.(*schema.Set).List() {
 			mapEc := rawEc.(map[string]interface{})
 			inputExtraConfig = append(inputExtraConfig, &types.ExtraConfigMarshal{
-				Key:      mapEc["key"].(string),
-				Value:    mapEc["value"].(string),
-				Required: mapEc["required"].(bool),
+				Key:   mapEc["key"].(string),
+				Value: mapEc["value"].(string),
 			})
 		}
 

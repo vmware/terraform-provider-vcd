@@ -456,9 +456,8 @@ resource "vcd_vapp_vm" "template-vm" {
   }
 
   set_extra_config {
-    key      = "template-vapp-vm-2"
-    value    = "{{.ExtraConfigValue2}}"
-    required = true
+    key   = "template-vapp-vm-2"
+    value = "{{.ExtraConfigValue2}}"
   }
 
   depends_on = [vcd_vapp_network.template]
@@ -504,9 +503,8 @@ resource "vcd_vapp_vm" "empty-vm" {
   }
 
   set_extra_config {
-    key      = "empty-vapp-vm-2"
-    value    = "{{.ExtraConfigValue2}}"
-    required = true
+    key   = "empty-vapp-vm-2"
+    value = "{{.ExtraConfigValue2}}"
   }
 
   depends_on = [vcd_vapp_network.empty-vm]
@@ -545,9 +543,8 @@ resource "vcd_vm" "template-vm" {
   }
 
   set_extra_config {
-    key      = "template-vm-2"
-    value    = "{{.ExtraConfigValue2}}"
-    required = true
+    key   = "template-vm-2"
+    value = "{{.ExtraConfigValue2}}"
   }
 
   prevent_update_power_off = true
@@ -590,11 +587,9 @@ resource "vcd_vm" "empty-vm" {
   }
 
   set_extra_config {
-    key      = "empty-vm-2"
-    value    = "{{.ExtraConfigValue2}}"
-    required = true
+    key   = "empty-vm-2"
+    value = "{{.ExtraConfigValue2}}"
   }
-
 
   prevent_update_power_off = true
 }

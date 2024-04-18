@@ -681,12 +681,6 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 						Required:    true,
 						Description: "The value of the extra configuration item. Leaving the `value` field empty will result in the item deletion",
 					},
-					"required": {
-						Type:        schema.TypeBool,
-						Optional:    true,
-						Default:     false,
-						Description: "Whether the extra configuration item is required",
-					},
 				},
 			},
 		},
