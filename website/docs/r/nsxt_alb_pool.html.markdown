@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_alb_pool"
 sidebar_current: "docs-vcd-resource-nsxt-alb-pool"
 description: |-
-  Provides a resource to manage NSX-T ALB Pools for particular NSX-T Edge Gateway. Pools maintain the list of servers
+  Provides a resource to manage ALB Pools for particular NSX-T Edge Gateway. Pools maintain the list of servers
   assigned to them and perform health monitoring, load balancing, persistence. A pool may only be used or referenced by
   only one virtual service at a time.
 ---
@@ -12,7 +12,7 @@ description: |-
 
 Supported in provider *v3.5+* and VCD 10.2+ with NSX-T and ALB.
 
-Provides a resource to manage NSX-T ALB Pools for particular NSX-T Edge Gateway. Pools maintain the list of servers
+Provides a resource to manage ALB Pools for particular NSX-T Edge Gateway. Pools maintain the list of servers
 assigned to them and perform health monitoring, load balancing, persistence. A pool may only be used or referenced by
 only one virtual service at a time.
 
@@ -92,9 +92,9 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
   when connected as sysadmin working across different organisations.
-* `name` - (Required) A name for NSX-T ALB Pool
-* `description` - (Optional) An optional description NSX-T ALB Pool
-* `enabled` - (Optional) Boolean value if NSX-T ALB Pool should be enabled (default `true`)
+* `name` - (Required) A name for ALB Pool
+* `description` - (Optional) An optional description ALB Pool
+* `enabled` - (Optional) Boolean value if ALB Pool should be enabled (default `true`)
 * `edge_gateway_id` - (Required) An ID of NSX-T Edge Gateway. Can be looked up using
   [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edgegateway) data source
 * `algorithm` - (Optional) Optional algorithm for choosing pool members (default `LEAST_CONNECTIONS`). Other options
@@ -182,14 +182,14 @@ The following attributes are exported on this resource:
 * `member_count` - Total number of members defined in the Pool
 * `up_member_count` - Number of members defined in the Pool that are accepting traffic
 * `enabled_member_count` - Number of enabled members defined in the Pool
-* `health_message` - Health message of NSX-T ALB Pool 
+* `health_message` - Health message of ALB Pool 
 
 ## Importing
 
 ~> The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
-An existing NSX-T ALB pool configuration can be [imported][docs-import] into this resource
+An existing ALB pool configuration can be [imported][docs-import] into this resource
 via supplying path for it. An example is below:
 
 [docs-import]: https://www.terraform.io/docs/import/
@@ -198,5 +198,5 @@ via supplying path for it. An example is below:
 terraform import vcd_nsxt_alb_pool.imported my-org.my-org-vdc-org-vdc-group-name.my-edge-gateway.my-alb-pool
 ```
 
-The above would import the `vcd_nsxt_alb_pool` NSX-T ALB Pool that is defined in VDC or VDC
+The above would import the `vcd_nsxt_alb_pool` ALB Pool that is defined in VDC or VDC
 Group`my-org-vdc-org-vdc-group-name` of Org `my-org` for NSX-T Edge Gateway `my-edge-gateway`
