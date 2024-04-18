@@ -13,7 +13,8 @@ description: |-
 This guide describes the required steps to configure VCD to install the Container Service Extension (CSE) 4.2, that
 will allow tenant users to deploy **Tanzu Kubernetes Grid Multi-cloud (TKGm)** clusters on VCD using Terraform or the UI.
 
-To know more about CSE 4.2, you can visit [the documentation][cse_docs].
+To know more about CSE [4.2](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.2/rn/vmware-cloud-director-container-service-extension-42-release-notes/index.html),
+you can visit [the documentation][cse_docs].
 
 ## Pre-requisites
 
