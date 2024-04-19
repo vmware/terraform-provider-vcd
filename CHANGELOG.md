@@ -10,6 +10,10 @@
 * Fix [Issue #1248](https://github.com/vmware/terraform-provider-vcd/issues/1248) that prevents CSE Kubernetes clusters from being upgraded to TKG v2.5.0 with Kubernetes v1.26.11 as it performed an invalid upgrade of CoreDNS ([#1247](https://github.com/vmware/terraform-provider-vcd/pull/1247))
 * Fix [Issue #1252](https://github.com/vmware/terraform-provider-vcd/issues/1248) that prevents reading the SSH Public Key from provisioned CSE Kubernetes clusters ([#1247](https://github.com/vmware/terraform-provider-vcd/pull/1247))
 
+### NOTES
+
+* Bump [`go-vcloud-director`](https://github.com/vmware/go-vcloud-director) to v2.24.0 (SDK this provider uses for low level access to the VCD) ([#1247](https://github.com/vmware/terraform-provider-vcd/pull/1247))
+
 ## 3.12.0 (March 22, 2024)
 
 ### FEATURES
