@@ -1052,11 +1052,15 @@ func setNsxtEdgeGatewayUplinkData(edgeGateway *govcd.NsxtEdgeGateway, edgeUplink
 	// 'subnet_with_ip_count' field
 	autoAllocatedSubnets := make([]interface{}, 1)
 	for _, subnetValue := range edgeUplink.Subnets.Values {
+		ipCount := 0
+		if subnetValue.TotalIPCount != nil {
+			ipCount = *subnetValue.TotalIPCount
+		}
 		oneSubnet := make(map[string]interface{})
 		oneSubnet["gateway"] = subnetValue.Gateway
 		oneSubnet["prefix_length"] = subnetValue.PrefixLength
 		oneSubnet["primary_ip"] = subnetValue.PrimaryIP
-		oneSubnet["allocated_ip_count"] = *subnetValue.TotalIPCount
+		oneSubnet["allocated_ip_count"] = ipCount
 
 		autoAllocatedSubnets = append(autoAllocatedSubnets, oneSubnet)
 	}
