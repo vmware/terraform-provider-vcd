@@ -1,6 +1,18 @@
-## 3.12.1 (Unreleased)
+## 3.12.1 (April 19, 2024)
 
-Changes in progress for v3.12.1 are available at [.changes/v3.12.1](https://github.com/vmware/terraform-provider-vcd/tree/main/.changes/v3.12.1) until the release.
+### IMPROVEMENTS
+* Improve page links for authentication methods in main documentation page ([#1241](https://github.com/vmware/terraform-provider-vcd/pull/1241))
+* Rename VMware NSX Advanced Load Balancer (Avi) to VMware Avi Load Balancer ([#1241](https://github.com/vmware/terraform-provider-vcd/pull/1241))
+
+### BUG FIXES
+* Fix [Issue #1242](https://github.com/vmware/terraform-provider-vcd/issues/1242): panic when edge gateway IP count returns empty ([#1244](https://github.com/vmware/terraform-provider-vcd/pull/1244))
+* Fix [Issue #1248](https://github.com/vmware/terraform-provider-vcd/issues/1248) that prevents CSE Kubernetes clusters from being upgraded to an OVA with higher Kubernetes version but same TKG version, and to an OVA with a higher patch version of Kubernetes ([#1247](https://github.com/vmware/terraform-provider-vcd/pull/1247))
+* Fix [Issue #1248](https://github.com/vmware/terraform-provider-vcd/issues/1248) that prevents CSE Kubernetes clusters from being upgraded to TKG v2.5.0 with Kubernetes v1.26.11 as it performed an invalid upgrade of CoreDNS ([#1247](https://github.com/vmware/terraform-provider-vcd/pull/1247))
+* Fix [Issue #1252](https://github.com/vmware/terraform-provider-vcd/issues/1248) that prevents reading the SSH Public Key from provisioned CSE Kubernetes clusters ([#1247](https://github.com/vmware/terraform-provider-vcd/pull/1247))
+
+### NOTES
+
+* Bump [`go-vcloud-director`](https://github.com/vmware/go-vcloud-director) to v2.24.0 (SDK this provider uses for low level access to the VCD) ([#1247](https://github.com/vmware/terraform-provider-vcd/pull/1247))
 
 ## 3.12.0 (March 22, 2024)
 
