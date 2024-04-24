@@ -3,6 +3,7 @@ package vcd
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
 
@@ -85,6 +86,7 @@ var alsoDelete = entityList{
 	{Type: "vcd_vapp", Name: "Vapp-AC-3", Comment: "from vcd.TestAccVcdVappAccessControl-update.tf: Vapp-AC-3"},
 	{Type: "vcd_org_vdc", Name: "ForInternalDiskTest", Comment: "from vcd.TestAccVcdVmInternalDisk-CreateALl.tf: ForInternalDiskTest"},
 	{Type: "vcd_solution_landing_zone", Name: "urn:vcloud:type:vmware:solutions_organization:1.0.0", Comment: "Solution Landing Zone"},
+	{Type: "vcd_solution_add_on", Name: "urn:vcloud:type:vmware:solutions_add_on:1.0.0", Comment: "Solution Add-On"},
 }
 
 // isTest is a regular expression that tells if an entity needs to be deleted
@@ -117,6 +119,31 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	}
 
 	// --------------------------------------------------------------
+	// Solution Add-ons
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		allEntries, err := govcdClient.GetAllSolutionAddons(nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving all SLZs: %s", err)
+		}
+
+		for _, addOn := range allEntries {
+			_ = shouldDeleteEntity(alsoDelete, doNotDelete, addOn.DefinedEntity.DefinedEntity.EntityType, "vcd_solution_add_on", 0, verbose)
+			if addOn.DefinedEntity.DefinedEntity.State != addrOf("READY") {
+				err := addOn.DefinedEntity.Resolve()
+				if err != nil {
+					return fmt.Errorf("error resolving Solution Add-on: %s", err)
+				}
+			}
+
+			err = addOn.Delete()
+			if err != nil {
+				return fmt.Errorf("error removing Solution Add-on: %s", err)
+			}
+		}
+	}
+
+	// --------------------------------------------------------------
 	// Solution Landing Zone (SLZ)
 	// --------------------------------------------------------------
 	if govcdClient.Client.IsSysAdmin {
@@ -132,6 +159,8 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			}
 		}
 	}
+
+	os.Exit(1)
 
 	// --------------------------------------------------------------
 	// Provider VDCs
