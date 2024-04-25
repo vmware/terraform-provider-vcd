@@ -5,6 +5,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"log"
+	"os"
+	"path"
 )
 
 func datasourceVcdOrg() *schema.Resource {
@@ -75,6 +77,11 @@ func datasourceVcdOrg() *schema.Resource {
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of VDCs, owned or shared, available to this organization",
+			},
+			"association_data_file": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Name of the file to be filled with association data for this Org",
 			},
 			"vapp_lease": {
 				Type:     schema.TypeList,
@@ -159,6 +166,18 @@ func datasourceVcdOrgRead(_ context.Context, d *schema.ResourceData, meta interf
 	diags := setOrgData(d, vcdClient, adminOrg)
 	if diags != nil && diags.HasError() {
 		return diags
+	}
+	associationDataFile := d.Get("association_data_file").(string)
+	if associationDataFile != "" {
+
+		associationRawData, err := adminOrg.GetOrgRawAssociationData()
+		if err != nil {
+			return diag.Errorf("error getting organization association data: %s", err)
+		}
+		err = os.WriteFile(path.Clean(associationDataFile), associationRawData, 0600)
+		if err != nil {
+			return diag.Errorf("error writing organization association data: %s", err)
+		}
 	}
 
 	// This must be checked at the end as setOrgData can throw Warning diagnostics
