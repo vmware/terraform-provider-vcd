@@ -54,6 +54,8 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 		}
 	}()
 
+	sshPublicKey := "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCrCI+QkLjgQVqR7c7dJfawJqCslVomo5I25JdolqlteX7RCUq0yncWyS+8MTYWCS03sm1jOroLOeuji8CDKCDCcKwQerJiOFoJS+VOK5xCjJ2u8RBGlIpXNcmIh2VriRJrV7TCKrFMSKLNF4/n83q4gWI/YPf6/dRhpPB72HYrdI4omvRlU4GG09jMmgiz+5Yb8wJEXYMsJni+MwPzFKe6TbMcqjBusDyeFGAhgyN7QJGpdNhAn1sqvqZrW2QjaE8P+4t8RzBo8B2ucyQazd6+lbYmOHq9366LjG160snzXrFzlARc4hhpjMzu9Bcm6i3ZZI70qhIbmi5IonbbVh8t"
+
 	var params = StringMap{
 		"CseVersion":         testConfig.Cse.Version,
 		"Name":               strings.ToLower(t.Name()),
@@ -72,6 +74,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 		"ExtraWorkerPool":    " ",
 		"PodsCidr":           "100.96.0.0/11",
 		"ServicesCidr":       "100.64.0.0/13",
+		"SshPublicKey":       sshPublicKey,
 		"AutoRepairOnErrors": true,
 		"NodeHealthCheck":    true,
 		"Timeout":            150,
@@ -167,7 +170,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttrPair(clusterName, "vdc_id", "data.vcd_org_vdc.vdc", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "network_id", "data.vcd_network_routed_v2.routed", "id"),
 					resource.TestCheckNoResourceAttr(clusterName, "owner"), // It is taken from Provider config
-					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", ""),
+					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", sshPublicKey),
 					resource.TestCheckResourceAttr(clusterName, "control_plane.0.machine_count", "1"),
 					resource.TestCheckResourceAttr(clusterName, "control_plane.0.disk_size_gi", "20"),
 					resource.TestCheckResourceAttrPair(clusterName, "control_plane.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
@@ -223,7 +226,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttrPair(clusterName, "vdc_id", "data.vcd_org_vdc.vdc", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "network_id", "data.vcd_network_routed_v2.routed", "id"),
 					resource.TestCheckNoResourceAttr(clusterName, "owner"), // It is taken from Provider config
-					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", ""),
+					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", sshPublicKey),
 					resource.TestCheckResourceAttr(clusterName, "control_plane.0.disk_size_gi", "20"),
 					resource.TestCheckResourceAttrPair(clusterName, "control_plane.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "control_plane.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
@@ -272,7 +275,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttrPair(clusterName, "vdc_id", "data.vcd_org_vdc.vdc", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "network_id", "data.vcd_network_routed_v2.routed", "id"),
 					resource.TestCheckNoResourceAttr(clusterName, "owner"), // It is taken from Provider config
-					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", ""),
+					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", sshPublicKey),
 					resource.TestCheckResourceAttr(clusterName, "control_plane.0.disk_size_gi", "20"),
 					resource.TestCheckResourceAttrPair(clusterName, "control_plane.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "control_plane.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
@@ -320,7 +323,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttrPair(clusterName, "vdc_id", "data.vcd_org_vdc.vdc", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "network_id", "data.vcd_network_routed_v2.routed", "id"),
 					resource.TestCheckNoResourceAttr(clusterName, "owner"), // It is taken from Provider config
-					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", ""),
+					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", sshPublicKey),
 					resource.TestCheckResourceAttr(clusterName, "control_plane.0.machine_count", "1"),
 					resource.TestCheckResourceAttr(clusterName, "control_plane.0.disk_size_gi", "20"),
 					resource.TestCheckResourceAttrPair(clusterName, "control_plane.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
@@ -373,7 +376,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttrPair(clusterName, "vdc_id", "data.vcd_org_vdc.vdc", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "network_id", "data.vcd_network_routed_v2.routed", "id"),
 					resource.TestCheckNoResourceAttr(clusterName, "owner"), // It is taken from Provider config
-					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", ""),
+					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", sshPublicKey),
 					resource.TestCheckResourceAttr(clusterName, "control_plane.0.machine_count", "1"),
 					resource.TestCheckResourceAttr(clusterName, "control_plane.0.disk_size_gi", "20"),
 					resource.TestCheckResourceAttrPair(clusterName, "control_plane.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
@@ -436,6 +439,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataWithName, "services_cidr", clusterName, "services_cidr"),
 					resource.TestCheckResourceAttrPair(dataWithName, "virtual_ip_subnet", clusterName, "virtual_ip_subnet"),
 					resource.TestCheckResourceAttrPair(dataWithName, "auto_repair_on_errors", clusterName, "auto_repair_on_errors"),
+					resource.TestCheckResourceAttrPair(dataWithName, "ssh_public_key", clusterName, "ssh_public_key"),
 					resource.TestCheckResourceAttrPair(dataWithName, "node_health_check", clusterName, "node_health_check"),
 					resource.TestCheckResourceAttrPair(dataWithName, "kubernetes_version", clusterName, "kubernetes_version"),
 					resource.TestCheckResourceAttrPair(dataWithName, "tkg_product_version", clusterName, "tkg_product_version"),
@@ -477,6 +481,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataWithId, "virtual_ip_subnet", dataWithName, "virtual_ip_subnet"),
 					resource.TestCheckResourceAttrPair(dataWithId, "auto_repair_on_errors", dataWithName, "auto_repair_on_errors"),
 					resource.TestCheckResourceAttrPair(dataWithId, "node_health_check", dataWithName, "node_health_check"),
+					resource.TestCheckResourceAttrPair(dataWithId, "ssh_public_key", dataWithName, "ssh_public_key"),
 					resource.TestCheckResourceAttrPair(dataWithId, "kubernetes_version", dataWithName, "kubernetes_version"),
 					resource.TestCheckResourceAttrPair(dataWithId, "tkg_product_version", dataWithName, "tkg_product_version"),
 					resource.TestCheckResourceAttrPair(dataWithId, "capvcd_version", dataWithName, "capvcd_version"),
@@ -644,6 +649,7 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
   vdc_id                 = data.vcd_org_vdc.vdc.id
   network_id             = data.vcd_network_routed_v2.routed.id
   api_token_file	     = vcd_api_token.token.file_name
+  ssh_public_key         = "{{.SshPublicKey}}"
 
   control_plane {
     machine_count      = {{.ControlPlaneCount}}
