@@ -1,0 +1,1 @@
+* Fix [Issue #1242](https://github.com/vmware/terraform-provider-vcd/issues/1242): panic when edge gateway IP count returns empty [GH-1244]

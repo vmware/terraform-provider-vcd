@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_alb_service_engine_group"
 sidebar_current: "docs-vcd-datasource-nsxt-alb-service-engine-group"
 description: |-
-  Provides a data source to read NSX-T ALB Service Engine Groups. A Service Engine Group is an isolation domain that also
+  Provides a data source to read ALB Service Engine Groups. A Service Engine Group is an isolation domain that also
   defines shared service engine properties, such as size, network access, and failover. Resources in a service engine
   group can be used for different virtual services, depending on your tenant needs. These resources cannot be shared
   between different service engine groups.
@@ -13,7 +13,7 @@ description: |-
 
 Supported in provider *v3.4+* and VCD 10.2+ with NSX-T and ALB.
 
-Provides a data source to read NSX-T ALB Service Engine Groups. A Service Engine Group is an isolation domain that also
+Provides a data source to read ALB Service Engine Groups. A Service Engine Group is an isolation domain that also
 defines shared service engine properties, such as size, network access, and failover. Resources in a service engine
 group can be used for different virtual services, depending on your tenant needs. These resources cannot be shared
 between different service engine groups.
