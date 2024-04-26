@@ -6,7 +6,7 @@ description: |-
   The VMware Cloud Director provider is used to interact with the resources supported by VMware Cloud Director. The provider needs to be configured with the proper credentials before it can be used.
 ---
 
-# VMware Cloud Director Provider 3.12
+# VMware Cloud Director Provider 3.13
 
 The VMware Cloud Director provider is used to interact with the resources supported by VMware Cloud Director. The provider needs to be configured with the proper credentials before it can be used.
 
@@ -27,9 +27,7 @@ The following Cloud Director versions are supported by this provider:
 
 Also Cloud Director Service (CDS) is supported.
 
-## Example Usage
-
-### Connecting as Org Admin
+## Connecting as Org Admin
 
 The most common - tenant - use case when you set user to organization administrator and when all resources are in a single organization. 
 
@@ -52,7 +50,7 @@ resource "vcd_network_routed" "net" {
 }
 ```
 
-### Connecting as Sys Admin
+## Connecting as Sys Admin
 
 When you want to manage resources across different organizations from a single configuration.
 
@@ -85,7 +83,7 @@ resource "vcd_network_routed" "net2" {
 }
 ```
 
-### Connecting as Sys Admin with Default Org and VDC
+## Connecting as Sys Admin with Default Org and VDC
 
 When you want to manage resources across different organizations but set a default one. 
 
@@ -142,7 +140,7 @@ resource "vcd_network_routed" "net1" {
 ```
 When using a token, the fields `user` and `password` will be ignored, but they need to be in the script.
 
-### Connecting with an API token/API token file
+## Connecting with an API token/API token file
 
 With VCD 10.3.1+, you can connect using an API token, as defined in the [documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.3/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-A1B3B2FA-7B2C-4EE1-9D1B-188BE703EEDE.html).
 The API token is not a bearer token, but one will be created and automatically used by the Terraform provider when an API
@@ -200,7 +198,7 @@ The file containing the API token needs to be readable and writable, in `json` f
 
 Note that when connecting with API tokens you can't create or modify users, roles, global roles, or rights bundles.
 
-### Connecting with a Service Account API token
+## Connecting with a Service Account API token
 
 With VCD 10.4.0+, similar to API token file, you can connect using a service account API token, as 
 defined in the 
@@ -243,7 +241,7 @@ provider "vcd" {
 }
 ```
 
-### Shell script to obtain a bearer token
+## Shell script to obtain a bearer token
 To obtain a bearer token you can use this sample shell script:
 
 ```sh
@@ -289,7 +287,7 @@ token may not work in recent VCD versions.
 
 Using a token produced by an org admin to run a task that requires a system administrator will fail.
 
-### Connecting with SAML user using Microsoft Active Directory Federation Services (ADFS) and setting custom Relaying Party Trust Identifier
+## Connecting with SAML user using Microsoft Active Directory Federation Services (ADFS) and setting custom Relaying Party Trust Identifier
 
 Take special attention to `user`, `use_saml_adfs` and `saml_rpt_id` fields.
 

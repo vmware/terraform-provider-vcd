@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_alb_cloud"
 sidebar_current: "docs-vcd-datasource-nsxt-alb-cloud"
 description: |-
-  Provides a data source to read NSX-T ALB Clouds for Providers. An NSX-T Cloud is a service provider-level construct
+  Provides a data source to read ALB Clouds for Providers. An NSX-T Cloud is a service provider-level construct
   that consists of an NSX-T Manager and an NSX-T Data Center transport zone.
 ---
 
@@ -11,7 +11,7 @@ description: |-
 
 Supported in provider *v3.4+* and VCD 10.2+ with NSX-T and ALB.
 
-Provides a data source to manage NSX-T ALB Clouds for Providers. An NSX-T Cloud is a service provider-level construct that
+Provides a data source to manage ALB Clouds for Providers. An NSX-T Cloud is a service provider-level construct that
 consists of an NSX-T Manager and an NSX-T Data Center transport zone.
 
 ~> Only `System Administrator` can use this data source.
@@ -32,7 +32,7 @@ data "vcd_nsxt_alb_cloud" "first" {
 
 The following arguments are supported:
 
-* `name` - (Required)  - Name of NSX-T ALB Cloud
+* `name` - (Required)  - Name of ALB Cloud
 
 ## Attribute Reference
 

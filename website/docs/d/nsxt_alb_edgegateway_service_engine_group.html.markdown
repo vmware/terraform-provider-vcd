@@ -3,14 +3,14 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_alb_edgegateway_service_engine_group"
 sidebar_current: "docs-vcd-datasource-nsxt-alb-edgegateway-service-engine-group"
 description: |-
-  Provides a datasource to read NSX-T ALB Service Engine Group assignment to NSX-T Edge Gateway.
+  Provides a datasource to read ALB Service Engine Group assignment to NSX-T Edge Gateway.
 ---
 
 # vcd\_nsxt\_alb\_edgegateway\_service\_engine\_group
 
 Supported in provider *v3.5+* and VCD 10.2+ with NSX-T and ALB.
 
-Provides a datasource to read NSX-T ALB Service Engine Group assignment to NSX-T Edge Gateway.
+Provides a datasource to read ALB Service Engine Group assignment to NSX-T Edge Gateway.
 
 ## Example Usage (Referencing Service Engine Group by ID)
 
