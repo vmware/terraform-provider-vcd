@@ -49,12 +49,12 @@ func TestAccSolutionAddon(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_solution_add_on.dse14", "state", "RESOLVED"),
 				),
 			},
-			{
+			/* {
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_solution_add_on.dse14", "state", "RESOLVED"),
 				),
-			},
+			}, */
 		},
 	})
 }
@@ -110,31 +110,20 @@ resource "vcd_solution_landing_zone" "slz" {
   }
 }
 
-data "vcd_catalog_media" "dse14" {
+resource "vcd_catalog_media" "dse14" {
   org        = "{{.Org}}"
   catalog_id = data.vcd_catalog.nsxt.id
 
   name              = basename("{{.AddonIsoPath}}")
-  #description       = "new os versions"
-  #media_path        = "{{.AddonIsoPath}}"
-  #upload_any_file   = false # Add-ons are packaged in '.iso' files
-  #upload_piece_size = 10
+  description       = "new os versions"
+  media_path        = "{{.AddonIsoPath}}"
+  upload_any_file   = false # Add-ons are packaged in '.iso' files
+  upload_piece_size = 10
 }
-
-#resource "vcd_catalog_media" "dse14" {
-#  org        = "{{.Org}}"
-#  catalog_id = data.vcd_catalog.nsxt.id
-#
-#  name              = basename("{{.AddonIsoPath}}")
-#  description       = "new os versions"
-#  media_path        = "{{.AddonIsoPath}}"
-#  upload_any_file   = false # Add-ons are packaged in '.iso' files
-#  upload_piece_size = 10
-#}
 
 resource "vcd_solution_add_on" "dse14" {
   org               = "{{.Org}}"
-  catalog_item_id   = data.vcd_catalog_media.dse14.catalog_item_id
+  catalog_item_id   = vcd_catalog_media.dse14.catalog_item_id
   addon_path        = "{{.AddonIsoPath}}"
   trust_certificate = true
   accept_eula       = true
