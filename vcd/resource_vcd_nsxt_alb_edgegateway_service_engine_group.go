@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -187,7 +188,11 @@ func resourceVcdAlbEdgeGatewayServiceEngineGroupImport(_ context.Context, d *sch
 		return nil, fmt.Errorf("could not retrieve NSX-T Edge Gateway with ID '%s': %s", d.Id(), err)
 	}
 
-	seGroupAssignment, err := vcdClient.GetAlbServiceEngineGroupAssignmentByName(seGroupName)
+	queryParams := url.Values{}
+	queryParams.Add("filter", fmt.Sprintf("gatewayRef.id==%s", edge.EdgeGateway.ID))
+
+	// GetFilteredAlbServiceEngineGroupAssignmentByName
+	seGroupAssignment, err := vcdClient.GetFilteredAlbServiceEngineGroupAssignmentByName(seGroupName, queryParams)
 	if err != nil {
 		return nil, fmt.Errorf("errorr retrieving Servce Engine Group assignment to Edge Gateway with Name '%s': %s",
 			seGroupName, err)
