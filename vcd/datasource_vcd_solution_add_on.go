@@ -19,28 +19,33 @@ func datasourceVcdSolutionAddon() *schema.Resource {
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
+			"name": {
+				Type:     schema.TypeString,
+				Required: true,
+				// Description: "absolute or relative path to Solution Add-on ISO file",
+			},
 			"catalog_item_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "absolute or relative path to Solution Add-on ISO file",
 			},
-			"addon_path": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "absolute or relative path to Solution Add-on ISO file",
-			},
+			// "addon_path": {
+			// 	Type:        schema.TypeString,
+			// 	Computed:    true,
+			// 	Description: "absolute or relative path to Solution Add-on ISO file",
+			// },
 			// Trust certificate - should we untrust (remove the certificate) in "update"?
-			"trust_certificate": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "",
-			},
-			"accept_eula": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				ForceNew:    true,
-				Description: "",
-			},
+			// "trust_certificate": {
+			// 	Type:        schema.TypeBool,
+			// 	Computed:    true,
+			// 	Description: "",
+			// },
+			// "accept_eula": {
+			// 	Type:        schema.TypeBool,
+			// 	Computed:    true,
+			// 	ForceNew:    true,
+			// 	Description: "",
+			// },
 			"state": {
 				Type:        schema.TypeString,
 				Description: "State reports RDE state",
@@ -53,7 +58,7 @@ func datasourceVcdSolutionAddon() *schema.Resource {
 func datasourceVcdSolutionAddonRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	slz, err := vcdClient.GetSolutionAddonById(d.Id())
+	slz, err := vcdClient.GetSolutionAddonByName(d.Get("name").(string))
 	if err != nil {
 		return diag.Errorf("error retrieving Solution Add-on: %s", err)
 	}
