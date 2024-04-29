@@ -26,6 +26,26 @@ func resourceVcdOrgOidc() *schema.Resource {
 				ForceNew:    true,
 				Description: "Organization ID",
 			},
+			"client_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Client ID to use when talking to the OIDC Identity Provider",
+			},
+			"client_secret": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Client Secret to use when talking to the OIDC Identity Provider",
+			},
+			"enabled": {
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "Enables or disables OIDC Authentication for the Organization specified in 'org_id'",
+			},
+			"wellknown_endpoint": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Endpoint from the OIDC Identity Provider that serves all the configuration values",
+			},
 		},
 	}
 }
