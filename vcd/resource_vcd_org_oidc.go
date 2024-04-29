@@ -3,8 +3,10 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"log"
 )
@@ -45,6 +47,106 @@ func resourceVcdOrgOidc() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Endpoint from the OIDC Identity Provider that serves all the configuration values",
+			},
+			"issuer_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true, // Can be obtained with "wellknown_endpoint"
+				Description: "",
+			},
+			"user_authorization_endpoint": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true, // Can be obtained with "wellknown_endpoint"
+				Description: "",
+			},
+			"access_endpoint_endpoint": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true, // Can be obtained with "wellknown_endpoint"
+				Description: "",
+			},
+			"userinfo_endpoint_endpoint": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true, // Can be obtained with "wellknown_endpoint"
+				Description: "",
+			},
+			"max_clock_skew": {
+				Type:             schema.TypeInt,
+				Optional:         true,
+				Computed:         true, // Can be obtained with "wellknown_endpoint"
+				Description:      "",
+				ValidateDiagFunc: minimumValue(0, "'max_clock_skew' must be higher than or equal to 0"),
+			},
+			"scopes": {
+				Type: schema.TypeSet,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Optional:    true,
+				Computed:    true, // Can be obtained with "wellknown_endpoint"
+				Description: "",
+			},
+			"claims_mapping": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Computed:    true, // Can be obtained with "wellknown_endpoint"
+				Description: "",
+				ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+					// Check that keys match only 'subject', 'last_name', etc
+					return nil
+				},
+			},
+			"key": {
+				Type:        schema.TypeSet,
+				MinItems:    1,
+				Required:    true, // FIXME: Can be obtained with "wellknown_endpoint"
+				Description: "",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "",
+						},
+						"pem_file": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"expiration": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+					},
+				},
+			},
+			"key_refresh_endpoint": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true, // Can be obtained with "wellknown_endpoint"
+				Description: "",
+			},
+			"key_refresh_period": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "",
+			},
+			"key_refresh_strategy": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "",
+				ValidateFunc: validation.StringInSlice([]string{"add", "replace", "expire_after"}, false),
+			},
+			"ui_button_label": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "",
+			},
+			"redirect_uri": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Redirect URI for this org",
 			},
 		},
 	}
