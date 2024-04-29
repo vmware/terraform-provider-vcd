@@ -24,13 +24,6 @@ func resourceVcdSolutionAddon() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"org": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Description: "The name of organization to use, optional if defined at provider " +
-					"level. Useful when connected as sysadmin working across different organizations",
-			},
 			"catalog_item_id": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -60,10 +53,6 @@ func resourceVcdSolutionAddon() *schema.Resource {
 
 func resourceVcdSolutionAddonCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-
-	if !d.Get("accept_eula").(bool) {
-		return diag.Errorf("cannot create Solution Add-on without accepting EULA")
-	}
 
 	createCfg := govcd.SolutionAddOnConfig{
 		IsoFilePath:          d.Get("addon_path").(string),
@@ -110,7 +99,6 @@ func resourceVcdSolutionAddonRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.Errorf("error retrieving Solution Add-on: %s", err)
 	}
 
-	// dSet(d, "user", slz.SolutionEntity.Origin.AcceptedBy)
 	dSet(d, "state", slz.DefinedEntity.DefinedEntity.State)
 	dSet(d, "catalog_item_id", slz.SolutionEntity.Origin.CatalogItemId)
 
