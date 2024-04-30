@@ -163,18 +163,18 @@ func resourceVcdOrgOidc() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"id": {
 							Type:        schema.TypeString,
-							Optional:    true, // It is required, but we mark it as optional to be able to delete keys
+							Required:    true,
 							Description: "",
 						},
 						"algorithm": {
 							Type:         schema.TypeString,
-							Optional:     true, // It is required, but we mark it as optional to be able to delete keys
+							Required:     true,
 							Description:  "",
 							ValidateFunc: validation.StringInSlice([]string{"RSA", "EC"}, false),
 						},
 						"pem_file": {
 							Type:        schema.TypeString,
-							Optional:    true, // It is required, but we mark it as optional to be able to delete keys
+							Required:    true,
 							Description: "",
 						},
 						"expiration_date": {

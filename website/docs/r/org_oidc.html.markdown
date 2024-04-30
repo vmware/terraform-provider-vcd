@@ -60,8 +60,7 @@ The following arguments are supported:
   by the `wellknown_endpoint`
 * `claims_mapping` - (Optional) A single configuration block that specifies the claim mappings to use with the OIDC provider.
   If `wellknown_endpoint` is **not**  set, then this argument is **required**. Otherwise, it is **optional**. This allows administrators
-  to override the claims given by `wellknown_endpoint`. Setting `claims_mapping {}` will make Terraform to set the claims provided originally
-  by the `wellknown_endpoint`. The supported claims are:
+  to override the claims given by `wellknown_endpoint`. The supported claims are:
   * `email` - Required if `wellknown_endpoint` doesn't give info about it
   * `subject` - Required if `wellknown_endpoint` doesn't give info about it
   * `last_name` - Required if `wellknown_endpoint` doesn't give info about it
@@ -71,8 +70,7 @@ The following arguments are supported:
   * `roles` - Optional
 * `key` - (Optional) One or more configuration blocks that specify the keys to use with the OIDC provider.
   If `wellknown_endpoint` is **not**  set, then this argument is **required**. Otherwise, it is **optional**. This allows administrators
-  to override the keys given by `wellknown_endpoint`. Setting `key {}` will make Terraform to set the keys provided originally
-  by the `wellknown_endpoint`. Each key requires the following:
+  to override the keys given by `wellknown_endpoint`. Each key requires the following:
   * `id` - Identifier of the key
   * `algorithm` - Algorithm used by the key. Can be `RSA` or `EC`
   * `pem_file` - PEM file to create/update the key
