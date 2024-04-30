@@ -398,6 +398,8 @@ The following arguments are supported:
     * `vcd_nsxt_transport_zone`
     * `vcd_distributed_switch`
     * `vcd_importable_port_group`
+    * `vcd_site_association`
+    * `vcd_org_association`
 * `list_mode` (Optional) How the list should be built. One of:
     * `name` (default): Only the resource name
     * `id`: Only the resource ID
