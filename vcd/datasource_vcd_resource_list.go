@@ -1323,7 +1323,7 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 	case "resource", "resources":
 		list, err = getResourcesList()
 	case "vcd_site_association":
-		list, err = getOrgAssociationList(d, meta, "vcd_site_association")
+		list, err = getSiteAssociationList(d, meta, "vcd_site_association")
 	case "vcd_org_association":
 		list, err = getOrgAssociationList(d, meta, "vcd_org_association")
 	case "vcd_org", "org", "orgs":
