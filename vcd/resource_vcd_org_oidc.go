@@ -77,12 +77,12 @@ func resourceVcdOrgOidc() *schema.Resource {
 				Description:  "If 'wellknown_endpoint' is set, this attribute overrides the obtained Access Token endpoint",
 				AtLeastOneOf: []string{"access_token_endpoint", "wellknown_endpoint"},
 			},
-			"userinfo_endpoint_endpoint": {
+			"userinfo_endpoint": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Computed:     true, // Can be obtained with "wellknown_endpoint"
 				Description:  "If 'wellknown_endpoint' is set, this attribute overrides the obtained Userinfo endpoint",
-				AtLeastOneOf: []string{"userinfo_endpoint_endpoint", "wellknown_endpoint"},
+				AtLeastOneOf: []string{"userinfo_endpoint", "wellknown_endpoint"},
 			},
 			"max_clock_skew": {
 				Type:             schema.TypeInt,
@@ -187,7 +187,7 @@ func resourceVcdOrgOidc() *schema.Resource {
 				Optional:     true,
 				Computed:     true, // Can be obtained with "wellknown_endpoint"
 				Description:  "",
-				RequiredWith: []string{"key_refresh_period", "key_refresh_strategy"},
+				RequiredWith: []string{"key_refresh_period_hours", "key_refresh_strategy"},
 			},
 			"key_refresh_period_hours": {
 				Type:         schema.TypeString,
@@ -204,7 +204,7 @@ func resourceVcdOrgOidc() *schema.Resource {
 				Optional:     true,
 				Description:  "",
 				ValidateFunc: validation.StringInSlice([]string{"ADD", "REPLACE", "EXPIRE_AFTER"}, false),
-				RequiredWith: []string{"key_refresh_endpoint", "key_refresh_period"},
+				RequiredWith: []string{"key_refresh_endpoint", "key_refresh_period_hours"},
 			},
 			"key_expire_duration_hours": {
 				Type:         schema.TypeString,
@@ -343,7 +343,7 @@ func genericVcdOrgOidcRead(_ context.Context, d *schema.ResourceData, meta inter
 	dSet(d, "prefer_id_token", settings.EnableIdTokenClaims)
 	dSet(d, "user_authorization_endpoint", settings.UserAuthorizationEndpoint)
 	dSet(d, "access_token_endpoint", settings.AccessTokenEndpoint)
-	dSet(d, "userinfo_endpoint_endpoint", settings.UserInfoEndpoint)
+	dSet(d, "userinfo_endpoint", settings.UserInfoEndpoint)
 	dSet(d, "max_clock_skew", settings.MaxClockSkew)
 	err = d.Set("scopes", settings.Scope)
 	if err != nil {
