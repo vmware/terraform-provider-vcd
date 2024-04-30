@@ -103,7 +103,7 @@ func genericVcdOrgAssociationRead(ctx context.Context, d *schema.ResourceData, m
 	org, err := client.GetAdminOrgById(orgId)
 	if err != nil {
 		if origin == "datasource" {
-			return diag.Errorf("error retrieving Org '%s': %s", err)
+			return diag.Errorf("error retrieving Org '%s': %s", orgId, err)
 		}
 		d.SetId("")
 		return nil
@@ -114,9 +114,12 @@ func genericVcdOrgAssociationRead(ctx context.Context, d *schema.ResourceData, m
 		// In a data source, we need an Org ID to access the data
 		associatedOrgId = d.Get("associated_org_id").(string)
 	}
+	if associatedOrgId == "" {
+		return diag.Errorf("no site ID found in either d.Id() or 'associated_org_id' field")
+	}
 	associationData, err := org.GetOrgAssociationByOrgId(associatedOrgId)
 	if err != nil {
-		return diag.Errorf("association data not found for Org '%s' with org ID '%s': %s", org.AdminOrg.Name, associatedOrgId)
+		return diag.Errorf("association data not found for Org '%s' with org ID '%s': %s", org.AdminOrg.Name, associatedOrgId, err)
 	}
 	dSet(d, "associated_org_id", associatedOrgId)
 	dSet(d, "associated_org_name", associationData.OrgName)
@@ -131,12 +134,18 @@ func resourceVcdOrgAssociationDelete(ctx context.Context, d *schema.ResourceData
 	orgId := d.Get("org_id").(string)
 	org, err := client.GetAdminOrgById(orgId)
 	if err != nil {
-		return diag.Errorf("error retrieving Org '%s': %s", err)
+		return diag.Errorf("error retrieving Org '%s': %s", orgId, err)
 	}
 	associatedOrgId := d.Id()
+	if associatedOrgId == "" {
+		associatedOrgId = d.Get("associated_org_id").(string)
+	}
+	if associatedOrgId == "" {
+		return diag.Errorf("no site ID found in either d.Id() or 'associated_org_id' field")
+	}
 	associationData, err := org.GetOrgAssociationByOrgId(associatedOrgId)
 	if err != nil {
-		return diag.Errorf("association data not found for Org '%s' with org ID '%s': %s", org.AdminOrg.Name, associatedOrgId)
+		return diag.Errorf("association data not found for Org '%s' with org ID '%s': %s", org.AdminOrg.Name, associatedOrgId, org)
 	}
 	err = org.RemoveOrgAssociation(associationData.Href)
 	if err != nil {

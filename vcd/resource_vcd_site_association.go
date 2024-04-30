@@ -97,10 +97,13 @@ func genericVcdSiteAssociationRead(ctx context.Context, d *schema.ResourceData, 
 		// In a data source, we need a site ID to access the data
 		associatedSiteId = d.Get("associated_site_id").(string)
 	}
+	if associatedSiteId == "" {
+		return diag.Errorf("no site ID found in either d.Id() or 'associated_site_id' field")
+	}
 	associationData, err := client.Client.GetSiteAssociationBySiteId(associatedSiteId)
 	if err != nil {
 		if origin == "datasource" {
-			return diag.Errorf("error retrieving association data for site ID '%s': %s", err)
+			return diag.Errorf("error retrieving association data for site ID '%s': %s", associatedSiteId, err)
 		}
 		d.SetId("")
 		return nil
@@ -115,9 +118,15 @@ func genericVcdSiteAssociationRead(ctx context.Context, d *schema.ResourceData, 
 func resourceVcdSiteAssociationDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*VCDClient)
 	associatedSiteId := d.Id()
+	if associatedSiteId == "" {
+		associatedSiteId = d.Get("associated_site_id").(string)
+	}
+	if associatedSiteId == "" {
+		return diag.Errorf("no site ID found in either d.Id() or 'associated_site_id' field")
+	}
 	associationData, err := client.Client.GetSiteAssociationBySiteId(associatedSiteId)
 	if err != nil {
-		return diag.Errorf("error retrieving association data for site ID '%s': %s", err)
+		return diag.Errorf("error retrieving association data for site ID '%s': %s", associatedSiteId, err)
 	}
 	err = client.Client.RemoveSiteAssociation(associationData.Href)
 	if err != nil {
