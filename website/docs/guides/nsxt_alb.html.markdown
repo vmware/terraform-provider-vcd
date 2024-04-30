@@ -1,35 +1,35 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: NSX-T Advanced Load Balancer"
+page_title: "VMware Cloud Director: Avi Load Balancer"
 sidebar_current: "docs-vcd-guides-nsxt-alb"
 description: |-
-  Provides guidance to VMware NSX Advanced Load Balancer (Avi)
+  Provides guidance to VMware Avi Load Balancer
 ---
 
-# VMware NSX Advanced Load Balancer (Avi)
+# VMware Avi Load Balancer
 
-## About 
+## About
 
 Starting with version 10.2, VMware Cloud Director provides load balancing services by leveraging the capabilities of
-VMware NSX Advanced Load Balancer. _System administrators_ can enable and configure access to load balancing services
+VMware Avi Load Balancer. _System administrators_ can enable and configure access to load balancing services
 for VDCs backed by NSX-T.
 
 Load balancing services are associated with NSX-T Edge Gateways, which can be scoped either to an organization VDC
 backed by NSX-T VDC or to a VDC Group with NSX-T Data Center network provider type.
 
-To use the virtual infrastructure provided by NSX-T Advanced Load Balancer, register your NSX-T Cloud instances with
+To use the virtual infrastructure provided by Avi Load Balancer, register your NSX-T Cloud instances with
 VMware Cloud Director. Controllers serve as a central control plane for load balancing services. After registering
 controllers, one can manage them directly from VMware Cloud Director.
 
-The load balancing compute infrastructure provided by NSX Advanced Load Balancer is organized into Service Engine
+The load balancing compute infrastructure provided by Avi Load Balancer is organized into Service Engine
 Groups. Multiple Service Engine Groups can be assigned to a single NSX-T Edge Gateway.
 
 A Service Engine Group has a unique set of compute characteristics that are defined upon creation.
 
 ## Requirements
 
-* NSX Advanced Load Balancer is supported starting VCD versions *10.2+*.
-* NSX Advanced Load Balancer configured with NSX-T, see [Avi Integration with NSX-T](https://avinetworks.com/docs/20.1/avi-nsx-t-integration/).
+* Avi Load Balancer is supported starting VCD versions *10.2+*.
+* Avi Load Balancer configured with NSX-T, see [Avi Integration with NSX-T](https://avinetworks.com/docs/20.1/avi-nsx-t-integration/).
 * Provider operations supported in Terraform provider VCD *v3.4+*. 
 * Tenant operations supported in Terraform provider VCD *3.5+*. 
 
@@ -37,7 +37,7 @@ A Service Engine Group has a unique set of compute characteristics that are defi
 
 ## Resource and data source overview
 
-The following list of resources and matching data sources exists to perform NSX-T ALB infrastructure
+The following list of resources and matching data sources exists to perform ALB infrastructure
 setup for providers:
 
 * [vcd_nsxt_alb_controller](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_controller)
@@ -70,11 +70,11 @@ each resource are outlined in their own documentation pages.
 
 The following snippet will do the following:
 
-* Register NSX-T ALB Controller using
+* Register ALB Controller using
   [vcd_nsxt_alb_controller](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_controller) resource
 * Look up available Clouds to import using
   [vcd_nsxt_alb_importable_cloud](/providers/vmware/vcd/latest/docs/data-sources/nsxt_alb_importable_cloud) data source
-* Define NSX-T ALB Cloud in VCD using [vcd_nsxt_alb_cloud](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_cloud)
+* Define ALB Cloud in VCD using [vcd_nsxt_alb_cloud](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_cloud)
   resource
 * Define a Service Engine Group
   [vcd_nsxt_alb_service_engine_group](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_service_engine_group) which
@@ -84,7 +84,7 @@ The following snippet will do the following:
 ```hcl
 # Local variable is used to avoid direct reference and 
 # cover Terraform core bug https://github.com/hashicorp/terraform/issues/29484
-# Even changing NSX-T ALB Controller name in UI, plan will 
+# Even changing ALB Controller name in UI, plan will 
 # cause to recreate all resources depending on 
 # vcd_nsxt_alb_importable_cloud data source if
 # this indirect reference (via local) variable is not used.
@@ -92,7 +92,7 @@ locals {
   controller_id = vcd_nsxt_alb_controller.main.id
 }
 
-# Configuration of NSX-T ALB Controller
+# Configuration of ALB Controller
 resource "vcd_nsxt_alb_controller" "main" {
   name         = "alb-controller-1"
   description  = "my first alb controller configured via Terraform"
@@ -253,6 +253,6 @@ resource "vcd_nsxt_alb_virtual_service" "test" {
 
 * [VMware Cloud Director Documentation for Providers](https://docs.vmware.com/en/VMware-Cloud-Director/10.3/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-1D3014BC-4792-40E8-99E1-A8F0FFC691FE.html)
 * [VMware Cloud Director Documentation for Tenants](https://docs.vmware.com/en/VMware-Cloud-Director/10.3/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-789FCC6A-EE14-4CAA-AB91-08841513B328.html)
-* [VMware blog post introducing NSX-T ALB](https://blogs.vmware.com/cloudprovider/2020/11/embrace-next-gen-networking-security-with-nsx-t-and-vmware-cloud-director-10-2.html)
-* [Feature Fridays video - NSX-T Advanced Load balancer](https://blogs.vmware.com/cloudprovider/2020/10/feature-fridays-episode-19-nsx-t-advanced-load-balancer.html)
+* [VMware blog post introducing ALB](https://blogs.vmware.com/cloudprovider/2020/11/embrace-next-gen-networking-security-with-nsx-t-and-vmware-cloud-director-10-2.html)
+* [Feature Fridays video - Avi Load balancer](https://blogs.vmware.com/cloudprovider/2020/10/feature-fridays-episode-19-nsx-t-advanced-load-balancer.html)
 * [Avi Integration with NSX-T](https://avinetworks.com/docs/20.1/avi-nsx-t-integration/)
