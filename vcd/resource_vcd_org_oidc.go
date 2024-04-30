@@ -58,11 +58,6 @@ func resourceVcdOrgOidc() *schema.Resource {
 				Description:  "If 'wellknown_endpoint' is set, this attribute overrides the obtained Issuer ID",
 				AtLeastOneOf: []string{"issuer_id", "wellknown_endpoint"},
 			},
-			"prefer_id_token": {
-				Type:        schema.TypeBool,
-				Required:    true,
-				Description: "",
-			},
 			"user_authorization_endpoint": {
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -84,15 +79,20 @@ func resourceVcdOrgOidc() *schema.Resource {
 				Description:  "If 'wellknown_endpoint' is set, this attribute overrides the obtained Userinfo endpoint",
 				AtLeastOneOf: []string{"userinfo_endpoint", "wellknown_endpoint"},
 			},
-			"max_clock_skew": {
+			"prefer_id_token": {
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "",
+			},
+			"max_clock_skew_seconds": {
 				Type:             schema.TypeInt,
-				Required:         true,
+				Optional:         true,
+				Default:          60,
 				Description:      "",
-				ValidateDiagFunc: minimumValue(0, "'max_clock_skew' must be higher than or equal to 0"),
+				ValidateDiagFunc: minimumValue(0, "'max_clock_skew_seconds' must be higher than or equal to 0"),
 			},
 			"scopes": {
-				Type:     schema.TypeSet,
-				MinItems: 1,
+				Type: schema.TypeSet,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -241,7 +241,12 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("[Organization Open ID Connect %s] error searching for Org '%s': %s", operation, orgId, err)
 	}
 
+	// Validations
 	isWellKnownEndpointUsed := d.Get("wellknown_endpoint").(string) != ""
+	scopes := d.Get("scopes").(*schema.Set).List()
+	if !isWellKnownEndpointUsed && len(scopes) == 0 {
+		return diag.Errorf("[Organization Open ID Connect %s] 'scopes' cannot be empty when a well-known endpoint is not used", operation)
+	}
 
 	settings := types.OrgOAuthSettings{
 		IssuerId:                   d.Get("issuer_id").(string),
@@ -251,7 +256,7 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 		UserAuthorizationEndpoint:  d.Get("user_authorization_endpoint").(string),
 		AccessTokenEndpoint:        d.Get("access_token_endpoint").(string),
 		UserInfoEndpoint:           d.Get("userinfo_endpoint").(string),
-		MaxClockSkew:               d.Get("max_clock_skew").(int),
+		MaxClockSkew:               d.Get("max_clock_skew_seconds").(int),
 		JwksUri:                    d.Get("key_refresh_endpoint").(string),
 		AutoRefreshKey:             d.Get("key_refresh_endpoint").(string) != "" && d.Get("key_refresh_strategy").(string) != "",
 		KeyRefreshStrategy:         d.Get("key_refresh_strategy").(string),
@@ -259,7 +264,7 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 		WellKnownEndpoint:          d.Get("wellknown_endpoint").(string),
 		EnableIdTokenClaims:        d.Get("prefer_id_token").(bool),
 		CustomUiButtonLabel:        d.Get("ui_button_label").(string),
-		Scope:                      convertTypeListToSliceOfStrings(d.Get("scopes").(*schema.Set).List()),
+		Scope:                      convertTypeListToSliceOfStrings(scopes),
 		// TODO UsePKCE:                    false,
 		// TODO SendClientCredentialsAsAuthorizationHeader: false,
 	}
@@ -274,11 +279,21 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 			Algorithm:      key["algorithm"].(string),
 			ExpirationDate: key["expiration_date"].(string), // FIXME: Formatting???
 		}
-		pemContents, err := os.ReadFile(key["pem_file"].(string))
-		if err != nil {
-			return diag.Errorf("[Organization Open ID Connect %s] error reading PEM file '%s': %s", operation, key["pem_file"].(string), err)
+		filePath, isSetPemFile := key["pem_file"]
+		pem, isSetPem := key["pem"]
+		if isSetPemFile && filePath != "" {
+			// If there's a PEM file set in the config, we give it priority
+			pemContents, err := os.ReadFile(filePath.(string))
+			if err != nil {
+				return diag.Errorf("[Organization Open ID Connect %s] error reading PEM file '%s': %s", operation, filePath, err)
+			}
+			oAuthKeyConfigurations[i].Key = string(pemContents)
+		} else if isSetPem && pem != "" {
+			// Otherwise, the PEM contents may have arrived in the computed field with a wellknown endpoint
+			oAuthKeyConfigurations[i].Key = pem.(string)
+		} else {
+			return diag.Errorf("[Organization Open ID Connect %s] a PEM file is required to set up a key", operation)
 		}
-		oAuthKeyConfigurations[i].Key = string(pemContents)
 	}
 
 	// Claims mapping: OIDCAttributeMapping: Subject, Email, Full name, First name and Last name are mandatory
@@ -345,7 +360,7 @@ func genericVcdOrgOidcRead(_ context.Context, d *schema.ResourceData, meta inter
 	dSet(d, "user_authorization_endpoint", settings.UserAuthorizationEndpoint)
 	dSet(d, "access_token_endpoint", settings.AccessTokenEndpoint)
 	dSet(d, "userinfo_endpoint", settings.UserInfoEndpoint)
-	dSet(d, "max_clock_skew", settings.MaxClockSkew)
+	dSet(d, "max_clock_skew_seconds", settings.MaxClockSkew)
 	err = d.Set("scopes", settings.Scope)
 	if err != nil {
 		return diag.FromErr(err)
