@@ -110,37 +110,44 @@ func resourceVcdOrgOidc() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"email": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
+							Computed:    true, // Can be obtained with "wellknown_endpoint"
 							Description: "",
 						},
 						"subject": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
+							Computed:    true, // Can be obtained with "wellknown_endpoint"
 							Description: "",
 						},
 						"last_name": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
+							Computed:    true, // Can be obtained with "wellknown_endpoint"
 							Description: "",
 						},
 						"first_name": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
+							Computed:    true, // Can be obtained with "wellknown_endpoint"
 							Description: "",
 						},
 						"full_name": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
+							Computed:    true, // Can be obtained with "wellknown_endpoint"
 							Description: "",
 						},
 						"groups": {
 							Type:        schema.TypeString,
 							Optional:    true,
+							Computed:    true, // Can be obtained with "wellknown_endpoint"
 							Description: "",
 						},
 						"roles": {
 							Type:        schema.TypeString,
 							Optional:    true,
+							Computed:    true, // Can be obtained with "wellknown_endpoint"
 							Description: "",
 						},
 					},
@@ -160,9 +167,10 @@ func resourceVcdOrgOidc() *schema.Resource {
 							Description: "",
 						},
 						"algorithm": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "",
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "",
+							ValidateFunc: validation.StringInSlice([]string{"RSA", "EC"}, false),
 						},
 						"pem_file": {
 							Type:        schema.TypeString,
@@ -271,28 +279,36 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 
 	// Key configurations: OAuthKeyConfigurations
 	keyList := d.Get("key").(*schema.Set).List()
-	oAuthKeyConfigurations := make([]*types.OAuthKeyConfiguration, len(keyList))
-	for i, k := range keyList {
-		key := k.(map[string]interface{})
-		oAuthKeyConfigurations[i] = &types.OAuthKeyConfiguration{
-			KeyId:          key["id"].(string),
-			Algorithm:      key["algorithm"].(string),
-			ExpirationDate: key["expiration_date"].(string), // FIXME: Formatting???
-		}
-		filePath, isSetPemFile := key["pem_file"]
-		pem, isSetPem := key["pem"]
-		if isSetPemFile && filePath != "" {
-			// If there's a PEM file set in the config, we give it priority
-			pemContents, err := os.ReadFile(filePath.(string))
-			if err != nil {
-				return diag.Errorf("[Organization Open ID Connect %s] error reading PEM file '%s': %s", operation, filePath, err)
+	if len(keyList) == 0 && !isWellKnownEndpointUsed {
+		return diag.Errorf("[Organization Open ID Connect %s] error reading keys, either set a 'key' block or set 'wellknown_endpoint' to obtain this information", operation)
+	}
+	if len(keyList) > 0 {
+		oAuthKeyConfigurations := make([]types.OAuthKeyConfiguration, len(keyList))
+		for i, k := range keyList {
+			key := k.(map[string]interface{})
+			oAuthKeyConfigurations[i] = types.OAuthKeyConfiguration{
+				KeyId:          key["id"].(string),
+				Algorithm:      key["algorithm"].(string),
+				ExpirationDate: key["expiration_date"].(string),
 			}
-			oAuthKeyConfigurations[i].Key = string(pemContents)
-		} else if isSetPem && pem != "" {
-			// Otherwise, the PEM contents may have arrived in the computed field with a wellknown endpoint
-			oAuthKeyConfigurations[i].Key = pem.(string)
-		} else {
-			return diag.Errorf("[Organization Open ID Connect %s] a PEM file is required to set up a key", operation)
+			filePath, isSetPemFile := key["pem_file"]
+			pem, isSetPem := key["pem"]
+			if isSetPemFile && filePath != "" {
+				// If there's a PEM file set in the config, we give it priority
+				pemContents, err := os.ReadFile(filePath.(string))
+				if err != nil {
+					return diag.Errorf("[Organization Open ID Connect %s] error reading PEM file '%s': %s", operation, filePath, err)
+				}
+				oAuthKeyConfigurations[i].Key = string(pemContents)
+			} else if isSetPem && pem != "" {
+				// Otherwise, the PEM contents may have arrived in the computed field with a wellknown endpoint
+				oAuthKeyConfigurations[i].Key = pem.(string)
+			} else {
+				return diag.Errorf("[Organization Open ID Connect %s] a PEM file is required to set up a key", operation)
+			}
+		}
+		settings.OAuthKeyConfigurations = &types.OAuthKeyConfigurationsList{
+			OAuthKeyConfiguration: oAuthKeyConfigurations,
 		}
 	}
 
