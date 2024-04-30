@@ -145,7 +145,7 @@ func resourceVcdOrgAssociationDelete(ctx context.Context, d *schema.ResourceData
 	}
 	associationData, err := org.GetOrgAssociationByOrgId(associatedOrgId)
 	if err != nil {
-		return diag.Errorf("association data not found for Org '%s' with org ID '%s': %s", org.AdminOrg.Name, associatedOrgId, org)
+		return diag.Errorf("association data not found for Org '%s' with org ID '%s': %s", org.AdminOrg.Name, associatedOrgId, err)
 	}
 	err = org.RemoveOrgAssociation(associationData.Href)
 	if err != nil {
