@@ -190,7 +190,7 @@ func resourceVcdOrgOidc() *schema.Resource {
 				RequiredWith: []string{"key_refresh_period_hours", "key_refresh_strategy"},
 			},
 			"key_refresh_period_hours": {
-				Type:         schema.TypeString,
+				Type:         schema.TypeInt,
 				Optional:     true,
 				Description:  "",
 				RequiredWith: []string{"key_refresh_endpoint", "key_refresh_strategy"},
@@ -207,7 +207,7 @@ func resourceVcdOrgOidc() *schema.Resource {
 				RequiredWith: []string{"key_refresh_endpoint", "key_refresh_period_hours"},
 			},
 			"key_expire_duration_hours": {
-				Type:         schema.TypeString,
+				Type:         schema.TypeInt,
 				Optional:     true,
 				Description:  "",
 				RequiredWith: []string{"key_refresh_strategy"},
@@ -282,19 +282,20 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	// Claims mapping: OIDCAttributeMapping: Subject, Email, Full name, First name and Last name are mandatory
-	claimsMapping := d.Get("claims_mapping").([]map[string]interface{})
+	claimsMapping := d.Get("claims_mapping").([]interface{})
 	if len(claimsMapping) == 0 && !isWellKnownEndpointUsed {
 		return diag.Errorf("[Organization Open ID Connect %s] error reading claims, either set a 'claims_mapping' block or set 'wellknown_endpoint' to obtain this information", operation)
 	}
 	if len(claimsMapping) > 0 {
 		var oidcAttributeMapping types.OIDCAttributeMapping
-		oidcAttributeMapping.SubjectAttributeName = claimsMapping[0]["subject"].(string)
-		oidcAttributeMapping.EmailAttributeName = claimsMapping[0]["email"].(string)
-		oidcAttributeMapping.FullNameAttributeName = claimsMapping[0]["full_name"].(string)
-		oidcAttributeMapping.FirstNameAttributeName = claimsMapping[0]["first_name"].(string)
-		oidcAttributeMapping.LastNameAttributeName = claimsMapping[0]["last_name"].(string)
-		oidcAttributeMapping.GroupsAttributeName = claimsMapping[0]["groups"].(string)
-		oidcAttributeMapping.RolesAttributeName = claimsMapping[0]["roles"].(string)
+		mappingEntry := claimsMapping[0].(map[string]interface{})
+		oidcAttributeMapping.SubjectAttributeName = mappingEntry["subject"].(string)
+		oidcAttributeMapping.EmailAttributeName = mappingEntry["email"].(string)
+		oidcAttributeMapping.FullNameAttributeName = mappingEntry["full_name"].(string)
+		oidcAttributeMapping.FirstNameAttributeName = mappingEntry["first_name"].(string)
+		oidcAttributeMapping.LastNameAttributeName = mappingEntry["last_name"].(string)
+		oidcAttributeMapping.GroupsAttributeName = mappingEntry["groups"].(string)
+		oidcAttributeMapping.RolesAttributeName = mappingEntry["roles"].(string)
 		settings.OIDCAttributeMapping = &oidcAttributeMapping
 	}
 
@@ -350,14 +351,16 @@ func genericVcdOrgOidcRead(_ context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 	if settings.OIDCAttributeMapping != nil {
-		claims := map[string]string{}
-		claims["email"] = settings.OIDCAttributeMapping.EmailAttributeName
-		claims["subject"] = settings.OIDCAttributeMapping.SubjectAttributeName
-		claims["last_name"] = settings.OIDCAttributeMapping.LastNameAttributeName
-		claims["first_name"] = settings.OIDCAttributeMapping.FirstNameAttributeName
-		claims["full_name"] = settings.OIDCAttributeMapping.FullNameAttributeName
-		claims["groups"] = settings.OIDCAttributeMapping.GroupsAttributeName
-		claims["roles"] = settings.OIDCAttributeMapping.RolesAttributeName
+		claims := make([]interface{}, 1)
+		claim := map[string]interface{}{}
+		claim["email"] = settings.OIDCAttributeMapping.EmailAttributeName
+		claim["subject"] = settings.OIDCAttributeMapping.SubjectAttributeName
+		claim["last_name"] = settings.OIDCAttributeMapping.LastNameAttributeName
+		claim["first_name"] = settings.OIDCAttributeMapping.FirstNameAttributeName
+		claim["full_name"] = settings.OIDCAttributeMapping.FullNameAttributeName
+		claim["groups"] = settings.OIDCAttributeMapping.GroupsAttributeName
+		claim["roles"] = settings.OIDCAttributeMapping.RolesAttributeName
+		claims[0] = claim
 		err = d.Set("claims_mapping", claims)
 		if err != nil {
 			return diag.FromErr(err)
