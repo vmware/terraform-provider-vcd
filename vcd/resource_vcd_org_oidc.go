@@ -169,7 +169,7 @@ func resourceVcdOrgOidc() *schema.Resource {
 							Required:    true,
 							Description: "",
 						},
-						"expiration": {
+						"expiration_date": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "",
@@ -374,7 +374,7 @@ func genericVcdOrgOidcRead(_ context.Context, d *schema.ResourceData, meta inter
 			key["id"] = keyConfig.KeyId
 			key["algorithm"] = keyConfig.Algorithm
 			key["pem"] = keyConfig.Key
-			key["expiration"] = keyConfig.ExpirationDate
+			key["expiration_date"] = keyConfig.ExpirationDate
 			keyConfigs[i] = key
 		}
 		err = d.Set("key", keyConfigs)
