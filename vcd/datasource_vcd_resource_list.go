@@ -105,6 +105,46 @@ func datasourceVcdResourceList() *schema.Resource {
 	}
 }
 
+func getSiteAssociationList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	siteAssociationList, err := client.VCDClient.Client.QueryAllSiteAssociations(nil, nil)
+	if err != nil {
+		return list, err
+	}
+	var items []resourceRef
+	for _, site := range siteAssociationList {
+		items = append(items, resourceRef{
+			name:     site.AssociatedSiteName,
+			id:       site.Href,
+			href:     site.Href,
+			parent:   "",
+			importId: false,
+		})
+	}
+	return genericResourceList(d, resType, nil, items)
+}
+
+func getOrgAssociationList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	orgAssociationList, err := client.VCDClient.Client.QueryAllOrgAssociations(nil, nil)
+	if err != nil {
+		return list, err
+	}
+	var items []resourceRef
+	for _, org := range orgAssociationList {
+		items = append(items, resourceRef{
+			name:     org.OrgName,
+			id:       org.Href,
+			href:     org.Href,
+			parent:   "",
+			importId: false,
+		})
+	}
+	return genericResourceList(d, resType, nil, items)
+}
+
 func getOrgList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
 
@@ -1282,6 +1322,10 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 	// Note: do not try to get the data sources list, as it would result in a circular reference
 	case "resource", "resources":
 		list, err = getResourcesList()
+	case "vcd_site_association":
+		list, err = getOrgAssociationList(d, meta, "vcd_site_association")
+	case "vcd_org_association":
+		list, err = getOrgAssociationList(d, meta, "vcd_org_association")
 	case "vcd_org", "org", "orgs":
 		list, err = getOrgList(d, meta, "vcd_org")
 	case "vcd_org_ldap", "vcd_org_saml":
