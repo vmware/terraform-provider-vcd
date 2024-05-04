@@ -2,8 +2,10 @@ package vcd
 
 import (
 	"context"
+	"fmt"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -13,7 +15,11 @@ func resourceVcdSiteAssociation() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdSiteAssociationCreate,
 		ReadContext:   resourceVcdSiteAssociationRead,
+		UpdateContext: resourceVcdSiteAssociationUpdate,
 		DeleteContext: resourceVcdSiteAssociationDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceVcdSiteAssociationImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"associated_site_id": {
 				Type:        schema.TypeString,
@@ -34,6 +40,12 @@ func resourceVcdSiteAssociation() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Status of the association",
+			},
+			"check_connection_minutes": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     0,
+				Description: "How many minutes to keep checking for connection (0=no check)",
 			},
 			"association_data": {
 				Type:         schema.TypeString,
@@ -82,7 +94,7 @@ func resourceVcdSiteAssociationCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.Errorf("no association found for site '%s' after setting: %s", associationData.SiteName, err)
 	}
-
+	// Note: check_connection_minutes will only be used in UPDATE operations
 	return resourceVcdSiteAssociationRead(ctx, d, meta)
 }
 
@@ -115,6 +127,20 @@ func genericVcdSiteAssociationRead(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
+// resourceVcdSiteAssociationUpdate will only update "check_connection_minutes"
+func resourceVcdSiteAssociationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client := meta.(*VCDClient)
+	associatedSiteId := d.Id()
+	connectionCheckMinutes := d.Get("check_connection_minutes").(int)
+	if d.HasChange("check_connection_minutes") && connectionCheckMinutes > 0 {
+		status, elapsed, err := client.Client.CheckSiteAssociation(associatedSiteId, time.Minute*time.Duration(connectionCheckMinutes))
+		if err != nil {
+			return diag.Errorf("error checking for site connection after %s - detected status '%s': %s", elapsed, status, err)
+		}
+	}
+	return resourceVcdSiteAssociationRead(ctx, d, meta)
+}
+
 func resourceVcdSiteAssociationDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*VCDClient)
 	associatedSiteId := d.Id()
@@ -133,4 +159,24 @@ func resourceVcdSiteAssociationDelete(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error removing site '%s': %s", associationData.SiteName, err)
 	}
 	return nil
+}
+
+func resourceVcdSiteAssociationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	client := meta.(*VCDClient)
+
+	associatedSiteId := d.Id()
+	if associatedSiteId == "" {
+		associatedSiteId = d.Get("associated_site_id").(string)
+	}
+
+	if associatedSiteId == "" {
+		return nil, fmt.Errorf("[site association import] no site ID found in either d.Id() or 'associated_site_id' field")
+	}
+	associationData, err := client.Client.GetSiteAssociationBySiteId(associatedSiteId)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving association data for site ID '%s': %s", associatedSiteId, err)
+	}
+	d.SetId(associationData.SiteID)
+	dSet(d, "associated_site_name", associationData.SiteName)
+	return []*schema.ResourceData{d}, nil
 }

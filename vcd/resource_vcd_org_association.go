@@ -2,9 +2,12 @@ package vcd
 
 import (
 	"context"
+	"fmt"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"path"
+	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -14,7 +17,11 @@ func resourceVcdOrgAssociation() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdOrgAssociationCreate,
 		DeleteContext: resourceVcdOrgAssociationDelete,
+		UpdateContext: resourceVcdOrgAssociationUpdate,
 		ReadContext:   resourceVcdOrgAssociationRead,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceVcdOrgAssociationImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"org_id": {
 				Type:        schema.TypeString,
@@ -24,7 +31,7 @@ func resourceVcdOrgAssociation() *schema.Resource {
 			},
 			"associated_org_id": {
 				Type:        schema.TypeString,
-				Computed:    true,
+				Optional:    true,
 				Description: "ID of the associated Organization",
 			},
 			"associated_org_name": {
@@ -41,6 +48,12 @@ func resourceVcdOrgAssociation() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Status of the association",
+			},
+			"check_connection_minutes": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     0,
+				Description: "How many minutes to keep checking for connection (0=no check)",
 			},
 			"association_data": {
 				Type:         schema.TypeString,
@@ -90,6 +103,7 @@ func resourceVcdOrgAssociationCreate(ctx context.Context, d *schema.ResourceData
 		return diag.Errorf("error setting association between Org '%s' and Org '%s': %s", org.AdminOrg.Name, associationData.OrgName, err)
 	}
 	d.SetId(associationData.OrgID)
+	// Note: "check_connection_minutes" will only be used in UPDATE operations
 	return resourceVcdOrgAssociationRead(ctx, d, meta)
 }
 
@@ -129,6 +143,25 @@ func genericVcdOrgAssociationRead(ctx context.Context, d *schema.ResourceData, m
 	return nil
 }
 
+// resourceVcdOrgAssociationUpdate only deals with optional check of association status, as there is nothing else that can be updated
+func resourceVcdOrgAssociationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client := meta.(*VCDClient)
+	orgId := d.Get("org_id").(string)
+	associatedOrgId := d.Id()
+	org, err := client.GetAdminOrgById(orgId)
+	if err != nil {
+		return diag.Errorf("error retrieving Org '%s': %s", orgId, err)
+	}
+	connectionCheckMinutes := d.Get("check_connection_minutes").(int)
+	if d.HasChange("check_connection_minutes") && connectionCheckMinutes > 0 {
+		status, elapsed, err := org.CheckOrgAssociation(associatedOrgId, time.Minute*time.Duration(connectionCheckMinutes))
+		if err != nil {
+			return diag.Errorf("error checking for org connection after %s - detected status '%s': %s", elapsed, status, err)
+		}
+	}
+	return resourceVcdOrgAssociationRead(ctx, d, meta)
+}
+
 func resourceVcdOrgAssociationDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*VCDClient)
 	orgId := d.Get("org_id").(string)
@@ -152,4 +185,29 @@ func resourceVcdOrgAssociationDelete(ctx context.Context, d *schema.ResourceData
 		return diag.Errorf("error removing association data for Org '%s' to org '%s': %s", org.AdminOrg.Name, associationData.OrgName, err)
 	}
 	return nil
+}
+
+func resourceVcdOrgAssociationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	client := meta.(*VCDClient)
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 2 {
+		return nil, fmt.Errorf("[org association import] org association must be provided as local-org-id.remote-org-id")
+	}
+	orgId := resourceURI[0]
+	associatedOrgId := resourceURI[1]
+
+	org, err := client.GetAdminOrgById(orgId)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving org '%s': %s", orgId, err)
+	}
+
+	associationData, err := org.GetOrgAssociationByOrgId(associatedOrgId)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving association data for org ID '%s': %s", associatedOrgId, err)
+	}
+	d.SetId(associationData.OrgID)
+	dSet(d, "org_id", orgId)
+	dSet(d, "associated_org_id", associatedOrgId)
+	dSet(d, "associated_org_name", associationData.OrgName)
+	return []*schema.ResourceData{d}, nil
 }

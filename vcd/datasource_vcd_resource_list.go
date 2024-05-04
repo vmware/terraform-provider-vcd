@@ -114,9 +114,12 @@ func getSiteAssociationList(d *schema.ResourceData, meta interface{}, resType st
 	}
 	var items []resourceRef
 	for _, site := range siteAssociationList {
+		if site.Status == string(types.StatusError) {
+			continue
+		}
 		items = append(items, resourceRef{
 			name:     site.AssociatedSiteName,
-			id:       site.Href,
+			id:       site.AssociatedSiteId,
 			href:     site.Href,
 			parent:   "",
 			importId: false,
@@ -134,9 +137,12 @@ func getOrgAssociationList(d *schema.ResourceData, meta interface{}, resType str
 	}
 	var items []resourceRef
 	for _, org := range orgAssociationList {
+		if org.Status == string(types.StatusError) {
+			continue
+		}
 		items = append(items, resourceRef{
 			name:     org.OrgName,
-			id:       org.Href,
+			id:       org.OrgId,
 			href:     org.Href,
 			parent:   "",
 			importId: false,
