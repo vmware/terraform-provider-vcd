@@ -10,7 +10,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-func slcChildComponent(title string) *schema.Schema {
+func slzChildComponent(title string) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeSet,
 		Required:    true,
@@ -123,9 +123,9 @@ func resourceVcdSolutionLandingZone() *schema.Resource {
 							Description: "Capability set for VDC",
 							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
-						"org_vdc_network": slcChildComponent("Org VDC Network"),
-						"storage_policy":  slcChildComponent("Storage Policy"),
-						"compute_policy":  slcChildComponent("Compute Policy"),
+						"org_vdc_network": slzChildComponent("Org VDC Network"),
+						"storage_policy":  slzChildComponent("Storage Policy"),
+						"compute_policy":  slzChildComponent("Compute Policy"),
 					},
 				},
 			},
@@ -153,7 +153,6 @@ func resourceVcdSolutionLandingZoneCreate(ctx context.Context, d *schema.Resourc
 }
 
 func resourceVcdSolutionLandingZoneUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-
 	vcdClient := meta.(*VCDClient)
 
 	slz, err := vcdClient.GetSolutionLandingZoneById(d.Id())

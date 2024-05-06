@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dsSlcChildComponent(title string) *schema.Schema {
+func dsSlzChildComponent(title string) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeSet,
 		Required:    true,
@@ -110,9 +110,9 @@ func datasourceVcdSolutionLandingZone() *schema.Resource {
 							Description: "",
 							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
-						"org_vdc_network": dsSlcChildComponent("Org VDC Network"),
-						"storage_policy":  dsSlcChildComponent("Storage Policy"),
-						"compute_policy":  dsSlcChildComponent("Compute Policy"),
+						"org_vdc_network": dsSlzChildComponent("Org VDC Network"),
+						"storage_policy":  dsSlzChildComponent("Storage Policy"),
+						"compute_policy":  dsSlzChildComponent("Compute Policy"),
 					},
 				},
 			},
