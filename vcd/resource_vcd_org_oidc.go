@@ -249,7 +249,6 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("[Organization Open ID Connect %s] error searching for Org '%s': %s", operation, orgId, err)
 	}
 
-	// Validations
 	isWellKnownEndpointUsed := d.Get("wellknown_endpoint").(string) != ""
 	scopes := d.Get("scopes").(*schema.Set).List()
 	if !isWellKnownEndpointUsed && len(scopes) == 0 {
@@ -273,8 +272,7 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 		EnableIdTokenClaims:        d.Get("prefer_id_token").(bool),
 		CustomUiButtonLabel:        d.Get("ui_button_label").(string),
 		Scope:                      convertTypeListToSliceOfStrings(scopes),
-		// TODO UsePKCE:                    false,
-		// TODO SendClientCredentialsAsAuthorizationHeader: false,
+		// UsePKCE and SendClientCredentialsAsAuthorizationHeader are not used yet
 	}
 
 	// Key configurations: OAuthKeyConfigurations
@@ -301,7 +299,7 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 				}
 				oAuthKeyConfigurations[i].Key = string(pemContents)
 			} else if isSetPem && pem != "" {
-				// Otherwise, the PEM contents may have arrived in the computed field with a wellknown endpoint
+				// Otherwise, the PEM contents may have arrived in the computed field with a well-known endpoint
 				oAuthKeyConfigurations[i].Key = pem.(string)
 			} else {
 				return diag.Errorf("[Organization Open ID Connect %s] a PEM file is required to set up a key", operation)
