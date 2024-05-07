@@ -11,17 +11,7 @@ import (
 
 func TestAccVcdOrgOidc(t *testing.T) {
 	preTestChecks(t)
-
-	if testConfig.Networking.OidcServer.Url == "" ||
-		testConfig.Networking.OidcServer.WellKnownEndpoint == "" {
-		t.Skip(t.Name(), "requires OIDC Server URL and its well-known endpoint")
-	}
-
-	oidcServer, err := url.Parse(testConfig.Networking.OidcServer.Url)
-	if err != nil {
-		t.Skip(t.Name(), "requires a valid OIDC Server URL but got ", err)
-	}
-	oidcServer = oidcServer.JoinPath(testConfig.Networking.OidcServer.WellKnownEndpoint)
+	oidcServerUrl := validateAndGetOidcServerUrl(t, testConfig)
 
 	orgName1 := t.Name() + "1"
 	orgName2 := t.Name() + "2"
@@ -31,7 +21,7 @@ func TestAccVcdOrgOidc(t *testing.T) {
 	var params = StringMap{
 		"OrgName1":          orgName1,
 		"OrgName2":          orgName2,
-		"WellKnownEndpoint": oidcServer.String(),
+		"WellKnownEndpoint": oidcServerUrl.String(),
 	}
 	testParamsNotEmpty(t, params)
 
@@ -98,3 +88,15 @@ resource "vcd_org_oidc" "oidc1" {
   wellknown_endpoint          = "{{.WellKnownEndpoint}}"
 }
 `
+
+func validateAndGetOidcServerUrl(t *testing.T, testConfig TestConfig) *url.URL {
+	if testConfig.Networking.OidcServer.Url == "" || testConfig.Networking.OidcServer.WellKnownEndpoint == "" {
+		t.Skip("test requires OIDC configuration")
+	}
+
+	oidcServer, err := url.Parse(testConfig.Networking.OidcServer.Url)
+	if err != nil {
+		t.Skip(t.Name() + " requires OIDC Server URL and its well-known endpoint")
+	}
+	return oidcServer.JoinPath(testConfig.Networking.OidcServer.WellKnownEndpoint)
+}
