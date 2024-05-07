@@ -73,8 +73,7 @@ The following arguments are supported:
   to override the keys given by `wellknown_endpoint`. Each key requires the following:
   * `id` - Identifier of the key
   * `algorithm` - Algorithm used by the key. Can be `RSA` or `EC`
-  * `pem_file` - PEM file to create/update the key
-  * `pem` - (Computed) This attribute is read-only, and contains the PEM contents after the configuration is available in VCD
+  * `certificate` - The contents of a PEM file to create/update the key
   * `expiration_date` - Expiration date for the key. The accepted format is the same used by [`timestamp`](https://developer.hashicorp.com/terraform/language/functions/timestamp)
 
 ## Attribute Reference

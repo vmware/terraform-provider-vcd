@@ -4,8 +4,10 @@ package vcd
 
 import (
 	_ "embed"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"net/url"
+	"regexp"
 	"testing"
 )
 
@@ -15,45 +17,85 @@ func TestAccVcdOrgOidc(t *testing.T) {
 
 	orgName1 := t.Name() + "1"
 	orgName2 := t.Name() + "2"
+	orgName3 := t.Name() + "3"
 	oidcResource1 := "vcd_org_oidc.oidc1"
-	//oidcResource2 := "vcd_org_oidc.oidc2"
+	oidcResource2 := "vcd_org_oidc.oidc2"
+	oidcResource3 := "vcd_org_oidc.oidc3"
 
 	var params = StringMap{
 		"OrgName1":          orgName1,
 		"OrgName2":          orgName2,
+		"OrgName3":          orgName3,
 		"WellKnownEndpoint": oidcServerUrl.String(),
+		"FuncName":          t.Name() + "-Step1",
 	}
 	testParamsNotEmpty(t, params)
 
 	skipIfNotSysAdmin(t)
 
-	configText := templateFill(testAccCheckVcdOrgOidc, params)
+	step1 := templateFill(testAccCheckVcdOrgOidc, params)
+	params["FuncName"] = t.Name() + "-Step2"
+	step2 := templateFill(testAccCheckVcdOrgOidc2, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	debugPrintf("#[DEBUG] Configuration Step 1: %s", step1)
+	debugPrintf("#[DEBUG] Configuration Step 2: %s", step1)
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy: resource.ComposeTestCheckFunc(
-			testAccCheckVcdOrgExists(orgName1),
-			testAccCheckVcdOrgExists(orgName2),
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckOrgDestroy(orgName1),
+			testAccCheckOrgDestroy(orgName2),
+			testAccCheckOrgDestroy(orgName3),
 		),
 		Steps: []resource.TestStep{
 			{
-				Config: configText,
-				Check: resource.ComposeTestCheckFunc(
+				Config: step1,
+				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdOrgExists("vcd_org.org1"),
 					testAccCheckVcdOrgExists("vcd_org.org2"),
+					testAccCheckVcdOrgExists("vcd_org.org3"),
+
+					resource.TestMatchResourceAttr(oidcResource1, "redirect_uri", regexp.MustCompile(fmt.Sprintf(".*=tenant:%s", orgName1))),
+					resource.TestCheckResourceAttr(oidcResource1, "client_id", "clientId"),
+					resource.TestCheckResourceAttr(oidcResource1, "client_secret", "clientSecret"),
+					resource.TestCheckResourceAttr(oidcResource1, "enabled", "true"),
+					resource.TestCheckResourceAttr(oidcResource1, "wellknown_endpoint", params["WellKnownEndpoint"].(string)),
+					resource.TestMatchResourceAttr(oidcResource1, "issuer_id", regexp.MustCompile(fmt.Sprintf("^%s://%s.*$", oidcServerUrl.Scheme, oidcServerUrl.Host))),
+					resource.TestMatchResourceAttr(oidcResource1, "user_authorization_endpoint", regexp.MustCompile(fmt.Sprintf("^%s://%s.*$", oidcServerUrl.Scheme, oidcServerUrl.Host))),
+					resource.TestMatchResourceAttr(oidcResource1, "access_token_endpoint", regexp.MustCompile(fmt.Sprintf("^%s://%s.*$", oidcServerUrl.Scheme, oidcServerUrl.Host))),
+					resource.TestMatchResourceAttr(oidcResource1, "userinfo_endpoint", regexp.MustCompile(fmt.Sprintf("^%s://%s.*$", oidcServerUrl.Scheme, oidcServerUrl.Host))),
+					resource.TestCheckResourceAttr(oidcResource1, "prefer_id_token", "false"),
+					resource.TestCheckResourceAttr(oidcResource1, "max_clock_skew_seconds", "60"),
+					resource.TestMatchResourceAttr(oidcResource1, "scopes.#", regexp.MustCompile(`[1-9][0-9]*`)),
+					resource.TestCheckResourceAttrSet(oidcResource1, "claims_mapping.0.email"),
+					resource.TestCheckResourceAttrSet(oidcResource1, "claims_mapping.0.subject"),
+					resource.TestCheckResourceAttrSet(oidcResource1, "claims_mapping.0.last_name"),
+					resource.TestCheckResourceAttrSet(oidcResource1, "claims_mapping.0.first_name"),
+					resource.TestMatchResourceAttr(oidcResource1, "key.#", regexp.MustCompile(`[1-9][0-9]*`)),
 				),
 			},
 			{
-				ResourceName:            oidcResource1,
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdTopHierarchy(orgName1),
-				ImportStateVerifyIgnore: []string{},
+				Config: step2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resourceFieldsEqual(oidcResource1, oidcResource2, []string{
+						"id", "org_id", "redirect_uri", "wellknown_endpoint", "key_refresh_endpoint",
+						"user_authorization_endpoint", "claims_mapping.0.subject",
+					}),
+					resource.TestCheckResourceAttr(oidcResource2, "user_authorization_endpoint", "https://www.dummy.com"),
+					resource.TestCheckResourceAttr(oidcResource2, "claims_mapping.0.subject", "foo"),
+					resourceFieldsEqual(oidcResource1, oidcResource3, []string{
+						"id", "org_id", "redirect_uri", "wellknown_endpoint", "key_refresh_endpoint",
+					}),
+				),
+			},
+			{
+				ResourceName:      oidcResource1,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdTopHierarchy(orgName1),
 			},
 		},
 	})
@@ -78,6 +120,14 @@ resource "vcd_org" "org2" {
   delete_recursive  = true
 }
 
+resource "vcd_org" "org3" {
+  name              = "{{.OrgName3}}"
+  full_name         = "{{.OrgName3}}"
+  description       = "{{.OrgName3}}"
+  delete_force      = true
+  delete_recursive  = true
+}
+
 resource "vcd_org_oidc" "oidc1" {
   org_id                      = vcd_org.org1.id
   enabled                     = true
@@ -86,6 +136,51 @@ resource "vcd_org_oidc" "oidc1" {
   client_secret               = "clientSecret"
   max_clock_skew_seconds      = 60
   wellknown_endpoint          = "{{.WellKnownEndpoint}}"
+}
+`
+
+const testAccCheckVcdOrgOidc2 = testAccCheckVcdOrgOidc + `
+resource "vcd_org_oidc" "oidc2" {
+  org_id                      = vcd_org.org2.id
+  enabled                     = true
+  prefer_id_token             = false
+  client_id                   = "clientId"
+  client_secret               = "clientSecret"
+  max_clock_skew_seconds      = 60
+  wellknown_endpoint          = "{{.WellKnownEndpoint}}"
+  user_authorization_endpoint = "https://www.dummy.com"
+  claims_mapping {
+	subject = "foo"
+  }
+}
+
+resource "vcd_org_oidc" "oidc3" {
+  org_id                      = vcd_org.org3.id
+  enabled                     = vcd_org_oidc.oidc1.enabled
+  prefer_id_token             = vcd_org_oidc.oidc1.prefer_id_token
+  client_id                   = vcd_org_oidc.oidc1.client_id
+  client_secret               = vcd_org_oidc.oidc1.client_secret
+  max_clock_skew_seconds      = vcd_org_oidc.oidc1.max_clock_skew_seconds
+  issuer_id                   = vcd_org_oidc.oidc1.issuer_id
+  user_authorization_endpoint = vcd_org_oidc.oidc1.user_authorization_endpoint
+  access_token_endpoint       = vcd_org_oidc.oidc1.access_token_endpoint
+  userinfo_endpoint           = vcd_org_oidc.oidc1.userinfo_endpoint
+  scopes                      = vcd_org_oidc.oidc1.scopes
+  claims_mapping {
+    email      = vcd_org_oidc.oidc1.claims_mapping[0].email
+    subject    = vcd_org_oidc.oidc1.claims_mapping[0].subject
+    last_name  = vcd_org_oidc.oidc1.claims_mapping[0].last_name
+    first_name = vcd_org_oidc.oidc1.claims_mapping[0].first_name
+    full_name  = vcd_org_oidc.oidc1.claims_mapping[0].full_name
+    groups     = vcd_org_oidc.oidc1.claims_mapping[0].groups
+    roles      = vcd_org_oidc.oidc1.claims_mapping[0].roles
+  }
+  key {
+    id              = tolist(vcd_org_oidc.oidc1.key)[0].id
+    algorithm       = tolist(vcd_org_oidc.oidc1.key)[0].algorithm
+    certificate     = tolist(vcd_org_oidc.oidc1.key)[0].certificate
+	expiration_date = tolist(vcd_org_oidc.oidc1.key)[0].expiration_date
+  }
 }
 `
 

@@ -10,7 +10,6 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
-	"os"
 )
 
 // resourceVcdOrgOidc defines the resource that manages Open ID Connect (OIDC) settings for an existing Organization
@@ -172,7 +171,7 @@ func resourceVcdOrgOidc() *schema.Resource {
 							Description:  "",
 							ValidateFunc: validation.StringInSlice([]string{"RSA", "EC"}, false),
 						},
-						"pem_file": {
+						"certificate": {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "",
@@ -180,11 +179,6 @@ func resourceVcdOrgOidc() *schema.Resource {
 						"expiration_date": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "",
-						},
-						"pem": {
-							Type:        schema.TypeString,
-							Computed:    true,
 							Description: "",
 						},
 					},
@@ -288,21 +282,7 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 				KeyId:          key["id"].(string),
 				Algorithm:      key["algorithm"].(string),
 				ExpirationDate: key["expiration_date"].(string),
-			}
-			filePath, isSetPemFile := key["pem_file"]
-			pem, isSetPem := key["pem"]
-			if isSetPemFile && filePath != "" {
-				// If there's a PEM file set in the config, we give it priority
-				pemContents, err := os.ReadFile(filePath.(string))
-				if err != nil {
-					return diag.Errorf("[Organization Open ID Connect %s] error reading PEM file '%s': %s", operation, filePath, err)
-				}
-				oAuthKeyConfigurations[i].Key = string(pemContents)
-			} else if isSetPem && pem != "" {
-				// Otherwise, the PEM contents may have arrived in the computed field with a well-known endpoint
-				oAuthKeyConfigurations[i].Key = pem.(string)
-			} else {
-				return diag.Errorf("[Organization Open ID Connect %s] a PEM file is required to set up a key", operation)
+				Key:            key["certificate"].(string),
 			}
 		}
 		settings.OAuthKeyConfigurations = &types.OAuthKeyConfigurationsList{
@@ -402,7 +382,7 @@ func genericVcdOrgOidcRead(_ context.Context, d *schema.ResourceData, meta inter
 			key := map[string]interface{}{}
 			key["id"] = keyConfig.KeyId
 			key["algorithm"] = keyConfig.Algorithm
-			key["pem"] = keyConfig.Key
+			key["certificate"] = keyConfig.Key
 			key["expiration_date"] = keyConfig.ExpirationDate
 			keyConfigs[i] = key
 		}
