@@ -122,6 +122,9 @@ func datasourceVcdSolutionLandingZone() *schema.Resource {
 
 func datasourceVcdSolutionLandingZoneRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+		return diag.Errorf("Solution Landing Zones are supported in VCD 10.4.1+")
+	}
 
 	slz, err := vcdClient.GetExactlyOneSolutionLandingZone()
 	if err != nil {

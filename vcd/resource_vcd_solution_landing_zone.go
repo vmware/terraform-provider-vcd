@@ -136,6 +136,10 @@ func resourceVcdSolutionLandingZone() *schema.Resource {
 func resourceVcdSolutionLandingZoneCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+		return diag.Errorf("Solution Landing Zones are supported in VCD 10.4.1+")
+	}
+
 	slzCfg, err := getSlzType(vcdClient, d)
 	if err != nil {
 		return diag.Errorf("error getting Solution Landing Zone configuration: %s", err)
@@ -207,6 +211,9 @@ func resourceVcdSolutionLandingZoneDelete(ctx context.Context, d *schema.Resourc
 
 func resourceVcdSolutionLandingZoneImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
+	if vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+		return nil, fmt.Errorf("solution landing zones are supported in VCD 10.4.1+")
+	}
 
 	slz, err := vcdClient.GetExactlyOneSolutionLandingZone()
 	if err != nil {
