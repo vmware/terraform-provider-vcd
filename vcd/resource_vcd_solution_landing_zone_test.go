@@ -12,6 +12,9 @@ import (
 
 func TestAccVcdSolutionLandingZone(t *testing.T) {
 	preTestChecks(t)
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.1") {
+		t.Skipf("Solution Landing Zones are supported in VCD 10.4.1+. Skipping")
+	}
 
 	var params = StringMap{
 		"Org":     testConfig.VCD.Org,
@@ -69,9 +72,9 @@ func TestAccVcdSolutionLandingZone(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_solution_landing_zone.slz", "catalog.#", "1"),
 
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "catalog.*", map[string]string{"name": testConfig.VCD.Catalog.NsxtBackedCatalogName}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.compute_policy.*", map[string]string{"name": "System Default", "is_default": "true"}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.org_vdc_network.*", map[string]string{"name": testConfig.Nsxt.IsolatedNetwork, "is_default": "true"}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.storage_policy.*", map[string]string{"name": "*", "is_default": "true"}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.compute_policy.*", map[string]string{"name": "System Default", "is_default": "false"}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.org_vdc_network.*", map[string]string{"name": testConfig.Nsxt.IsolatedNetwork, "is_default": "false"}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*.storage_policy.*", map[string]string{"name": "*", "is_default": "false"}),
 					resource.TestCheckResourceAttr("vcd_solution_landing_zone.slz", "vdc.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_solution_landing_zone.slz", "vdc.*", map[string]string{"is_default": "true", "name": testConfig.Nsxt.Vdc}),
 				),
@@ -200,7 +203,9 @@ resource "vcd_solution_landing_zone" "slz" {
 `
 
 const testAccSolutionLandingZoneStep3DS = testAccSolutionLandingZoneStep2 + `
-data "vcd_solution_landing_zone" "slz" {}
+data "vcd_solution_landing_zone" "slz" {
+  depends_on = [vcd_solution_landing_zone.slz]
+}
 `
 
 func testAccCheckSlzDestroy() resource.TestCheckFunc {

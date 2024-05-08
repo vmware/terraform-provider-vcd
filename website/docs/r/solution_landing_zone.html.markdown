@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_solution\_landing\_zone
 
-Supported in provider *v3.13+* and VCD 10.4+.
+Supported in provider *v3.13+* and VCD 10.4.1+.
 
 Provides a resource to configure VCD Solution Add-on Landing Zone.
 

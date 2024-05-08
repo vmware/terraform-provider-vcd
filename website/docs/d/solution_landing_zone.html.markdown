@@ -8,11 +8,11 @@ description: |-
 
 # vcd\_solution\_landing\_zone
 
-Supported in provider *v3.13+* and VCD 10.4+.
+Supported in provider *v3.13+* and VCD 10.4.1+.
 
 Provides a data source to read VCD Solution Add-on Landing Zone.
 
-~> Only `System Administrator` can create this resource.
+~> Only `System Administrator` can read this configuration.
 
 ## Example Usage
 
