@@ -1,6 +1,7 @@
 package vcd
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -8,7 +9,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
+	"strings"
+	"time"
 )
 
 // resourceVcdOrgOidc defines the resource that manages Open ID Connect (OIDC) settings for an existing Organization
@@ -195,6 +199,38 @@ func resourceVcdOrgOidc() *schema.Resource {
 								validation.ToDiagFunc(validation.StringIsEmpty)),
 						},
 					},
+				},
+				// This function is required because the default hash function makes
+				// the Terraform plans to be dirty all the time, trying to remove the given key even if
+				// it didn't change.
+				Set: func(v interface{}) int {
+					var buf bytes.Buffer
+					m := v.(map[string]interface{})
+					_, err := buf.WriteString(m["id"].(string))
+					if err != nil {
+						util.Logger.Printf("[ERROR] error writing to string: %s", err)
+					}
+					_, err = buf.WriteString(m["algorithm"].(string))
+					if err != nil {
+						util.Logger.Printf("[ERROR] error writing to string: %s", err)
+					}
+					_, err = buf.WriteString(strings.ReplaceAll(m["certificate"].(string), "\n", ""))
+					if err != nil {
+						util.Logger.Printf("[ERROR] error writing to string: %s", err)
+					}
+					if m["expiration_date"].(string) != "" {
+						t, err := time.Parse(time.RFC3339, m["expiration_date"].(string))
+						if err != nil {
+							util.Logger.Printf("[ERROR] error parsing date: %s", err)
+						}
+						_, err = buf.WriteString(t.Format(time.RFC3339))
+						if err != nil {
+							util.Logger.Printf("[ERROR] error writing to string: %s", err)
+						}
+					} else {
+						buf.WriteString("nil")
+					}
+					return hashcodeString(buf.String())
 				},
 			},
 			"key_refresh_endpoint": {
@@ -403,6 +439,7 @@ func genericVcdOrgOidcRead(_ context.Context, d *schema.ResourceData, meta inter
 			key["id"] = keyConfig.KeyId
 			key["algorithm"] = keyConfig.Algorithm
 			key["certificate"] = keyConfig.Key
+			key["expiration_date"] = keyConfig.ExpirationDate
 			keyConfigs[i] = key
 		}
 		err = d.Set("key", keyConfigs)
