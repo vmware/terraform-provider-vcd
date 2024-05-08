@@ -190,6 +190,9 @@ func resourceVcdOrgOidc() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "Expiration date for the certificate",
+							ValidateDiagFunc: validation.AnyDiag(
+								validation.ToDiagFunc(validation.IsRFC3339Time),
+								validation.ToDiagFunc(validation.StringIsEmpty)),
 						},
 					},
 				},
@@ -255,7 +258,10 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if _, ok := d.GetOk("key_expire_duration_hours"); ok && d.Get("key_refresh_strategy") != "EXPIRE_AFTER" {
-		return diag.Errorf("'key_expire_duration_hours' can only be used when key_refresh_strategy=EXPIRE_AFTER, but key_refresh_strategy=%s", d.Get("key_refresh_strategy"))
+		return diag.Errorf("'key_expire_duration_hours' can only be used when 'key_refresh_strategy=EXPIRE_AFTER', but key_refresh_strategy=%s", d.Get("key_refresh_strategy"))
+	}
+	if _, ok := d.GetOk("key_expire_duration_hours"); !ok && d.Get("key_refresh_strategy") == "EXPIRE_AFTER" {
+		return diag.Errorf("'key_refresh_strategy=EXPIRE_AFTER' requires 'key_expire_duration_hours' to be set")
 	}
 
 	if _, ok := d.GetOk("ui_button_label"); ok && vcdClient.Client.APIVCDMaxVersionIs("< 38.1") {
@@ -397,7 +403,6 @@ func genericVcdOrgOidcRead(_ context.Context, d *schema.ResourceData, meta inter
 			key["id"] = keyConfig.KeyId
 			key["algorithm"] = keyConfig.Algorithm
 			key["certificate"] = keyConfig.Key
-			key["expiration_date"] = keyConfig.ExpirationDate
 			keyConfigs[i] = key
 		}
 		err = d.Set("key", keyConfigs)
