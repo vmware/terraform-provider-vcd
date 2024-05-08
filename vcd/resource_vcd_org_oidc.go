@@ -3,7 +3,6 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -27,67 +26,74 @@ func resourceVcdOrgOidc() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Organization ID",
+				Description: "Organization ID that will have the OpenID Connect settings configured",
 			},
 			"client_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Client ID to use when talking to the OIDC Identity Provider",
+				Description: "Client ID to use when talking to the OpenID Connect Identity Provider",
 			},
 			"client_secret": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
-				Description: "Client Secret to use when talking to the OIDC Identity Provider",
+				Description: "Client Secret to use when talking to the OpenID Connect Identity Provider",
 			},
 			"enabled": {
 				Type:        schema.TypeBool,
 				Required:    true,
-				Description: "Enables or disables OIDC Authentication for the Organization specified in 'org_id'",
+				Description: "Enables or disables OpenID Connect authentication for the specified Organization",
 			},
 			"wellknown_endpoint": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Endpoint from the OIDC Identity Provider that serves all the configuration values",
+				Description: "Endpoint from the OpenID Connect Identity Provider that serves all the configuration values",
 			},
 			"issuer_id": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true, // Can be obtained with "wellknown_endpoint"
-				Description:  "If 'wellknown_endpoint' is set, this attribute overrides the obtained Issuer ID",
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true, // Can be obtained with "wellknown_endpoint"
+				Description: "The issuer identifier of the OpenID Connect Identity Provider. " +
+					"If 'wellknown_endpoint' is set, this attribute overrides the obtained issuer identifier",
 				AtLeastOneOf: []string{"issuer_id", "wellknown_endpoint"},
 			},
 			"user_authorization_endpoint": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true, // Can be obtained with "wellknown_endpoint"
-				Description:  "If 'wellknown_endpoint' is set, this attribute overrides the obtained User Authorization endpoint",
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true, // Can be obtained with "wellknown_endpoint"
+				Description: "The user authorization endpoint of the OpenID Connect Identity Provider. " +
+					"If 'wellknown_endpoint' is set, this attribute overrides the obtained user authorization endpoint",
 				AtLeastOneOf: []string{"user_authorization_endpoint", "wellknown_endpoint"},
 			},
 			"access_token_endpoint": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true, // Can be obtained with "wellknown_endpoint"
-				Description:  "If 'wellknown_endpoint' is set, this attribute overrides the obtained Access Token endpoint",
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true, // Can be obtained with "wellknown_endpoint"
+				Description: "The access token endpoint of the OpenID Connect Identity Provider. " +
+					"If 'wellknown_endpoint' is set, this attribute overrides the obtained access token endpoint",
 				AtLeastOneOf: []string{"access_token_endpoint", "wellknown_endpoint"},
 			},
 			"userinfo_endpoint": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true, // Can be obtained with "wellknown_endpoint"
-				Description:  "If 'wellknown_endpoint' is set, this attribute overrides the obtained Userinfo endpoint",
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true, // Can be obtained with "wellknown_endpoint"
+				Description: "The user info endpoint of the OpenID Connect Identity Provider. " +
+					"If 'wellknown_endpoint' is set, this attribute overrides the obtained user info endpoint",
 				AtLeastOneOf: []string{"userinfo_endpoint", "wellknown_endpoint"},
 			},
 			"prefer_id_token": {
-				Type:        schema.TypeBool,
-				Required:    true,
-				Description: "",
+				Type:     schema.TypeBool,
+				Required: true,
+				Description: "If you want to combine claims from 'userinfo_endpoint' and the ID Token, set this to 'true'. " +
+					"The identity providers do not provide all the required claims set in 'userinfo_endpoint'." +
+					"By setting this argument to 'true', VMware Cloud Director can fetch and consume claims from both sources",
 			},
 			"max_clock_skew_seconds": {
-				Type:             schema.TypeInt,
-				Optional:         true,
-				Default:          60,
-				Description:      "",
+				Type:     schema.TypeInt,
+				Optional: true,
+				Default:  60,
+				Description: "The maximum clock skew is the maximum allowable time difference between the client and server. " +
+					"This time compensates for any small-time differences in the timestamps when verifying tokens",
 				ValidateDiagFunc: minimumValue(0, "'max_clock_skew_seconds' must be higher than or equal to 0"),
 			},
 			"scopes": {
@@ -95,134 +101,132 @@ func resourceVcdOrgOidc() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Optional:    true,
-				Computed:    true, // Can be obtained with "wellknown_endpoint"
-				Description: "If 'wellknown_endpoint' is set, this attribute overrides the obtained Scopes",
+				Optional: true,
+				Computed: true, // Can be obtained with "wellknown_endpoint"
+				Description: "A set of scopes to use with the OpenID Connect provider. " +
+					"They are used to authorize access to user details, by defining the permissions that the access tokens have to access user information. " +
+					"If 'wellknown_endpoint' is set, this attribute overrides the obtained scopes",
 			},
 			"claims_mapping": {
-				Type:        schema.TypeList,
-				MaxItems:    1,
-				Optional:    true,
-				Computed:    true, // Can be obtained with "wellknown_endpoint"
-				Description: "If 'wellknown_endpoint' is set, this attribute overrides the obtained Claim mappings",
+				Type:     schema.TypeList,
+				MaxItems: 1,
+				Optional: true,
+				Computed: true, // Can be obtained with "wellknown_endpoint"
+				Description: "A single configuration block that specifies the claim mappings to use with the OpenID Connect provider. " +
+					"If 'wellknown_endpoint' is set, this attribute overrides the obtained claim mappings",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"email": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Computed:    true, // Can be obtained with "wellknown_endpoint"
-							Description: "",
+							Description: "Email claim mapping",
 						},
 						"subject": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Computed:    true, // Can be obtained with "wellknown_endpoint"
-							Description: "",
+							Description: "Subject claim mapping",
 						},
 						"last_name": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Computed:    true, // Can be obtained with "wellknown_endpoint"
-							Description: "",
+							Description: "Last name claim mapping",
 						},
 						"first_name": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Computed:    true, // Can be obtained with "wellknown_endpoint"
-							Description: "",
+							Description: "First name claim mapping",
 						},
 						"full_name": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Computed:    true, // Can be obtained with "wellknown_endpoint"
-							Description: "",
+							Description: "Full name claim mapping",
 						},
 						"groups": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Computed:    true, // Can be obtained with "wellknown_endpoint"
-							Description: "",
+							Description: "Groups claim mapping",
 						},
 						"roles": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Computed:    true, // Can be obtained with "wellknown_endpoint"
-							Description: "",
+							Description: "Roles claim mapping",
 						},
 					},
 				},
 			},
 			"key": {
-				Type:        schema.TypeSet,
-				MinItems:    1,
-				Optional:    true,
-				Computed:    true, // Can be obtained with "wellknown_endpoint"
-				Description: "",
+				Type:     schema.TypeSet,
+				MinItems: 1,
+				Optional: true,
+				Computed: true, // Can be obtained with "wellknown_endpoint"
+				Description: "One or more configuration blocks that specify the keys to use with the OIDC provider. " +
+					"If 'wellknown_endpoint' is set, this attribute overrides the obtained keys",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "",
+							Description: "ID of the key",
 						},
 						"algorithm": {
-							Type:         schema.TypeString,
-							Required:     true,
-							Description:  "",
-							ValidateFunc: validation.StringInSlice([]string{"RSA", "EC"}, false),
+							Type:             schema.TypeString,
+							Required:         true,
+							Description:      "Algorithm of the key, either RSA or EC",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"RSA", "EC"}, false)),
 						},
 						"certificate": {
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "",
+							Description: "The certificate contents",
 						},
 						"expiration_date": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "",
+							Description: "Expiration date for the certificate",
 						},
 					},
 				},
 			},
 			"key_refresh_endpoint": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Computed:     true, // Can be obtained with "wellknown_endpoint"
-				Description:  "",
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true, // Can be obtained with "wellknown_endpoint"
+				Description: "Endpoint used to refresh the keys. If 'wellknown_endpoint' is set, then this argument" +
+					"will override the obtained endpoint",
 				RequiredWith: []string{"key_refresh_period_hours", "key_refresh_strategy"},
 			},
 			"key_refresh_period_hours": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				Description:  "",
-				RequiredWith: []string{"key_refresh_endpoint", "key_refresh_strategy"},
-				ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
-					return nil
-					// Maximum 30 days: 24*30
-				},
+				Type:             schema.TypeInt,
+				Optional:         true,
+				Description:      "Defines the frequency of key refresh. Maximum is 720 hours",
+				RequiredWith:     []string{"key_refresh_endpoint"},
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 720)),
 			},
 			"key_refresh_strategy": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Description:  "",
-				ValidateFunc: validation.StringInSlice([]string{"ADD", "REPLACE", "EXPIRE_AFTER"}, false),
-				RequiredWith: []string{"key_refresh_endpoint", "key_refresh_period_hours"},
+				Type:             schema.TypeString,
+				Optional:         true,
+				Description:      "Defines the strategy of key refresh",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"ADD", "REPLACE", "EXPIRE_AFTER"}, false)),
+				RequiredWith:     []string{"key_refresh_endpoint"},
 			},
 			"key_expire_duration_hours": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				Description:  "",
-				RequiredWith: []string{"key_refresh_strategy"},
-				ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
-					return nil
-					// Only if key_refresh_strategy=EXPIRE_AFTER
-					// Maximum 1 days: 24
-				},
+				Type:             schema.TypeInt,
+				Optional:         true,
+				Description:      "Defines the expiration period of the key, only when 'key_refresh_strategy=EXPIRE_AFTER'. Maximum is 24 hours",
+				RequiredWith:     []string{"key_refresh_endpoint", "key_refresh_strategy"},
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 24)),
 			},
 			"ui_button_label": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "",
+				Description: "Customizes the label of the UI button of the login screen. Only available since VCD 10.5.1",
 			},
 			"redirect_uri": {
 				Type:        schema.TypeString,
@@ -243,11 +247,21 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("[Organization Open ID Connect %s] error searching for Org '%s': %s", operation, orgId, err)
 	}
 
+	// Runtime validations
 	isWellKnownEndpointUsed := d.Get("wellknown_endpoint").(string) != ""
 	scopes := d.Get("scopes").(*schema.Set).List()
 	if !isWellKnownEndpointUsed && len(scopes) == 0 {
 		return diag.Errorf("[Organization Open ID Connect %s] 'scopes' cannot be empty when a well-known endpoint is not used", operation)
 	}
+
+	if _, ok := d.GetOk("key_expire_duration_hours"); ok && d.Get("key_refresh_strategy") != "EXPIRE_AFTER" {
+		return diag.Errorf("'key_expire_duration_hours' can only be used when key_refresh_strategy=EXPIRE_AFTER, but key_refresh_strategy=%s", d.Get("key_refresh_strategy"))
+	}
+
+	if _, ok := d.GetOk("ui_button_label"); ok && vcdClient.Client.APIVCDMaxVersionIs("< 38.1") {
+		return diag.Errorf("'ui_button_label' can only be used since VCD 10.5.1")
+	}
+	// End of validations
 
 	settings := types.OrgOAuthSettings{
 		IssuerId:                   d.Get("issuer_id").(string),

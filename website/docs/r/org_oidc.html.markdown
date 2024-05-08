@@ -55,11 +55,11 @@ The following arguments are supported:
   This time compensates for any small-time differences in the timestamps when verifying tokens. The **default** value is `60` seconds.
 * `scopes` - (Optional) A set of scopes to use with the OIDC provider. They are used to authorize access to user details,
   by defining the permissions that the access tokens have to access user information.
-  If `wellknown_endpoint` is **not**  set, then this argument is **required**. Otherwise, it is **optional**. This allows administrators
+  If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**. This allows administrators
   to override the scopes given by `wellknown_endpoint`. Setting `scopes = []` will make Terraform to set the scopes provided originally
   by the `wellknown_endpoint`
 * `claims_mapping` - (Optional) A single configuration block that specifies the claim mappings to use with the OIDC provider.
-  If `wellknown_endpoint` is **not**  set, then this argument is **required**. Otherwise, it is **optional**. This allows administrators
+  If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**. This allows administrators
   to override the claims given by `wellknown_endpoint`. The supported claims are:
   * `email` - Required if `wellknown_endpoint` doesn't give info about it
   * `subject` - Required if `wellknown_endpoint` doesn't give info about it
@@ -69,12 +69,20 @@ The following arguments are supported:
   * `groups` - Optional
   * `roles` - Optional
 * `key` - (Optional) One or more configuration blocks that specify the keys to use with the OIDC provider.
-  If `wellknown_endpoint` is **not**  set, then this argument is **required**. Otherwise, it is **optional**. This allows administrators
+  If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**. This allows administrators
   to override the keys given by `wellknown_endpoint`. Each key requires the following:
   * `id` - Identifier of the key
   * `algorithm` - Algorithm used by the key. Can be `RSA` or `EC`
   * `certificate` - The contents of a PEM file to create/update the key
   * `expiration_date` - Expiration date for the key. The accepted format is the same used by [`timestamp`](https://developer.hashicorp.com/terraform/language/functions/timestamp)
+* `key_refresh_endpoint` - (Optional) Endpoint used to refresh the keys. If set, `key_refresh_period_hours` and `key_refresh_strategy` will be required.
+  If `wellknown_endpoint` is set, then this argument will override the obtained endpoint.
+* `key_refresh_period_hours` - (Optional) Required if `key_refresh_endpoint` is set. Defines the frequency of key refresh. Maximum value is 720 (30 days).
+* `key_refresh_strategy` - (Optional) Required if `key_refresh_endpoint` is set. Defines the strategy of key refresh. One of `ADD`, `REPLACE`, `EXPIRE_AFTER`.
+  The different strategies are explained [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-92C030BE-5444-45B4-891F-63EA6872FEA1.html).
+* `key_expire_duration_hours` - (Optional) Required if `key_refresh_endpoint` is set and `key_refresh_strategy=EXPIRE_AFTER`. Defines the expiration period of the key.
+  You can get more details of the `EXPIRE_AFTER` strategy [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-92C030BE-5444-45B4-891F-63EA6872FEA1.html).
+* `ui_button_label` - (Optional) Customizes the label of the UI button of the login screen. Only available since VCD 10.5.1
 
 ## Attribute Reference
 

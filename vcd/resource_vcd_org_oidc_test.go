@@ -21,6 +21,7 @@ func TestAccVcdOrgOidc(t *testing.T) {
 	oidcResource1 := "vcd_org_oidc.oidc1"
 	oidcResource2 := "vcd_org_oidc.oidc2"
 	oidcResource3 := "vcd_org_oidc.oidc3"
+	oidcData := "data.vcd_org_oidc.oidc_data"
 
 	var params = StringMap{
 		"OrgName1":          orgName1,
@@ -36,12 +37,15 @@ func TestAccVcdOrgOidc(t *testing.T) {
 	step1 := templateFill(testAccCheckVcdOrgOidc, params)
 	params["FuncName"] = t.Name() + "-Step2"
 	step2 := templateFill(testAccCheckVcdOrgOidc2, params)
+	params["FuncName"] = t.Name() + "-Step3"
+	step3 := templateFill(testAccCheckVcdOrgOidc3, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 	debugPrintf("#[DEBUG] Configuration Step 1: %s", step1)
-	debugPrintf("#[DEBUG] Configuration Step 2: %s", step1)
+	debugPrintf("#[DEBUG] Configuration Step 2: %s", step2)
+	debugPrintf("#[DEBUG] Configuration Step 3: %s", step3)
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -89,6 +93,12 @@ func TestAccVcdOrgOidc(t *testing.T) {
 					resourceFieldsEqual(oidcResource1, oidcResource3, []string{
 						"id", "org_id", "redirect_uri", "wellknown_endpoint", "key_refresh_endpoint",
 					}),
+				),
+			},
+			{
+				Config: step3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resourceFieldsEqual(oidcResource1, oidcData, nil),
 				),
 			},
 			{
@@ -181,6 +191,12 @@ resource "vcd_org_oidc" "oidc3" {
     certificate     = tolist(vcd_org_oidc.oidc1.key)[0].certificate
 	expiration_date = tolist(vcd_org_oidc.oidc1.key)[0].expiration_date
   }
+}
+`
+
+const testAccCheckVcdOrgOidc3 = testAccCheckVcdOrgOidc2 + `
+data "vcd_org_oidc" "oidc_data" {
+  org_id = vcd_org.org1.id
 }
 `
 
