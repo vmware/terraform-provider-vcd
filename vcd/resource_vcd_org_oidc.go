@@ -246,7 +246,7 @@ func resourceVcdOrgOidc() *schema.Resource {
 				Optional:         true,
 				Description:      "Defines the frequency of key refresh. Maximum is 720 hours",
 				RequiredWith:     []string{"key_refresh_endpoint"},
-				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 720)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 720)),
 			},
 			"key_refresh_strategy": {
 				Type:             schema.TypeString,
@@ -260,7 +260,7 @@ func resourceVcdOrgOidc() *schema.Resource {
 				Optional:         true,
 				Description:      "Defines the expiration period of the key, only when 'key_refresh_strategy=EXPIRE_AFTER'. Maximum is 24 hours",
 				RequiredWith:     []string{"key_refresh_endpoint", "key_refresh_strategy"},
-				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 24)),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 24)),
 			},
 			"ui_button_label": {
 				Type:        schema.TypeString,
