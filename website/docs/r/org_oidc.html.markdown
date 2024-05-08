@@ -20,7 +20,7 @@ data "vcd_org" "my_org" {
 }
 
 resource "vcd_org_oidc" "oidc" {
-  org_id                      = vcd_org.my_org.id
+  org_id                      = data.vcd_org.my_org.id
   enabled                     = true
   prefer_id_token             = false
   client_id                   = "clientId"
@@ -38,7 +38,7 @@ data "vcd_org" "my_org" {
 }
 
 resource "vcd_org_oidc" "oidc" {
-  org_id                      = vcd_org.my_org.id
+  org_id                      = data.vcd_org.my_org.id
   enabled                     = true
   prefer_id_token             = false
   client_id                   = "clientId"
