@@ -12,15 +12,56 @@ Provides a VMware Cloud Director Organization OIDC resource. This can be used to
 
 Supported in provider *v3.13+*
 
-## Example Usage
+## Example Usage with Well-known Endpoint
 
 ```hcl
 data "vcd_org" "my_org" {
   name = "my-org"
 }
 
-resource "vcd_org_oidc" "my-org-oidc" {
-  org_id = data.vcd_org.my_org.id
+resource "vcd_org_oidc" "oidc" {
+  org_id                      = vcd_org.my_org.id
+  enabled                     = true
+  prefer_id_token             = false
+  client_id                   = "clientId"
+  client_secret               = "clientSecret"
+  max_clock_skew_seconds      = 60
+  wellknown_endpoint          = "https://my-idp.company.com/oidc/.well-known/openid-configuration"
+}
+```
+
+## Example Usage without Well-known Endpoint
+
+```hcl
+data "vcd_org" "my_org" {
+  name = "my-org"
+}
+
+resource "vcd_org_oidc" "oidc" {
+  org_id                      = vcd_org.my_org.id
+  enabled                     = true
+  prefer_id_token             = false
+  client_id                   = "clientId"
+  client_secret               = "clientSecret"
+  max_clock_skew_seconds      = 60
+  issuer_id                   = "https://my-idp.company.com/oidc"
+  user_authorization_endpoint = "https://my-idp.company.com/oidc/authorize"
+  access_token_endpoint       = "https://my-idp.company.com/oidc/token"
+  userinfo_endpoint           = "https://my-idp.company.com/oidc/userinfo"
+  scopes                      = ["openid", "profile", "email", "address", "phone", "offline_access"]
+  claims_mapping {
+    email      = "email"
+    subject    = "sub"
+    last_name  = "family_name"
+    first_name = "given_name"
+    full_name  = "name"
+  }
+  key {
+    id              = "rsa1"
+    algorithm       = "RSA"
+    certificate     = file("certificate.pem")
+    expiration_date = "2037-05-13T07:44:12Z"
+  }
 }
 ```
 
