@@ -98,7 +98,7 @@ func resourceVcdOrgOidc() *schema.Resource {
 				Default:  60,
 				Description: "The maximum clock skew is the maximum allowable time difference between the client and server. " +
 					"This time compensates for any small-time differences in the timestamps when verifying tokens",
-				ValidateDiagFunc: minimumValue(0, "'max_clock_skew_seconds' must be higher than or equal to 0"),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 			},
 			"scopes": {
 				Type: schema.TypeSet,
