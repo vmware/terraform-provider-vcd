@@ -121,7 +121,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	// --------------------------------------------------------------
 	// Solution Add-ons
 	// --------------------------------------------------------------
-	if govcdClient.Client.IsSysAdmin {
+	/* if govcdClient.Client.IsSysAdmin {
 		allEntries, err := govcdClient.GetAllSolutionAddons(nil)
 		if err != nil {
 			return fmt.Errorf("error retrieving all SLZs: %s", err)
@@ -141,7 +141,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 				return fmt.Errorf("error removing Solution Add-on: %s", err)
 			}
 		}
-	}
+	} */
 
 	// --------------------------------------------------------------
 	// Solution Landing Zone (SLZ)
