@@ -19,7 +19,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 	// This regular expression matches strings with at most 31 characters, composed only by lowercase alphanumeric characters or '-',
 	// that must start with an alphabetic character, and end with an alphanumeric.
 	// This is used for any "name" property in CSE, like cluster name, worker pool name or storage class name.
-	var kubernetesNameRegex = regexp.MustCompile(`^[a-z](?:[a-z0-9-]{0,29}[a-z0-9])?$`)
+	kubernetesNameRegex := regexp.MustCompile(`^[a-z](?:[a-z0-9-]{0,29}[a-z0-9])?$`)
 
 	return &schema.Resource{
 		CreateContext: resourceVcdCseKubernetesClusterCreate,
