@@ -47,7 +47,7 @@ resource "vcd_org_oidc" "oidc" {
   client_secret          = "clientSecret"
   max_clock_skew_seconds = 60
   wellknown_endpoint     = "https://my-idp.company.com/oidc/.well-known/openid-configuration"
-  
+
   # Overrides:
   access_token_endpoint = "https://my-other-idp.company.com/oidc/token"
   userinfo_endpoint     = "https://my-other-idp.company.com/oidc/userinfo"
