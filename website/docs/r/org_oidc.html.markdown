@@ -159,3 +159,5 @@ terraform import vcd_org_oidc.my_org_oidc organization_id
 
 After that, you must expand the configuration file before you can either update or delete the OIDC configuration. Running `terraform plan`
 at this stage will show the difference between the minimal configuration file and the stored properties.
+
+[docs-import]:https://www.terraform.io/docs/import/

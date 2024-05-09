@@ -176,3 +176,5 @@ terraform import vcd_org_ldap.my-org-ldap organization_id
 
 After that, you must expand the configuration file before you can either update or delete the LDAP configuration. Running `terraform plan`
 at this stage will show the difference between the minimal configuration file and the stored properties.
+
+[docs-import]:https://www.terraform.io/docs/import/
