@@ -30,7 +30,7 @@ func resourceVcdOrgOidc() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Organization ID that will have the OpenID Connect settings configured",
+				Description: "ID of the Organization that will have the OpenID Connect settings configured",
 			},
 			"client_id": {
 				Type:        schema.TypeString,

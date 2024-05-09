@@ -49,10 +49,35 @@ resource "vcd_org_oidc" "oidc" {
   wellknown_endpoint     = "https://my-idp.company.com/oidc/.well-known/openid-configuration"
   
   # Overrides:
-  access_token_endpoint = "https://my-idp.company.com/oidc/token"
-  userinfo_endpoint     = "https://my-idp.company.com/oidc/userinfo"
+  access_token_endpoint = "https://my-other-idp.company.com/oidc/token"
+  userinfo_endpoint     = "https://my-other-idp.company.com/oidc/userinfo"
 }
 ```
+
+Once the OIDC settings are created, if users want to restore an overridden value to the original one given by the
+well-known configuration endpoint, they must perform an update in code to set the previous value explicitly:
+
+```hcl
+data "vcd_org" "my_org" {
+  name = "my-org"
+}
+
+resource "vcd_org_oidc" "oidc" {
+  org_id                 = data.vcd_org.my_org.id
+  enabled                = true
+  prefer_id_token        = false
+  client_id              = "clientId"
+  client_secret          = "clientSecret"
+  max_clock_skew_seconds = 60
+  wellknown_endpoint     = "https://my-idp.company.com/oidc/.well-known/openid-configuration"
+
+  access_token_endpoint = "https://my-idp.company.com/oidc/token"          # Restores the previous value
+  userinfo_endpoint     = "https://my-other-idp.company.com/oidc/userinfo" # Still overridden
+}
+```
+
+In other words, removing the argument or setting it to `""` won't make the original value from the well-known configuration endpoint
+to be restored during updates.
 
 ## Example Usage without Well-known Configuration Endpoint
 
@@ -93,26 +118,27 @@ resource "vcd_org_oidc" "oidc" {
 
 The following arguments are supported:
 
-* `org_id` - (Required) Since there is only one OIDC configuration available for an organization, the resource can be identified by the Org itself
+* `org_id` - (Required) ID of the Organization that will have the OpenID Connect settings configured. There must be only one
+  resource `vcd_org_oidc` per `org_id`, as the configuration is unique
 * `client_id` - (Required) Client ID to use with the OIDC provider
 * `client_secret` - (Required) Client Secret to use with the OIDC provider
 * `enabled` - (Required) Either `true` or `false`, specifies whether the OIDC authentication is enabled for the given organization
-* `wellknown_endpoint` - (Optional) An endpoint that can be set to automatically retrieve the OIDC provider configuration and set
-  the following arguments without setting them explicitly in HCL: `issuer_id`, `user_authorization_endpoint`, `access_token_endpoint`, 
-  `userinfo_endpoint`, the `claims_mapping` block, any `key` block, and `scopes`. These mentioned attributes will be computed, and
-  can be overridden by setting them explicitly in HCL configuration
+* `wellknown_endpoint` - (Optional) This endpoint retrieves the OIDC provider configuration and automatically sets
+  the following arguments, without setting them explicitly: `issuer_id`, `user_authorization_endpoint`, `access_token_endpoint`, 
+  `userinfo_endpoint`, the `claims_mapping` block, the `key` blocks, and `scopes`. These mentioned attributes will be computed, and
+  can be overridden by setting them explicitly in HCL code
 * `issuer_id` - (Optional) The issuer ID for the OIDC provider.
   If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**.
-  This allows administrators to override the configuration given by `wellknown_endpoint`
+  This allows users to override the configuration given by `wellknown_endpoint`
 * `user_authorization_endpoint` - (Optional) The issuer ID for the OIDC provider.
   If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**.
-  This allows administrators to override the configuration given by `wellknown_endpoint`
+  This allows users to override the configuration given by `wellknown_endpoint`
 * `access_token_endpoint` - (Optional) The endpoint to use for access tokens.
   If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**.
-  This allows administrators to override the configuration given by `wellknown_endpoint`
+  This allows users to override the configuration given by `wellknown_endpoint`
 * `userinfo_endpoint` - (Optional) The endpoint to use for User Info.
   If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**.
-  This allows administrators to override the configuration given by `wellknown_endpoint`
+  This allows users to override the configuration given by `wellknown_endpoint`
 * `prefer_id_token` - (Required) If you want to combine claims from `userinfo_endpoint` and the ID Token, set this to `true`.
   The identity providers do not provide all the required claims set in `userinfo_endpoint`. By setting this argument to `true`,
   VMware Cloud Director can fetch and consume claims from both sources
@@ -120,11 +146,11 @@ The following arguments are supported:
   This time compensates for any small-time differences in the timestamps when verifying tokens. The **default** value is `60` seconds.
 * `scopes` - (Optional) A set of scopes to use with the OIDC provider. They are used to authorize access to user details,
   by defining the permissions that the access tokens have to access user information.
-  If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**. This allows administrators
+  If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**. This allows users
   to override the scopes given by `wellknown_endpoint`. Setting `scopes = []` will make Terraform to set the scopes provided originally
   by the `wellknown_endpoint`
 * `claims_mapping` - (Optional) A single configuration block that specifies the claim mappings to use with the OIDC provider.
-  If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**. This allows administrators
+  If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**. This allows users
   to override the claims given by `wellknown_endpoint`. The supported claims are:
   * `email` - Required if `wellknown_endpoint` doesn't give info about it
   * `subject` - Required if `wellknown_endpoint` doesn't give info about it
@@ -134,7 +160,7 @@ The following arguments are supported:
   * `groups` - Optional
   * `roles` - Optional
 * `key` - (Optional) One or more configuration blocks that specify the keys to use with the OIDC provider.
-  If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**. This allows administrators
+  If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**. This allows users
   to override the keys given by `wellknown_endpoint`. Each key requires the following:
   * `id` - Identifier of the key
   * `algorithm` - Algorithm used by the key. Can be `RSA` or `EC`
