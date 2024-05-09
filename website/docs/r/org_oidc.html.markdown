@@ -173,7 +173,7 @@ The following arguments are supported:
   The different strategies are explained [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-92C030BE-5444-45B4-891F-63EA6872FEA1.html).
 * `key_expire_duration_hours` - (Optional) Required if `key_refresh_endpoint` is set and `key_refresh_strategy=EXPIRE_AFTER`. Defines the expiration period of the key.
   You can get more details of the `EXPIRE_AFTER` strategy [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-92C030BE-5444-45B4-891F-63EA6872FEA1.html).
-* `ui_button_label` - (Optional) Customizes the label of the UI button of the login screen. Only available since VCD 10.5.1
+* `ui_button_label` - (Optional; VCD `10.5.1+`) Customizes the label of the UI button of the login screen
 
 ## Attribute Reference
 
