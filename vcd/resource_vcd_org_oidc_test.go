@@ -96,7 +96,7 @@ func TestAccVcdOrgOidc(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual(oidcResource1, oidcResource2, []string{
 						"id", "org_id", "redirect_uri", "wellknown_endpoint", "key_refresh_endpoint",
-						"user_authorization_endpoint", "claims_mapping.0.subject",
+						"user_authorization_endpoint", "claims_mapping.0.subject", "ui_button_label", "prefer_id_token",
 					}),
 					resource.TestCheckResourceAttr(oidcResource2, "user_authorization_endpoint", "https://www.dummy.com"),
 					resource.TestCheckResourceAttr(oidcResource2, "claims_mapping.0.subject", "foo"),
@@ -164,7 +164,6 @@ const testAccCheckVcdOrgOidc2 = testAccCheckVcdOrgOidc + `
 resource "vcd_org_oidc" "oidc2" {
   org_id                      = vcd_org.org2.id
   enabled                     = true
-  {{.PreferIdToken}}
   client_id                   = "clientId"
   client_secret               = "clientSecret"
   max_clock_skew_seconds      = 60
@@ -173,7 +172,6 @@ resource "vcd_org_oidc" "oidc2" {
   claims_mapping {
 	subject = "foo"
   }
-  {{.UIButtonLabel}}
 }
 
 resource "vcd_org_oidc" "oidc3" {

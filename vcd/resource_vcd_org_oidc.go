@@ -369,8 +369,8 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 	if vcdClient.Client.APIVCDMaxVersionIs(">= 37.1") {
 		settings.EnableIdTokenClaims = addrOf(d.Get("prefer_id_token").(bool))
 	}
-	if vcdClient.Client.APIVCDMaxVersionIs(">= 38.1") {
-		settings.CustomUiButtonLabel = addrOf(d.Get("ui_button_label").(string))
+	if v, ok := d.GetOk("ui_button_label"); ok && vcdClient.Client.APIVCDMaxVersionIs(">= 38.1") {
+		settings.CustomUiButtonLabel = addrOf(v.(string))
 	}
 
 	_, err = org.SetOpenIdConnectSettings(settings)
