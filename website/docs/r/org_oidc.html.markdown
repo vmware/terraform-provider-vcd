@@ -32,6 +32,28 @@ resource "vcd_org_oidc" "oidc" {
 }
 ```
 
+Users can override any value retrieved by the well-known configuration:
+
+```hcl
+data "vcd_org" "my_org" {
+  name = "my-org"
+}
+
+resource "vcd_org_oidc" "oidc" {
+  org_id                 = data.vcd_org.my_org.id
+  enabled                = true
+  prefer_id_token        = false
+  client_id              = "clientId"
+  client_secret          = "clientSecret"
+  max_clock_skew_seconds = 60
+  wellknown_endpoint     = "https://my-idp.company.com/oidc/.well-known/openid-configuration"
+  
+  # Overrides:
+  access_token_endpoint = "https://my-idp.company.com/oidc/token"
+  userinfo_endpoint     = "https://my-idp.company.com/oidc/userinfo"
+}
+```
+
 ## Example Usage without Well-known Configuration Endpoint
 
 ```hcl
