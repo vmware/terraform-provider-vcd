@@ -19,7 +19,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 	// This regular expression matches strings with at most 31 characters, composed only by lowercase alphanumeric characters or '-',
 	// that must start with an alphabetic character, and end with an alphanumeric.
 	// This is used for any "name" property in CSE, like cluster name, worker pool name or storage class name.
-	const kubernetesNameRegex = `^[a-z](?:[a-z0-9-]{0,29}[a-z0-9])?$`
+	var kubernetesNameRegex = regexp.MustCompile(`^[a-z](?:[a-z0-9-]{0,29}[a-z0-9])?$`)
 
 	return &schema.Resource{
 		CreateContext: resourceVcdCseKubernetesClusterCreate,
@@ -63,7 +63,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "The name of the Kubernetes cluster",
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(kubernetesNameRegex), "name must contain only lowercase alphanumeric characters or '-',"+
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(kubernetesNameRegex, "name must contain only lowercase alphanumeric characters or '-',"+
 					"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters")),
 			},
 			"kubernetes_template_id": {
@@ -184,7 +184,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "The name of this worker pool. Must be unique",
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(kubernetesNameRegex), "name must contain only lowercase alphanumeric characters or '-',"+
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(kubernetesNameRegex, "name must contain only lowercase alphanumeric characters or '-',"+
 								"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters")),
 						},
 						"machine_count": {
@@ -242,7 +242,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							ForceNew:    true,
 							Type:        schema.TypeString,
 							Description: "Name to give to this storage class",
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(kubernetesNameRegex), "name must contain only lowercase alphanumeric characters or '-',"+
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(kubernetesNameRegex, "name must contain only lowercase alphanumeric characters or '-',"+
 								"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters")),
 						},
 						"reclaim_policy": {
