@@ -415,7 +415,6 @@ func genericVcdOrgOidcRead(_ context.Context, d *schema.ResourceData, meta inter
 	dSet(d, "enabled", settings.Enabled)
 	dSet(d, "wellknown_endpoint", settings.WellKnownEndpoint)
 	dSet(d, "issuer_id", settings.IssuerId)
-	dSet(d, "prefer_id_token", settings.EnableIdTokenClaims)
 	dSet(d, "user_authorization_endpoint", settings.UserAuthorizationEndpoint)
 	dSet(d, "access_token_endpoint", settings.AccessTokenEndpoint)
 	dSet(d, "userinfo_endpoint", settings.UserInfoEndpoint)
@@ -460,8 +459,15 @@ func genericVcdOrgOidcRead(_ context.Context, d *schema.ResourceData, meta inter
 	dSet(d, "key_refresh_period_hours", settings.KeyRefreshFrequencyInHours)
 	dSet(d, "key_refresh_strategy", settings.KeyRefreshStrategy)
 	dSet(d, "key_expire_duration_hours", settings.KeyExpireDurationInHours)
-	dSet(d, "ui_button_label", settings.CustomUiButtonLabel)
 	dSet(d, "redirect_uri", settings.OrgRedirectUri)
+
+	if settings.EnableIdTokenClaims != nil {
+		dSet(d, "prefer_id_token", *settings.EnableIdTokenClaims)
+	}
+	if settings.CustomUiButtonLabel != nil {
+		dSet(d, "ui_button_label", *settings.CustomUiButtonLabel)
+	}
+
 	d.SetId(adminOrg.AdminOrg.ID)
 
 	return nil
