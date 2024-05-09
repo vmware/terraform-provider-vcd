@@ -27,7 +27,7 @@ users, roles, runtime defined entities, and more.
 ## Example Usage (Uploading an image and create a Solution Add-On entry)
 
 ```hcl
-data "vcd_solution_landing_zone" "slz" { }
+data "vcd_solution_landing_zone" "slz" {}
 
 resource "vcd_catalog_media" "dse14" {
   org        = "solution_org"
