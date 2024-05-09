@@ -80,7 +80,7 @@ func TestAccVcdOrgOidc(t *testing.T) {
 					resource.TestMatchResourceAttr(oidcResource1, "user_authorization_endpoint", regexp.MustCompile(fmt.Sprintf("^%s://%s.*$", oidcServerUrl.Scheme, oidcServerUrl.Host))),
 					resource.TestMatchResourceAttr(oidcResource1, "access_token_endpoint", regexp.MustCompile(fmt.Sprintf("^%s://%s.*$", oidcServerUrl.Scheme, oidcServerUrl.Host))),
 					resource.TestMatchResourceAttr(oidcResource1, "userinfo_endpoint", regexp.MustCompile(fmt.Sprintf("^%s://%s.*$", oidcServerUrl.Scheme, oidcServerUrl.Host))),
-					testMatchResourceAttrWhenVersionMatches(oidcResource1, "prefer_id_token", regexp.MustCompile("^false$"), ">= 37.1"),
+					testMatchResourceAttrWhenVersionMatches(oidcResource1, "prefer_id_token", regexp.MustCompile("^true$"), ">= 37.1"),
 					resource.TestCheckResourceAttr(oidcResource1, "max_clock_skew_seconds", "60"),
 					resource.TestMatchResourceAttr(oidcResource1, "scopes.#", regexp.MustCompile(`[1-9][0-9]*`)),
 					resource.TestCheckResourceAttrSet(oidcResource1, "claims_mapping.0.email"),
