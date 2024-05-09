@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_org_oidc"
 sidebar_current: "docs-vcd-resource-org-oidc"
 description: |-
-  Provides a VMware Cloud Director Organization resource to configure OpenID Connect for an Organization.
+  Provides a resource to configure OpenID Connect (OIDC) for an Organization in VMware Cloud Director.
 ---
 
 # vcd\_org\_oidc
 
-Provides a VMware Cloud Director Organization resource to configure OpenID Connect for an Organization.
+Provides a resource to configure OpenID Connect (OIDC) for an Organization in VMware Cloud Director.
 
 Supported in provider *v3.13+*
 

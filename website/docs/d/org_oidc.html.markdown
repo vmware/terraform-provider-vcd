@@ -3,14 +3,14 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_org_oidc"
 sidebar_current: "docs-vcd-data-source-org-oidc"
 description: |-
-  Provides a data source to read OIDC configuration for an Organization.
+  Provides a data source to read the OpenID Connect (OIDC) configuration of an Organization in VMware Cloud Director.
 ---
 
 # vcd\_org\_oidc
 
-Supported in provider *v3.13+*.
+Provides a data source to read the OpenID Connect (OIDC) configuration of an Organization in VMware Cloud Director.
 
-Provides a data source to read OIDC configuration for an Organization.
+Supported in provider *v3.13+*.
 
 ## Example Usage
 
@@ -28,8 +28,8 @@ data "vcd_org_oidc" "oidc_settings" {
 
 The following arguments are supported:
 
-* `org_id` - (Required)  - ID of the organization containing the OIDC settings
+* `org_id` - (Required) - ID of the organization containing the OIDC settings
 
 ## Attribute Reference
 
-* `foo` - TBD
+All the arguments and attributes from [the `vcd_org_oidc` resource](/providers/vmware/vcd/latest/docs/resources/org_oidc) are available as read-only.
