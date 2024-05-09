@@ -3,16 +3,18 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_org_oidc"
 sidebar_current: "docs-vcd-resource-org-oidc"
 description: |-
-  Provides a VMware Cloud Director Organization OIDC resource. This can be used to create, delete, and update the OIDC configuration for an Organization.
+  Provides a VMware Cloud Director Organization resource to configure OpenID Connect for an Organization.
 ---
 
 # vcd\_org\_oidc
 
-Provides a VMware Cloud Director Organization OIDC resource. This can be used to create, update, and delete OIDC configuration for an Organization.
+Provides a VMware Cloud Director Organization resource to configure OpenID Connect for an Organization.
 
 Supported in provider *v3.13+*
 
-## Example Usage with Well-known Endpoint
+## Example Usage with Well-known Configuration Endpoint
+
+The well-known configuration endpoint retrieves all the OpenID Connect settings values:
 
 ```hcl
 data "vcd_org" "my_org" {
@@ -20,17 +22,17 @@ data "vcd_org" "my_org" {
 }
 
 resource "vcd_org_oidc" "oidc" {
-  org_id                      = data.vcd_org.my_org.id
-  enabled                     = true
-  prefer_id_token             = false
-  client_id                   = "clientId"
-  client_secret               = "clientSecret"
-  max_clock_skew_seconds      = 60
-  wellknown_endpoint          = "https://my-idp.company.com/oidc/.well-known/openid-configuration"
+  org_id                 = data.vcd_org.my_org.id
+  enabled                = true
+  prefer_id_token        = false
+  client_id              = "clientId"
+  client_secret          = "clientSecret"
+  max_clock_skew_seconds = 60
+  wellknown_endpoint     = "https://my-idp.company.com/oidc/.well-known/openid-configuration"
 }
 ```
 
-## Example Usage without Well-known Endpoint
+## Example Usage without Well-known Configuration Endpoint
 
 ```hcl
 data "vcd_org" "my_org" {
