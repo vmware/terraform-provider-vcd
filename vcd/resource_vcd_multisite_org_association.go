@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceVcdOrgAssociation() *schema.Resource {
+func resourceVcdMultisiteOrgAssociation() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdOrgAssociationCreate,
 		DeleteContext: resourceVcdOrgAssociationDelete,
@@ -49,7 +49,7 @@ func resourceVcdOrgAssociation() *schema.Resource {
 				Computed:    true,
 				Description: "Status of the association",
 			},
-			"check_connection_minutes": {
+			"connection_timeout_mins": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     0,
@@ -103,7 +103,7 @@ func resourceVcdOrgAssociationCreate(ctx context.Context, d *schema.ResourceData
 		return diag.Errorf("error setting association between Org '%s' and Org '%s': %s", org.AdminOrg.Name, associationData.OrgName, err)
 	}
 	d.SetId(associationData.OrgID)
-	// Note: "check_connection_minutes" will only be used in UPDATE operations
+	// Note: "connection_timeout_mins" will only be used in UPDATE operations
 	return resourceVcdOrgAssociationRead(ctx, d, meta)
 }
 
@@ -152,8 +152,8 @@ func resourceVcdOrgAssociationUpdate(ctx context.Context, d *schema.ResourceData
 	if err != nil {
 		return diag.Errorf("error retrieving Org '%s': %s", orgId, err)
 	}
-	connectionCheckMinutes := d.Get("check_connection_minutes").(int)
-	if d.HasChange("check_connection_minutes") && connectionCheckMinutes > 0 {
+	connectionCheckMinutes := d.Get("connection_timeout_mins").(int)
+	if d.HasChange("connection_timeout_mins") && connectionCheckMinutes > 0 {
 		status, elapsed, err := org.CheckOrgAssociation(associatedOrgId, time.Minute*time.Duration(connectionCheckMinutes))
 		if err != nil {
 			return diag.Errorf("error checking for org connection after %s - detected status '%s': %s", elapsed, status, err)

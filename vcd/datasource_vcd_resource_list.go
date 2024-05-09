@@ -1328,10 +1328,10 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 	// Note: do not try to get the data sources list, as it would result in a circular reference
 	case "resource", "resources":
 		list, err = getResourcesList()
-	case "vcd_site_association":
-		list, err = getSiteAssociationList(d, meta, "vcd_site_association")
-	case "vcd_org_association":
-		list, err = getOrgAssociationList(d, meta, "vcd_org_association")
+	case "vcd_multisite_site_association":
+		list, err = getSiteAssociationList(d, meta, "vcd_multisite_site_association")
+	case "vcd_multisite_org_association":
+		list, err = getOrgAssociationList(d, meta, "vcd_multisite_org_association")
 	case "vcd_org", "org", "orgs":
 		list, err = getOrgList(d, meta, "vcd_org")
 	case "vcd_org_ldap", "vcd_org_saml":

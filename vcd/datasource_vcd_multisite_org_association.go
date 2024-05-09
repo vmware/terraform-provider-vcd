@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func datasourceVcdOrgAssociation() *schema.Resource {
+func datasourceVcdMultisiteOrgAssociation() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdOrgAssociationRead,
 		Schema: map[string]*schema.Schema{

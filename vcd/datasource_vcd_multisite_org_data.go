@@ -9,7 +9,7 @@ import (
 	"sort"
 )
 
-func datasourceVcdOrgMultiSite() *schema.Resource {
+func datasourceVcdMultiSiteOrgData() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdOrgMultiSiteRead,
 		Schema: map[string]*schema.Schema{
@@ -34,7 +34,7 @@ func datasourceVcdOrgMultiSite() *schema.Resource {
 				Computed:    true,
 				Description: "Data needed to associate this Organization to another",
 			},
-			"association_data_file": {
+			"download_to_file": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Name of the file to be filled with association data for this Org",
@@ -46,7 +46,7 @@ func datasourceVcdOrgMultiSite() *schema.Resource {
 func datasourceVcdOrgMultiSiteRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*VCDClient)
 	orgId := d.Get("org_id").(string)
-	associationDataFile := d.Get("association_data_file").(string)
+	downloadToFile := d.Get("download_to_file").(string)
 	org, err := client.GetAdminOrgById(orgId)
 	if err != nil {
 		return diag.Errorf("error retrieving Org '%s': %s", orgId, err)
@@ -58,10 +58,10 @@ func datasourceVcdOrgMultiSiteRead(ctx context.Context, d *schema.ResourceData, 
 	}
 	d.SetId(orgId)
 	dSet(d, "association_data", string(rawData))
-	if associationDataFile != "" {
-		err = os.WriteFile(path.Clean(associationDataFile), rawData, 0600)
+	if downloadToFile != "" {
+		err = os.WriteFile(path.Clean(downloadToFile), rawData, 0600)
 		if err != nil {
-			return diag.Errorf("error writing Org '%s' association data to file '%s' : %s", org.AdminOrg.Name, associationDataFile, err)
+			return diag.Errorf("error writing Org '%s' association data to file '%s' : %s", org.AdminOrg.Name, downloadToFile, err)
 		}
 	}
 	associations, err := org.GetOrgAssociations()

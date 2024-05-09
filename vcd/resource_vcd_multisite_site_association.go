@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceVcdSiteAssociation() *schema.Resource {
+func resourceVcdMultisiteSiteAssociation() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdSiteAssociationCreate,
 		ReadContext:   resourceVcdSiteAssociationRead,
@@ -41,7 +41,7 @@ func resourceVcdSiteAssociation() *schema.Resource {
 				Computed:    true,
 				Description: "Status of the association",
 			},
-			"check_connection_minutes": {
+			"connection_timeout_mins": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     0,
@@ -94,7 +94,7 @@ func resourceVcdSiteAssociationCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.Errorf("no association found for site '%s' after setting: %s", associationData.SiteName, err)
 	}
-	// Note: check_connection_minutes will only be used in UPDATE operations
+	// Note: connection_timeout_mins will only be used in UPDATE operations
 	return resourceVcdSiteAssociationRead(ctx, d, meta)
 }
 
@@ -127,12 +127,12 @@ func genericVcdSiteAssociationRead(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-// resourceVcdSiteAssociationUpdate will only update "check_connection_minutes"
+// resourceVcdSiteAssociationUpdate will only update "connection_timeout_mins"
 func resourceVcdSiteAssociationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*VCDClient)
 	associatedSiteId := d.Id()
-	connectionCheckMinutes := d.Get("check_connection_minutes").(int)
-	if d.HasChange("check_connection_minutes") && connectionCheckMinutes > 0 {
+	connectionCheckMinutes := d.Get("connection_timeout_mins").(int)
+	if d.HasChange("connection_timeout_mins") && connectionCheckMinutes > 0 {
 		status, elapsed, err := client.Client.CheckSiteAssociation(associatedSiteId, time.Minute*time.Duration(connectionCheckMinutes))
 		if err != nil {
 			return diag.Errorf("error checking for site connection after %s - detected status '%s': %s", elapsed, status, err)
