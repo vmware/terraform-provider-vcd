@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"regexp"
 	"sort"
 	"time"
 )
@@ -62,8 +63,8 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "The name of the Kubernetes cluster",
-				ValidateDiagFunc: matchRegex(kubernetesNameRegex, "name must contain only lowercase alphanumeric characters or '-',"+
-					"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters"),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(kubernetesNameRegex), "name must contain only lowercase alphanumeric characters or '-',"+
+					"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters")),
 			},
 			"kubernetes_template_id": {
 				Type:        schema.TypeString,
@@ -135,7 +136,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Optional:         true,
 							Default:          20, // As suggested in UI
 							ForceNew:         true,
-							ValidateDiagFunc: minimumValue(20, "disk size in Gibibytes (Gi) must be at least 20"),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(20)),
 							Description:      "Disk size, in Gibibytes (Gi), for the control plane nodes. Must be at least 20",
 						},
 						"sizing_policy_id": {
@@ -183,22 +184,22 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "The name of this worker pool. Must be unique",
-							ValidateDiagFunc: matchRegex(kubernetesNameRegex, "name must contain only lowercase alphanumeric characters or '-',"+
-								"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters"),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(kubernetesNameRegex), "name must contain only lowercase alphanumeric characters or '-',"+
+								"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters")),
 						},
 						"machine_count": {
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Default:          1, // As suggested in UI
 							Description:      "The number of nodes that this worker pool has. Must be higher than or equal to 0",
-							ValidateDiagFunc: minimumValue(0, "number of nodes must be higher than or equal to 0"),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 						},
 						"disk_size_gi": {
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Default:          20, // As suggested in UI
 							Description:      "Disk size, in Gibibytes (Gi), for the control plane nodes",
-							ValidateDiagFunc: minimumValue(20, "disk size in Gibibytes (Gi) must be at least 20"),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(20)),
 						},
 						"sizing_policy_id": {
 							Type:        schema.TypeString,
@@ -241,8 +242,8 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							ForceNew:    true,
 							Type:        schema.TypeString,
 							Description: "Name to give to this storage class",
-							ValidateDiagFunc: matchRegex(kubernetesNameRegex, "name must contain only lowercase alphanumeric characters or '-',"+
-								"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters"),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringMatch(regexp.MustCompile(kubernetesNameRegex), "name must contain only lowercase alphanumeric characters or '-',"+
+								"start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters")),
 						},
 						"reclaim_policy": {
 							Required:     true,
@@ -297,7 +298,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Description: "The time, in minutes, to wait for the cluster operations to be successfully completed. For example, during cluster creation, it should be in `provisioned`" +
 					"state before the timeout is reached, otherwise the operation will return an error. For cluster deletion, this timeout" +
 					"specifies the time to wait until the cluster is completely deleted. Setting this argument to `0` means to wait indefinitely",
-				ValidateDiagFunc: minimumValue(0, "timeout must be at least 0 (no timeout)"),
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 			},
 			"kubernetes_version": {
 				Type:        schema.TypeString,
