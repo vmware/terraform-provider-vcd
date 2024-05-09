@@ -130,7 +130,7 @@ The following arguments are supported:
 * `issuer_id` - (Optional) The issuer ID for the OIDC provider.
   If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**.
   This allows users to override the configuration given by `wellknown_endpoint`
-* `user_authorization_endpoint` - (Optional) The issuer ID for the OIDC provider.
+* `user_authorization_endpoint` - (Optional) The endpoint to use for authorization.
   If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**.
   This allows users to override the configuration given by `wellknown_endpoint`
 * `access_token_endpoint` - (Optional) The endpoint to use for access tokens.
@@ -139,11 +139,11 @@ The following arguments are supported:
 * `userinfo_endpoint` - (Optional) The endpoint to use for User Info.
   If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**.
   This allows users to override the configuration given by `wellknown_endpoint`
-* `prefer_id_token` - (Required) If you want to combine claims from `userinfo_endpoint` and the ID Token, set this to `true`.
+* `prefer_id_token` - (Optional; VCD 10.4.1+) If you want to combine claims from `userinfo_endpoint` and the ID Token, set this to `true`.
   The identity providers do not provide all the required claims set in `userinfo_endpoint`. By setting this argument to `true`,
   VMware Cloud Director can fetch and consume claims from both sources
 * `max_clock_skew_seconds` - (Optional) The maximum clock skew is the maximum allowable time difference between the client and server.
-  This time compensates for any small-time differences in the timestamps when verifying tokens. The **default** value is `60` seconds.
+  This time compensates for any small-time differences in the timestamps when verifying tokens. The **default** value is `60` seconds
 * `scopes` - (Optional) A set of scopes to use with the OIDC provider. They are used to authorize access to user details,
   by defining the permissions that the access tokens have to access user information.
   If `wellknown_endpoint` is **not** set, then this argument is **required**. Otherwise, it is **optional**. This allows users
@@ -167,12 +167,13 @@ The following arguments are supported:
   * `certificate` - The contents of a PEM file to create/update the key
   * `expiration_date` - Expiration date for the key. The accepted format is [RFC3339](https://datatracker.ietf.org/doc/html/rfc3339), like `2037-05-13T07:44:12.000Z`
 * `key_refresh_endpoint` - (Optional) Endpoint used to refresh the keys. If set, `key_refresh_period_hours` and `key_refresh_strategy` will be required.
-  If `wellknown_endpoint` is set, then this argument will override the obtained endpoint.
-* `key_refresh_period_hours` - (Optional) Required if `key_refresh_endpoint` is set. Defines the frequency of key refresh. Maximum value is 720 (30 days).
+  If `wellknown_endpoint` is set, then this argument will override the obtained endpoint
+* `key_refresh_period_hours` - (Optional) Required if `key_refresh_endpoint` is set. Defines the frequency of key refresh. Maximum value is `720` (30 days)
 * `key_refresh_strategy` - (Optional) Required if `key_refresh_endpoint` is set. Defines the strategy of key refresh. One of `ADD`, `REPLACE`, `EXPIRE_AFTER`.
-  The different strategies are explained [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-92C030BE-5444-45B4-891F-63EA6872FEA1.html).
-* `key_expire_duration_hours` - (Optional) Required if `key_refresh_endpoint` is set and `key_refresh_strategy=EXPIRE_AFTER`. Defines the expiration period of the key.
+  The different strategies are explained [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-92C030BE-5444-45B4-891F-63EA6872FEA1.html)
+* `key_expire_duration_hours` - (Optional) Required if `key_refresh_endpoint` is set and `key_refresh_strategy=EXPIRE_AFTER`. Defines the expiration period of the key
   You can get more details of the `EXPIRE_AFTER` strategy [here](https://docs.vmware.com/en/VMware-Cloud-Director/10.4/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-92C030BE-5444-45B4-891F-63EA6872FEA1.html).
+  Maximum value is `24`
 * `ui_button_label` - (Optional; VCD `10.5.1+`) Customizes the label of the UI button of the login screen
 
 ## Attribute Reference

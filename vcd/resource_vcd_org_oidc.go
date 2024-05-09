@@ -87,7 +87,7 @@ func resourceVcdOrgOidc() *schema.Resource {
 			},
 			"prefer_id_token": {
 				Type:     schema.TypeBool,
-				Required: true,
+				Optional: true,
 				Description: "If you want to combine claims from 'userinfo_endpoint' and the ID Token, set this to 'true'. " +
 					"The identity providers do not provide all the required claims set in 'userinfo_endpoint'." +
 					"By setting this argument to 'true', VMware Cloud Director can fetch and consume claims from both sources",
@@ -303,6 +303,9 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 	if _, ok := d.GetOk("ui_button_label"); ok && vcdClient.Client.APIVCDMaxVersionIs("< 38.1") {
 		return diag.Errorf("[Organization Open ID Connect %s] 'ui_button_label' can only be used since VCD 10.5.1", operation)
 	}
+	if _, ok := d.GetOk("prefer_id_token"); ok && vcdClient.Client.APIVCDMaxVersionIs("< 37.1") {
+		return diag.Errorf("[Organization Open ID Connect %s] 'prefer_id_token' can only be used since VCD 10.4.1", operation)
+	}
 	// End of validations
 
 	settings := types.OrgOAuthSettings{
@@ -319,10 +322,7 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 		KeyRefreshStrategy:         d.Get("key_refresh_strategy").(string),
 		KeyRefreshFrequencyInHours: d.Get("key_refresh_period_hours").(int),
 		WellKnownEndpoint:          d.Get("wellknown_endpoint").(string),
-		EnableIdTokenClaims:        d.Get("prefer_id_token").(bool),
-		CustomUiButtonLabel:        d.Get("ui_button_label").(string),
 		Scope:                      convertTypeListToSliceOfStrings(scopes),
-		// UsePKCE and SendClientCredentialsAsAuthorizationHeader are not used yet
 	}
 
 	// Key configurations: OAuthKeyConfigurations
@@ -362,6 +362,15 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 		oidcAttributeMapping.GroupsAttributeName = mappingEntry["groups"].(string)
 		oidcAttributeMapping.RolesAttributeName = mappingEntry["roles"].(string)
 		settings.OIDCAttributeMapping = &oidcAttributeMapping
+	}
+
+	// Attributes that depend on the VCD version.
+	// UsePKCE and SendClientCredentialsAsAuthorizationHeader are not used in UI yet
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 37.1") {
+		settings.EnableIdTokenClaims = addrOf(d.Get("prefer_id_token").(bool))
+	}
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 38.1") {
+		settings.CustomUiButtonLabel = addrOf(d.Get("ui_button_label").(string))
 	}
 
 	_, err = org.SetOpenIdConnectSettings(settings)

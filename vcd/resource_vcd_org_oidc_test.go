@@ -29,6 +29,15 @@ func TestAccVcdOrgOidc(t *testing.T) {
 		"OrgName3":          orgName3,
 		"WellKnownEndpoint": oidcServerUrl.String(),
 		"FuncName":          t.Name() + "-Step1",
+		"PreferIdToken":     " ",
+		"UIButtonLabel":     " ",
+	}
+	client := createSystemTemporaryVCDConnection()
+	if client.Client.APIVCDMaxVersionIs(">= 37.1") {
+		params["PreferIdToken"] = "prefer_id_token             = true"
+	}
+	if client.Client.APIVCDMaxVersionIs(">= 38.1") {
+		params["UIButtonLabel"] = "ui_button_label             = \"this is a test\""
 	}
 	testParamsNotEmpty(t, params)
 
@@ -71,7 +80,7 @@ func TestAccVcdOrgOidc(t *testing.T) {
 					resource.TestMatchResourceAttr(oidcResource1, "user_authorization_endpoint", regexp.MustCompile(fmt.Sprintf("^%s://%s.*$", oidcServerUrl.Scheme, oidcServerUrl.Host))),
 					resource.TestMatchResourceAttr(oidcResource1, "access_token_endpoint", regexp.MustCompile(fmt.Sprintf("^%s://%s.*$", oidcServerUrl.Scheme, oidcServerUrl.Host))),
 					resource.TestMatchResourceAttr(oidcResource1, "userinfo_endpoint", regexp.MustCompile(fmt.Sprintf("^%s://%s.*$", oidcServerUrl.Scheme, oidcServerUrl.Host))),
-					resource.TestCheckResourceAttr(oidcResource1, "prefer_id_token", "false"),
+					testMatchResourceAttrWhenVersionMatches(oidcResource1, "prefer_id_token", regexp.MustCompile("^false$"), ">= 37.1"),
 					resource.TestCheckResourceAttr(oidcResource1, "max_clock_skew_seconds", "60"),
 					resource.TestMatchResourceAttr(oidcResource1, "scopes.#", regexp.MustCompile(`[1-9][0-9]*`)),
 					resource.TestCheckResourceAttrSet(oidcResource1, "claims_mapping.0.email"),
@@ -79,6 +88,7 @@ func TestAccVcdOrgOidc(t *testing.T) {
 					resource.TestCheckResourceAttrSet(oidcResource1, "claims_mapping.0.last_name"),
 					resource.TestCheckResourceAttrSet(oidcResource1, "claims_mapping.0.first_name"),
 					resource.TestMatchResourceAttr(oidcResource1, "key.#", regexp.MustCompile(`[1-9][0-9]*`)),
+					testMatchResourceAttrWhenVersionMatches(oidcResource1, "ui_button_label", regexp.MustCompile("^this is a test$"), ">= 38.1"),
 				),
 			},
 			{
@@ -141,11 +151,12 @@ resource "vcd_org" "org3" {
 resource "vcd_org_oidc" "oidc1" {
   org_id                      = vcd_org.org1.id
   enabled                     = true
-  prefer_id_token             = false
+  {{.PreferIdToken}}
   client_id                   = "clientId"
   client_secret               = "clientSecret"
   max_clock_skew_seconds      = 60
   wellknown_endpoint          = "{{.WellKnownEndpoint}}"
+  {{.UIButtonLabel}}
 }
 `
 
@@ -153,7 +164,7 @@ const testAccCheckVcdOrgOidc2 = testAccCheckVcdOrgOidc + `
 resource "vcd_org_oidc" "oidc2" {
   org_id                      = vcd_org.org2.id
   enabled                     = true
-  prefer_id_token             = false
+  {{.PreferIdToken}}
   client_id                   = "clientId"
   client_secret               = "clientSecret"
   max_clock_skew_seconds      = 60
@@ -162,12 +173,13 @@ resource "vcd_org_oidc" "oidc2" {
   claims_mapping {
 	subject = "foo"
   }
+  {{.UIButtonLabel}}
 }
 
 resource "vcd_org_oidc" "oidc3" {
   org_id                      = vcd_org.org3.id
   enabled                     = vcd_org_oidc.oidc1.enabled
-  prefer_id_token             = vcd_org_oidc.oidc1.prefer_id_token
+  {{.PreferIdToken}}
   client_id                   = vcd_org_oidc.oidc1.client_id
   client_secret               = vcd_org_oidc.oidc1.client_secret
   max_clock_skew_seconds      = vcd_org_oidc.oidc1.max_clock_skew_seconds
@@ -191,6 +203,7 @@ resource "vcd_org_oidc" "oidc3" {
     certificate     = tolist(vcd_org_oidc.oidc1.key)[0].certificate
 	expiration_date = tolist(vcd_org_oidc.oidc1.key)[0].expiration_date
   }
+  {{.UIButtonLabel}}
 }
 `
 
