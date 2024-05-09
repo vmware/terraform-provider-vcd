@@ -294,14 +294,14 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	if _, ok := d.GetOk("key_expire_duration_hours"); ok && d.Get("key_refresh_strategy") != "EXPIRE_AFTER" {
-		return diag.Errorf("'key_expire_duration_hours' can only be used when 'key_refresh_strategy=EXPIRE_AFTER', but key_refresh_strategy=%s", d.Get("key_refresh_strategy"))
+		return diag.Errorf("[Organization Open ID Connect %s] 'key_expire_duration_hours' can only be used when 'key_refresh_strategy=EXPIRE_AFTER', but key_refresh_strategy=%s", operation, d.Get("key_refresh_strategy"))
 	}
 	if _, ok := d.GetOk("key_expire_duration_hours"); !ok && d.Get("key_refresh_strategy") == "EXPIRE_AFTER" {
-		return diag.Errorf("'key_refresh_strategy=EXPIRE_AFTER' requires 'key_expire_duration_hours' to be set")
+		return diag.Errorf("[Organization Open ID Connect %s] 'key_refresh_strategy=EXPIRE_AFTER' requires 'key_expire_duration_hours' to be set", operation)
 	}
 
 	if _, ok := d.GetOk("ui_button_label"); ok && vcdClient.Client.APIVCDMaxVersionIs("< 38.1") {
-		return diag.Errorf("'ui_button_label' can only be used since VCD 10.5.1")
+		return diag.Errorf("[Organization Open ID Connect %s] 'ui_button_label' can only be used since VCD 10.5.1", operation)
 	}
 	// End of validations
 
@@ -366,7 +366,7 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 
 	_, err = org.SetOpenIdConnectSettings(settings)
 	if err != nil {
-		return diag.Errorf("[Organization Open ID Connect create] Could not set OIDC settings: %s", err)
+		return diag.Errorf("[Organization Open ID Connect %s] Could not set OIDC settings: %s", operation, err)
 	}
 
 	return resourceVcdOrgOidcRead(ctx, d, meta)
