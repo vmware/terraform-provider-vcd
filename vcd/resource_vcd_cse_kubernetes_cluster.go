@@ -341,6 +341,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The contents of the kubeconfig of the Kubernetes cluster, only available when 'state=provisioned'",
+				Sensitive:   true,
 			},
 			"supported_upgrades": {
 				Type:        schema.TypeSet,
