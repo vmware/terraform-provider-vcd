@@ -27,24 +27,23 @@ func resourceVcdSolutionAddon() *schema.Resource {
 			"catalog_item_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "absolute or relative path to Solution Add-on ISO file",
+				Description: "Solution Add-On Catalog Item ID ",
 			},
 			"addon_path": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "absolute or relative path to Solution Add-on ISO file",
+				Description: "Absolute or relative path to Solution Add-On ISO file available locally",
 			},
-			// Trust certificate - should we untrust (remove the certificate) in "update"?
 			"trust_certificate": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "",
+				Description: "Defines if the resource should automatically trust Solution Add-On certificate",
 			},
-			"state": {
+			"rde_state": {
 				Type:        schema.TypeString,
-				Description: "State reports RDE state",
+				Description: "Parent RDE state",
 				Computed:    true,
 			},
 		},
@@ -63,7 +62,7 @@ func resourceVcdSolutionAddonCreate(ctx context.Context, d *schema.ResourceData,
 	addon, err := vcdClient.CreateSolutionAddOn(createCfg)
 
 	if err != nil {
-		return diag.Errorf("error configuring Solution Add-on: %s", err)
+		return diag.Errorf("error creating Solution Add-On: %s", err)
 	}
 
 	d.SetId(addon.DefinedEntity.DefinedEntity.ID)
@@ -96,10 +95,10 @@ func resourceVcdSolutionAddonRead(ctx context.Context, d *schema.ResourceData, m
 
 	slz, err := vcdClient.GetSolutionAddonById(d.Id())
 	if err != nil {
-		return diag.Errorf("error retrieving Solution Add-on: %s", err)
+		return diag.Errorf("error retrieving Solution Add-On: %s", err)
 	}
 
-	dSet(d, "state", slz.DefinedEntity.DefinedEntity.State)
+	dSet(d, "rde_state", slz.DefinedEntity.DefinedEntity.State)
 	dSet(d, "catalog_item_id", slz.SolutionEntity.Origin.CatalogItemId)
 
 	return nil
@@ -114,7 +113,7 @@ func resourceVcdSolutionAddonDelete(ctx context.Context, d *schema.ResourceData,
 	}
 	err = entity.Delete()
 	if err != nil {
-		return diag.Errorf("error deleting Solution Add-on RDE: %s", err)
+		return diag.Errorf("error deleting Solution Add-On RDE: %s", err)
 	}
 
 	return nil
@@ -139,10 +138,10 @@ func resourceVcdSolutionAddonImport(ctx context.Context, d *schema.ResourceData,
 		if err != nil {
 			addOnTable, err2 := listSolutionAddons(vcdClient)
 			if err2 != nil {
-				return nil, fmt.Errorf("error finding Solution Add-on by ID '%s' and couldn't retrieve list: %s", d.Id(), err2)
+				return nil, fmt.Errorf("error finding Solution Add-On by ID '%s' and couldn't retrieve list: %s", d.Id(), err2)
 			}
 
-			return nil, fmt.Errorf("error finding Solution Add-on by ID '%s': %s\n Available Add-Ons:\n %s", d.Id(), err, addOnTable)
+			return nil, fmt.Errorf("error finding Solution Add-On by ID '%s': %s\n Available Add-Ons:\n %s", d.Id(), err, addOnTable)
 		}
 
 		d.SetId(addOnById.Id())
@@ -151,9 +150,9 @@ func resourceVcdSolutionAddonImport(ctx context.Context, d *schema.ResourceData,
 		if err != nil {
 			addOnTable, err2 := listSolutionAddons(vcdClient)
 			if err2 != nil {
-				return nil, fmt.Errorf("error finding Solution Add-on by ID '%s' and couldn't retrieve list: %s", d.Id(), err2)
+				return nil, fmt.Errorf("error finding Solution Add-On by ID '%s' and couldn't retrieve list: %s", d.Id(), err2)
 			}
-			return nil, fmt.Errorf("error finding Solution Add-on by ID '%s': %s\n Available Add-Ons:\n %s", d.Id(), err, addOnTable)
+			return nil, fmt.Errorf("error finding Solution Add-On by ID '%s': %s\n Available Add-Ons:\n %s", d.Id(), err, addOnTable)
 		}
 
 		d.SetId(addOnByName.Id())
@@ -178,7 +177,7 @@ func listSolutionAddons(vcdClient *VCDClient) (string, error) {
 
 	addOns, err := vcdClient.GetAllSolutionAddons(nil)
 	if err != nil {
-		return "", fmt.Errorf("error retrieving all solution add-ons")
+		return "", fmt.Errorf("error retrieving all Solution Add-Ons")
 	}
 
 	for index, addon := range addOns {

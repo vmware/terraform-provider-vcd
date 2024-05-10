@@ -22,31 +22,14 @@ func datasourceVcdSolutionAddon() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
-				// Description: "absolute or relative path to Solution Add-on ISO file",
+				// Description: "absolute or relative path to Solution Add-On ISO file",
 			},
 			"catalog_item_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "absolute or relative path to Solution Add-on ISO file",
+				Description: "absolute or relative path to Solution Add-On ISO file",
 			},
-			// "addon_path": {
-			// 	Type:        schema.TypeString,
-			// 	Computed:    true,
-			// 	Description: "absolute or relative path to Solution Add-on ISO file",
-			// },
-			// Trust certificate - should we untrust (remove the certificate) in "update"?
-			// "trust_certificate": {
-			// 	Type:        schema.TypeBool,
-			// 	Computed:    true,
-			// 	Description: "",
-			// },
-			// "accept_eula": {
-			// 	Type:        schema.TypeBool,
-			// 	Computed:    true,
-			// 	ForceNew:    true,
-			// 	Description: "",
-			// },
-			"state": {
+			"rde_state": {
 				Type:        schema.TypeString,
 				Description: "State reports RDE state",
 				Computed:    true,
@@ -60,11 +43,10 @@ func datasourceVcdSolutionAddonRead(ctx context.Context, d *schema.ResourceData,
 
 	slz, err := vcdClient.GetSolutionAddonByName(d.Get("name").(string))
 	if err != nil {
-		return diag.Errorf("error retrieving Solution Add-on: %s", err)
+		return diag.Errorf("error retrieving Solution Add-On: %s", err)
 	}
 
-	// dSet(d, "user", slz.SolutionEntity.Origin.AcceptedBy)
-	dSet(d, "state", slz.DefinedEntity.DefinedEntity.State)
+	dSet(d, "rde_state", slz.DefinedEntity.DefinedEntity.State)
 	dSet(d, "catalog_item_id", slz.SolutionEntity.Origin.CatalogItemId)
 
 	return nil

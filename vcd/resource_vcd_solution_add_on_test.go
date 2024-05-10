@@ -22,32 +22,18 @@ func TestAccSolutionAddon(t *testing.T) {
 	vcdClient := createTemporaryVCDConnection(true)
 	org, err := vcdClient.GetOrgByName(testConfig.VCD.Org)
 	if err != nil {
-		t.Fatalf("Add-On config value not specified: %s", err)
+		t.Fatalf("rrror creating temporary VCD connection: %s", err)
 	}
 
 	catalog, err := org.GetCatalogByName(testConfig.VCD.Catalog.NsxtBackedCatalogName, false)
 	if err != nil {
-		t.Fatalf("Add-On config value not specified: %s", err)
+		t.Fatalf("error retrieving catalog: %s", err)
 	}
 
 	localAddOnPath, err := fetchCacheFile(catalog, testConfig.VCD.Catalog.NsxtCatalogAddonDse, t)
 	if err != nil {
-		t.Fatalf("Add-On config value not specified: %s", err)
+		t.Fatalf("error finding Solution Add-On cache file: %s", err)
 	}
-
-	// cacheDir :=
-	// pwd, err := os.Getwd()
-	// if err != nil {
-	// 	t.Fatalf("error retrieving current directory")
-	// }
-	// fileName := testConfig.VCD.Catalog.NsxtCatalogAddonDse
-	// cacheDirPath := pwd + "/../test-resources/cache"
-	// cacheFilePath := cacheDirPath + "/" + fileName
-
-	// While the image should already be present in the catalog
-	// 'testConfig.VCD.Catalog.NsxtBackedCatalogName' with name
-	// 'testConfig.VCD.Catalog.NsxtCatalogAddonDse', it must also be present locally as it must be
-	// extracted and some data of it should be used to create Solution Add-On itself.
 
 	params := StringMap{
 		"Org":     testConfig.VCD.Org,
@@ -59,17 +45,12 @@ func TestAccSolutionAddon(t *testing.T) {
 		"IsolatedNetworkName": testConfig.Nsxt.IsolatedNetwork,
 
 		"AddonIsoPath": localAddOnPath,
-		// "AddonIsoPath2": "/Users/dainius/Downloads/vmware-vcd-ds-1.3.0-22829404.iso",
 	}
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
 	configText1 := templateFill(testAccSolutionAddonStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
-
-	params["FuncName"] = t.Name() + "step2"
-	configText2 := templateFill(testAccSolutionAddonStep2, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -78,20 +59,16 @@ func TestAccSolutionAddon(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		// CheckDestroy:      testAccCheckServiceAccountDestroy(params["Org"].(string), params["SaName"].(string)),
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("vcd_solution_add_on.dse14", "state", "RESOLVED"),
+					resource.TestCheckResourceAttrSet("vcd_solution_add_on.dse14", "id"),
+					resource.TestCheckResourceAttrSet("vcd_solution_add_on.dse14", "catalog_item_id"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on.dse14", "rde_state", "RESOLVED"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on.dse14", "trust_certificate", "true"),
 				),
 			},
-			/* {
-				Config: configText2,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("vcd_solution_add_on.dse14", "state", "RESOLVED"),
-				),
-			}, */
 		},
 	})
 }
@@ -151,95 +128,13 @@ data "vcd_catalog_media" "dse14" {
   org        = "{{.Org}}"
   catalog_id = data.vcd_catalog.nsxt.id
 
-  name              = basename("{{.AddonIsoPath}}")
+  name = basename("{{.AddonIsoPath}}")
 }
 
 resource "vcd_solution_add_on" "dse14" {
   catalog_item_id   = data.vcd_catalog_media.dse14.catalog_item_id
   addon_path        = "{{.AddonIsoPath}}"
   trust_certificate = true
-}
-`
-
-const testAccSolutionAddonStep2 = `
-data "vcd_catalog" "nsxt" {
-  org  = "{{.Org}}"
-  name = "{{.CatalogName}}"
-}
-
-data "vcd_org_vdc" "vdc1" {
-  org  = "{{.Org}}"
-  name = "{{.VdcName}}"
-}
-
-data "vcd_network_routed_v2" "r1" {
-  org  = "{{.Org}}"
-  vdc  = "{{.VdcName}}"
-  name = "{{.RoutedNetworkName}}"
-}
-
-data "vcd_storage_profile" "sp" {
-  org  = "{{.Org}}"
-  vdc  = "{{.VdcName}}"
-  name = "*"
-}
-
-resource "vcd_solution_landing_zone" "slz" {
-  org = "{{.Org}}"
-
-  catalog {
-	id           = data.vcd_catalog.nsxt.id
-  }
-
-  vdc {
-	id         = data.vcd_org_vdc.vdc1.id
-	is_default = true
-
-	org_vdc_network {
-	  id         = data.vcd_network_routed_v2.r1.id
-	  is_default = true
-	}
-
-	compute_policy {
-	  id         = data.vcd_org_vdc.vdc1.default_compute_policy_id
-	  is_default = true
-	}
-
-	storage_policy {
-	  id         = data.vcd_storage_profile.sp.id
-	  is_default = true
-	}
-  }
-}
-
-data "vcd_catalog_media" "dse14" {
-  org        = "{{.Org}}"
-  catalog_id = data.vcd_catalog.nsxt.id
-
-  name              = basename("{{.AddonIsoPath}}")
-  #description       = "new os versions"
-  #media_path        = "{{.AddonIsoPath}}"
-  #upload_any_file   = false # Add-ons are packaged in '.iso' files
-  #upload_piece_size = 10
-}
-
-resource "vcd_catalog_media" "dse13" {
-  org        = "{{.Org}}"
-  catalog_id = data.vcd_catalog.nsxt.id
-
-  name              = basename("{{.AddonIsoPath}}")
-  description       = "new os versions"
-  media_path        = "{{.AddonIsoPath2}}"
-  upload_any_file   = false # Add-ons are packaged in '.iso' files
-  upload_piece_size = 10
-}
-
-resource "vcd_solution_add_on" "dse14" {
-  org               = "{{.Org}}"
-  catalog_item_id   = vcd_catalog_media.dse13.catalog_item_id
-  addon_path        = "{{.AddonIsoPath2}}"
-  trust_certificate = true
-  accept_eula       = true
 }
 `
 
@@ -255,7 +150,6 @@ func fetchCacheFile(catalog *govcd.Catalog, fileName string, t *testing.T) (stri
 	if _, err := os.Stat(cacheFilePath); errors.Is(err, os.ErrNotExist) {
 		// Create cache directory if it doesn't exist
 		if _, err := os.Stat(cacheDirPath); os.IsNotExist(err) {
-			// printVerbose("# Creating directory '%s'\n", cacheDirPath)
 			err := os.Mkdir(cacheDirPath, 0750)
 			if err != nil {
 				t.Fatalf("error creating cache directory: %s", err)
