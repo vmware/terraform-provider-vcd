@@ -213,7 +213,7 @@ func testAccCheckSlzDestroy() resource.TestCheckFunc {
 		conn := testAccProvider.Meta().(*VCDClient)
 		slz, err := conn.GetExactlyOneSolutionLandingZone()
 		if err == nil {
-			return fmt.Errorf("there is still an RDE for Solution Landing Zone: %s", slz.Id())
+			return fmt.Errorf("there is still an RDE for Solution Landing Zone: %s", slz.RdeId())
 		}
 
 		return nil

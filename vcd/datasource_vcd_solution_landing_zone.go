@@ -12,7 +12,7 @@ func dsSlzChildComponent(title string) *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeSet,
 		Required:    true,
-		Description: "",
+		Description: fmt.Sprintf("Details of %s element", title),
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"id": {
@@ -102,12 +102,12 @@ func datasourceVcdSolutionLandingZone() *schema.Resource {
 						"is_default": {
 							Type:        schema.TypeBool,
 							Computed:    true,
-							Description: "Shows is the member is enabled or not",
+							Description: "Defines if this VDC should be treated as the default one",
 						},
 						"capabilities": {
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Description: "",
+							Description: "Set of capabilities of the VDC",
 							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
 						"org_vdc_network": dsSlzChildComponent("Org VDC Network"),
@@ -137,7 +137,7 @@ func datasourceVcdSolutionLandingZoneRead(ctx context.Context, d *schema.Resourc
 	}
 
 	// The real ID of Solution Landing Zone is RDE ID
-	d.SetId(slz.Id())
+	d.SetId(slz.RdeId())
 
 	return nil
 }
