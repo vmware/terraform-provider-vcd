@@ -270,6 +270,7 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		if (dataSourceName == "vcd_org_saml" ||
 			dataSourceName == "vcd_org_saml_metadata" ||
 			dataSourceName == "vcd_org_ldap" ||
+			dataSourceName == "vcd_org_oidc" ||
 			dataSourceName == "vcd_ip_space_custom_quota" ||
 			dataSourceName == "vcd_ip_space_ip_allocation") &&
 			mandatoryFields[fieldIndex] == "org_id" {
