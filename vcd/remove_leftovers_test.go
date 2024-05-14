@@ -3,7 +3,6 @@ package vcd
 import (
 	"fmt"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 
@@ -163,8 +162,6 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			}
 		}
 	}
-
-	os.Exit(1)
 
 	// --------------------------------------------------------------
 	// Provider VDCs
