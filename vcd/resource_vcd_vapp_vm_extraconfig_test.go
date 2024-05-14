@@ -49,7 +49,9 @@ func TestAccVcdVAppVm_extraconfig(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep1)
+	debugPrintf("#[DEBUG] CONFIGURATION step 1: %s\n", configTextStep1)
+	debugPrintf("#[DEBUG] CONFIGURATION step 2: %s\n", configTextStep2)
+	debugPrintf("#[DEBUG] CONFIGURATION step 3: %s\n", configTextStep3)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
