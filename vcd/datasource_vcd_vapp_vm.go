@@ -404,6 +404,30 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 				},
 			},
 		},
+		"extra_config": {
+			Type:        schema.TypeList,
+			Computed:    true,
+			Description: "A block to retrieve extra configuration key-value pairs",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"key": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The key of the extra configuration item",
+					},
+					"value": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The value of the extra configuration item",
+					},
+					"required": {
+						Type:        schema.TypeBool,
+						Computed:    true,
+						Description: "Whether the extra configuration item is required",
+					},
+				},
+			},
+		},
 		"cpu_hot_add_enabled": {
 			Type:        schema.TypeBool,
 			Computed:    true,
