@@ -101,7 +101,10 @@ func TestAccVcdOrgOidc(t *testing.T) {
 					resource.TestCheckResourceAttr(oidcResource2, "issuer_id", "https://doesnotexist.broadcom.com"),
 					resource.TestCheckResourceAttr(oidcResource2, "claims_mapping.0.subject", "foo"),
 					resourceFieldsEqual(oidcResource1, oidcResource3, []string{
-						"id", "org_id", "redirect_uri", "wellknown_endpoint", "key_refresh_endpoint",
+						"id", "org_id", "redirect_uri", "wellknown_endpoint", "key_refresh_endpoint", "key.0.expiration_date",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(oidcResource3, "key.*", map[string]string{
+						"expiration_date": "2077-05-13",
 					}),
 				),
 			},
@@ -199,7 +202,7 @@ resource "vcd_org_oidc" "oidc3" {
     id              = tolist(vcd_org_oidc.oidc1.key)[0].id
     algorithm       = tolist(vcd_org_oidc.oidc1.key)[0].algorithm
     certificate     = tolist(vcd_org_oidc.oidc1.key)[0].certificate
-	expiration_date = tolist(vcd_org_oidc.oidc1.key)[0].expiration_date
+	expiration_date = "2077-05-13"
   }
   {{.UIButtonLabel}}
 }

@@ -109,7 +109,7 @@ resource "vcd_org_oidc" "oidc" {
     id              = "rsa1"
     algorithm       = "RSA"
     certificate     = file("certificate.pem")
-    expiration_date = "2037-05-13T07:44:12.000Z"
+    expiration_date = "2077-05-13"
   }
 }
 ```
@@ -165,7 +165,7 @@ The following arguments are supported:
   * `id` - Identifier of the key
   * `algorithm` - Algorithm used by the key. Can be `RSA` or `EC`
   * `certificate` - The contents of a PEM file to create/update the key
-  * `expiration_date` - Expiration date for the key. The accepted format is [RFC3339](https://datatracker.ietf.org/doc/html/rfc3339), like `2037-05-13T07:44:12.000Z`
+  * `expiration_date` - Expiration date for the key. The accepted format is `YYYY-MM-DD`, like `2077-12-31`
 * `key_refresh_endpoint` - (Optional) Endpoint used to refresh the keys. If set, `key_refresh_period_hours` and `key_refresh_strategy` will be required.
   If `wellknown_endpoint` is set, then this argument will override the obtained endpoint
 * `key_refresh_period_hours` - (Optional) Required if `key_refresh_endpoint` is set. Defines the frequency of key refresh. Maximum value is `720` (30 days)

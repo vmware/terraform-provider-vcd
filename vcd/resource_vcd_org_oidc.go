@@ -1,17 +1,15 @@
 package vcd
 
 import (
-	"bytes"
 	"context"
 	"fmt"
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
-	"strings"
 	"time"
 )
 
@@ -194,43 +192,18 @@ func resourceVcdOrgOidc() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "Expiration date for the certificate",
-							ValidateDiagFunc: validation.AnyDiag(
-								validation.ToDiagFunc(validation.IsRFC3339Time),
-								validation.ToDiagFunc(validation.StringIsEmpty)),
+							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+								if i.(string) == "" {
+									return nil // It's an optional value
+								}
+								_, err := time.Parse(time.DateOnly, i.(string))
+								if err != nil {
+									return diag.FromErr(err)
+								}
+								return nil
+							},
 						},
 					},
-				},
-				// This function is required because the default hash function makes
-				// the Terraform plans to be dirty all the time, trying to remove the given key even if
-				// it didn't change.
-				Set: func(v interface{}) int {
-					var buf bytes.Buffer
-					m := v.(map[string]interface{})
-					_, err := buf.WriteString(m["id"].(string))
-					if err != nil {
-						util.Logger.Printf("[ERROR] error writing to string: %s", err)
-					}
-					_, err = buf.WriteString(m["algorithm"].(string))
-					if err != nil {
-						util.Logger.Printf("[ERROR] error writing to string: %s", err)
-					}
-					_, err = buf.WriteString(strings.ReplaceAll(m["certificate"].(string), "\n", ""))
-					if err != nil {
-						util.Logger.Printf("[ERROR] error writing to string: %s", err)
-					}
-					if m["expiration_date"].(string) != "" {
-						t, err := time.Parse(time.RFC3339, m["expiration_date"].(string))
-						if err != nil {
-							util.Logger.Printf("[ERROR] error parsing date: %s", err)
-						}
-						_, err = buf.WriteString(t.Format(time.RFC3339))
-						if err != nil {
-							util.Logger.Printf("[ERROR] error writing to string: %s", err)
-						}
-					} else {
-						buf.WriteString("nil")
-					}
-					return hashcodeString(buf.String())
 				},
 			},
 			"key_refresh_endpoint": {
@@ -335,10 +308,16 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 		for i, k := range keyList {
 			key := k.(map[string]interface{})
 			oAuthKeyConfigurations[i] = types.OAuthKeyConfiguration{
-				KeyId:          key["id"].(string),
-				Algorithm:      key["algorithm"].(string),
-				ExpirationDate: key["expiration_date"].(string),
-				Key:            key["certificate"].(string),
+				KeyId:     key["id"].(string),
+				Algorithm: key["algorithm"].(string),
+				Key:       key["certificate"].(string),
+			}
+			if key["expiration_date"].(string) != "" {
+				t, err := time.Parse(time.DateOnly, key["expiration_date"].(string))
+				if err != nil {
+					return diag.Errorf("wrong expiration date set in configuration for key '%s': %s", key["id"].(string), err)
+				}
+				oAuthKeyConfigurations[i].ExpirationDate = t.Format(time.RFC3339)
 			}
 		}
 		settings.OAuthKeyConfigurations = &types.OAuthKeyConfigurationsList{
@@ -447,7 +426,13 @@ func genericVcdOrgOidcRead(_ context.Context, d *schema.ResourceData, meta inter
 			key["id"] = keyConfig.KeyId
 			key["algorithm"] = keyConfig.Algorithm
 			key["certificate"] = keyConfig.Key
-			key["expiration_date"] = keyConfig.ExpirationDate
+			if keyConfig.ExpirationDate != "" {
+				t, err := time.Parse(time.RFC3339, keyConfig.ExpirationDate)
+				if err != nil {
+					return diag.Errorf("wrong expiration date received for key '%s': %s", keyConfig.KeyId, err)
+				}
+				key["expiration_date"] = t.Format(time.DateOnly)
+			}
 			keyConfigs[i] = key
 		}
 		err = d.Set("key", keyConfigs)
