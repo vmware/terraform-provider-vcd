@@ -12,26 +12,19 @@ func datasourceVcdSolutionAddon() *schema.Resource {
 		ReadContext: datasourceVcdSolutionAddonRead,
 
 		Schema: map[string]*schema.Schema{
-			"org": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Description: "The name of organization to use, optional if defined at provider " +
-					"level. Useful when connected as sysadmin working across different organizations",
-			},
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				// Description: "absolute or relative path to Solution Add-On ISO file",
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of the Solution Add-On Defined Entity",
 			},
 			"catalog_item_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "absolute or relative path to Solution Add-On ISO file",
+				Description: "Catalog item ID of the Solution Add-On",
 			},
 			"rde_state": {
 				Type:        schema.TypeString,
-				Description: "State reports RDE state",
+				Description: "RDE State of the Solution Add-On",
 				Computed:    true,
 			},
 		},
@@ -41,13 +34,18 @@ func datasourceVcdSolutionAddon() *schema.Resource {
 func datasourceVcdSolutionAddonRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	slz, err := vcdClient.GetSolutionAddonByName(d.Get("name").(string))
+	slzAddOn, err := vcdClient.GetSolutionAddonByName(d.Get("name").(string))
 	if err != nil {
 		return diag.Errorf("error retrieving Solution Add-On: %s", err)
 	}
 
-	dSet(d, "rde_state", slz.DefinedEntity.DefinedEntity.State)
-	dSet(d, "catalog_item_id", slz.SolutionEntity.Origin.CatalogItemId)
+	if slzAddOn.DefinedEntity.DefinedEntity.State == addrOf("") || slzAddOn.SolutionEntity.Origin.CatalogItemId == "" {
+		return diag.Errorf("no values filled in")
+	}
+
+	dSet(d, "rde_state", slzAddOn.DefinedEntity.DefinedEntity.State)
+	dSet(d, "catalog_item_id", slzAddOn.SolutionEntity.Origin.CatalogItemId)
+	d.SetId(slzAddOn.RdeId())
 
 	return nil
 }

@@ -43,6 +43,8 @@ var doNotDelete = entityList{
 	{Type: "vcd_vapp", Name: "Test_EmptyVmVapp1", Comment: "created by test, but to be preserved"},
 	{Type: "vcd_vapp", Name: "Test_EmptyVmVapp2", Comment: "created by test, but to be preserved"},
 	{Type: "vcd_vapp", Name: "Test_EmptyVmVapp3", Comment: "created by test, but to be preserved"},
+	{Type: "vcd_solution_add_on", Name: "vmware.solution-addon-landing-zone-1.2.0-22957452", Comment: "Built-in Solution Add-On"},
+	{Type: "vcd_solution_add_on", Name: "vmware.autoscale-1.4.0-23130968", Comment: "Built-in Solution Add-On"},
 }
 
 // alsoDelete contains a list of entities that should be removed , in addition to the ones
@@ -121,27 +123,29 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	// --------------------------------------------------------------
 	// Solution Add-ons
 	// --------------------------------------------------------------
-	/* if govcdClient.Client.IsSysAdmin {
+	if govcdClient.Client.IsSysAdmin {
 		allEntries, err := govcdClient.GetAllSolutionAddons(nil)
 		if err != nil {
-			return fmt.Errorf("error retrieving all SLZs: %s", err)
+			return fmt.Errorf("error retrieving all Solution Add-Ons: %s", err)
 		}
 
 		for _, addOn := range allEntries {
-			_ = shouldDeleteEntity(alsoDelete, doNotDelete, addOn.DefinedEntity.DefinedEntity.EntityType, "vcd_solution_add_on", 0, verbose)
-			if addOn.DefinedEntity.DefinedEntity.State != addrOf("READY") {
-				err := addOn.DefinedEntity.Resolve()
+			shouldDeleteAddOn := shouldDeleteEntity(alsoDelete, doNotDelete, addOn.DefinedEntity.DefinedEntity.Name, "vcd_solution_add_on", 0, verbose)
+			if shouldDeleteAddOn {
+				if addOn.DefinedEntity.DefinedEntity.State != addrOf("READY") {
+					err := addOn.DefinedEntity.Resolve()
+					if err != nil {
+						return fmt.Errorf("error resolving Solution Add-on: %s", err)
+					}
+				}
+
+				err = addOn.Delete()
 				if err != nil {
-					return fmt.Errorf("error resolving Solution Add-on: %s", err)
+					return fmt.Errorf("error removing Solution Add-on: %s", err)
 				}
 			}
-
-			err = addOn.Delete()
-			if err != nil {
-				return fmt.Errorf("error removing Solution Add-on: %s", err)
-			}
 		}
-	} */
+	}
 
 	// --------------------------------------------------------------
 	// Solution Landing Zone (SLZ)

@@ -46,6 +46,11 @@ func resourceVcdSolutionAddon() *schema.Resource {
 				Description: "Parent RDE state",
 				Computed:    true,
 			},
+			"name": {
+				Type:        schema.TypeString,
+				Description: "Name of the Solution Add-On Defined Entity",
+				Computed:    true,
+			},
 		},
 	}
 }
@@ -59,8 +64,8 @@ func resourceVcdSolutionAddonCreate(ctx context.Context, d *schema.ResourceData,
 		CatalogItemId:        d.Get("catalog_item_id").(string),
 		AutoTrustCertificate: d.Get("trust_certificate").(bool),
 	}
-	addon, err := vcdClient.CreateSolutionAddOn(createCfg)
 
+	addon, err := vcdClient.CreateSolutionAddOn(createCfg)
 	if err != nil {
 		return diag.Errorf("error creating Solution Add-On: %s", err)
 	}
@@ -93,13 +98,14 @@ func resourceVcdSolutionAddonUpdate(ctx context.Context, d *schema.ResourceData,
 func resourceVcdSolutionAddonRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	slz, err := vcdClient.GetSolutionAddonById(d.Id())
+	slzAddOn, err := vcdClient.GetSolutionAddonById(d.Id())
 	if err != nil {
 		return diag.Errorf("error retrieving Solution Add-On: %s", err)
 	}
 
-	dSet(d, "rde_state", slz.DefinedEntity.DefinedEntity.State)
-	dSet(d, "catalog_item_id", slz.SolutionEntity.Origin.CatalogItemId)
+	dSet(d, "rde_state", slzAddOn.DefinedEntity.DefinedEntity.State)
+	dSet(d, "catalog_item_id", slzAddOn.SolutionEntity.Origin.CatalogItemId)
+	dSet(d, "name", slzAddOn.DefinedEntity.DefinedEntity.Name)
 
 	return nil
 }
@@ -144,7 +150,7 @@ func resourceVcdSolutionAddonImport(ctx context.Context, d *schema.ResourceData,
 			return nil, fmt.Errorf("error finding Solution Add-On by ID '%s': %s\n Available Add-Ons:\n %s", d.Id(), err, addOnTable)
 		}
 
-		d.SetId(addOnById.Id())
+		d.SetId(addOnById.RdeId())
 	} else {
 		addOnByName, err := vcdClient.GetSolutionAddonByName(d.Id())
 		if err != nil {
@@ -155,7 +161,7 @@ func resourceVcdSolutionAddonImport(ctx context.Context, d *schema.ResourceData,
 			return nil, fmt.Errorf("error finding Solution Add-On by ID '%s': %s\n Available Add-Ons:\n %s", d.Id(), err, addOnTable)
 		}
 
-		d.SetId(addOnByName.Id())
+		d.SetId(addOnByName.RdeId())
 	}
 
 	return []*schema.ResourceData{d}, nil
@@ -182,7 +188,7 @@ func listSolutionAddons(vcdClient *VCDClient) (string, error) {
 
 	for index, addon := range addOns {
 		_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%s\t%s\n", index+1,
-			addon.Id(),
+			addon.RdeId(),
 			addon.DefinedEntity.DefinedEntity.Name,
 			addon.SolutionEntity.Status,
 			addon.SolutionEntity.Manifest["name"].(string),

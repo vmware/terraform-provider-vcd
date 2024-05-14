@@ -52,10 +52,17 @@ func TestAccSolutionAddon(t *testing.T) {
 	configText1 := templateFill(testAccSolutionAddonStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccSolutionAddonStep2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText2)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
+
+	cacheAddOnId := &testCachedFieldValue{}
+	cacheAddOnName := &testCachedFieldValue{}
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -67,7 +74,29 @@ func TestAccSolutionAddon(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_solution_add_on.dse14", "catalog_item_id"),
 					resource.TestCheckResourceAttr("vcd_solution_add_on.dse14", "rde_state", "RESOLVED"),
 					resource.TestCheckResourceAttr("vcd_solution_add_on.dse14", "trust_certificate", "true"),
+					cacheAddOnId.cacheTestResourceFieldValue("vcd_solution_add_on.dse14", "id"),
+					cacheAddOnName.cacheTestResourceFieldValue("vcd_solution_add_on.dse14", "name"),
 				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeTestCheckFunc(
+					resourceFieldsEqual("vcd_solution_add_on.dse14", "data.vcd_solution_add_on.dse14", []string{"%", "trust_certificate", "addon_path"}),
+				),
+			},
+			{ // Import by ID
+				ResourceName:            "vcd_solution_add_on.dse14",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateId:           cacheAddOnId.fieldValue,
+				ImportStateVerifyIgnore: []string{"addon_path", "trust_certificate"},
+			},
+			{ // Import by Name
+				ResourceName:            "vcd_solution_add_on.dse14",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateId:           cacheAddOnName.fieldValue,
+				ImportStateVerifyIgnore: []string{"addon_path", "trust_certificate"},
 			},
 		},
 	})
@@ -135,6 +164,12 @@ resource "vcd_solution_add_on" "dse14" {
   catalog_item_id   = data.vcd_catalog_media.dse14.catalog_item_id
   addon_path        = "{{.AddonIsoPath}}"
   trust_certificate = true
+}
+`
+
+const testAccSolutionAddonStep2 = testAccSolutionAddonStep1 + `
+data "vcd_solution_add_on" "dse14" {
+  name = vcd_solution_add_on.dse14.name
 }
 `
 
