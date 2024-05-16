@@ -119,7 +119,7 @@ resource "vcd_org_oidc" "oidc" {
 The following arguments are supported:
 
 * `org_id` - (Required) ID of the Organization that will have the OpenID Connect settings configured. There must be only one
-  resource `vcd_org_oidc` per `org_id`, as the configuration is unique
+  resource `vcd_org_oidc` per `org_id`, as there is only one OpenID configuration per Organization
 * `client_id` - (Required) Client ID to use with the OIDC provider
 * `client_secret` - (Required) Client Secret to use with the OIDC provider
 * `enabled` - (Required) Either `true` or `false`, specifies whether the OIDC authentication is enabled for the given organization
