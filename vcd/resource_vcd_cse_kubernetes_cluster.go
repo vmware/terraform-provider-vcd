@@ -198,28 +198,40 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Default:          20, // As suggested in UI
-							Description:      "Disk size, in Gibibytes (Gi), for the control plane nodes",
+							Description:      "Disk size, in Gibibytes (Gi), for this worker pool",
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(20)),
 						},
 						"sizing_policy_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "VM Sizing policy for the control plane nodes",
+							Description: "VM Sizing policy for this worker pool",
 						},
 						"placement_policy_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "VM Placement policy for the control plane nodes",
+							Description: "VM Placement policy for this worker pool",
 						},
 						"vgpu_policy_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "vGPU policy for the control plane nodes",
+							Description: "vGPU policy for this worker pool",
 						},
 						"storage_profile_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "Storage profile for the control plane nodes",
+							Description: "Storage profile for this worker pool",
+						},
+						"autoscaler_max_replicas": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Default:     -1,
+							Description: "Maximum replicas for the autoscaling capabilities of this worker pool. Requires 'autoscaler_min_replicas'",
+						},
+						"autoscaler_min_replicas": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Default:     -1,
+							Description: "Minimum replicas for the autoscaling capabilities of this worker pool. Requires 'autoscaler_max_replicas'",
 						},
 					},
 				},
@@ -461,6 +473,20 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 			VGpuPolicyId:      workerPool["vgpu_policy_id"].(string),
 			StorageProfileId:  workerPool["storage_profile_id"].(string),
 		}
+		autoscalerMaxReplicas := workerPool["autoscaler_max_replicas"].(int)
+		autoscalerMinReplicas := workerPool["autoscaler_min_replicas"].(int)
+		if autoscalerMaxReplicas > -1 && autoscalerMinReplicas < 0 {
+			return diag.Errorf("'autoscaler_max_replicas' requires 'autoscaler_min_replicas' to be set")
+		}
+		if autoscalerMaxReplicas < 0 && autoscalerMinReplicas > -1 {
+			return diag.Errorf("'autoscaler_min_replicas' requires 'autoscaler_max_replicas' to be set")
+		}
+		if autoscalerMaxReplicas > -1 && autoscalerMinReplicas > -1 {
+			workerPools[i].Autoscaler = &govcd.CseWorkerPoolAutoscaler{
+				MaxSize: autoscalerMaxReplicas,
+				MinSize: autoscalerMinReplicas,
+			}
+		}
 	}
 	creationData.WorkerPools = workerPools
 
@@ -560,6 +586,7 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 					if oldPool["storage_profile_id"] != newPool["storage_profile_id"] {
 						return diag.Errorf("'storage_profile_id' of Worker Pool '%s' cannot be changed", oldPool["name"])
 					}
+					// TODO: Autoscaler
 					changePoolsPayload[newPool["name"].(string)] = govcd.CseWorkerPoolUpdateInput{MachineCount: newPool["machine_count"].(int)}
 					existingPools[newPool["name"].(string)] = true // Register this pool as not new
 				}
@@ -589,6 +616,7 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 					VGpuPolicyId:      newPool["vgpu_policy_id"].(string),
 					StorageProfileId:  newPool["storage_profile_id"].(string),
 				})
+				// TODO: Autoscaler
 			}
 		}
 		payload.NewWorkerPools = &addPoolsPayload
