@@ -243,6 +243,16 @@ type TestConfig struct {
 		RoutedNetwork  string `json:"routedNetwork,omitempty"`
 		EdgeGateway    string `json:"edgeGateway,omitempty"`
 	} `json:"cse,omitempty"`
+	SolutionAddOn struct {
+		Org           string `json:"org,omitempty"`
+		Vdc           string `json:"vdc,omitempty"`
+		RoutedNetwork string `json:"routedNetwork,omitempty"`
+		ComputePolicy string `json:"computePolicy,omitempty"`
+		StoragePolicy string `json:"storagePolicy,omitempty"`
+
+		Catalog       string `json:"catalog,omitempty"`
+		AddonImageDse string `json:"addonImageDse,omitempty"`
+	} `json:"solutionAddOn,omitempty"`
 }
 
 // names for created resources for all the tests

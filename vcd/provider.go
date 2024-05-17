@@ -269,6 +269,8 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_cse_kubernetes_cluster":                       resourceVcdCseKubernetesCluster(),                    // 3.12
 	"vcd_solution_landing_zone":                        resourceVcdSolutionLandingZone(),                     // 3.13
 	"vcd_solution_add_on":                              resourceVcdSolutionAddon(),                           // 3.13
+	"vcd_solution_add_on_instance":                     resourceVcdSolutionAddonInstance(),                   // 3.13
+	"vcd_solution_add_on_instance_publish":             resourceVcdSolutionAddonInstancePublish(),            // 3.13
 }
 
 // Provider returns a terraform.ResourceProvider.
