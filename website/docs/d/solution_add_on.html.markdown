@@ -25,14 +25,18 @@ users, roles, runtime defined entities, and more.
 ## Example Usage
 
 ```hcl
-
+data "vcd_solution_add_on" "dse14" {
+  name = vcd_solution_add_on.dse14.name
+}
 ```
 
 ## Argument Reference
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to which the edge gateway belongs. Optional if defined at provider level.
+* `name` - (Required) Solution Add-On name, e.g. `vmware.ds-1.4.0-23376809`. Solution Add-On
+  resource [`vcd_solution_add_on`](/providers/vmware/vcd/latest/docs/resources/solution_add_on)
+  `import` with `list@` capability can help listing available names.
 
 
 ## Attribute Reference

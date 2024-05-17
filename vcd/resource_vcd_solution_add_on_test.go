@@ -1,4 +1,4 @@
-//go:build api || functional || ALL
+//go:build slz || api || functional || ALL
 
 package vcd
 

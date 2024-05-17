@@ -85,6 +85,9 @@ The following arguments are supported:
 
 The following attributes are exported on this resource:
 
+* `name` - reports the name of Solution Add-On as defined in the system. This name can be also used
+  in data source
+  [`vcd_solution_add_on`](/providers/vmware/vcd/latest/docs/data-sources/solution_add_on)
 * `state` - reports the state of parent [Runtime Defined
   Entity](/providers/vmware/vcd/latest/docs/resources/rde)
 
