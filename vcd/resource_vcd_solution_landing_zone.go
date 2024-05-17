@@ -223,7 +223,7 @@ func resourceVcdSolutionLandingZoneImport(ctx context.Context, d *schema.Resourc
 	if slz != nil && slz.SolutionLandingZoneType != nil {
 		dSet(d, "org", slz.SolutionLandingZoneType.Name)
 	}
-	d.SetId(slz.Id())
+	d.SetId(slz.RdeId())
 
 	return []*schema.ResourceData{d}, nil
 }
