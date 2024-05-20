@@ -31,6 +31,7 @@ func TestAccVcdOrgOidc(t *testing.T) {
 		"FuncName":          t.Name() + "-Step1",
 		"PreferIdToken":     " ",
 		"UIButtonLabel":     " ",
+		"SkipBinary":        "# skip-binary-test: redundant test",
 	}
 	client := createSystemTemporaryVCDConnection()
 	if client.Client.APIVCDMaxVersionIs(">= 37.1") {
@@ -47,6 +48,7 @@ func TestAccVcdOrgOidc(t *testing.T) {
 	params["FuncName"] = t.Name() + "-Step2"
 	step2 := templateFill(testAccCheckVcdOrgOidc2, params)
 	params["FuncName"] = t.Name() + "-Step3"
+	params["SkipBinary"] = " "
 	step3 := templateFill(testAccCheckVcdOrgOidc3, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -127,6 +129,7 @@ func TestAccVcdOrgOidc(t *testing.T) {
 }
 
 const testAccCheckVcdOrgOidc = `
+{{.SkipBinary}}
 resource "vcd_org" "org1" {
   name              = "{{.OrgName1}}"
   full_name         = "{{.OrgName1}}"
