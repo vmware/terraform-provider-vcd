@@ -14,6 +14,9 @@ import (
 
 func TestAccSolutionAddon(t *testing.T) {
 	preTestChecks(t)
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.1") {
+		t.Skipf("Solution Landing Zones are supported in VCD 10.4.1+. Skipping")
+	}
 
 	if testConfig.VCD.Catalog.NsxtCatalogAddonDse == "" {
 		t.Skipf("Add-On config value not specified ")
