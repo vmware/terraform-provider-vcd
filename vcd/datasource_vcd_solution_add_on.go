@@ -15,7 +15,7 @@ func datasourceVcdSolutionAddon() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of the Solution Add-On Defined Entity",
+				Description: "Name of the Solution Add-On Defined Entity (e.g. 'vmware.ds-1.4.0-23376809')",
 			},
 			"catalog_item_id": {
 				Type:        schema.TypeString,
@@ -39,12 +39,12 @@ func datasourceVcdSolutionAddonRead(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("error retrieving Solution Add-On: %s", err)
 	}
 
-	if slzAddOn.DefinedEntity.DefinedEntity.State == addrOf("") || slzAddOn.SolutionEntity.Origin.CatalogItemId == "" {
+	if slzAddOn.DefinedEntity.DefinedEntity.State == addrOf("") || slzAddOn.SolutionAddOnEntity.Origin.CatalogItemId == "" {
 		return diag.Errorf("no values filled in")
 	}
 
 	dSet(d, "rde_state", slzAddOn.DefinedEntity.DefinedEntity.State)
-	dSet(d, "catalog_item_id", slzAddOn.SolutionEntity.Origin.CatalogItemId)
+	dSet(d, "catalog_item_id", slzAddOn.SolutionAddOnEntity.Origin.CatalogItemId)
 	d.SetId(slzAddOn.RdeId())
 
 	return nil
