@@ -6,12 +6,8 @@ import (
 	_ "embed"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"net/url"
 	"regexp"
-	"strconv"
-	"strings"
 	"testing"
 )
 
@@ -71,8 +67,7 @@ func TestAccVcdOrgOidc(t *testing.T) {
 		),
 		Steps: []resource.TestStep{
 			{
-				Config:   step1,
-				SkipFunc: skipIfEndpointNotReachable(t, &client.Client, oidcServerUrl.String()),
+				Config: step1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdOrgExists("vcd_org.org1"),
 					testAccCheckVcdOrgExists("vcd_org.org2"),
@@ -99,8 +94,7 @@ func TestAccVcdOrgOidc(t *testing.T) {
 				),
 			},
 			{
-				Config:   step2,
-				SkipFunc: skipIfEndpointNotReachable(t, &client.Client, oidcServerUrl.String()),
+				Config: step2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual(oidcResource1, oidcResource2, []string{
 						"id", "org_id", "redirect_uri", "wellknown_endpoint", "key_refresh_endpoint",
@@ -117,14 +111,12 @@ func TestAccVcdOrgOidc(t *testing.T) {
 				),
 			},
 			{
-				Config:   step3,
-				SkipFunc: skipIfEndpointNotReachable(t, &client.Client, oidcServerUrl.String()),
+				Config: step3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual(oidcResource1, oidcData, nil),
 				),
 			},
 			{
-				SkipFunc:          skipIfEndpointNotReachable(t, &client.Client, oidcServerUrl.String()),
 				ResourceName:      oidcResource1,
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -235,42 +227,4 @@ func validateAndGetOidcServerUrl(t *testing.T, testConfig TestConfig) *url.URL {
 		t.Skip(t.Name() + " requires OIDC Server URL and its well-known endpoint")
 	}
 	return oidcServer.JoinPath(testConfig.Networking.OidcServer.WellKnownEndpoint)
-}
-
-// skipIfEndpointNotReachable returns a SkipFunc that skips an acceptance test step if the given endpoint is not reachable.
-func skipIfEndpointNotReachable(t *testing.T, client *govcd.Client, endpoint string) func() (bool, error) {
-	return func() (bool, error) {
-		uri, err := url.Parse(endpoint)
-		if err != nil {
-			return true, err
-		}
-		isSecure := strings.ToLower(uri.Scheme) == "https"
-
-		rawPort := uri.Port()
-		if rawPort == "" {
-			rawPort = "80"
-			if isSecure {
-				rawPort = "443"
-			}
-		}
-		port, err := strconv.Atoi(rawPort)
-		if err != nil {
-			return true, err
-		}
-
-		result, err := client.TestConnection(types.TestConnection{
-			Host:   uri.Hostname(),
-			Port:   port,
-			Secure: &isSecure,
-		})
-		if err != nil {
-			return true, err
-		}
-
-		if result.TargetProbe == nil || !result.TargetProbe.CanConnect || (isSecure && !result.TargetProbe.SSLHandshake) {
-			fmt.Printf("Skipping a step in '%s' because it could not establish a connection to %s://%s\n", t.Name(), uri.Scheme, uri.Host)
-			return true, nil
-		}
-		return false, nil
-	}
 }
