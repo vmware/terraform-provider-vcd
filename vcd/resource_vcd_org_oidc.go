@@ -10,6 +10,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
+	"strings"
 	"time"
 )
 
@@ -352,7 +353,7 @@ func resourceVcdOrgOidcCreateOrUpdate(ctx context.Context, d *schema.ResourceDat
 		settings.CustomUiButtonLabel = addrOf(v.(string))
 	}
 
-	_, err = org.SetOpenIdConnectSettings(settings)
+	_, err = setOIDCSettings(org, settings)
 	if err != nil {
 		return diag.Errorf("[Organization Open ID Connect %s] Could not set OIDC settings: %s", operation, err)
 	}
@@ -490,4 +491,26 @@ func resourceVcdOrgOidcImport(_ context.Context, d *schema.ResourceData, meta in
 
 	d.SetId(adminOrg.AdminOrg.ID)
 	return []*schema.ResourceData{d}, nil
+}
+
+// setOIDCSettings sets the given OIDC settings for the given Organization. It does this operation
+// with some tries to avoid failures due to network glitches.
+func setOIDCSettings(adminOrg *govcd.AdminOrg, settings types.OrgOAuthSettings) (*types.OrgOAuthSettings, error) {
+	tries := 0
+	var newSettings *types.OrgOAuthSettings
+	var err error
+	for tries < 5 {
+		tries++
+		newSettings, err = adminOrg.SetOpenIdConnectSettings(settings)
+		if err == nil {
+			break
+		}
+		if strings.Contains(err.Error(), "could not establish a connection") || strings.Contains(err.Error(), "connect timed out") {
+			time.Sleep(10 * time.Second)
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	return newSettings, nil
 }
