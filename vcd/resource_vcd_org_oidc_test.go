@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"net/url"
 	"regexp"
+	"strings"
 	"testing"
 )
 
@@ -58,8 +59,20 @@ func TestAccVcdOrgOidc(t *testing.T) {
 	debugPrintf("#[DEBUG] Configuration Step 2: %s", step2)
 	debugPrintf("#[DEBUG] Configuration Step 3: %s", step3)
 
+	skip := false
+	skipFunc := func() (bool, error) {
+		return skip, nil
+	}
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
+		ErrorCheck: func(err error) error {
+			if strings.Contains(err.Error(), "could not establish a connection") {
+				skip = true
+				fmt.Printf("skipping %s as the OIDC server is not responding: %s", t.Name(), err)
+				return nil
+			}
+			return err
+		},
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckOrgDestroy(orgName1),
 			testAccCheckOrgDestroy(orgName2),
@@ -94,7 +107,8 @@ func TestAccVcdOrgOidc(t *testing.T) {
 				),
 			},
 			{
-				Config: step2,
+				Config:   step2,
+				SkipFunc: skipFunc,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual(oidcResource1, oidcResource2, []string{
 						"id", "org_id", "redirect_uri", "wellknown_endpoint", "key_refresh_endpoint",
@@ -111,12 +125,14 @@ func TestAccVcdOrgOidc(t *testing.T) {
 				),
 			},
 			{
-				Config: step3,
+				Config:   step3,
+				SkipFunc: skipFunc,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual(oidcResource1, oidcData, nil),
 				),
 			},
 			{
+				SkipFunc:          skipFunc,
 				ResourceName:      oidcResource1,
 				ImportState:       true,
 				ImportStateVerify: true,
