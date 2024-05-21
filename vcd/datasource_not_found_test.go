@@ -78,7 +78,11 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			},
 			{
 				skipVersionConstraint: "< 37.1",
-				datasourceName:        "vcd_ip_space_custom_quota",
+				datasourceName:        "vcd_ip_space",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_solution_landing_zone",
 			},
 			{
 				skipVersionConstraint: "< 37.1",
