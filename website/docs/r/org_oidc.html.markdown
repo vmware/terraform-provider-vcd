@@ -76,7 +76,7 @@ resource "vcd_org_oidc" "oidc" {
 }
 ```
 
-In other words, removing the argument or setting it to `""` won't make the original value from the well-known configuration endpoint
+In other words, removing the argument or setting it to `""` **won't** make the original value from the well-known configuration endpoint
 to be restored during updates.
 
 ## Example Usage without Well-known Configuration Endpoint
