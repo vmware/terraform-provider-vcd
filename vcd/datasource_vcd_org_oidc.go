@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-// datasourceVcdOrgOidc defines the data source that reads Open ID Connect (OIDC) settings from an existing Organization
+// datasourceVcdOrgOidc defines the data source that reads Open ID Connect (OIDC) settings from an Organization
 func datasourceVcdOrgOidc() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdOrgOidcRead,

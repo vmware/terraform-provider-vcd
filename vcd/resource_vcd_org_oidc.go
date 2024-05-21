@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-// resourceVcdOrgOidc defines the resource that manages Open ID Connect (OIDC) settings for an existing Organization
+// resourceVcdOrgOidc defines the resource that manages Open ID Connect (OIDC) settings for an Organization
 func resourceVcdOrgOidc() *schema.Resource {
 	return &schema.Resource{
 		ReadContext:   resourceVcdOrgOidcRead,
