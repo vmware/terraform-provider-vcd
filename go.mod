@@ -2,8 +2,6 @@ module github.com/vmware/terraform-provider-vcd/v3
 
 go 1.22
 
-toolchain go1.22.1
-
 require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/hashicorp/go-version v1.6.0
