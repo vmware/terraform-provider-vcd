@@ -191,7 +191,7 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Default:          1, // As suggested in UI
-							Description:      "The number of nodes that this worker pool has. Must be higher than or equal to 0",
+							Description:      "The number of nodes that this worker pool has. Must be higher than or equal to 0. Ignored if 'autoscaler_max_replicas' and 'autoscaler_min_replicas' are set",
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 						},
 						"disk_size_gi": {
@@ -224,13 +224,11 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 						"autoscaler_max_replicas": {
 							Type:        schema.TypeInt,
 							Optional:    true,
-							Default:     -1,
 							Description: "Maximum replicas for the autoscaling capabilities of this worker pool. Requires 'autoscaler_min_replicas'",
 						},
 						"autoscaler_min_replicas": {
 							Type:        schema.TypeInt,
 							Optional:    true,
-							Default:     -1,
 							Description: "Minimum replicas for the autoscaling capabilities of this worker pool. Requires 'autoscaler_max_replicas'",
 						},
 					},
@@ -466,7 +464,6 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 		workerPool := w.(map[string]interface{})
 		workerPools[i] = govcd.CseWorkerPoolSettings{
 			Name:              workerPool["name"].(string),
-			MachineCount:      workerPool["machine_count"].(int),
 			DiskSizeGi:        workerPool["disk_size_gi"].(int),
 			SizingPolicyId:    workerPool["sizing_policy_id"].(string),
 			PlacementPolicyId: workerPool["placement_policy_id"].(string),
@@ -475,17 +472,21 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 		}
 		autoscalerMaxReplicas := workerPool["autoscaler_max_replicas"].(int)
 		autoscalerMinReplicas := workerPool["autoscaler_min_replicas"].(int)
-		if autoscalerMaxReplicas > -1 && autoscalerMinReplicas < 0 {
-			return diag.Errorf("'autoscaler_max_replicas' requires 'autoscaler_min_replicas' to be set")
+		machineCount := workerPool["machine_count"].(int)
+
+		if autoscalerMaxReplicas > 0 && autoscalerMinReplicas <= 0 {
+			return diag.Errorf("'autoscaler_max_replicas=%d' requires 'autoscaler_min_replicas=%d' to be higher than 0", autoscalerMaxReplicas, autoscalerMinReplicas)
 		}
-		if autoscalerMaxReplicas < 0 && autoscalerMinReplicas > -1 {
-			return diag.Errorf("'autoscaler_min_replicas' requires 'autoscaler_max_replicas' to be set")
+		if autoscalerMinReplicas > 0 && autoscalerMaxReplicas <= 0 {
+			return diag.Errorf("'autoscaler_min_replicas=%d' requires 'autoscaler_max_replicas=%d' to be higher than 0", autoscalerMinReplicas, autoscalerMaxReplicas)
 		}
-		if autoscalerMaxReplicas > -1 && autoscalerMinReplicas > -1 {
+		if autoscalerMaxReplicas > 0 && autoscalerMinReplicas > 0 {
 			workerPools[i].Autoscaler = &govcd.CseWorkerPoolAutoscaler{
 				MaxSize: autoscalerMaxReplicas,
 				MinSize: autoscalerMinReplicas,
 			}
+		} else {
+			workerPools[i].MachineCount = machineCount
 		}
 	}
 	creationData.WorkerPools = workerPools

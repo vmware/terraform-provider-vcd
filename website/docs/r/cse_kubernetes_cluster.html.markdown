@@ -174,7 +174,7 @@ Each block asks for the following arguments:
 
 * `name` - (Required) The name of the worker pool. It must be unique per cluster, and must contain only lowercase alphanumeric characters or "-",
   start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters
-* `machine_count` - (Optional) The number of VMs that the worker pool has. Must be higher than `0`. Defaults to `1`
+* `machine_count` - (Optional) The number of VMs that the worker pool has. Must be higher than `0`. Defaults to `1`.  Ignored if `autoscaler_max_replicas` and `autoscaler_min_replicas` are set
 * `disk_size_gi` - (Optional) Disk size, in **Gibibytes (Gi)**, for the worker pool VMs. Must be at least `20`. Defaults to `20`
 * `sizing_policy_id` - (Optional) VM Sizing policy for the control plane VMs. Must be one of the ones made available during CSE installation
 * `placement_policy_id` - (Optional) VM Placement policy for the worker pool VMs. If this one is set, `vgpu_policy_id` must be empty
