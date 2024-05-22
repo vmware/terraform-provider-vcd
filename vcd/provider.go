@@ -155,6 +155,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_vm_vgpu_policy":                               datasourceVcdVmVgpuPolicy(),                            // 3.11
 	"vcd_cse_kubernetes_cluster":                       datasourceVcdCseKubernetesCluster(),                    // 3.12
 	"vcd_version":                                      datasourceVcdVersion(),                                 // 3.12
+	"vcd_solution_landing_zone":                        datasourceVcdSolutionLandingZone(),                     // 3.13
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -265,6 +266,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edgegateway_dns":                         resourceVcdNsxtEdgeGatewayDns(),                      // 3.11
 	"vcd_vm_vgpu_policy":                               resourceVcdVmVgpuPolicy(),                            // 3.11
 	"vcd_cse_kubernetes_cluster":                       resourceVcdCseKubernetesCluster(),                    // 3.12
+	"vcd_solution_landing_zone":                        resourceVcdSolutionLandingZone(),                     // 3.13
 }
 
 // Provider returns a terraform.ResourceProvider.

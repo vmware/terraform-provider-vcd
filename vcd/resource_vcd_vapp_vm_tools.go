@@ -368,6 +368,28 @@ func getVmIndependentDisks(vm govcd.VM) []string {
 	return disks
 }
 
+func addRemoveExtraConfiguration(d *schema.ResourceData, vm *govcd.VM) error {
+	if d.HasChange("set_extra_config") {
+		rawExtraConfig := d.Get("set_extra_config")
+		var inputExtraConfig []*types.ExtraConfigMarshal
+		for _, rawEc := range rawExtraConfig.(*schema.Set).List() {
+			mapEc := rawEc.(map[string]interface{})
+			inputExtraConfig = append(inputExtraConfig, &types.ExtraConfigMarshal{
+				Key:   mapEc["key"].(string),
+				Value: mapEc["value"].(string),
+			})
+		}
+
+		log.Printf("[TRACE] Updating VM extra configuration")
+		_, err := vm.UpdateExtraConfig(inputExtraConfig)
+		if err != nil {
+			return err
+		}
+		return vm.Refresh()
+	}
+	return nil
+}
+
 func addRemoveGuestProperties(d *schema.ResourceData, vm *govcd.VM) error {
 	if d.HasChange("guest_properties") {
 		vmProperties, err := getGuestProperties(d)
@@ -1098,7 +1120,31 @@ func setGuestCustomizationData(d *schema.ResourceData, vm *govcd.VM) error {
 
 	err = d.Set("customization", customizationBlock)
 	if err != nil {
-		return fmt.Errorf("")
+		return fmt.Errorf("error setting 'customization' values: %s", err)
+	}
+
+	return nil
+}
+
+func setExtraCustomizationData(d *schema.ResourceData, vm *govcd.VM) error {
+	extraConfig, err := vm.GetExtraConfig()
+	if err != nil {
+		return fmt.Errorf("unable to get extra customization section: %s", err)
+	}
+
+	extraBlock := make([]interface{}, len(extraConfig))
+
+	for i, ec := range extraConfig {
+		extraBlock[i] = map[string]interface{}{
+			"key":      ec.Key,
+			"value":    ec.Value,
+			"required": ec.Required,
+		}
+	}
+
+	err = d.Set("extra_config", extraBlock)
+	if err != nil {
+		return fmt.Errorf("error setting 'extra_config' values: %s", err)
 	}
 
 	return nil
