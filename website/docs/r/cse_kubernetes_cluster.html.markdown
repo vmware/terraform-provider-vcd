@@ -175,15 +175,15 @@ Each block asks for the following arguments:
 * `name` - (Required) The name of the worker pool. It must be unique per cluster, and must contain only lowercase alphanumeric characters or "-",
   start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters
 * `machine_count` - (Optional) The number of VMs that the worker pool has. Must be higher than `0`, unless `autoscaler_max_replicas` and `autoscaler_min_replicas` are set,
-  in this case it must be `0` (this value is hence not used nor refreshed). Defaults to `1`
+  in this case it must be `0` (in this particular case, this value will not be used). Defaults to `1`
 * `disk_size_gi` - (Optional) Disk size, in **Gibibytes (Gi)**, for the worker pool VMs. Must be at least `20`. Defaults to `20`
 * `sizing_policy_id` - (Optional) VM Sizing policy for the control plane VMs. Must be one of the ones made available during CSE installation
 * `placement_policy_id` - (Optional) VM Placement policy for the worker pool VMs. If this one is set, `vgpu_policy_id` must be empty
 * `vgpu_policy_id` - (Optional) vGPU policy for the worker pool VMs. If this one is set, `placement_policy_id` must be empty
 * `storage_profile_id` - (Optional) Storage profile for the worker pool VMs
-* `autoscaler_max_replicas` - (Optional; *v3.13+*) Together with `autoscaler_min_replicas`, and **only when `machine_count=0`**, defines the maximum number of nodes that
+* `autoscaler_max_replicas` - (Optional; *v3.13+*) Together with `autoscaler_min_replicas`, and **only when `machine_count=0` or unset**, defines the maximum number of nodes that
   the Kubernetes Autoscaler will deploy for this worker pool. Read the section below for details.
-* `autoscaler_min_replicas` - (Optional; *v3.13+*) Together with `autoscaler_max_replicas`, and **only when `machine_count=0`**, defines the minimum number of nodes that
+* `autoscaler_min_replicas` - (Optional; *v3.13+*) Together with `autoscaler_max_replicas`, and **only when `machine_count=0` or unset**, defines the minimum number of nodes that
   the Kubernetes Autoscaler will deploy for this worker pool. Read the section below for details.
 
 #### Worker pools with Kubernetes Autoscaler enabled
