@@ -108,10 +108,11 @@ The following attributes are exported on this resource:
 ~> The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
-Only a single entry should exist in a valid scenario, but :
-
-[docs-import]: https://www.terraform.io/docs/import/
+A single configuration for Solution Landing Zone is present therefore it is imported directly as per
+the example below:
 
 ```
 terraform import vcd_solution_landing_zone.imported
 ```
+
+[docs-import]: https://www.terraform.io/docs/import/

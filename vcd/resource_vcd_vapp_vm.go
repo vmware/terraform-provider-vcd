@@ -665,6 +665,49 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 				},
 			},
 		},
+		"set_extra_config": {
+			Type:        schema.TypeSet,
+			Optional:    true,
+			Description: "A block to set extra configuration key-value pairs",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"key": {
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "The key of the extra configuration item",
+					},
+					"value": {
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "The value of the extra configuration item. Leaving the `value` field empty will result in the item deletion",
+					},
+				},
+			},
+		},
+		"extra_config": {
+			Type:        schema.TypeList,
+			Computed:    true,
+			Description: "A block to retrieve extra configuration key-value pairs",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"key": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The key of the extra configuration item",
+					},
+					"value": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The value of the extra configuration item",
+					},
+					"required": {
+						Type:        schema.TypeBool,
+						Computed:    true,
+						Description: "Whether the extra configuration item is required",
+					},
+				},
+			},
+		},
 		"cpu_hot_add_enabled": {
 			Type:        schema.TypeBool,
 			Optional:    true,
@@ -923,7 +966,12 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		return diag.Errorf("error setting guest properties: %s", err)
 	}
 
-	// vm.VM structure contains ProductSection so it needs to be refreshed after
+	err = addRemoveExtraConfiguration(d, vm)
+	if err != nil {
+		return diag.Errorf("error setting extra configuration: %s", err)
+	}
+
+	// vm.VM structure contains ProductSection, so it needs to be refreshed after
 	// `addRemoveGuestProperties`
 	if err = vm.Refresh(); err != nil {
 		return diag.Errorf("error refreshing VM: %s", err)
@@ -1745,6 +1793,11 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 		return diag.FromErr(err)
 	}
 
+	err = addRemoveExtraConfiguration(d, vm)
+	if err != nil {
+		return diag.Errorf("error setting extra configuration: %s", err)
+	}
+
 	sizingId, newSizingId := d.GetChange("sizing_policy_id")
 	placementId, newPlacementId := d.GetChange("placement_policy_id")
 
@@ -2349,6 +2402,10 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 
 	if err := setGuestCustomizationData(d, vm); err != nil {
 		return diag.Errorf("error storing customization block: %s", err)
+	}
+
+	if err := setExtraCustomizationData(d, vm); err != nil {
+		return diag.Errorf("error storing extra customization block: %s", err)
 	}
 
 	if vm.VM.ComputePolicy != nil {
