@@ -215,6 +215,36 @@ not enforce the node group size. If your cluster is below the minimum number of 
 unschedulable pods. On the other hand, if your cluster is above the minimum number of nodes configured for CA, it will be scaled down only if it
 has unneeded nodes."
 
+```hcl
+
+resource "vcd_cse_kubernetes_cluster" "my_cluster" {
+  name                   = "test"
+  # ... Omitted
+
+  control_plane {
+    # ... Omitted
+  }
+
+  worker_pool {
+    name               = "node-pool-1"
+    disk_size_gi       = 20
+    sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id
+    storage_profile_id = data.vcd_storage_profile.sp.id
+    
+    # Enables the Kubernetes Autoscaler for this Worker Pool
+    autoscaler_max_replicas = 10
+    autoscaler_min_replicas = 2
+  }
+  worker_pool {
+    name               = "node-pool-1"
+    machine_count      = 1 # Regular static replicas
+    disk_size_gi       = 20
+    sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id
+    storage_profile_id = data.vcd_storage_profile.sp.id
+  }
+}
+```
+
 ### Default Storage Class
 
 The `default_storage_class` block is **optional**, and every cluster should have **at most one** of them.
@@ -270,8 +300,8 @@ be scaled down to zero.
 
 Updating any other argument will delete the existing cluster and create a new one, when the Terraform plan is applied.
 
-Upgrading CSE version with `cse_version` is not supported as this operation would require human intervention,
-as stated [in the official documentation](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1/VMware-Cloud-Director-Container-Service-Extension-Using-Tenant-4.1/GUID-092C40B4-D0BA-4B90-813F-D36929F2F395.html).
+Modifying the CSE version of a cluster with `cse_version` is not supported.
+This must be done manually as stated [in the official documentation](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1/VMware-Cloud-Director-Container-Service-Extension-Using-Tenant-4.1/GUID-092C40B4-D0BA-4B90-813F-D36929F2F395.html).
 
 ## Accessing the Kubernetes cluster
 
