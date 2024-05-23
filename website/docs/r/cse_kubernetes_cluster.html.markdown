@@ -181,9 +181,9 @@ Each block asks for the following arguments:
 * `placement_policy_id` - (Optional) VM Placement policy for the worker pool VMs. If this one is set, `vgpu_policy_id` must be empty
 * `vgpu_policy_id` - (Optional) vGPU policy for the worker pool VMs. If this one is set, `placement_policy_id` must be empty
 * `storage_profile_id` - (Optional) Storage profile for the worker pool VMs
-* `autoscaler_max_replicas` - (Optional; *v3.13+*) Together with `autoscaler_min_replicas`, and **only when `machine_count=0` or unset**, defines the maximum number of nodes that
+* `autoscaler_max_replicas` - (Optional; *v3.13+*) Together with `autoscaler_min_replicas`, and **only when `machine_count=0` (or unset)**, defines the maximum number of nodes that
   the Kubernetes Autoscaler will deploy for this worker pool. Read the section below for details.
-* `autoscaler_min_replicas` - (Optional; *v3.13+*) Together with `autoscaler_max_replicas`, and **only when `machine_count=0` or unset**, defines the minimum number of nodes that
+* `autoscaler_min_replicas` - (Optional; *v3.13+*) Together with `autoscaler_max_replicas`, and **only when `machine_count=0` (or unset)**, defines the minimum number of nodes that
   the Kubernetes Autoscaler will deploy for this worker pool. Read the section below for details.
 
 #### Worker pools with Kubernetes Autoscaler enabled
@@ -209,6 +209,11 @@ The Kubernetes Autoscaler will be deployed only **once**, as soon as **one** `wo
 depending on the requirements of the worker pools throughout their lifecycle: If **all** of the `worker_pool` blocks unset the autoscaling
 arguments during following updates, the Autoscaler deployment will be **scaled down to 0 replicas**.
 If one of the `worker_pool` blocks requires autoscaling again, it will be **scaled up to 1 replica**.
+
+~> From the [FAQ](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md), be aware that "by default, Cluster Autoscaler does
+not enforce the node group size. If your cluster is below the minimum number of nodes configured for CA, it will be scaled up only in presence of
+unschedulable pods. On the other hand, if your cluster is above the minimum number of nodes configured for CA, it will be scaled down only if it
+has unneeded nodes."
 
 ### Default Storage Class
 
