@@ -78,6 +78,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 		"AutoRepairOnErrors": true,
 		"NodeHealthCheck":    true,
 		"Timeout":            150,
+		"Autoscaler":         " ",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -118,8 +119,14 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION step5: %s", step5)
 
 	params["FuncName"] = t.Name() + "Step6"
-	step6 := templateFill(testAccVcdCseKubernetesCluster+testAccVcdCseKubernetesClusterDS, params)
-	debugPrintf("#[DEBUG] CONFIGURATION step6: %s", step5)
+	params["NodePoolCount"] = 0
+	params["Autoscaler"] = "    autoscaler_max_replicas = 5\n    autoscaler_min_replicas = 1"
+	step6 := templateFill(testAccVcdCseKubernetesCluster, params)
+	debugPrintf("#[DEBUG] CONFIGURATION step6: %s", step6)
+
+	params["FuncName"] = t.Name() + "Step7"
+	step7 := templateFill(testAccVcdCseKubernetesCluster+testAccVcdCseKubernetesClusterDS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION step7: %s", step7)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -182,6 +189,8 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.disk_size_gi", "20"),
 					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.autoscaler_max_replicas", "0"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.autoscaler_min_replicas", "0"),
 					resource.TestCheckResourceAttrPair(clusterName, "default_storage_class.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
 					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.name", "sc-1"),
 					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.reclaim_policy", "delete"),
@@ -237,6 +246,8 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.disk_size_gi", "20"),
 					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.autoscaler_max_replicas", "0"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.autoscaler_min_replicas", "0"),
 					resource.TestCheckResourceAttrPair(clusterName, "default_storage_class.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
 					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.name", "sc-1"),
 					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.reclaim_policy", "delete"),
@@ -285,6 +296,8 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.disk_size_gi", "20"),
 					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.autoscaler_max_replicas", "0"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.autoscaler_min_replicas", "0"),
 					resource.TestCheckResourceAttrPair(clusterName, "default_storage_class.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
 					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.name", "sc-1"),
 					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.reclaim_policy", "delete"),
@@ -334,6 +347,8 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.disk_size_gi", "20"),
 					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.autoscaler_max_replicas", "0"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.autoscaler_min_replicas", "0"),
 					resource.TestCheckResourceAttrPair(clusterName, "default_storage_class.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
 					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.name", "sc-1"),
 					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.reclaim_policy", "delete"),
@@ -362,6 +377,8 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "worker_pool.1.machine_count", "1"),
 					resource.TestCheckResourceAttr(clusterName, "worker_pool.1.name", "worker-pool-2"),
 					resource.TestCheckResourceAttr(clusterName, "worker_pool.1.disk_size_gi", "20"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.1.autoscaler_max_replicas", "0"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.1.autoscaler_min_replicas", "0"),
 					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.1.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.1.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
 					resource.TestCheckResourceAttr(clusterName, "node_health_check", "true"),
@@ -387,6 +404,65 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.disk_size_gi", "20"),
 					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
 					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.autoscaler_max_replicas", "0"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.autoscaler_min_replicas", "0"),
+					resource.TestCheckResourceAttrPair(clusterName, "default_storage_class.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
+					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.name", "sc-1"),
+					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.reclaim_policy", "delete"),
+					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.filesystem", "ext4"),
+					resource.TestCheckResourceAttr(clusterName, "pods_cidr", "100.96.0.0/11"),
+					resource.TestCheckResourceAttr(clusterName, "services_cidr", "100.64.0.0/13"),
+					resource.TestCheckResourceAttr(clusterName, "virtual_ip_subnet", ""),
+					resource.TestCheckResourceAttr(clusterName, "auto_repair_on_errors", "false"),
+					resource.TestMatchResourceAttr(clusterName, "kubernetes_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+\+vmware\.[0-9]$`)),
+					resource.TestMatchResourceAttr(clusterName, "tkg_product_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)),
+					resource.TestMatchResourceAttr(clusterName, "capvcd_version", regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)),
+					resource.TestMatchResourceAttr(clusterName, "cluster_resource_set_bindings.#", regexp.MustCompile(`^[1-9][0-9]*$`)),
+					resource.TestMatchResourceAttr(clusterName, "cpi_version", regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+$`)),
+					resource.TestMatchResourceAttr(clusterName, "csi_version", regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+$`)),
+					resource.TestCheckResourceAttr(clusterName, "state", "provisioned"),
+					resource.TestCheckResourceAttrSet(clusterName, "kubeconfig"),
+					resource.TestMatchResourceAttr(clusterName, "events.#", regexp.MustCompile(`^[1-9][0-9]*$`)),
+				),
+			},
+			// Change first worker pool to use the Autoscaler
+			{
+				Config: step6,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// Autoscaler should be enabled now
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.machine_count", "0"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.autoscaler_max_replicas", "5"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.autoscaler_min_replicas", "1"),
+
+					// Other things should remain the same
+					cacheId.testCheckCachedResourceFieldValue(clusterName, "id"),
+					resource.TestCheckResourceAttr(clusterName, "cse_version", testConfig.Cse.Version),
+					resource.TestCheckResourceAttr(clusterName, "runtime", "tkg"),
+					resource.TestCheckResourceAttr(clusterName, "name", strings.ToLower(t.Name())),
+					resource.TestCheckResourceAttrPair(clusterName, "kubernetes_template_id", "data.vcd_catalog_vapp_template.tkg_ova", "id"),
+					resource.TestCheckResourceAttrPair(clusterName, "org", "data.vcd_org_vdc.vdc", "org"),
+					resource.TestCheckResourceAttrPair(clusterName, "vdc_id", "data.vcd_org_vdc.vdc", "id"),
+					resource.TestCheckResourceAttrPair(clusterName, "network_id", "data.vcd_network_routed_v2.routed", "id"),
+					resource.TestCheckNoResourceAttr(clusterName, "owner"), // It is taken from Provider config
+					resource.TestCheckResourceAttr(clusterName, "ssh_public_key", sshPublicKey),
+					resource.TestCheckResourceAttr(clusterName, "control_plane.0.machine_count", "1"),
+					resource.TestCheckResourceAttr(clusterName, "control_plane.0.disk_size_gi", "20"),
+					resource.TestCheckResourceAttrPair(clusterName, "control_plane.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
+					resource.TestCheckResourceAttrPair(clusterName, "control_plane.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
+					resource.TestCheckResourceAttrSet(clusterName, "control_plane.0.ip"), // IP should be assigned after creation as it was not set manually in HCL config
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.name", "worker-pool-1"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.disk_size_gi", "20"),
+					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
+					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.#", "2"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.1.machine_count", "1"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.1.name", "worker-pool-2"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.1.disk_size_gi", "20"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.1.autoscaler_max_replicas", "0"),
+					resource.TestCheckResourceAttr(clusterName, "worker_pool.1.autoscaler_min_replicas", "0"),
+					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.1.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
+					resource.TestCheckResourceAttrPair(clusterName, "worker_pool.1.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
+					resource.TestCheckResourceAttr(clusterName, "node_health_check", "true"),
 					resource.TestCheckResourceAttrPair(clusterName, "default_storage_class.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
 					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.name", "sc-1"),
 					resource.TestCheckResourceAttr(clusterName, "default_storage_class.0.reclaim_policy", "delete"),
@@ -408,7 +484,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 			},
 			// Test data sources. Can't use resourceFieldsEqual function as we need to ignore the "events" TypeList which has an unknown size
 			{
-				Config: step6,
+				Config: step7,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// Data source with name
 					resource.TestCheckResourceAttrPair(dataWithName, "id", clusterName, "id"),
@@ -431,6 +507,8 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataWithName, "worker_pool.0.disk_size_gi", clusterName, "worker_pool.0.disk_size_gi"),
 					resource.TestCheckResourceAttrPair(dataWithName, "worker_pool.0.sizing_policy_id", clusterName, "worker_pool.0.sizing_policy_id"),
 					resource.TestCheckResourceAttrPair(dataWithName, "worker_pool.0.storage_profile_id", clusterName, "worker_pool.0.storage_profile_id"),
+					resource.TestCheckResourceAttrPair(dataWithName, "worker_pool.0.autoscaler_max_replicas", clusterName, "worker_pool.0.autoscaler_max_replicas"),
+					resource.TestCheckResourceAttrPair(dataWithName, "worker_pool.0.autoscaler_min_replicas", clusterName, "worker_pool.0.autoscaler_min_replicas"),
 					resource.TestCheckResourceAttrPair(dataWithName, "default_storage_class.0.storage_profile_id", clusterName, "default_storage_class.0.storage_profile_id"),
 					resource.TestCheckResourceAttrPair(dataWithName, "default_storage_class.0.name", clusterName, "default_storage_class.0.name"),
 					resource.TestCheckResourceAttrPair(dataWithName, "default_storage_class.0.reclaim_policy", clusterName, "default_storage_class.0.reclaim_policy"),
@@ -472,6 +550,8 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 					resource.TestCheckResourceAttrPair(dataWithId, "worker_pool.0.disk_size_gi", dataWithName, "worker_pool.0.disk_size_gi"),
 					resource.TestCheckResourceAttrPair(dataWithId, "worker_pool.0.sizing_policy_id", dataWithName, "worker_pool.0.sizing_policy_id"),
 					resource.TestCheckResourceAttrPair(dataWithId, "worker_pool.0.storage_profile_id", dataWithName, "worker_pool.0.storage_profile_id"),
+					resource.TestCheckResourceAttrPair(dataWithId, "worker_pool.0.autoscaler_max_replicas", dataWithName, "worker_pool.0.autoscaler_max_replicas"),
+					resource.TestCheckResourceAttrPair(dataWithId, "worker_pool.0.autoscaler_min_replicas", dataWithName, "worker_pool.0.autoscaler_min_replicas"),
 					resource.TestCheckResourceAttrPair(dataWithId, "default_storage_class.0.storage_profile_id", dataWithName, "default_storage_class.0.storage_profile_id"),
 					resource.TestCheckResourceAttrPair(dataWithId, "default_storage_class.0.name", dataWithName, "default_storage_class.0.name"),
 					resource.TestCheckResourceAttrPair(dataWithId, "default_storage_class.0.reclaim_policy", dataWithName, "default_storage_class.0.reclaim_policy"),
@@ -664,6 +744,7 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
     disk_size_gi       = 20
     sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id
     storage_profile_id = data.vcd_storage_profile.sp.id
+    {{.Autoscaler}}
   }
 
   {{.ExtraWorkerPool}}
