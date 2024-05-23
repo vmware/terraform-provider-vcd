@@ -39,6 +39,8 @@ func TestAccSolutionAddonInstance(t *testing.T) {
 		"CatalogName":       testConfig.SolutionAddOn.Catalog,
 		"RoutedNetworkName": testConfig.SolutionAddOn.RoutedNetwork,
 
+		"PublishToOrg": testConfig.Cse.TenantOrg,
+
 		"AddonIsoPath": localAddOnPath,
 	}
 	testParamsNotEmpty(t, params)
@@ -47,9 +49,9 @@ func TestAccSolutionAddonInstance(t *testing.T) {
 	configText1 := templateFill(testAccSolutionAddonInstanceStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
-	// params["FuncName"] = t.Name() + "step2"
-	// configText2 := templateFill(testAccSolutionAddonInstanceStep2, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText2)
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccSolutionAddonInstanceStep2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -73,12 +75,12 @@ func TestAccSolutionAddonInstance(t *testing.T) {
 					cacheAddOnName.cacheTestResourceFieldValue("vcd_solution_add_on.dse14", "name"),
 				),
 			},
-			// {
-			// 	Config: configText2,
-			// 	Check: resource.ComposeTestCheckFunc(
-			// 		resourceFieldsEqual("vcd_solution_add_on.dse14", "data.vcd_solution_add_on.dse14", []string{"%", "trust_certificate", "addon_path"}),
-			// 	),
-			// },
+			{
+				Config: configText2,
+				Check:  resource.ComposeTestCheckFunc(
+				// resourceFieldsEqual("vcd_solution_add_on.dse14", "data.vcd_solution_add_on.dse14", []string{"%", "trust_certificate", "addon_path"}),
+				),
+			},
 		},
 	})
 }
@@ -151,18 +153,32 @@ resource "vcd_solution_add_on" "dse14" {
 
 
 resource "vcd_solution_add_on_instance" "dse14" {
-	add_on_id     = vcd_solution_add_on.dse14.id
-	accept_eula   = true
-	instance_name = "ds-asdER"
-	input = {
-		name = "ds-qwer"
-		input-delete-previous-uiplugin-versions = false
-	}
+  add_on_id     = vcd_solution_add_on.dse14.id
+  accept_eula   = true
+  instance_name = "ds-asdER"
+  input = {
+    name = "ds-qwer"
+    input-delete-previous-uiplugin-versions = false
+  }
+}
+
+data "vcd_org" "recipient" {
+  name = "{{.PublishToOrg}}"
+}
+
+resource "vcd_solution_add_on_instance_publish" "public" {
+  add_on_instance_id = vcd_solution_add_on_instance.dse14.id
+  org_ids = [data.vcd_org.recipient.id]
+  publish_to_all_tenants = false
 }
 `
 
-// const testAccSolutionAddonInstanceStep2 = testAccSolutionAddonInstanceStep1 + `
-// data "vcd_solution_add_on" "dse14" {
-//   name = vcd_solution_add_on.dse14.name
-// }
-// `
+const testAccSolutionAddonInstanceStep2 = testAccSolutionAddonInstanceStep1 + `
+data "vcd_solution_add_on" "dse14" {
+  name = vcd_solution_add_on.dse14.name
+}
+
+data "vcd_solution_add_on_instance_publish" "published" {
+  add_on_instance_id = vcd_solution_add_on_instance.dse14.id
+}
+`

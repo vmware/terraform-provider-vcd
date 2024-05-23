@@ -157,6 +157,8 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_version":                                      datasourceVcdVersion(),                                 // 3.12
 	"vcd_solution_landing_zone":                        datasourceVcdSolutionLandingZone(),                     // 3.13
 	"vcd_solution_add_on":                              datasourceVcdSolutionAddon(),                           // 3.13
+	"vcd_solution_add_on_instance":                     datasourceVcdSolutionAddonInstance(),                   // 3.13
+	"vcd_solution_add_on_instance_publish":             datasourceVcdSolutionAddonInstancePublish(),            // 3.13
 }
 
 var globalResourceMap = map[string]*schema.Resource{
