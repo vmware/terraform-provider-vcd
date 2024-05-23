@@ -174,12 +174,41 @@ Each block asks for the following arguments:
 
 * `name` - (Required) The name of the worker pool. It must be unique per cluster, and must contain only lowercase alphanumeric characters or "-",
   start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters
-* `machine_count` - (Optional) The number of VMs that the worker pool has. Must be higher than `0`. Defaults to `1`.  Ignored if `autoscaler_max_replicas` and `autoscaler_min_replicas` are set
+* `machine_count` - (Optional) The number of VMs that the worker pool has. Must be higher than `0`, unless `autoscaler_max_replicas` and `autoscaler_min_replicas` are set,
+  in this case it must be `0` (this value is hence not used nor refreshed). Defaults to `1`
 * `disk_size_gi` - (Optional) Disk size, in **Gibibytes (Gi)**, for the worker pool VMs. Must be at least `20`. Defaults to `20`
 * `sizing_policy_id` - (Optional) VM Sizing policy for the control plane VMs. Must be one of the ones made available during CSE installation
 * `placement_policy_id` - (Optional) VM Placement policy for the worker pool VMs. If this one is set, `vgpu_policy_id` must be empty
 * `vgpu_policy_id` - (Optional) vGPU policy for the worker pool VMs. If this one is set, `placement_policy_id` must be empty
 * `storage_profile_id` - (Optional) Storage profile for the worker pool VMs
+* `autoscaler_max_replicas` - (Optional; *v3.13+*) Together with `autoscaler_min_replicas`, and **only when `machine_count=0`**, defines the maximum number of nodes that
+  the Kubernetes Autoscaler will deploy for this worker pool. Read the section below for details.
+* `autoscaler_min_replicas` - (Optional; *v3.13+*) Together with `autoscaler_max_replicas`, and **only when `machine_count=0`**, defines the minimum number of nodes that
+  the Kubernetes Autoscaler will deploy for this worker pool. Read the section below for details.
+
+#### Worker pools with Kubernetes Autoscaler enabled
+
+-> Supported in provider *v3.13+*
+
+The **Kubernetes Autoscaler** is a component that automatically adjusts the size of a Kubernetes Cluster so that all pods have a
+place to run and there are no unneeded nodes. You can read more about it [here](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/clusterapi/README.md).
+
+This provider has two arguments for the `worker_pool` block since version v3.13.0: `autoscaler_max_replicas` and `autoscaler_min_replicas`.
+They allow to define the maximum and minimum amount of nodes of a pool, respectively. They specify the autoscaling
+capabilities of the given Worker Pool as defined [here](https://www.vmware.com/content/dam/digitalmarketing/vmware/en/pdf/docs/vmw-whitepaper-cluster-auto-scaler.pdf).
+
+If at least **one** `worker_pool` block has `autoscaler_max_replicas` and `autoscaler_min_replicas` defined (and subsequently, `machine_count=0`), 
+the provider will deploy the Kubernetes Autoscaler in the cluster `kube-system` namespace, with the following components:
+
+* A `Deployment`, this is the Autoscaler deployment definition
+* Dependencies for the Autoscaler: A `ServiceAccount`, a `ClusterRole`, a `Role` and a `ClusterRoleBinding`
+
+These elements are the ones defined in [the documentation](https://www.vmware.com/content/dam/digitalmarketing/vmware/en/pdf/docs/vmw-whitepaper-cluster-auto-scaler.pdf).
+
+The Kubernetes Autoscaler will be deployed only **once**, as soon as **one** `worker_pool` requires it, and it will be scaled up/down
+depending on the requirements of the worker pools throughout their lifecycle: If **all** of the `worker_pool` blocks unset the autoscaling
+arguments during following updates, the Autoscaler deployment will be **scaled down to 0 replicas**.
+If one of the `worker_pool` blocks requires autoscaling again, it will be **scaled up to 1 replica**.
 
 ### Default Storage Class
 
