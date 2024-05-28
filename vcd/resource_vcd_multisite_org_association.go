@@ -32,6 +32,7 @@ func resourceVcdMultisiteOrgAssociation() *schema.Resource {
 			"associated_org_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "ID of the associated Organization",
 			},
 			"associated_org_name": {
