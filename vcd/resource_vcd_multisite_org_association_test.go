@@ -36,6 +36,11 @@ func TestVcdMultisiteOrgAssociation(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION DATA: %s", configTextData)
 	debugPrintf("#[DEBUG] CONFIGURATION Association: %s", configTextAssociation)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	defer func() {
 		for _, fName := range []string{org1Xml, org2Xml} {
 			if fileExists(fName) {
