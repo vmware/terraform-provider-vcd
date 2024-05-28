@@ -140,6 +140,7 @@ func genericVcdOrgAssociationRead(ctx context.Context, d *schema.ResourceData, m
 	dSet(d, "associated_org_name", associationData.OrgName)
 	dSet(d, "associated_site_id", associationData.SiteID)
 	dSet(d, "status", associationData.Status)
+	d.SetId(associatedOrgId)
 
 	return nil
 }

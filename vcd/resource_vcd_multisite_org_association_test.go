@@ -5,7 +5,9 @@ package vcd
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"os"
+	"regexp"
 	"testing"
 )
 
@@ -27,21 +29,27 @@ func TestVcdMultisiteOrgAssociation(t *testing.T) {
 		"Org1Association":   "org1-org2",
 		"Org2Association":   "org2-org1",
 		"SkipNotice":        " ",
+		"TimeoutMins":       "0",
 	}
 
 	params["FuncName"] = t.Name() + "-data"
 	configTextData := templateFill(testAccMultisiteOrgCommon+testAccMultisiteOrgData, params)
 	params["FuncName"] = t.Name() + "-association"
 	configTextAssociation := templateFill(testAccMultisiteOrgCommon+testAccMultisiteOrgAssociation, params)
+	params["FuncName"] = t.Name() + "-association-update"
+	params["TimeoutMins"] = "2"
+	configTextAssociationUpdate := templateFill(testAccMultisiteOrgCommon+testAccMultisiteOrgAssociation, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION DATA: %s", configTextData)
 	debugPrintf("#[DEBUG] CONFIGURATION Association: %s", configTextAssociation)
+	debugPrintf("#[DEBUG] CONFIGURATION Association update: %s", configTextAssociationUpdate)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 
 	defer func() {
+		// Remove XML files, if they were left behind
 		for _, fName := range []string{org1Xml, org2Xml} {
 			if fileExists(fName) {
 				if err := os.Remove(fName); err != nil {
@@ -58,10 +66,30 @@ func TestVcdMultisiteOrgAssociation(t *testing.T) {
 			{
 				Config: configTextData,
 			},
-
 			// associating org1 with org2 and org2 with org1
 			{
 				Config: configTextAssociation,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// The status, depending on the operation speed, could be either 'ACTIVE' or 'ASYMMETRIC'
+					resource.TestMatchResourceAttr("vcd_multisite_org_association.org2-org1",
+						"status", regexp.MustCompilePOSIX(string(types.StatusAsymmetric)+`|`+string(types.StatusActive))),
+				),
+			},
+			{
+				Config: configTextAssociationUpdate,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair(
+						"vcd_multisite_org_association.org1-org2", "associated_org_id",
+						"data.vcd_org.org2", "id",
+					),
+					resource.TestCheckResourceAttrPair(
+						"vcd_multisite_org_association.org2-org1", "associated_org_id",
+						"data.vcd_org.org1", "id",
+					),
+					// After the mandatory check (connection_timeout_mins=2), the status must be 'ACTIVE'
+					resource.TestCheckResourceAttr("vcd_multisite_org_association.org1-org2", "status", string(types.StatusActive)),
+					resource.TestCheckResourceAttr("vcd_multisite_org_association.org2-org1", "status", string(types.StatusActive)),
+				),
 			},
 		},
 	})
@@ -111,13 +139,13 @@ resource "vcd_multisite_org_association" "{{.Org1Association}}" {
   provider                = {{.ProviderVcdOrg1}}
   org_id                  = data.vcd_org.{{.Org1Def}}.id
   association_data_file   = "{{.Org2Name}}.xml"
-  connection_timeout_mins = 2
+  connection_timeout_mins = {{.TimeoutMins}}
 }
 
 resource "vcd_multisite_org_association" "{{.Org2Association}}" {
   provider                = {{.ProviderVcdOrg2}}
   org_id                  = data.vcd_org.{{.Org2Def}}.id
   association_data_file   = "{{.Org1Name}}.xml"
-  connection_timeout_mins = 2
+  connection_timeout_mins = {{.TimeoutMins}}
 }
 `
