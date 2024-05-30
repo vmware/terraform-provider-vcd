@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 func resourceVcdSolutionAddonInstancePublish() *schema.Resource {
@@ -15,16 +14,17 @@ func resourceVcdSolutionAddonInstancePublish() *schema.Resource {
 		ReadContext:   resourceVcdSolutionAddonInstancePublishRead,
 		UpdateContext: resourceVcdSolutionAddonInstancePublishCreateUpdate,
 		DeleteContext: resourceVcdSolutionAddonInstancePublishDelete,
-		/* Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdSolutionAddonInstancePublishImport,
-		}, */
+		// Import is exactly the same as for Solution Add-On Instance
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceVcdSolutionAddonInstanceImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"add_on_instance_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Solution Add-On ID",
+				Description: "Solution Add-On Instance ID",
 			},
 			"org_ids": {
 				Type:        schema.TypeSet,
@@ -51,20 +51,23 @@ func resourceVcdSolutionAddonInstancePublishCreateUpdate(ctx context.Context, d 
 	}
 
 	orgIds := convertSchemaSetToSliceOfStrings(d.Get("org_ids").(*schema.Set))
-	util.Logger.Printf("[TRACE] DAINIUS Create ORGIDS %#v", orgIds)
+
 	scopes, err := orgIdsToNames(vcdClient, orgIds)
 	if err != nil {
 		return diag.Errorf("error converting Org IDs to Names: %s", err)
 	}
+	publishToAll := d.Get("publish_to_all_tenants").(bool)
 
-	util.Logger.Printf("[TRACE] DAINIUS Create scopes %#v", scopes)
+	if len(scopes) > 0 && publishToAll {
+		return diag.Errorf("'org_ids' must be empty when 'publish_to_all_tenants' is set")
+	}
 
-	_, err = addOnInstance.Publishing(scopes, d.Get("publish_to_all_tenants").(bool))
+	_, err = addOnInstance.Publishing(scopes, publishToAll)
 	if err != nil {
 		return diag.Errorf("error publishing Solution Add-On Instance %s: %s", addOnInstance.SolutionAddOnInstance.Name, err)
 	}
 
-	d.SetId(addOnInstance.DefinedEntity.DefinedEntity.ID)
+	d.SetId(addOnInstance.RdeId())
 
 	return resourceVcdSolutionAddonInstancePublishRead(ctx, d, meta)
 }
@@ -72,7 +75,7 @@ func resourceVcdSolutionAddonInstancePublishCreateUpdate(ctx context.Context, d 
 func resourceVcdSolutionAddonInstancePublishRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	addOnInstance, err := vcdClient.GetSolutionAddOnInstanceById(d.Get("add_on_instance_id").(string))
+	addOnInstance, err := vcdClient.GetSolutionAddOnInstanceById(d.Id())
 	if err != nil {
 		return diag.Errorf("error retrieving Solution Add-On Instance: %s", err)
 	}
@@ -80,14 +83,10 @@ func resourceVcdSolutionAddonInstancePublishRead(ctx context.Context, d *schema.
 	d.Set("publish_to_all_tenants", addOnInstance.SolutionAddOnInstance.Scope.AllTenants)
 	orgNames := addOnInstance.SolutionAddOnInstance.Scope.Tenants
 
-	util.Logger.Printf("[TRACE] DAINIUS read orgNames %#v", orgNames)
-
 	orgIds, err := orgNamesToIds(vcdClient, orgNames)
 	if err != nil {
 		return diag.Errorf("error converting Org IDs to Names: %s", err)
 	}
-
-	util.Logger.Printf("[TRACE] DAINIUS read orgIds %#v", orgIds)
 
 	orgIdsSet := convertStringsToTypeSet(orgIds)
 	err = d.Set("org_ids", orgIdsSet)
@@ -95,12 +94,14 @@ func resourceVcdSolutionAddonInstancePublishRead(ctx context.Context, d *schema.
 		return diag.Errorf("error storing Org IDs: %s", err)
 	}
 
+	dSet(d, "add_on_instance_id", addOnInstance.RdeId())
+
 	return nil
 }
 
 func resourceVcdSolutionAddonInstancePublishDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	addOnInstance, err := vcdClient.GetSolutionAddOnInstanceById(d.Get("add_on_instance_id").(string))
+	addOnInstance, err := vcdClient.GetSolutionAddOnInstanceById(d.Id())
 	if err != nil {
 		return diag.Errorf("error retrieving Solution Add-On Instance: %s", err)
 	}
@@ -112,13 +113,6 @@ func resourceVcdSolutionAddonInstancePublishDelete(ctx context.Context, d *schem
 
 	return resourceVcdSolutionAddonInstancePublishRead(ctx, d, meta)
 }
-
-/* func resourceVcdSolutionAddonInstancePublishImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	vcdClient := meta.(*VCDClient)
-
-	return []*schema.ResourceData{d}, nil
-
-} */
 
 func orgIdsToNames(vcdClient *VCDClient, orgIds []string) ([]string, error) {
 	existingOrgs, err := vcdClient.GetOrgList()
