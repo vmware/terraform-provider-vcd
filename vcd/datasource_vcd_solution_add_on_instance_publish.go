@@ -12,10 +12,15 @@ func datasourceVcdSolutionAddonInstancePublish() *schema.Resource {
 		ReadContext: datasourceVcdSolutionAddonInstancePublishRead,
 
 		Schema: map[string]*schema.Schema{
-			"add_on_instance_id": {
+			"add_on_instance_name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of the Solution Add-On Defined Entity",
+			},
+			"add_on_instance_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Solution Add-On Instance ID",
 			},
 			"org_ids": {
 				Type:     schema.TypeSet,
@@ -41,14 +46,14 @@ func datasourceVcdSolutionAddonInstancePublish() *schema.Resource {
 func datasourceVcdSolutionAddonInstancePublishRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	slzAddOnInstance, err := vcdClient.GetSolutionAddOnInstanceById(d.Get("add_on_instance_id").(string))
+	addOnInstance, err := vcdClient.GetSolutionAddonInstanceByName(d.Get("add_on_instance_name").(string))
 	if err != nil {
 		return diag.Errorf("error retrieving Solution Add-On Instance: %s", err)
 	}
 
-	d.Set("publish_to_all_tenants", slzAddOnInstance.SolutionAddOnInstance.Scope.AllTenants)
+	d.Set("publish_to_all_tenants", addOnInstance.SolutionAddOnInstance.Scope.AllTenants)
 
-	orgNames := slzAddOnInstance.SolutionAddOnInstance.Scope.Tenants
+	orgNames := addOnInstance.SolutionAddOnInstance.Scope.Tenants
 	orgIds, err := orgNamesToIds(vcdClient, orgNames)
 	if err != nil {
 		return diag.Errorf("error converting Org IDs to Names: %s", err)
@@ -60,8 +65,9 @@ func datasourceVcdSolutionAddonInstancePublishRead(ctx context.Context, d *schem
 		return diag.Errorf("error storing Org IDs: %s", err)
 	}
 
-	dSet(d, "rde_state", slzAddOnInstance.DefinedEntity.DefinedEntity.State)
-	d.SetId(slzAddOnInstance.RdeId())
+	dSet(d, "add_on_instance_id", addOnInstance.RdeId())
+	dSet(d, "rde_state", addOnInstance.DefinedEntity.DefinedEntity.State)
+	d.SetId(addOnInstance.RdeId())
 
 	return nil
 }

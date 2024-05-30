@@ -5,15 +5,17 @@ package vcd
 import (
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccSolutionAddonInstance(t *testing.T) {
+func TestAccSolutionAddonInstanceAndPublishing(t *testing.T) {
 	preTestChecks(t)
 
-	// if testConfig.VCD.So == "" {
-	// 	t.Skipf("Add-On config value not specified ")
-	// }
+	if testConfig.SolutionAddOn.Org == "" {
+		t.Skipf("SolutionAddOn config value not specified")
+	}
 
 	vcdClient := createTemporaryVCDConnection(true)
 	org, err := vcdClient.GetOrgByName(testConfig.SolutionAddOn.Org)
@@ -38,19 +40,17 @@ func TestAccSolutionAddonInstance(t *testing.T) {
 		"TestName":          t.Name(),
 		"CatalogName":       testConfig.SolutionAddOn.Catalog,
 		"RoutedNetworkName": testConfig.SolutionAddOn.RoutedNetwork,
-
-		"PublishToOrg": testConfig.Cse.TenantOrg,
-
-		"AddonIsoPath": localAddOnPath,
+		"PublishToOrg":      testConfig.Cse.TenantOrg,
+		"AddonIsoPath":      localAddOnPath,
 	}
 	testParamsNotEmpty(t, params)
 
 	params["FuncName"] = t.Name() + "step1"
-	configText1 := templateFill(testAccSolutionAddonInstanceStep1, params)
+	configText1 := templateFill(testAccSolutionAddonInstanceStep1+testAccSolutionAddonInstancePublishOrg, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	params["FuncName"] = t.Name() + "step2"
-	configText2 := templateFill(testAccSolutionAddonInstanceStep2, params)
+	configText2 := templateFill(testAccSolutionAddonInstanceStep2+testAccSolutionAddonInstancePublishAll, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText2)
 
 	if vcdShortTest {
@@ -58,28 +58,58 @@ func TestAccSolutionAddonInstance(t *testing.T) {
 		return
 	}
 
-	cacheAddOnId := &testCachedFieldValue{}
-	cacheAddOnName := &testCachedFieldValue{}
-
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet("vcd_solution_add_on.dse14", "id"),
-					resource.TestCheckResourceAttrSet("vcd_solution_add_on.dse14", "catalog_item_id"),
-					resource.TestCheckResourceAttr("vcd_solution_add_on.dse14", "rde_state", "RESOLVED"),
-					resource.TestCheckResourceAttr("vcd_solution_add_on.dse14", "trust_certificate", "true"),
-					cacheAddOnId.cacheTestResourceFieldValue("vcd_solution_add_on.dse14", "id"),
-					cacheAddOnName.cacheTestResourceFieldValue("vcd_solution_add_on.dse14", "name"),
+					resource.TestCheckResourceAttrSet("vcd_solution_add_on_instance.dse14", "id"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance.dse14", "accept_eula", "true"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance.dse14", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance.dse14", "delete_input.%", "1"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance.dse14", "delete_input.force-delete", "true"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance.dse14", "input.%", "1"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance.dse14", "input.delete-previous-uiplugin-versions", "true"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance.dse14", "rde_state", "RESOLVED"),
+
+					resource.TestCheckResourceAttrPair("vcd_solution_add_on_instance_publish.public", "id", "vcd_solution_add_on_instance.dse14", "id"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance_publish.public", "org_ids.#", "1"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance_publish.public", "publish_to_all_tenants", "false"),
 				),
 			},
 			{
 				Config: configText2,
-				Check:  resource.ComposeTestCheckFunc(
-				// resourceFieldsEqual("vcd_solution_add_on.dse14", "data.vcd_solution_add_on.dse14", []string{"%", "trust_certificate", "addon_path"}),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_solution_add_on_instance.dse14", "id"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance.dse14", "accept_eula", "true"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance.dse14", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance.dse14", "delete_input.%", "1"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance.dse14", "delete_input.force-delete", "true"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance.dse14", "input.%", "1"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance.dse14", "input.delete-previous-uiplugin-versions", "true"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance.dse14", "rde_state", "RESOLVED"),
+
+					resource.TestCheckResourceAttrPair("vcd_solution_add_on_instance_publish.public", "id", "vcd_solution_add_on_instance.dse14", "id"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance_publish.public", "org_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on_instance_publish.public", "publish_to_all_tenants", "true"),
+
+					resourceFieldsEqual("vcd_solution_add_on_instance.dse14", "data.vcd_solution_add_on_instance.dse14", []string{"%", "accept_eula", "delete_input.%", "delete_input.force-delete"}),
+					resourceFieldsEqual("vcd_solution_add_on_instance_publish.public", "data.vcd_solution_add_on_instance_publish.published", []string{"%"}),
 				),
+			},
+			{ // Import by Name
+				ResourceName:            "vcd_solution_add_on_instance.dse14",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateId:           t.Name(),
+				ImportStateVerifyIgnore: []string{"input", "delete-input", "delete_input.%", "delete_input.force-delete"},
+			},
+			{ // Import by Name
+				ResourceName:      "vcd_solution_add_on_instance_publish.public",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     t.Name(),
 			},
 		},
 	})
@@ -151,17 +181,22 @@ resource "vcd_solution_add_on" "dse14" {
   depends_on = [ vcd_solution_landing_zone.slz ]
 }
 
-
 resource "vcd_solution_add_on_instance" "dse14" {
   add_on_id     = vcd_solution_add_on.dse14.id
   accept_eula   = true
-  instance_name = "ds-asdER"
+  name = "{{.TestName}}"
+
   input = {
-    name = "ds-qwer"
-    input-delete-previous-uiplugin-versions = false
+    delete-previous-uiplugin-versions = true
+  }
+
+  delete_input = {
+    force-delete = true
   }
 }
+`
 
+const testAccSolutionAddonInstancePublishOrg = `
 data "vcd_org" "recipient" {
   name = "{{.PublishToOrg}}"
 }
@@ -174,11 +209,27 @@ resource "vcd_solution_add_on_instance_publish" "public" {
 `
 
 const testAccSolutionAddonInstanceStep2 = testAccSolutionAddonInstanceStep1 + `
-data "vcd_solution_add_on" "dse14" {
-  name = vcd_solution_add_on.dse14.name
+data "vcd_solution_add_on_instance" "dse14" {
+  name = vcd_solution_add_on_instance.dse14.name
 }
 
 data "vcd_solution_add_on_instance_publish" "published" {
-  add_on_instance_id = vcd_solution_add_on_instance.dse14.id
+  add_on_instance_name = vcd_solution_add_on_instance.dse14.name
+
+  depends_on = [ vcd_solution_add_on_instance_publish.public]
 }
 `
+
+const testAccSolutionAddonInstancePublishAll = `
+resource "vcd_solution_add_on_instance_publish" "public" {
+  add_on_instance_id = vcd_solution_add_on_instance.dse14.id
+  publish_to_all_tenants = true
+}
+`
+
+func stateDumper() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		spew.Dump(s)
+		return nil
+	}
+}

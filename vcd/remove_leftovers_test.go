@@ -15,9 +15,10 @@ import (
 // entityDef is the definition of an entity (to be either deleted or kept)
 // with an optional comment
 type entityDef struct {
-	Type    string `json:"type"`
-	Name    string `json:"name"`
-	Comment string `json:"comment,omitempty"`
+	Type       string `json:"type"`
+	Name       string `json:"name"`
+	Comment    string `json:"comment,omitempty"`
+	NameRegexp *regexp.Regexp
 }
 
 // entityList is a collection of entityDef
@@ -42,8 +43,8 @@ var doNotDelete = entityList{
 	{Type: "vcd_vapp", Name: "Test_EmptyVmVapp1", Comment: "created by test, but to be preserved"},
 	{Type: "vcd_vapp", Name: "Test_EmptyVmVapp2", Comment: "created by test, but to be preserved"},
 	{Type: "vcd_vapp", Name: "Test_EmptyVmVapp3", Comment: "created by test, but to be preserved"},
-	{Type: "vcd_solution_add_on", Name: "vmware.solution-addon-landing-zone-1.2.0-22957452", Comment: "Built-in Solution Add-On"},
-	{Type: "vcd_solution_add_on", Name: "vmware.autoscale-1.4.0-23130968", Comment: "Built-in Solution Add-On"},
+	{Type: "vcd_solution_add_on", NameRegexp: regexp.MustCompile(`^vmware.solution-addon-landing-zone`), Comment: "Built-in Solution Add-On"},
+	{Type: "vcd_solution_add_on", NameRegexp: regexp.MustCompile(`^vmware.autoscale`), Comment: "Built-in Solution Add-On"},
 }
 
 // alsoDelete contains a list of entities that should be removed , in addition to the ones
@@ -88,7 +89,7 @@ var alsoDelete = entityList{
 	{Type: "vcd_org_vdc", Name: "ForInternalDiskTest", Comment: "from vcd.TestAccVcdVmInternalDisk-CreateALl.tf: ForInternalDiskTest"},
 	{Type: "vcd_solution_landing_zone", Name: "urn:vcloud:type:vmware:solutions_organization:1.0.0", Comment: "Solution Landing Zone"},
 	{Type: "vcd_solution_add_on", Name: "urn:vcloud:type:vmware:solutions_add_on:1.0.0", Comment: "Solution Add-On"},
-	{Type: "vcd_solution_add_on_instance", Name: "urn:vcloud:type:vmware:solutions_add_on:1.0.0", Comment: "Solution Add-On"},
+	{Type: "vcd_solution_add_on_instance", NameRegexp: regexp.MustCompile(`^vmware.ds`), Comment: "Solution Add-On"},
 }
 
 // isTest is a regular expression that tells if an entity needs to be deleted
@@ -123,29 +124,37 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	// --------------------------------------------------------------
 	// Solution Add-On Instances
 	// --------------------------------------------------------------
-	/* if govcdClient.Client.IsSysAdmin {
+	if govcdClient.Client.IsSysAdmin {
 		allEntries, err := govcdClient.GetAllSolutionAddonInstances(nil)
 		if err != nil {
 			return fmt.Errorf("error retrieving all Solution Add-On Instances: %s", err)
 		}
 
-		for _, addOn := range allEntries {
-			shouldDeleteAddOn := shouldDeleteEntity(alsoDelete, doNotDelete, addOn.DefinedEntity.DefinedEntity.Name, "vcd_solution_add_on_instance", 0, verbose)
+		for _, addOnInstance := range allEntries {
+			shouldDeleteAddOn := shouldDeleteEntity(alsoDelete, doNotDelete, addOnInstance.DefinedEntity.DefinedEntity.Name, "vcd_solution_add_on_instance", 0, verbose)
 			if shouldDeleteAddOn {
-				if addOn.DefinedEntity.DefinedEntity.State != addrOf("READY") {
-					err := addOn.DefinedEntity.Resolve()
+				if addOnInstance != nil && addOnInstance.DefinedEntity != nil &&
+					addOnInstance.DefinedEntity.DefinedEntity != nil &&
+					addOnInstance.DefinedEntity.DefinedEntity.State != nil &&
+					*addOnInstance.DefinedEntity.DefinedEntity.State != "READY" {
+					err := addOnInstance.DefinedEntity.Resolve()
 					if err != nil {
-						return fmt.Errorf("error resolving Solution Add-on: %s", err)
+						return fmt.Errorf("error resolving Solution Add-On Instance: %s", err)
 					}
 				}
 
-				err = addOn.Delete()
+				_, err = addOnInstance.Publishing(nil, false)
 				if err != nil {
-					return fmt.Errorf("error removing Solution Add-on: %s", err)
+					return fmt.Errorf("error unpublishig Solution Add-On Instance: %s", err)
+				}
+
+				_, err = addOnInstance.Delete(nil)
+				if err != nil {
+					return fmt.Errorf("error removing Solution Add-On Instance: %s", err)
 				}
 			}
 		}
-	} */
+	}
 
 	// --------------------------------------------------------------
 	// Solution Add-ons
@@ -917,7 +926,12 @@ func shouldDeleteEntity(alsoDelete, doNotDelete entityList, name, entityType str
 // inList shows whether a given entity is included in an entityList
 func inList(list entityList, name, entityType string) bool {
 	for _, element := range list {
+		// Compare by names
 		if element.Name == name && element.Type == entityType {
+			return true
+		}
+		// Compare by possible regexp values
+		if element.NameRegexp != nil && element.NameRegexp.MatchString(name) {
 			return true
 		}
 	}

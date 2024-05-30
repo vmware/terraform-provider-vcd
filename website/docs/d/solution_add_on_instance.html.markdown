@@ -3,40 +3,28 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_solution_add_on_instance"
 sidebar_current: "docs-vcd-data-source-solution-add-on-instance"
 description: |-
-  Provides a data source to read Solution Add-Ons in Cloud Director. A solution add-on is the
-  representation of a solution that is custom built for VMware Cloud Director in the VMware Cloud
-  Director extensibility ecosystem. A solution add-on can encapsulate UI and API VMware Cloud
-  Director extensions together with their backend services and lifecycle management. Solution
-  аdd-оns are distributed as .iso files. A solution add-on can contain numerous
-  elements: UI plugins, vApps, users, roles, runtime defined entities, and more.
+  Provides a data source to read Solution Add-On Instances in Cloud Director. A Solution Add-On Instance
+  is created from an existing Solution Add-On by supplying configuration values of that particular instance.
 ---
 
 # vcd\_solution\_add\_on\_instance
 
 Supported in provider *v3.13+* and VCD 10.4.1+.
 
-Provides a data source to read Solution Add-Ons in Cloud Director. A solution add-on is the
-representation of a solution that is custom built for VMware Cloud Director in the VMware Cloud
-Director extensibility ecosystem. A solution add-on can encapsulate UI and API VMware Cloud Director
-extensions together with their backend services and lifecycle management. Solution аdd-оns are
-distributed as .iso files. A solution add-on can contain numerous elements: UI plugins, vApps,
-users, roles, runtime defined entities, and more.
+Provides a data source to read Solution Add-On Instances in Cloud Director. A Solution Add-On
+Instance is created from an existing Solution Add-On by supplying configuration values of that
+particular instance.
 
 ## Example Usage
 
 ```hcl
-
+data "vcd_solution_add_on_instance" "dse14" {
+  name = "MyDseInstance"
+}
 ```
-
-## Argument Reference
-
-The following arguments are supported:
-
-* `org` - (Optional) The name of organization to which the edge gateway belongs. Optional if defined at provider level.
-
 
 ## Attribute Reference
 
 All the arguments and attributes defined in
-[`vcd_solution_add_on`](/providers/vmware/vcd/latest/docs/resources/solution_add_on) resource are
-available.
+[`vcd_solution_add_on_instance`](/providers/vmware/vcd/latest/docs/resources/solution_add_on_instance)
+resource are available.

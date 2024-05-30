@@ -12,24 +12,18 @@ func datasourceVcdSolutionAddonInstance() *schema.Resource {
 		ReadContext: datasourceVcdSolutionAddonInstanceRead,
 
 		Schema: map[string]*schema.Schema{
-			"add_on_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Solution Add-On ID",
-			},
-
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "Solution Add-On Name",
 			},
-			"input": {
-				Type:        schema.TypeMap,
+			"add_on_id": {
+				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Key value map of Solution Add-On instance",
+				Description: "Parent Solution Add-On ID",
 			},
-			"delete_input": { // These will only be applicable to "delete" operation
+			"input": {
 				Type:        schema.TypeMap,
 				Computed:    true,
 				Description: "Key value map of Solution Add-On instance",
@@ -46,34 +40,29 @@ func datasourceVcdSolutionAddonInstance() *schema.Resource {
 func datasourceVcdSolutionAddonInstanceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	slzAddOn, err := vcdClient.GetSolutionAddonById(d.Get("add_on_id").(string))
-	if err != nil {
-		return diag.Errorf("error retrieving Solution Add-On: %s", err)
-	}
-
-	slzAddOnInstance, err := slzAddOn.GetInstanceByName(d.Get("name").(string))
+	addOnInstance, err := vcdClient.GetSolutionAddonInstanceByName(d.Get("name").(string))
 	if err != nil {
 		return diag.Errorf("error retrieving Solution Add-On Instance: %s", err)
 	}
 
-	d.SetId(slzAddOnInstance.RdeId())
+	dSet(d, "add_on_id", addOnInstance.SolutionAddOnInstance.Prototype)
+	dSet(d, "name", addOnInstance.SolutionAddOnInstance.Name)
+	dSet(d, "rde_state", addOnInstance.DefinedEntity.DefinedEntity.State)
 
-	// d.Set("publish_to_all_tenants", slzAddOnInstance.SolutionAddOnInstance.Scope.AllTenants)
+	// Retrieve creation input fields
+	// 'delete_input' values cannot be read from Solution Add-On Instance as they are specified only
+	// when deleting the Add-On Instance.
+	inputValues, err := addOnInstance.ReadCreationInputValues(true)
+	if err != nil {
+		return diag.Errorf("error reading Input values from Solution Add-On instance: %s", err)
+	}
 
-	// orgNames := slzAddOnInstance.SolutionAddOnInstance.Scope.Tenants
-	// orgIds, err := orgNamesToIds(vcdClient, orgNames)
-	// if err != nil {
-	// 	return diag.Errorf("error converting Org IDs to Names: %s", err)
-	// }
+	err = d.Set("input", inputValues)
+	if err != nil {
+		return diag.Errorf("error storing 'input' field: %s", err)
+	}
 
-	// orgIdsSet := convertStringsToTypeSet(orgIds)
-	// err = d.Set("org_ids", orgIdsSet)
-	// if err != nil {
-	// 	return diag.Errorf("error storing Org IDs: %s", err)
-	// }
-
-	// dSet(d, "rde_state", slzAddOnInstance.DefinedEntity.DefinedEntity.State)
-	// d.SetId(slzAddOnInstance.RdeId())
+	d.SetId(addOnInstance.RdeId())
 
 	return nil
 }
