@@ -39,8 +39,11 @@ func datasourceVcdSolutionAddonRead(ctx context.Context, d *schema.ResourceData,
 		return diag.Errorf("error retrieving Solution Add-On: %s", err)
 	}
 
-	if slzAddOn.DefinedEntity.DefinedEntity.State == addrOf("") || slzAddOn.SolutionAddOnEntity.Origin.CatalogItemId == "" {
-		return diag.Errorf("no values filled in")
+	if slzAddOn == nil || slzAddOn.DefinedEntity == nil ||
+		slzAddOn.DefinedEntity.DefinedEntity == nil || slzAddOn.DefinedEntity.DefinedEntity.State == nil ||
+		*slzAddOn.DefinedEntity.DefinedEntity.State == "" ||
+		slzAddOn.SolutionAddOnEntity.Origin.CatalogItemId == "" {
+		return diag.Errorf("no values filled in for Solution Add-On '%s'", d.Get("name").(string))
 	}
 
 	dSet(d, "rde_state", slzAddOn.DefinedEntity.DefinedEntity.State)

@@ -25,7 +25,7 @@ func TestAccSolutionAddon(t *testing.T) {
 	vcdClient := createTemporaryVCDConnection(true)
 	org, err := vcdClient.GetOrgByName(testConfig.VCD.Org)
 	if err != nil {
-		t.Fatalf("rrror creating temporary VCD connection: %s", err)
+		t.Fatalf("error creating temporary VCD connection: %s", err)
 	}
 
 	catalog, err := org.GetCatalogByName(testConfig.VCD.Catalog.NsxtBackedCatalogName, false)

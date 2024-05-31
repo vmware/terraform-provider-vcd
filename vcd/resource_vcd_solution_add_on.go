@@ -119,7 +119,7 @@ func resourceVcdSolutionAddonDelete(ctx context.Context, d *schema.ResourceData,
 	}
 	err = entity.Delete()
 	if err != nil {
-		return diag.Errorf("error deleting Solution Add-On RDE: %s", err)
+		return diag.Errorf("error deleting Solution Add-On: %s", err)
 	}
 
 	return nil
