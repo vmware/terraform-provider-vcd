@@ -1,0 +1,1 @@
+* Fix `vcd_catalog_media` resource so it doesn't hang on successfully completed tasks [GH-1273]

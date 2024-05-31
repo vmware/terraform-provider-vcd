@@ -184,9 +184,8 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 				return diag.FromErr(err)
 			}
 
-			logForScreen("vcd_catalog_media", fmt.Sprintf("vcd_catalog_media.%s: Upload progress %s%%\n", mediaName, task.GetUploadProgress()))
-			if task.Task != nil && task.Task.Task != nil && task.Task.Task.Status == "success" {
-				logForScreen("vcd_catalog_media", fmt.Sprintf("vcd_catalog_media.%s: Upload finished successfully\n", mediaName))
+			logForScreen("vcd_catalog_media", fmt.Sprintf("vcd_catalog_media."+mediaName+": Upload progress "+task.GetUploadProgress()+"%%\n"))
+			if task.GetUploadProgress() == "100.00" {
 				break
 			}
 			time.Sleep(10 * time.Second)
