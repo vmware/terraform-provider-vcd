@@ -200,7 +200,7 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 				return diag.Errorf("VCD Error importing new catalog item: %s", err)
 			}
 			logForScreen("vcd_catalog_media", fmt.Sprintf("vcd_catalog_media.%s: VCD import catalog item progress %s%%\n", mediaName, progress))
-			if task.Task != nil && task.Task.Task != nil && (task.Task.Task.Status == "success" || task.Task.Task.Status == "aborted") {
+			if progress == "100" || (task.Task != nil && task.Task.Task != nil && (task.Task.Task.Status == "success" || task.Task.Task.Status == "aborted")) {
 				logForScreen("vcd_catalog_media", fmt.Sprintf("vcd_catalog_media.%s: VCD import catalog item finished with status '%s'\n", mediaName, task.Task.Task.Status))
 				break
 			}
