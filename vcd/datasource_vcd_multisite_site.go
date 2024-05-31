@@ -7,9 +7,9 @@ import (
 	"sort"
 )
 
-func datasourceVcdSite() *schema.Resource {
+func datasourceVcdMultisiteSite() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdSiteRead,
+		ReadContext: datasourceVcdMultisiteSiteRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
@@ -36,7 +36,7 @@ func datasourceVcdSite() *schema.Resource {
 	}
 }
 
-func datasourceVcdSiteRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdMultisiteSiteRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*VCDClient)
 	site, err := client.Client.GetSite()
 

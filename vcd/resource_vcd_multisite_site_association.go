@@ -27,8 +27,10 @@ func resourceVcdMultisiteSiteAssociation() *schema.Resource {
 				Description: "ID of the site to which the associated site belongs",
 			},
 			"associated_site_name": {
-				Type:        schema.TypeString,
-				Computed:    true,
+				Type:     schema.TypeString,
+				Computed: true,
+				// Note: The API allows customising this field, and it will apply it, but the name will be silently
+				// changed back to its default (host name) immediately after creation. Hence, we keep it computed and immutable
 				Description: "Name of the site to which the associated site belongs",
 			},
 			"associated_site_href": {
@@ -124,6 +126,8 @@ func genericVcdSiteAssociationRead(ctx context.Context, d *schema.ResourceData, 
 	dSet(d, "associated_site_name", associationData.SiteName)
 	dSet(d, "associated_site_href", associationData.Href)
 	dSet(d, "status", associationData.Status)
+	d.SetId(associationData.SiteID)
+
 	return nil
 }
 

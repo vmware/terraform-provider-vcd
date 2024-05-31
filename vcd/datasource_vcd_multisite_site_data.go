@@ -2,6 +2,8 @@ package vcd
 
 import (
 	"context"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"os"
 	"path"
 
@@ -41,5 +43,10 @@ func datasourceVcdSiteMultiSiteRead(ctx context.Context, d *schema.ResourceData,
 			return diag.Errorf("error writing site association data to file '%s' : %s", downloadToFile, err)
 		}
 	}
+	siteData, err := govcd.RawDataToStructuredXml[types.SiteAssociationMember](rawData)
+	if err != nil {
+		return diag.Errorf("error decoding raw data for this site: %s", err)
+	}
+	d.SetId(extractUuid(siteData.Href))
 	return nil
 }

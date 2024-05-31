@@ -214,3 +214,44 @@ func buildMultipleProviders() map[string]func() (*schema.Provider, error) {
 	}
 	return providers
 }
+
+// ----------------------
+func createSysVCDConnection(vcdUrl, user, password, org string) *VCDClient {
+	config := Config{
+		User:            user,
+		Password:        password,
+		Token:           "",
+		ApiToken:        "",
+		UseSamlAdfs:     false,
+		CustomAdfsRptId: "",
+		SysOrg:          org,
+		Org:             org,
+		Vdc:             "",
+		Href:            vcdUrl,
+		InsecureFlag:    testConfig.Provider.AllowInsecure,
+		MaxRetryTimeout: testConfig.Provider.MaxRetryTimeout,
+	}
+	conn, err := config.Client()
+	if err != nil {
+		panic("unable to initialize VCD connection :" + err.Error())
+	}
+	return conn
+}
+
+// buildMultipleSysProviders builds a provider factory with two system administrators from two VCDs
+func buildMultipleSysProviders(vcdUrl, user, password, org string) map[string]func() (*schema.Provider, error) {
+	newProvider := Provider()
+
+	newProvider.ConfigureContextFunc = func(ctx context.Context, data *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		return createSysVCDConnection(vcdUrl, user, password, org), nil
+	}
+	providers := map[string]func() (*schema.Provider, error){
+		providerVcdSystem: func() (*schema.Provider, error) {
+			return testAccProvider, nil
+		},
+		providerVcdSystem2: func() (*schema.Provider, error) {
+			return newProvider, nil
+		},
+	}
+	return providers
+}
