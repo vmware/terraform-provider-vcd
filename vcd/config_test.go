@@ -33,6 +33,17 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
+// #nosec G101 -- These credentials are fake for testing purposes
+const (
+	envSecondVcdUrl      = "VCD_URL2"
+	envSecondVcdUser     = "VCD_USER2"
+	envSecondVcdPassword = "VCD_PASSWORD2"
+	envSecondVcdSysOrg   = "VCD_SYSORG2"
+	//secondVcdOrg2             = "VCD_ORG2"
+	//secondVcdOrgUser2         = "VCD_ORGUSER2"
+	//secondVcdOrgUserPassword2 = "VCD_ORGUSER_PASSWORD2"
+)
+
 func init() {
 
 	// To list the flags when we run "go test -tags functional -vcd-help", the flag name must start with "vcd"

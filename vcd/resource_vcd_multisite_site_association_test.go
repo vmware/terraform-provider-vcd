@@ -12,17 +12,6 @@ import (
 	"testing"
 )
 
-// #nosec G101 -- These credentials are fake for testing purposes
-const (
-	envSecondVcdUrl      = "VCD_URL2"
-	envSecondVcdUser     = "VCD_USER2"
-	envSecondVcdPassword = "VCD_PASSWORD2"
-	envSecondVcdSysOrg   = "VCD_SYSORG2"
-	//secondVcdOrg2             = "VCD_ORG2"
-	//secondVcdOrgUser2         = "VCD_ORGUSER2"
-	//secondVcdOrgUserPassword2 = "VCD_ORGUSER_PASSWORD2"
-)
-
 func checkClientConnectionFromEnv() error {
 	vcdUrl := os.Getenv(envSecondVcdUrl)
 	user := os.Getenv(envSecondVcdUser)
@@ -53,6 +42,7 @@ func checkClientConnectionFromEnv() error {
 
 func TestVcdMultisiteSiteAssociation(t *testing.T) {
 	preTestChecks(t)
+	skipIfNotSysAdmin(t)
 	err := checkClientConnectionFromEnv()
 	if err != nil {
 		t.Skipf("second connection not available: %s", err)

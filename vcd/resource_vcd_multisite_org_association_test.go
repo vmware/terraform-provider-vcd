@@ -13,6 +13,7 @@ import (
 
 func TestVcdMultisiteOrgAssociation(t *testing.T) {
 	preTestChecks(t)
+	skipIfNotSysAdmin(t)
 	org1Name := testConfig.VCD.Org
 	org2Name := testConfig.VCD.Org + "-1"
 	org1Xml := org1Name + ".xml"
