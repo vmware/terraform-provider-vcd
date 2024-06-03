@@ -1,1 +1,2 @@
-* Fix `vcd_catalog_media` resource so it doesn't hang on successfully completed tasks [GH-1273]
+* Fix `vcd_catalog_media` resource so it doesn't wait indefinitely to the upload task to reach 100% progress,
+  by checking also its status, to decide that the upload is complete [GH-1273]
