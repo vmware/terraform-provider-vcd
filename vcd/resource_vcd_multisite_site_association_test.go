@@ -40,6 +40,24 @@ func checkClientConnectionFromEnv() error {
 	return nil
 }
 
+/*
+	TestVcdMultisiteSiteAssociation will test the associations between two sites
+	To run this test, make a shell script like the one below, filling the variables
+	in addition to the VCD defined in vcd_test_config.json
+
+$ cat connection.sh
+export VCD_URL2=https://some-vcd-url.com/api
+export VCD_USER2=administrator
+export VCD_PASSWORD2='myPassword'
+export VCD_SYSORG2=System
+export VCD_ORG2=orgname2
+export VCD_ORGUSER2=org-admin-name
+export VCD_ORGUSER_PASSWORD2='myOrgAdminPassword'
+
+$	source connection.sh
+$ go test -tags functional -run TestVcdMultisiteSiteAssociation  -v -timeout 0
+*/
+
 func TestVcdMultisiteSiteAssociation(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
