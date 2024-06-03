@@ -46,9 +46,10 @@ func suppressTextAfterImport() schema.SchemaDiffSuppressFunc {
 	}
 }
 
-// suppressBoolAfterCreation will ignore the field value if its value has changed
+// suppressFieldAfterImport will ignore the field value if its value has changed
 // (Useful for resources that have values set to default on import)
-func suppressBoolAfterCreation(ignoreField string) schema.SchemaDiffSuppressFunc {
+// Note: don't use this function unless the resource has a Boolean field named "imported" that is set during import
+func suppressFieldAfterImport(ignoreField string) schema.SchemaDiffSuppressFunc {
 	return func(k string, old string, new string, d *schema.ResourceData) bool {
 		if old != new && k == ignoreField && d.Get("imported").(bool) {
 			return true

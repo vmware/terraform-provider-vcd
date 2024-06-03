@@ -261,14 +261,14 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Optional:         true,
 			Default:          true,
 			Description:      "Automatically accept EULA if OVA has it",
-			DiffSuppressFunc: suppressBoolAfterCreation("accept_all_eulas"),
+			DiffSuppressFunc: suppressFieldAfterImport("accept_all_eulas"),
 		},
 		"power_on": {
 			Type:             schema.TypeBool,
 			Optional:         true,
 			Default:          true,
 			Description:      "A boolean value stating if this VM should be powered on",
-			DiffSuppressFunc: suppressBoolAfterCreation("power_on"),
+			DiffSuppressFunc: suppressFieldAfterImport("power_on"),
 		},
 		"storage_profile": {
 			Type:        schema.TypeString,
@@ -412,7 +412,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Default:          false,
 			ForceNew:         true,
 			Description:      "Consolidates disks during creation and allows to change disk size using 'override_template_disk' in fast provisioned VDCs",
-			DiffSuppressFunc: suppressBoolAfterCreation("consolidate_disks_on_create"),
+			DiffSuppressFunc: suppressFieldAfterImport("consolidate_disks_on_create"),
 		},
 		"override_template_disk": {
 			Type:        schema.TypeSet,
@@ -731,7 +731,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Optional:         true,
 			Default:          false,
 			Description:      "True if the update of resource should fail when virtual machine power off needed.",
-			DiffSuppressFunc: suppressBoolAfterCreation("prevent_update_power_off"),
+			DiffSuppressFunc: suppressFieldAfterImport("prevent_update_power_off"),
 		},
 		"sizing_policy_id": {
 			Type:        schema.TypeString,
@@ -1762,7 +1762,6 @@ func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType
 		return err
 	}
 
-	dSet(d, "imported", false)
 	return resourceVcdVAppVmUpdateExecute(d, meta, "update", vmType, nil)
 }
 
