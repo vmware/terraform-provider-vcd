@@ -767,6 +767,11 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    true,
 			Description: "A map that contains metadata that is automatically added by VCD (10.5.1+) and provides details on the origin of the VM",
 		},
+		"imported": {
+			Type:        schema.TypeBool,
+			Computed:    true,
+			Description: "Tells whether this resource has been imported",
+		},
 	}
 }
 
@@ -843,6 +848,7 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 	if len(diags) != 0 {
 		return append(diags, genericVcdVmRead(d, meta, "resource")...)
 	}
+	dSet(d, "imported", false)
 	return genericVcdVmRead(d, meta, "resource")
 }
 
@@ -1756,6 +1762,7 @@ func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType
 		return err
 	}
 
+	dSet(d, "imported", false)
 	return resourceVcdVAppVmUpdateExecute(d, meta, "update", vmType, nil)
 }
 
@@ -2631,6 +2638,7 @@ func resourceVcdVappVmImport(_ context.Context, d *schema.ResourceData, meta int
 	dSet(d, "prevent_update_power_off", d.Get("prevent_update_power_off"))
 	dSet(d, "power_on", d.Get("power_on"))
 	dSet(d, "consolidate_disks_on_create", d.Get("consolidate_disks_on_create"))
+	dSet(d, "imported", true)
 	d.SetId(vm.VM.ID)
 	return []*schema.ResourceData{d}, nil
 }

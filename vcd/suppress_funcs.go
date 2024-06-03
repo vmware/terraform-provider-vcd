@@ -50,7 +50,7 @@ func suppressTextAfterImport() schema.SchemaDiffSuppressFunc {
 // (Useful for resources that have values set to default on import)
 func suppressBoolAfterCreation(ignoreField string) schema.SchemaDiffSuppressFunc {
 	return func(k string, old string, new string, d *schema.ResourceData) bool {
-		if old != new && k == ignoreField {
+		if old != new && k == ignoreField && d.Get("imported").(bool) {
 			return true
 		}
 		return false
