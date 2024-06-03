@@ -18,8 +18,8 @@ github.com/cloudflare/circl v1.3.7/go.mod h1:sRTcRWXGLrKw6yIGJ+l7amYJFfAXbZG0kBS
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/cyphar/filepath-securejoin v0.2.4 h1:Ugdm7cg7i6ZK6x3xDF1oEu1nfkyfH53EtKeQYTC3kyg=
 github.com/cyphar/filepath-securejoin v0.2.4/go.mod h1:aPGpWjXOXUn2NCNjFvBE6aRxGGx79pTxQpKOJNYHHl4=
-github.com/dataclouder/go-vcloud-director/v2 v2.17.0-alpha.3.0.20240521190600-546b408a8d37 h1:vlRzyxsOY44kmlj3dvcUX3WV5Tn1AKKjA2Ns73SNNv4=
-github.com/dataclouder/go-vcloud-director/v2 v2.17.0-alpha.3.0.20240521190600-546b408a8d37/go.mod h1:vbuNYzuADDBFhi9i2dIKWeNxMK1VFF0dACq01amYBIM=
+github.com/dataclouder/go-vcloud-director/v2 v2.17.0-alpha.3.0.20240603070925-4e7793bb15b4 h1:XYngKd4ASPGfKpo2ly69KFDToie9p7hXX/5JgHG8jK8=
+github.com/dataclouder/go-vcloud-director/v2 v2.17.0-alpha.3.0.20240603070925-4e7793bb15b4/go.mod h1:vbuNYzuADDBFhi9i2dIKWeNxMK1VFF0dACq01amYBIM=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
