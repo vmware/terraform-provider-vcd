@@ -704,9 +704,9 @@ func TestAccVcdCseKubernetesClusterCreationWithAutoscaler(t *testing.T) {
 					resource.TestCheckResourceAttrSet(clusterResource, "control_plane.0.ip"), // IP should be assigned after creation as it was not set manually in HCL config
 					resource.TestCheckResourceAttr(clusterResource, "worker_pool.#", "1"),
 					resource.TestCheckResourceAttr(clusterResource, "worker_pool.0.name", "worker-pool-1"),
-					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.machine_count", "0"),
-					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.autoscaler_max_replicas", "5"),
-					resource.TestCheckResourceAttr(clusterName, "worker_pool.0.autoscaler_min_replicas", "1"),
+					resource.TestCheckResourceAttr(clusterResource, "worker_pool.0.machine_count", "0"),
+					resource.TestCheckResourceAttr(clusterResource, "worker_pool.0.autoscaler_max_replicas", "5"),
+					resource.TestCheckResourceAttr(clusterResource, "worker_pool.0.autoscaler_min_replicas", "1"),
 					resource.TestCheckResourceAttr(clusterResource, "worker_pool.0.disk_size_gi", "20"),
 					resource.TestCheckResourceAttrPair(clusterResource, "worker_pool.0.sizing_policy_id", "data.vcd_vm_sizing_policy.tkg_small", "id"),
 					resource.TestCheckResourceAttrPair(clusterResource, "worker_pool.0.storage_profile_id", "data.vcd_storage_profile.sp", "id"),
