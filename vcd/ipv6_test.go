@@ -722,7 +722,7 @@ func TestAccVcdIpv6SupportLargeSubnet(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_nsxt_edgegateway.nsxt-edge", "read_limit_unused_ip_count", strconv.Itoa(defaultReadLimitOfUnusedIps)),
 					resource.TestCheckResourceAttr("data.vcd_nsxt_edgegateway.nsxt-edge", "unused_ip_count", "999998"), // data source does not have limit
 
-					resourceFieldsEqual("vcd_nsxt_edgegateway.nsxt-edge", "data.vcd_nsxt_edgegateway.nsxt-edge", []string{"%", "unused_ip_count"}),
+					resourceFieldsEqual("vcd_nsxt_edgegateway.nsxt-edge", "data.vcd_nsxt_edgegateway.nsxt-edge", []string{"%", "unused_ip_count", "read_limit_unused_ip_count"}),
 				),
 			},
 		},
