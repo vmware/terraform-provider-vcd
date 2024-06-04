@@ -301,7 +301,6 @@ be scaled down to zero.
 Updating any other argument will delete the existing cluster and create a new one, when the Terraform plan is applied.
 
 Modifying the CSE version of a cluster with `cse_version` is not supported.
-This must be done manually as stated [in the official documentation](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1/VMware-Cloud-Director-Container-Service-Extension-Using-Tenant-4.1/GUID-092C40B4-D0BA-4B90-813F-D36929F2F395.html).
 
 ## Accessing the Kubernetes cluster
 
