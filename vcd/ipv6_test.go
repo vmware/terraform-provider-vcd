@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -569,6 +570,10 @@ func TestAccVcdIpv6SupportLargeSubnet(t *testing.T) {
 	configTex2 := templateFill(testAccVcdIpv6LargeSubnetStep2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTex2)
 
+	params["FuncName"] = t.Name() + "-step3"
+	configTex3DS := templateFill(testAccVcdIpv6LargeSubnetStep2DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTex3DS)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -593,6 +598,7 @@ func TestAccVcdIpv6SupportLargeSubnet(t *testing.T) {
 					}),
 
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.nsxt-edge", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "read_limit_unused_ip_count", strconv.Itoa(defaultReadLimitOfUnusedIps)),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "unused_ip_count", "999999"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "used_ip_count", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "subnet.*", map[string]string{
@@ -700,6 +706,25 @@ func TestAccVcdIpv6SupportLargeSubnet(t *testing.T) {
 					}),
 				),
 			},
+			{
+				Config: configTex3DS,
+				SkipFunc: func() (bool, error) {
+					if skipVersionLessThan != "" {
+						fmt.Println(skipVersionLessThan)
+						return true, nil
+					}
+					return false, nil
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "unused_ip_count", "199998"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "read_limit_unused_ip_count", "200000"), // 200k
+
+					resource.TestCheckResourceAttr("data.vcd_nsxt_edgegateway.nsxt-edge", "read_limit_unused_ip_count", strconv.Itoa(defaultReadLimitOfUnusedIps)),
+					resource.TestCheckResourceAttr("data.vcd_nsxt_edgegateway.nsxt-edge", "unused_ip_count", "999998"), // data source does not have limit
+
+					resourceFieldsEqual("vcd_nsxt_edgegateway.nsxt-edge", "data.vcd_nsxt_edgegateway.nsxt-edge", []string{"%", "unused_ip_count"}),
+				),
+			},
 		},
 	})
 	postTestChecks(t)
@@ -707,6 +732,16 @@ func TestAccVcdIpv6SupportLargeSubnet(t *testing.T) {
 
 const testAccVcdIpv6LargeSubnetStep1 = testAccVcdIpv6Prerequisites + testAccVcdIpv6networksLargeSubnets + testAccVcdIpv6EdgeGatewayLargeSubnet
 const testAccVcdIpv6LargeSubnetStep2 = testAccVcdIpv6Prerequisites + testAccVcdIpv6networksLargeSubnets + testAccVcdIpv6EdgeGatewayLargeSubnetWithExternalNetworks
+const testAccVcdIpv6LargeSubnetStep2DS = testAccVcdIpv6LargeSubnetStep2 + `
+# skip-binary-test: Data source test
+data "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org         = "{{.Org}}"
+  owner_id    = vcd_org_vdc.with-edge-cluster.id
+  name        = vcd_nsxt_edgegateway.nsxt-edge.name
+
+  depends_on = [vcd_nsxt_edgegateway.nsxt-edge]
+}
+`
 
 const testAccVcdIpv6networksLargeSubnets = `
 data "vcd_nsxt_manager" "main" {
@@ -951,6 +986,8 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   name        = "{{.TestName}}-edge-gateway"
 
   external_network_id = vcd_external_network_v2.ext-net-nsxt.id
+  
+  read_limit_unused_ip_count = 200000 # 200k
 
   subnet {
      gateway       = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].gateway

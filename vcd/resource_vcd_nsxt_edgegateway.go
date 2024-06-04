@@ -14,7 +14,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
-var defaultReadLimitOfUnusedIps = 1000000
+const defaultReadLimitOfUnusedIps = 1000000 // 1 million
 
 var nsxtEdgeSubnetRange = &schema.Resource{
 	Schema: map[string]*schema.Schema{
@@ -220,7 +220,7 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     defaultReadLimitOfUnusedIps,
-				Description: "How many maximum fields should be reported in 'unused_ip_count'",
+				Description: "How many maximum IPs should be reported in 'used_ipcount' and 'unused_ip_count'",
 			},
 			"use_ip_spaces": {
 				Type:        schema.TypeBool,
