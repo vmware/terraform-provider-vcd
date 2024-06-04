@@ -111,7 +111,8 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
 }
 
 output "kubeconfig" {
-  value = vcd_cse_kubernetes_cluster.my_cluster.kubeconfig
+  value     = vcd_cse_kubernetes_cluster.my_cluster.kubeconfig
+  sensitive = true
 }
 ```
 
@@ -244,7 +245,8 @@ To retrieve the Kubeconfig of a created cluster, you may set it as an output:
 
 ```hcl
 output "kubeconfig" {
-  value = vcd_cse_kubernetes_cluster.my_cluster.kubeconfig
+  value     = vcd_cse_kubernetes_cluster.my_cluster.kubeconfig
+  sensitive = true
 }
 ```
 
