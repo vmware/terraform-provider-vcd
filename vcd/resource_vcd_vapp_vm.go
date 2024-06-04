@@ -771,9 +771,6 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Type:        schema.TypeBool,
 			Computed:    true,
 			Description: "Tells whether this resource has been imported",
-			DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
-				return true
-			},
 		},
 	}
 }
