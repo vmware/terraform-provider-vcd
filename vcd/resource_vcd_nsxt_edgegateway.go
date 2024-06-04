@@ -434,6 +434,7 @@ func resourceVcdNsxtEdgeGatewayImport(_ context.Context, d *schema.ResourceData,
 	// Only setting Org because VDC is a deprecated field. `owner_id` is set by resourceVcdNsxtEdgeGatewayRead by itself
 	dSet(d, "org", orgName)
 
+	dSet(d, "read_limit_unused_ip_count", defaultReadLimitOfUnusedIps)
 	d.SetId(edge.EdgeGateway.ID)
 
 	return []*schema.ResourceData{d}, nil
