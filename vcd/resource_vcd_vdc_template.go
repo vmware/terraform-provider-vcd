@@ -206,20 +206,20 @@ func resourceVcdVdcTemplate() *schema.Resource {
 	}
 }
 
-func resourceVcdVdcTemplateCreate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdVdcTemplateCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// Checks:
 	// NSX-V edge clusters are used when type=NSX_V
 	// NSX-T edge clusters are used when type=NSX_V
 	// edge_gateway_static_ip_pool is present if and only if the edge_gateway block is present
-	return nil
+	return resourceVcdVdcTemplateRead(ctx, d, meta)
 }
 
 func resourceVcdVdcTemplateRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdVdcTemplateRead(ctx, d, meta)
 }
 
-func resourceVcdVdcTemplateUpdate(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return nil
+func resourceVcdVdcTemplateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceVcdVdcTemplateRead(ctx, d, meta)
 }
 
 func resourceVcdVdcTemplateDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
