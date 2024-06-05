@@ -238,7 +238,14 @@ func resourceVcdVdcTemplateDelete(_ context.Context, d *schema.ResourceData, met
 }
 
 func resourceVcdVdcTemplateImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	return nil, nil
+	vdcTemplate, err := meta.(*VCDClient).GetVdcTemplateByName(d.Id())
+	if err != nil {
+		return nil, fmt.Errorf("could not import VDC Template with name %s: %s", d.Id(), err)
+	}
+
+	dSet(d, "name", vdcTemplate.VdcTemplate.Name)
+	d.SetId(vdcTemplate.VdcTemplate.ID)
+	return []*schema.ResourceData{d}, nil
 }
 
 func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
