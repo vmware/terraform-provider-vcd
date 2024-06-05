@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -199,13 +200,22 @@ func resourceVappNetworkCreate(ctx context.Context, d *schema.ResourceData, meta
 		return diag.FromErr(err)
 	}
 
+	var prefixLength *int
+	if d.Get("prefix_length").(string) != "" {
+		p, err := strconv.Atoi(d.Get("prefix_length").(string))
+		if err != nil {
+			return diag.Errorf("could not parse 'prefix_length': %s", err)
+		}
+		prefixLength = addrOf(p)
+	}
+
 	vappNetworkName := d.Get("name").(string)
 	vappNetworkSettings := &govcd.VappNetworkSettings{
 		Name:               vappNetworkName,
 		Description:        d.Get("description").(string),
 		Gateway:            d.Get("gateway").(string),
 		NetMask:            d.Get("netmask").(string),
-		SubnetPrefixLength: d.Get("prefix_length").(string),
+		SubnetPrefixLength: prefixLength,
 		DNS1:               d.Get("dns1").(string),
 		DNS2:               d.Get("dns2").(string),
 		DNSSuffix:          d.Get("dns_suffix").(string),
@@ -408,13 +418,22 @@ func resourceVappNetworkUpdate(ctx context.Context, d *schema.ResourceData, meta
 		return diag.FromErr(err)
 	}
 
+	var prefixLength *int
+	if d.Get("prefix_length").(string) != "" {
+		p, err := strconv.Atoi(d.Get("prefix_length").(string))
+		if err != nil {
+			return diag.Errorf("could not parse 'prefix_length': %s", err)
+		}
+		prefixLength = addrOf(p)
+	}
+
 	vappNetworkSettings := &govcd.VappNetworkSettings{
 		ID:                 d.Id(),
 		Name:               d.Get("name").(string),
 		Description:        d.Get("description").(string),
 		Gateway:            d.Get("gateway").(string),
 		NetMask:            d.Get("netmask").(string),
-		SubnetPrefixLength: d.Get("prefix_length").(string),
+		SubnetPrefixLength: prefixLength,
 		DNS1:               d.Get("dns1").(string),
 		DNS2:               d.Get("dns2").(string),
 		DNSSuffix:          d.Get("dns_suffix").(string),
