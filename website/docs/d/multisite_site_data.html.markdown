@@ -6,7 +6,7 @@ description: |-
   Provides a data source to read a VMware Cloud Director Site association data to be used for association with another site.
 ---
 
-# vcd\_multisite_site_data
+# vcd\_multisite\_site\_data
 
 Provides a data source to read a VMware Cloud Director Site association data to be used for association with another site.
 

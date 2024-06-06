@@ -6,7 +6,7 @@ description: |-
   Provides a data source to read a VMware Cloud Director Site in the context of multi-site operations.
 ---
 
-# vcd\_multisite_site
+# vcd\_multisite\_site
 
 Provides a data source to read a VMware Cloud Director Site in the context of multi-site operatioos
 
