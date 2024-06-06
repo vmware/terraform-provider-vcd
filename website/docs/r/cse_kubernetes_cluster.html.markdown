@@ -218,7 +218,7 @@ has unneeded nodes."
 ```hcl
 
 resource "vcd_cse_kubernetes_cluster" "my_cluster" {
-  name                   = "test"
+  name = "test"
   # ... Omitted
 
   control_plane {
