@@ -230,7 +230,7 @@ resource "vcd_cse_kubernetes_cluster" "my_cluster" {
     disk_size_gi       = 20
     sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id
     storage_profile_id = data.vcd_storage_profile.sp.id
-    
+
     # Enables the Kubernetes Autoscaler for this Worker Pool
     autoscaler_max_replicas = 10
     autoscaler_min_replicas = 2
