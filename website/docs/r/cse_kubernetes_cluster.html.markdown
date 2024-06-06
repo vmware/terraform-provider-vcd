@@ -219,7 +219,6 @@ unschedulable pods. On the other hand, if your cluster is above the minimum numb
 has unneeded nodes."
 
 ```hcl
-
 resource "vcd_cse_kubernetes_cluster" "my_cluster" {
   name = "test"
   # ... Omitted
