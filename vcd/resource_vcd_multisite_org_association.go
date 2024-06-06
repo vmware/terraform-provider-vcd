@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -115,6 +116,8 @@ func resourceVcdOrgAssociationRead(ctx context.Context, d *schema.ResourceData, 
 func genericVcdOrgAssociationRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	client := meta.(*VCDClient)
 	orgId := d.Get("org_id").(string)
+	associationDataFile := d.Get("association_data_file").(string)
+
 	org, err := client.GetAdminOrgById(orgId)
 	if err != nil {
 		if origin == "datasource" {
@@ -129,9 +132,25 @@ func genericVcdOrgAssociationRead(ctx context.Context, d *schema.ResourceData, m
 		// In a data source, we need an Org ID to access the data
 		associatedOrgId = d.Get("associated_org_id").(string)
 	}
+	// If no associated Org ID was supplied, the last attempt is to get it through an associated data file
+	if associatedOrgId == "" && associationDataFile != "" {
+		associatedRawData, err := os.ReadFile(path.Clean(associationDataFile))
+		if err != nil {
+			return diag.Errorf("error reading from 'association_data_file' %s: %s", associationDataFile, err)
+		}
+		// Note: this data is only a convenient way of retrieving the associated Org ID. It does not mean that an association
+		// exists. For that, the operation below will determine the truth.
+		associationData, err := govcd.RawDataToStructuredXml[types.OrgAssociationMember](associatedRawData)
+		if err != nil {
+			return diag.Errorf("error decoding data from 'association_data_file' %s: %s", associationDataFile, err)
+		}
+		associatedOrgId = associationData.OrgID
+	}
 	if associatedOrgId == "" {
 		return diag.Errorf("no site ID found in either d.Id() or 'associated_org_id' field")
 	}
+	// Note: the data retrieved by the operation below only exists if an association has already been established.
+	// The existence of an XML file containing an associated Org is just a convenient way of retrieving the Org ID.
 	associationData, err := org.GetOrgAssociationByOrgId(associatedOrgId)
 	if err != nil {
 		return diag.Errorf("association data not found for Org '%s' with org ID '%s': %s", org.AdminOrg.Name, associatedOrgId, err)

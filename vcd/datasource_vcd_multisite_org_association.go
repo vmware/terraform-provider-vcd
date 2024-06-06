@@ -17,9 +17,10 @@ func datasourceVcdMultisiteOrgAssociation() *schema.Resource {
 				Description: "Organization ID",
 			},
 			"associated_org_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "ID of the associated Organization",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "ID of the associated Organization",
+				ExactlyOneOf: []string{"associated_org_id", "association_data_file"},
 			},
 			"associated_org_name": {
 				Type:        schema.TypeString,
@@ -35,6 +36,13 @@ func datasourceVcdMultisiteOrgAssociation() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Status of the Org association",
+			},
+			"association_data_file": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ExactlyOneOf: []string{"associated_org_id", "association_data_file"},
+				Description:  "Name of the file filled with association data for this Org. Used when user doesn't have associated org ID",
 			},
 		},
 	}

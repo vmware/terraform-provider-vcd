@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"os"
+	"path"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -107,13 +109,30 @@ func resourceVcdSiteAssociationRead(ctx context.Context, d *schema.ResourceData,
 func genericVcdSiteAssociationRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	client := meta.(*VCDClient)
 	associatedSiteId := d.Id()
+	associationDataFile := d.Get("association_data_file").(string)
 	if associatedSiteId == "" {
 		// In a data source, we need a site ID to access the data
 		associatedSiteId = d.Get("associated_site_id").(string)
 	}
+	// If no associated Site ID was supplied, the last attempt is to get it through an associated data file
+	if associatedSiteId == "" && associationDataFile != "" {
+		associatedRawData, err := os.ReadFile(path.Clean(associationDataFile))
+		if err != nil {
+			return diag.Errorf("error reading from 'association_data_file' %s: %s", associationDataFile, err)
+		}
+		// Note: this data is only a convenient way of retrieving the associated Site ID. It does not mean that an association
+		// exists. For that, the operation below will determine the truth.
+		associationData, err := govcd.RawDataToStructuredXml[types.SiteAssociationMember](associatedRawData)
+		if err != nil {
+			return diag.Errorf("error decoding data from 'association_data_file' %s: %s", associationDataFile, err)
+		}
+		associatedSiteId = associationData.SiteID
+	}
 	if associatedSiteId == "" {
 		return diag.Errorf("no site ID found in either d.Id() or 'associated_site_id' field")
 	}
+	// Note: the data retrieved by the operation below only exists if an association has already been established.
+	// The existence of an XML file containing an associated site is just a convenient way of retrieving the site ID.
 	associationData, err := client.Client.GetSiteAssociationBySiteId(associatedSiteId)
 	if err != nil {
 		if origin == "datasource" {
