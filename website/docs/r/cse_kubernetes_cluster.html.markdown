@@ -186,12 +186,12 @@ Each block asks for the following arguments:
 * `autoscaler_min_replicas` - (Optional; *v3.13+*) Together with `autoscaler_max_replicas`, and **only when `machine_count=0` (or unset)**, defines the minimum number of nodes that
   the Kubernetes Autoscaler will deploy for this worker pool. Read the section below for details.
 
-~> The Autoscaler can only work in clusters with Internet access, as it needs to download the Docker image from
-k8s.gcr.io/autoscaling/cluster-autoscaler
-
 #### Worker pools with Kubernetes Autoscaler enabled
 
 -> Supported in provider *v3.13+*
+
+~> The Autoscaler can only work in clusters with Internet access, as it needs to download the Docker image from
+k8s.gcr.io/autoscaling/cluster-autoscaler
 
 The **Kubernetes Autoscaler** is a component that automatically adjusts the size of a Kubernetes Cluster so that all pods have a
 place to run and there are no unneeded nodes. You can read more about it [here](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/clusterapi/README.md).
