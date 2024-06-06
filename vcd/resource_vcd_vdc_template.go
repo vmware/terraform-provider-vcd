@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"strings"
 )
 
 func resourceVcdVdcTemplate() *schema.Resource {
@@ -255,6 +256,97 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 	}
 
 	dSet(d, "name", vdcTemplate.VdcTemplate.Name)
+	dSet(d, "network_provider_type", vdcTemplate.VdcTemplate.NetworkBackingType)
+
+	if len(vdcTemplate.VdcTemplate.ProviderVdcReference) > 0 {
+		dSet(d, "provider_vdc_id", vdcTemplate.VdcTemplate.ProviderVdcReference[0].ID) // ??
+		bindings := vdcTemplate.VdcTemplate.ProviderVdcReference[0].Binding
+		for _, binding := range bindings {
+			if strings.Contains(binding.Value.ID, "urn:vcloud:external") {
+				dSet(d, "external_network_id", binding.Value.ID)
+			}
+			if strings.Contains(binding.Value.ID, "urn:vcloud:backingEdgeCluster") {
+				if vdcTemplate.VdcTemplate.NetworkBackingType == "NSX_V" {
+					dSet(d, "nsxv_primary_edge_cluster_id", binding.Value.ID)
+				} else {
+					dSet(d, "nsxt_gateway_edge_cluster_id", binding.Value.ID)
+				}
+			}
+			// We need the Binding ID to distinguish between Primary/secondary and Gateway/Services
+			if strings.Contains(binding.Value.ID, "urn:vcloud:backingEdgeCluster") {
+				if vdcTemplate.VdcTemplate.NetworkBackingType == "NSX_V" {
+					dSet(d, "nsxv_secondary_edge_cluster_id", binding.Value.ID)
+				} else {
+					dSet(d, "nsxt_services_edge_cluster_id", binding.Value.ID)
+				}
+			}
+		}
+	}
+
+	if vdcTemplate.VdcTemplate.VdcTemplateSpecification != nil {
+		dSet(d, "allocation_model", vdcTemplate.VdcTemplate.VdcTemplateSpecification.Type)
+		dSet(d, "enable_fast_provisioning", vdcTemplate.VdcTemplate.VdcTemplateSpecification.FastProvisioningEnabled)
+		dSet(d, "thin_provisioning", vdcTemplate.VdcTemplate.VdcTemplateSpecification.ThinProvision)
+		dSet(d, "nics_quota", vdcTemplate.VdcTemplate.VdcTemplateSpecification.NicQuota)
+		dSet(d, "provisioned_networks_quota", vdcTemplate.VdcTemplate.VdcTemplateSpecification.ProvisionedNetworkQuota)
+
+		if vdcTemplate.VdcTemplate.VdcTemplateSpecification.NetworkPoolReference != nil {
+			dSet(d, "network_pool_id", vdcTemplate.VdcTemplate.VdcTemplateSpecification.NetworkPoolReference.ID)
+		}
+
+		if len(vdcTemplate.VdcTemplate.VdcTemplateSpecification.StorageProfile) > 0 {
+			storageProfiles := make([]interface{}, len(vdcTemplate.VdcTemplate.VdcTemplateSpecification.StorageProfile))
+			for i, storageProfile := range vdcTemplate.VdcTemplate.VdcTemplateSpecification.StorageProfile {
+				sp := map[string]interface{}{}
+				sp["id"] = storageProfile.ID
+				sp["default"] = storageProfile.Default
+				sp["storage_used_in_mb"] = storageProfile.StorageUsedMB
+				storageProfiles[i] = sp
+			}
+			err = d.Set("storage_profile", storageProfiles)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+
+		if vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration != nil && vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Gateway != nil && vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network != nil {
+			edgeGatewayConfig := make([]interface{}, 1)
+			ec := map[string]interface{}{}
+
+			ec["name"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Gateway.Name
+			ec["description"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Gateway.Description
+			// ec["ip_allocation_count"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration.
+			ec["network_name"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Name
+			ec["network_description"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Description
+			// ec["gateway_cidr"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Gateway.Configuration.
+
+			edgeGatewayConfig[0] = ec
+			err = d.Set("edge_gateway", edgeGatewayConfig)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+
+			// Revisit
+			staticIpPool := make([]interface{}, len(vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration.IPScopes.IPScope))
+			for i, ipScope := range vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration.IPScopes.IPScope {
+				pool := map[string]interface{}{}
+				pool["start_address"] = ipScope.IPRanges.IPRange[0].StartAddress
+				pool["end_address"] = ipScope.IPRanges.IPRange[0].EndAddress
+				edgeGatewayConfig[i] = pool
+			}
+			err = d.Set("edge_gateway_static_ip_pool", staticIpPool)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
+
+	// dSet(d, "view_and_instantiate_org_ids", ????)
+	dSet(d, "vdc_template_system_name", vdcTemplate.VdcTemplate.Name)
+	dSet(d, "vdc_template_tenant_name", vdcTemplate.VdcTemplate.TenantName)
+	dSet(d, "vdc_template_system_description", vdcTemplate.VdcTemplate.Description)
+	dSet(d, "vdc_template_tenant_description", vdcTemplate.VdcTemplate.TenantDescription)
+
 	d.SetId(vdcTemplate.VdcTemplate.ID)
 
 	return nil
