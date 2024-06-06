@@ -186,6 +186,9 @@ Each block asks for the following arguments:
 * `autoscaler_min_replicas` - (Optional; *v3.13+*) Together with `autoscaler_max_replicas`, and **only when `machine_count=0` (or unset)**, defines the minimum number of nodes that
   the Kubernetes Autoscaler will deploy for this worker pool. Read the section below for details.
 
+~> The Autoscaler can only work in clusters with Internet access, as it needs to download the Docker image from
+k8s.gcr.io/autoscaling/cluster-autoscaler
+
 #### Worker pools with Kubernetes Autoscaler enabled
 
 -> Supported in provider *v3.13+*
@@ -286,7 +289,7 @@ The following attributes are available for consumption as read-only attributes a
 Only the following arguments can be updated:
 
 * `kubernetes_template_id`: The cluster must allow upgrading to the new TKG version. You can check `supported_upgrades` attribute to know
-  the available OVAs.
+  the available OVAs. Upgrading the Kubernetes version will also upgrade the Cluster Autoscaler to its corresponding minor version, if it is being used by any `worker_pool`.
 * `machine_count` of the `control_plane`: Supports scaling up and down. Nothing else can be updated.
 * `machine_count` of any `worker_pool`: Supports scaling up and down. Use caution when resizing down to 0 nodes.
   The cluster must always have at least 1 running node, or else the cluster will enter an unrecoverable error state.
