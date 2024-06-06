@@ -20,7 +20,6 @@ Note: there is only one site available for each VCD. No ID or name is necessary 
 
 ```hcl
 data "vcd_multisite_site" "current_site" {
-  
 }
 ```
 
