@@ -14,6 +14,8 @@ import (
 
 func TestAccSolutionAddon(t *testing.T) {
 	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
 	if checkVersion(testConfig.Provider.ApiVersion, "< 37.1") {
 		t.Skipf("Solution Landing Zones are supported in VCD 10.4.1+. Skipping")
 	}
