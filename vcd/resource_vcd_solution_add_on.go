@@ -144,7 +144,7 @@ func resourceVcdSolutionAddonImport(ctx context.Context, d *schema.ResourceData,
 		if err != nil {
 			addOnTable, err2 := listSolutionAddons(vcdClient)
 			if err2 != nil {
-				return nil, fmt.Errorf("error finding Solution Add-On by ID '%s' and couldn't retrieve list: %s", d.Id(), err2)
+				return nil, fmt.Errorf("error finding Solution Add-On by ID '%s' and couldn't retrieve list: %s, %s", d.Id(), err2, err)
 			}
 
 			return nil, fmt.Errorf("error finding Solution Add-On by ID '%s': %s\n Available Add-Ons:\n %s", d.Id(), err, addOnTable)
@@ -156,7 +156,7 @@ func resourceVcdSolutionAddonImport(ctx context.Context, d *schema.ResourceData,
 		if err != nil {
 			addOnTable, err2 := listSolutionAddons(vcdClient)
 			if err2 != nil {
-				return nil, fmt.Errorf("error finding Solution Add-On by ID '%s' and couldn't retrieve list: %s", d.Id(), err2)
+				return nil, fmt.Errorf("error finding Solution Add-On by ID '%s' and couldn't retrieve list: %s, %s", d.Id(), err2, err)
 			}
 			return nil, fmt.Errorf("error finding Solution Add-On by ID '%s': %s\n Available Add-Ons:\n %s", d.Id(), err, addOnTable)
 		}

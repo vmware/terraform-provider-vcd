@@ -185,9 +185,18 @@ func fetchCacheFile(catalog *govcd.Catalog, fileName string, t *testing.T) (stri
 	cacheDirPath := pwd + "/.." + "/test-resources/cache"
 	cacheFilePath := cacheDirPath + "/" + fileName
 
-	if _, err := os.Stat(cacheFilePath); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(cacheFilePath); errors.Is(err, os.ErrNotExist) || !dirExists(cacheDirPath) {
 		// Create cache directory if it doesn't exist
-		if _, err := os.Stat(cacheDirPath); os.IsNotExist(err) {
+		if fileInfo, err := os.Stat(cacheDirPath); os.IsNotExist(err) || !fileInfo.IsDir() {
+			// test-resources/cache is a file, not a directory, it should be removed
+			if !os.IsNotExist(err) && !fileInfo.IsDir() {
+				fmt.Printf("# %s is a file, not a directory - removing\n", cacheDirPath)
+				err := os.Remove(cacheDirPath)
+				if err != nil {
+					t.Fatalf("error removing cache directory: %s", err)
+				}
+			}
+
 			err := os.Mkdir(cacheDirPath, 0750)
 			if err != nil {
 				t.Fatalf("error creating cache directory: %s", err)
