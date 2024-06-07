@@ -46,8 +46,9 @@ func TestAccVcdRdeDuplicate(t *testing.T) {
 	fieldsNotEqual := []string{"id", "org", "org_id"}
 	vcdClient := createSystemTemporaryVCDConnection()
 	if vcdClient.VCDClient.Client.APIVCDMaxVersionIs(">= 39.0") {
-		// Since API >= 39.0, if a RDE is created as the System Administrator in a tenant, the owner is not "administrator"
-		// anymore, but "system". If the RDE is created in System org, the owner is still "administrator".
+		// Since API >= 39.0, whenever a RDE is created in a tenant by the System Administrator,
+		// the owner is not "administrator" anymore, but "system".
+		// If the RDE is created in System organization, the owner is still "administrator".
 		fieldsNotEqual = []string{"id", "org", "org_id", "owner_name", "owner_user_id"}
 	}
 
