@@ -3,10 +3,13 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"strings"
 )
 
@@ -23,47 +26,51 @@ func resourceVcdVdcTemplate() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of the VDC Template",
+				Description: "Name of the VDC Template as seen by the System administrator",
 			},
-			"network_provider_type": {
-				Type:             schema.TypeString,
-				Required:         true,
-				Description:      "Type of network provider. One of: 'NSX_V' or 'NSX_T'",
-				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"NSX_V", "NSX_T"}, false)),
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Description of the VDC Template as seen by the System administrator",
 			},
-			"provider_vdc_id": {
+			"tenant_name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "ID of the Provider VDC that the VDCs instantiated from this template will use",
+				Description: "Name of the VDC Template as seen by the tenants (organizations)",
 			},
-			"external_network_id": {
+			"tenant_description": {
 				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Description of the VDC Template as seen by the tenants (organizations)",
+			},
+			"provider_vdc": {
+				Type:        schema.TypeSet,
 				Required:    true,
-				Description: "ID of the External network that the VDCs instantiated from this template will use",
-			},
-			"nsxv_primary_edge_cluster_id": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Description:   "NSX-V only: ID of the Edge Cluster that the VDCs instantiated from this template will use as primary",
-				ConflictsWith: []string{"nsxt_gateway_edge_cluster_id", "nsxt_services_edge_cluster_id"},
-			},
-			"nsxv_secondary_edge_cluster_id": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Description:   "NSX-V only: ID of the Edge Cluster that the VDCs instantiated from this template will use as secondary",
-				ConflictsWith: []string{"nsxt_gateway_edge_cluster_id", "nsxt_services_edge_cluster_id"},
-			},
-			"nsxt_gateway_edge_cluster_id": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Description:   "NSX-T only: ID of the Edge Cluster that the VDCs instantiated from this template will use with the NSX-T Gateway",
-				ConflictsWith: []string{"nsxv_primary_edge_cluster_id", "nsxv_secondary_edge_cluster_id"},
-			},
-			"nsxt_services_edge_cluster_id": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Description:   "NSX-T only: ID of the Edge Cluster that the VDCs instantiated from this template will use for services",
-				ConflictsWith: []string{"nsxv_primary_edge_cluster_id", "nsxv_secondary_edge_cluster_id"},
+				Description: "A Provider VDC that the VDCs instantiated from this template will use",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "ID of Provider VDC",
+						},
+						"external_network_id": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "ID of the External network that the VDCs instantiated from this template will use",
+						},
+						"gateway_edge_cluster_id": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "ID of the Edge Cluster that the VDCs instantiated from this template will use with the NSX-T Gateway",
+						},
+						"services_edge_cluster_id": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "ID of the Edge Cluster that the VDCs instantiated from this template will use for services",
+						},
+					},
+				},
 			},
 			"allocation_model": {
 				Type:             schema.TypeString,
@@ -149,26 +156,36 @@ func resourceVcdVdcTemplate() *schema.Resource {
 						},
 					},
 				},
+				RequiredWith: []string{"edge_gateway_static_ip_pool"},
 			},
 			"edge_gateway_static_ip_pool": {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "IP ranges used for the network created with the Edge Gateway. Only required if the 'edge_gateway' block is used",
-				Elem:        networkV2IpRange,
+				Type:         schema.TypeSet,
+				Optional:     true,
+				Description:  "IP ranges used for the network created with the Edge Gateway. Only required if the 'edge_gateway' block is used",
+				Elem:         networkV2IpRange,
+				RequiredWith: []string{"edge_gateway"},
 			},
 			"network_pool_id": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Description: "If set, specifies the Network pool for the instantiated VDCs",
+				Computed:    true,
+				Description: "If set, specifies the Network pool for the instantiated VDCs. Otherwise it is automatically chosen",
 			},
-			"nics_quota": {
+			"nic_quota": {
 				Type:             schema.TypeInt,
 				Optional:         true,
 				Default:          0,
 				Description:      "Quota for the NICs of the instantiated VDCs. 0 means unlimited",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 			},
-			"provisioned_networks_quota": {
+			"vm_quota": {
+				Type:             schema.TypeInt,
+				Optional:         true,
+				Default:          0,
+				Description:      "Quota for the VMs of the instantiated VDCs. 0 means unlimited",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
+			},
+			"provisioned_network_quota": {
 				Type:             schema.TypeInt,
 				Optional:         true,
 				Default:          0,
@@ -183,25 +200,10 @@ func resourceVcdVdcTemplate() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"vdc_template_system_name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Name of the VDC Template as seen by the System administrator",
-			},
-			"vdc_template_tenant_name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Name of the VDC Template as seen by the tenants (organizations)",
-			},
-			"vdc_template_system_description": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Description of the VDC Template as seen by the System administrator",
-			},
-			"vdc_template_tenant_description": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Description of the VDC Template as seen by the tenants (organizations)",
+			"bindings": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "Auxiliary map that links a binding with its corresponding VCD URN, for internal use of the provider only",
 			},
 		},
 	}
@@ -212,6 +214,155 @@ func resourceVcdVdcTemplateCreate(ctx context.Context, d *schema.ResourceData, m
 	// NSX-V edge clusters are used when type=NSX_V
 	// NSX-T edge clusters are used when type=NSX_V
 	// edge_gateway_static_ip_pool is present if and only if the edge_gateway block is present
+	edgeGatewayBindingId, servicesBindingId := "", ""
+	vcdClient := meta.(*VCDClient)
+
+	providerBlocks := d.Get("provider_vdc").(*schema.Set).List()
+	pvdcs := make([]*types.VMWVdcTemplateProviderVdcSpecification, len(providerBlocks))
+
+	for i, p := range providerBlocks {
+		pvdcBlock := p.(map[string]interface{})
+
+		// External network binding. This one is Required
+		externalNetworkBinding := saveAndGetVdcTemplateBinding(d, "external_network_id", pvdcBlock["external_network_id"].(string))
+		bindings := []*types.VMWVdcTemplateBinding{
+			{
+				Name:  externalNetworkBinding,
+				Value: &types.Reference{ID: pvdcBlock["external_network_id"].(string)},
+			},
+		}
+		// We generate the bindings for the Edge Clusters and save them into the state + prepare the API payload.
+		for _, attribute := range []string{"gateway_edge_cluster_id", "services_edge_cluster_id"} {
+			if ecId, ok := pvdcBlock[attribute]; ok {
+				bindingId := saveAndGetVdcTemplateBinding(d, attribute, ecId.(string))
+				bindings = append(bindings, &types.VMWVdcTemplateBinding{
+					Name:  bindingId,
+					Value: &types.Reference{ID: ecId.(string)},
+				})
+
+				// We save this binding ID for later
+				if attribute == "nsxt_gateway_edge_cluster_id" {
+					edgeGatewayBindingId = bindingId
+				}
+				if attribute == "services_edge_cluster_id" {
+					servicesBindingId = bindingId
+				}
+			}
+		}
+		pvdcs[i] = &types.VMWVdcTemplateProviderVdcSpecification{
+			ID:      pvdcBlock["id"].(string),
+			Binding: bindings,
+		}
+	}
+	// Gateway information
+	var gateway *types.VdcTemplateSpecificationGatewayConfiguration
+	if g, ok := d.GetOk("gateway"); ok && len(g.([]interface{})) > 0 {
+
+		gatewayBlock := g.([]interface{})[0].(map[string]interface{})
+
+		binding := saveAndGetVdcTemplateBinding(d, "gateway", "")
+		gatewayIp := gatewayBlock["gateway_cidr"].(string)
+		gatewayPrefix := gatewayBlock["gateway_cidr"].(string)
+		gatewayNetmask := gatewayBlock["gateway_cidr"].(int)
+
+		staticPoolBlocks := d.Get("edge_gateway_static_ip_pool").(*schema.Set).List()
+		if len(staticPoolBlocks) == 0 {
+			return diag.Errorf("at least one static IP pool is required when 'gateway' block is specified")
+		}
+		staticPools := make([]*types.IPRange, len(staticPoolBlocks))
+		for i, b := range staticPoolBlocks {
+			block := b.(map[string]interface{})
+			staticPools[i] = &types.IPRange{
+				StartAddress: block["start_address"].(string),
+				EndAddress:   block["end_address"].(string),
+			}
+		}
+
+		gateway = &types.VdcTemplateSpecificationGatewayConfiguration{
+			Gateway: &types.EdgeGateway{
+				Name:        gatewayBlock["name"].(string),
+				Description: gatewayBlock["description"].(string),
+				Configuration: &types.GatewayConfiguration{
+					GatewayInterfaces: &types.GatewayInterfaces{GatewayInterface: []*types.GatewayInterface{
+						{
+							Name:        binding,
+							DisplayName: binding,
+							Connected:   true,
+							Network: &types.Reference{
+								HREF: binding,
+							},
+							QuickAddAllocatedIpCount: gatewayBlock["ip_allocation_count"].(int),
+						},
+					}},
+				},
+			},
+			Network: &types.OrgVDCNetwork{
+				Name:        gatewayBlock["network_name"].(string),
+				Description: gatewayBlock["network_description"].(string),
+				Configuration: &types.NetworkConfiguration{
+					IPScopes: &types.IPScopes{IPScope: []*types.IPScope{
+						{
+							Gateway:            gatewayIp,
+							Netmask:            gatewayPrefix,
+							SubnetPrefixLength: &gatewayNetmask,
+							IPRanges:           &types.IPRanges{IPRange: staticPools},
+						},
+					}},
+					FenceMode: "natRouted",
+				},
+				IsShared: false,
+			},
+		}
+
+		// TODO: What with multiple pvdcs?
+		if edgeGatewayBindingId != "" {
+			gateway.Gateway.Configuration.EdgeClusterConfiguration = &types.EdgeClusterConfiguration{PrimaryEdgeCluster: &types.Reference{HREF: edgeGatewayBindingId}}
+		}
+	}
+
+	storageProfiles := []types.VdcStorageProfile{{}}
+
+	_, err := vcdClient.CreateVdcTemplate(types.VMWVdcTemplate{
+		NetworkBackingType:   "NSX_T", // The only supported network provider
+		ProviderVdcReference: pvdcs,
+		Name:                 d.Get("name").(string),
+		Description:          d.Get("description").(string),
+		TenantName:           d.Get("tenant_name").(string),
+		TenantDescription:    d.Get("tenant_description").(string),
+		VdcTemplateSpecification: &types.VMWVdcTemplateSpecification{
+			Type:                    types.VdcTemplateFlexType,
+			NicQuota:                d.Get("nic_quota").(int),
+			VmQuota:                 d.Get("vm_quota").(int),
+			ProvisionedNetworkQuota: d.Get("provisioned_network_quota").(int),
+			GatewayConfiguration:    gateway,
+			StorageProfile:          storageProfiles,
+			IsElastic:               false,
+			IncludeMemoryOverhead:   true,
+			ThinProvision:           true,
+			FastProvisioningEnabled: true,
+			NetworkPoolReference: &types.Reference{
+				HREF: "",
+				ID:   "",
+				Type: "",
+				Name: "",
+			},
+			// TODO: This should be conditional + What happens with multiple PVDCS??
+			NetworkProfileConfiguration: &types.VdcTemplateNetworkProfile{
+				ServicesEdgeCluster: &types.Reference{HREF: servicesBindingId},
+			},
+			CpuAllocationMhz:           addrOf(0),
+			CpuLimitMhzPerVcpu:         addrOf(1000),
+			CpuLimitMhz:                addrOf(0),
+			MemoryAllocationMB:         addrOf(0),
+			MemoryLimitMb:              addrOf(0),
+			CpuGuaranteedPercentage:    addrOf(20),
+			MemoryGuaranteedPercentage: addrOf(20),
+		},
+	})
+	if err != nil {
+		return diag.Errorf("could not create the VDC Template: %s", err)
+	}
+
 	return resourceVcdVdcTemplateRead(ctx, d, meta)
 }
 
@@ -258,29 +409,40 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 	dSet(d, "name", vdcTemplate.VdcTemplate.Name)
 	dSet(d, "network_provider_type", vdcTemplate.VdcTemplate.NetworkBackingType)
 
-	if len(vdcTemplate.VdcTemplate.ProviderVdcReference) > 0 {
-		dSet(d, "provider_vdc_id", vdcTemplate.VdcTemplate.ProviderVdcReference[0].ID) // ??
-		bindings := vdcTemplate.VdcTemplate.ProviderVdcReference[0].Binding
-		for _, binding := range bindings {
+	pvdcBlock := make([]interface{}, len(vdcTemplate.VdcTemplate.ProviderVdcReference))
+	for i, providerVdcRef := range vdcTemplate.VdcTemplate.ProviderVdcReference {
+		p := map[string]interface{}{}
+		p["id"] = providerVdcRef.ID
+		for _, binding := range providerVdcRef.Binding {
+			// The Binding Name is the binding URN auto-generated during create/update.
+			// Each Binding Value is a Reference (we only need the ID)
 			if strings.Contains(binding.Value.ID, "urn:vcloud:external") {
-				dSet(d, "external_network_id", binding.Value.ID)
+				// We can only have one external network per PVDC, so we don't check bindings here
+				p["external_network_id"] = binding.Value.ID
 			}
 			if strings.Contains(binding.Value.ID, "urn:vcloud:backingEdgeCluster") {
-				if vdcTemplate.VdcTemplate.NetworkBackingType == "NSX_V" {
-					dSet(d, "nsxv_primary_edge_cluster_id", binding.Value.ID)
-				} else {
-					dSet(d, "nsxt_gateway_edge_cluster_id", binding.Value.ID)
-				}
-			}
-			// We need the Binding ID to distinguish between Primary/secondary and Gateway/Services
-			if strings.Contains(binding.Value.ID, "urn:vcloud:backingEdgeCluster") {
-				if vdcTemplate.VdcTemplate.NetworkBackingType == "NSX_V" {
-					dSet(d, "nsxv_secondary_edge_cluster_id", binding.Value.ID)
-				} else {
-					dSet(d, "nsxt_services_edge_cluster_id", binding.Value.ID)
+				// We have an Edge Cluster here, it can belong to several attributes:
+				// nsxt_gateway_edge_cluster_id, nsxv_primary_edge_cluster_id, nsxt_services_edge_cluster_id or nsxv_secondary_edge_cluster_id
+				// We review the saved "bindings" to know where the Edge cluster belongs.
+				switch binding.Value.ID {
+				case getVdcTemplateBinding(d, "nsxt_gateway_edge_cluster_id", binding.Name):
+					p["nsxt_gateway_edge_cluster_id"] = binding.Value.ID
+				case getVdcTemplateBinding(d, "nsxv_primary_edge_cluster_id", binding.Name):
+					p["nsxv_primary_edge_cluster_id"] = binding.Value.ID
+				case getVdcTemplateBinding(d, "nsxt_services_edge_cluster_id", binding.Name):
+					p["nsxt_services_edge_cluster_id"] = binding.Value.ID
+				case getVdcTemplateBinding(d, "nsxv_secondary_edge_cluster_id", binding.Name):
+					p["nsxv_secondary_edge_cluster_id"] = binding.Value.ID
+				default:
+					return diag.Errorf("the binding ID '%s' is not saved in state, hence the provider can't know whether '%s' is a Primary/Gateway or Secondary/Services edge cluster", binding.Name, binding.Value.ID)
 				}
 			}
 		}
+		pvdcBlock[i] = p
+	}
+	err = d.Set("provider_vdc", pvdcBlock)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	if vdcTemplate.VdcTemplate.VdcTemplateSpecification != nil {
@@ -369,4 +531,30 @@ func getVdcTemplate(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.VdcTem
 		}
 	}
 	return vdcTemplate, nil
+}
+
+// saveAndGetVdcTemplateBinding saves the given URN (example: urn:vcloud:edgecluster:...) of the given
+// argument (example: nsxt_gateway_edge_cluster_id) in the Terraform state, and returns the corresponding
+// Binding ID that can be sent to VCD and used again to retrieve the URN on reads.
+func saveAndGetVdcTemplateBinding(d *schema.ResourceData, field, urn string) string {
+	bindings := d.Get("bindings").(map[string]interface{})
+	id := fmt.Sprintf("urn:vcloud:binding:%s", uuid.NewString())
+	bindings[fmt.Sprintf("%s_%s", field, id)] = urn
+	err := d.Set("bindings", bindings)
+	if err != nil {
+		util.Logger.Printf("[ERROR] could not save binding with URN '%s' for attribute '%s' and ID '%s': %s", urn, field, id, err)
+	}
+	return id
+}
+
+// getVdcTemplateBinding recovers the URN (example: urn:vcloud:edgecluster:...) that was saved
+// in Terraform state, that corresponds to the given Binding ID (urn:vcloud:binding:...). If it's
+// not found, returns an empty string
+func getVdcTemplateBinding(d *schema.ResourceData, field, bindingId string) string {
+	bindings := d.Get("bindings").(map[string]interface{})
+	urn, ok := bindings[fmt.Sprintf("%s_%s", field, bindingId)]
+	if !ok {
+		return ""
+	}
+	return urn.(string)
 }
