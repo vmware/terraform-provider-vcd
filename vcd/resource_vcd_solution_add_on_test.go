@@ -173,6 +173,7 @@ resource "vcd_solution_add_on" "dse14" {
 `
 
 const testAccSolutionAddonStep2 = testAccSolutionAddonStep1 + `
+# skip-binary-test: data source test
 data "vcd_solution_add_on" "dse14" {
   name = vcd_solution_add_on.dse14.name
 }

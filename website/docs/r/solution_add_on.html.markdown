@@ -80,7 +80,7 @@ locally as some of the metadata must be extracted for creating the Solution Add-
 Director.
 * `trust_certificate` - (Optional) Plugin can automatically trust the certificate of Solution
   Add-On. This is required for Solution Add-Ons to work and one will have to do it manually before
-  using the Solution Add-On.
+  using the Solution Add-On if not specified here.
 
 
 ## Attribute Reference
