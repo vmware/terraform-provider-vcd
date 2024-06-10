@@ -10,6 +10,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
+	"net"
 	"strings"
 )
 
@@ -210,10 +211,6 @@ func resourceVcdVdcTemplate() *schema.Resource {
 }
 
 func resourceVcdVdcTemplateCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// Checks:
-	// NSX-V edge clusters are used when type=NSX_V
-	// NSX-T edge clusters are used when type=NSX_V
-	// edge_gateway_static_ip_pool is present if and only if the edge_gateway block is present
 	edgeGatewayBindingId, servicesBindingId := "", ""
 	vcdClient := meta.(*VCDClient)
 
@@ -222,18 +219,11 @@ func resourceVcdVdcTemplateCreate(ctx context.Context, d *schema.ResourceData, m
 
 	for i, p := range providerBlocks {
 		pvdcBlock := p.(map[string]interface{})
+		var bindings []*types.VMWVdcTemplateBinding
 
-		// External network binding. This one is Required
-		externalNetworkBinding := saveAndGetVdcTemplateBinding(d, "external_network_id", pvdcBlock["external_network_id"].(string))
-		bindings := []*types.VMWVdcTemplateBinding{
-			{
-				Name:  externalNetworkBinding,
-				Value: &types.Reference{ID: pvdcBlock["external_network_id"].(string)},
-			},
-		}
-		// We generate the bindings for the Edge Clusters and save them into the state + prepare the API payload.
-		for _, attribute := range []string{"gateway_edge_cluster_id", "services_edge_cluster_id"} {
+		for _, attribute := range []string{"external_network_id", "gateway_edge_cluster_id", "services_edge_cluster_id"} {
 			if ecId, ok := pvdcBlock[attribute]; ok {
+				// We save the Binding IDs in the Terraform state to use them later
 				bindingId := saveAndGetVdcTemplateBinding(d, attribute, ecId.(string))
 				bindings = append(bindings, &types.VMWVdcTemplateBinding{
 					Name:  bindingId,
@@ -261,9 +251,11 @@ func resourceVcdVdcTemplateCreate(ctx context.Context, d *schema.ResourceData, m
 		gatewayBlock := g.([]interface{})[0].(map[string]interface{})
 
 		binding := saveAndGetVdcTemplateBinding(d, "gateway", "")
-		gatewayIp := gatewayBlock["gateway_cidr"].(string)
-		gatewayPrefix := gatewayBlock["gateway_cidr"].(string)
-		gatewayNetmask := gatewayBlock["gateway_cidr"].(int)
+		ip, cidr, err := net.ParseCIDR(gatewayBlock["gateway_cidr"].(string))
+		if err != nil {
+			return diag.Errorf("error parsing 'gateway_cidr': %s", err)
+		}
+		prefixLength, _ := cidr.Mask.Size()
 
 		staticPoolBlocks := d.Get("edge_gateway_static_ip_pool").(*schema.Set).List()
 		if len(staticPoolBlocks) == 0 {
@@ -302,9 +294,9 @@ func resourceVcdVdcTemplateCreate(ctx context.Context, d *schema.ResourceData, m
 				Configuration: &types.NetworkConfiguration{
 					IPScopes: &types.IPScopes{IPScope: []*types.IPScope{
 						{
-							Gateway:            gatewayIp,
-							Netmask:            gatewayPrefix,
-							SubnetPrefixLength: &gatewayNetmask,
+							Gateway:            ip.String(),
+							Netmask:            fmt.Sprintf("%d.%d.%d.%d", cidr.Mask[0], cidr.Mask[1], cidr.Mask[2], cidr.Mask[3]),
+							SubnetPrefixLength: &prefixLength,
 							IPRanges:           &types.IPRanges{IPRange: staticPools},
 						},
 					}},
@@ -538,13 +530,13 @@ func getVdcTemplate(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.VdcTem
 // Binding ID that can be sent to VCD and used again to retrieve the URN on reads.
 func saveAndGetVdcTemplateBinding(d *schema.ResourceData, field, urn string) string {
 	bindings := d.Get("bindings").(map[string]interface{})
-	id := fmt.Sprintf("urn:vcloud:binding:%s", uuid.NewString())
-	bindings[fmt.Sprintf("%s_%s", field, id)] = urn
+	bindingId := fmt.Sprintf("urn:vcloud:binding:%s", uuid.NewString())
+	bindings[fmt.Sprintf("%s_%s", field, bindingId)] = urn
 	err := d.Set("bindings", bindings)
 	if err != nil {
-		util.Logger.Printf("[ERROR] could not save binding with URN '%s' for attribute '%s' and ID '%s': %s", urn, field, id, err)
+		util.Logger.Printf("[ERROR] could not save binding with URN '%s' for attribute '%s' and ID '%s': %s", urn, field, bindingId, err)
 	}
-	return id
+	return bindingId
 }
 
 // getVdcTemplateBinding recovers the URN (example: urn:vcloud:edgecluster:...) that was saved
