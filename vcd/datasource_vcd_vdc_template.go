@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func datasourceVcdVdcTemplate() *schema.Resource {
+func datasourceVcdOrgVdcTemplate() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdVdcTemplateRead,
 		Schema: map[string]*schema.Schema{
