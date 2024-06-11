@@ -62,8 +62,8 @@ the same person.
 4. Common admin runs resource `vcd_multisite_site_association` using `site2.xml` `local_file` data source as input.
 5. Common admin runs resource `vcd_multisite_site_association` using `site1.xml` `local_file` data source as input.
 
-See a full example for this workflow at https://github.com/dataclouder/terraform-provider-vcd/tree/site-org-associations/examples/multi-site/all-at-once
-<!-- TODO: After merge, change to https://github.com/vmware/terraform-provider-vcd/tree/main/examples/multi-site/all-at-once -->
+See a full example for this workflow at https://github.com/dataclouder/terraform-provider-vcd/tree/site-org-associations/examples/multi-site/site-all-at-once
+<!-- TODO: After merge, change to https://github.com/vmware/terraform-provider-vcd/tree/main/examples/multi-site/site-all-at-once -->
 
 ## Workflow multi-admin for an organization association
 
