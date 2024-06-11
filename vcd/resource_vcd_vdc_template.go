@@ -437,20 +437,7 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 		storageProfiles[i] = storageProfile
 	}
 
-	// As we use the same allocation model keywords from 'vcd_org_vdc' for simplicity,
-	// but this method requires different (similar) keywords.
-	allocationModel := ""
-	switch d.Get("allocation_model") {
-	case "AllocationVApp":
-		allocationModel = types.VdcTemplatePayAsYouGoType
-	case "AllocationPool":
-		allocationModel = types.VdcTemplateAllocationPoolType
-	case "ReservationPool":
-		allocationModel = types.VdcTemplateReservationPoolType
-	case "Flex":
-		allocationModel = types.VdcTemplateFlexType
-	}
-
+	allocationModel := getVdcTemplateType(d.Get("allocation_model").(string))
 	settings := types.VMWVdcTemplate{
 		NetworkBackingType:   "NSX_T", // The only supported network provider
 		ProviderVdcReference: pvdcs,
@@ -632,16 +619,7 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 	}
 
 	if vdcTemplate.VdcTemplate.VdcTemplateSpecification != nil {
-		switch vdcTemplate.VdcTemplate.VdcTemplateSpecification.Type {
-		case types.VdcTemplatePayAsYouGoType:
-			dSet(d, "allocation_model", "AllocationVApp")
-		case types.VdcTemplateAllocationPoolType:
-			dSet(d, "allocation_model", "AllocationPool")
-		case types.VdcTemplateReservationPoolType:
-			dSet(d, "allocation_model", "ReservationPool")
-		case types.VdcTemplateFlexType:
-			dSet(d, "allocation_model", "Flex")
-		}
+		dSet(d, "allocation_model", getVdcTemplateType(vdcTemplate.VdcTemplate.VdcTemplateSpecification.Type))
 		dSet(d, "enable_fast_provisioning", vdcTemplate.VdcTemplate.VdcTemplateSpecification.FastProvisioningEnabled)
 		dSet(d, "thin_provisioning", vdcTemplate.VdcTemplate.VdcTemplateSpecification.ThinProvision)
 		dSet(d, "nic_quota", vdcTemplate.VdcTemplate.VdcTemplateSpecification.NicQuota)
@@ -769,4 +747,28 @@ func getVdcTemplateBinding(d *schema.ResourceData, field, bindingId string) stri
 		return ""
 	}
 	return urn.(string)
+}
+
+// getVdcTemplateType transforms the allocation models used by VDC Templates to the allocation models used by regular
+// VDCs and viceversa.
+func getVdcTemplateType(input string) string {
+	switch input {
+	case types.VdcTemplatePayAsYouGoType:
+		return "AllocationVApp"
+	case types.VdcTemplateAllocationPoolType:
+		return "AllocationPool"
+	case types.VdcTemplateReservationPoolType:
+		return "ReservationPool"
+	case types.VdcTemplateFlexType:
+		return "Flex"
+	case "AllocationVApp":
+		return types.VdcTemplatePayAsYouGoType
+	case "AllocationPool":
+		return types.VdcTemplateAllocationPoolType
+	case "ReservationPool":
+		return types.VdcTemplateReservationPoolType
+	case "Flex":
+		return types.VdcTemplateFlexType
+	}
+	return ""
 }
