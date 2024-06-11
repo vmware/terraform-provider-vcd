@@ -642,7 +642,6 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 		case types.VdcTemplateFlexType:
 			dSet(d, "allocation_model", "Flex")
 		}
-		dSet(d, "allocation_model", vdcTemplate.VdcTemplate.VdcTemplateSpecification.Type)
 		dSet(d, "enable_fast_provisioning", vdcTemplate.VdcTemplate.VdcTemplateSpecification.FastProvisioningEnabled)
 		dSet(d, "thin_provisioning", vdcTemplate.VdcTemplate.VdcTemplateSpecification.ThinProvision)
 		dSet(d, "nic_quota", vdcTemplate.VdcTemplate.VdcTemplateSpecification.NicQuota)
