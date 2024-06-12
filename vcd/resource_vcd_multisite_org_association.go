@@ -153,7 +153,8 @@ func genericVcdOrgAssociationRead(ctx context.Context, d *schema.ResourceData, m
 	// The existence of an XML file containing an associated Org is just a convenient way of retrieving the Org ID.
 	associationData, err := org.GetOrgAssociationByOrgId(associatedOrgId)
 	if err != nil {
-		return diag.Errorf("association data not found for Org '%s' with org ID '%s': %s", org.AdminOrg.Name, associatedOrgId, err)
+		return diag.Errorf("association data not found for Org '%s' with org ID '%s': %s", org.AdminOrg.Name, associatedOrgId,
+			fmt.Errorf("%s: %s", err, govcd.ErrorEntityNotFound))
 	}
 	dSet(d, "associated_org_id", associatedOrgId)
 	dSet(d, "associated_org_name", associationData.OrgName)

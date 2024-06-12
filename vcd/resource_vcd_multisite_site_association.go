@@ -136,7 +136,8 @@ func genericVcdSiteAssociationRead(ctx context.Context, d *schema.ResourceData, 
 	associationData, err := client.Client.GetSiteAssociationBySiteId(associatedSiteId)
 	if err != nil {
 		if origin == "datasource" {
-			return diag.Errorf("error retrieving association data for site ID '%s': %s", associatedSiteId, err)
+			return diag.Errorf("error retrieving association data for site ID '%s': %s", associatedSiteId,
+				fmt.Errorf("%s: %s", govcd.ErrorEntityNotFound, err))
 		}
 		d.SetId("")
 		return nil
