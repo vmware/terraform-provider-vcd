@@ -325,14 +325,23 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 
 		for _, attribute := range []string{"external_network_id", "gateway_edge_cluster_id", "services_edge_cluster_id"} {
 			if urn := pvdcBlock[attribute]; urn != "" {
-				// We save the Binding IDs in the Terraform state to use them later
+				// We save the Binding IDs in the Terraform state to use them in subsequent operations,
+				// as we need to correlate them with different Edge cluster URNs.
 				bindingId := saveAndGetVdcTemplateBinding(d, attribute, urn.(string))
+
+				// Complete the URN for Edge clusters, just for the API payload (we don't save the URN with prefix in "bindings"
+				// to avoid undesired dirty plans after creation)
+				if attribute != "external_network_id" && !strings.Contains("urn:vcloud:backingEdgeCluster:", urn.(string)) {
+					urn = fmt.Sprintf("urn:vcloud:backingEdgeCluster:%s", urn)
+				}
+
 				bindings = append(bindings, &types.VMWVdcTemplateBinding{
 					Name:  bindingId,
 					Value: &types.Reference{ID: urn.(string)},
 				})
 
-				// We save the first available Edge cluster binding IDs for later
+				// We save the first available Edge cluster binding IDs for later, when we
+				// configure the Edge Gateway
 				if attribute == "gateway_edge_cluster_id" && edgeGatewayBindingId == "" {
 					edgeGatewayBindingId = bindingId
 				}
@@ -630,11 +639,12 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 				// We have an Edge Cluster here, it can belong to several attributes:
 				// gateway_edge_cluster_id, services_edge_cluster_id
 				// We review the saved "bindings" to know where the Edge cluster belongs.
-				switch binding.Value.ID {
+				id := extractUuid(binding.Value.ID)
+				switch id {
 				case getVdcTemplateBinding(d, "gateway_edge_cluster_id", binding.Name):
-					p["gateway_edge_cluster_id"] = binding.Value.ID
+					p["gateway_edge_cluster_id"] = id
 				case getVdcTemplateBinding(d, "services_edge_cluster_id", binding.Name):
-					p["services_edge_cluster_id"] = binding.Value.ID
+					p["services_edge_cluster_id"] = id
 				}
 			} else if strings.Contains(binding.Value.ID, "urn:vcloud:network") {
 				// We can only have one external network per PVDC, so we don't check bindings here
@@ -723,7 +733,7 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 					ipRange["end_address"] = ir.EndAddress
 					ipRanges[i] = ipRange
 				}
-				ec["ip_ranges"] = ipRanges
+				ec["static_ip_pool"] = ipRanges
 			}
 
 			edgeGatewayConfig[0] = ec

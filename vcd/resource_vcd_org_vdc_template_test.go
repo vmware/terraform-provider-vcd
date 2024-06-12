@@ -20,6 +20,8 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 	var params = StringMap{
 		"OrgToPublish":    testConfig.VCD.Org,
 		"ProviderVdc":     testConfig.VCD.NsxtProviderVdc.Name,
+		"Vdc":             testConfig.Nsxt.Vdc,
+		"EdgeCluster":     testConfig.Nsxt.NsxtEdgeCluster,
 		"ExternalNetwork": testConfig.Nsxt.ExternalNetwork,
 		"NetworkPool":     testConfig.VCD.NsxtProviderVdc.NetworkPool,
 		"StorageProfile":  testConfig.VCD.NsxtProviderVdc.StorageProfile,
@@ -104,6 +106,17 @@ func testAccCheckVdcTemplateDestroyed(vdcTemplateName string) resource.TestCheck
 const testAccVdcTemplateStep1 = `
 data "vcd_org" "org" {
   name = "{{.OrgToPublish}}"
+}
+
+data "vcd_org_vdc" "vdc" {
+  org  = data.vcd_org.org.name
+  name = "{{.Vdc}}"
+}
+
+data "vcd_nsxt_edge_cluster" "ec" {
+  org    = data.vcd_org.org.name
+  vdc_id = data.vcd_org_vdc.vdc.id
+  name   = "{{.EdgeCluster}}"
 }
 
 data "vcd_provider_vdc" "pvdc" {
@@ -203,9 +216,21 @@ resource "vcd_org_vdc_template" "template3" {
     memory_limit     = 0
   }
 
+  edge_gateway {
+    name                 = "edgy"
+    ip_allocation_count  = 10
+    network_name         = "net2"
+    network_gateway_cidr = "1.2.3.4/24"
+    static_ip_pool {
+      start_address = "1.2.3.4"
+      end_address   = "1.2.3.4"
+    }
+  }
+
   provider_vdc {
-    id                  = data.vcd_provider_vdc.pvdc.id
-    external_network_id = data.vcd_external_network_v2.ext_net.id
+    id                      = data.vcd_provider_vdc.pvdc.id
+    external_network_id     = data.vcd_external_network_v2.ext_net.id
+	gateway_edge_cluster_id = data.vcd_nsxt_edge_cluster.ec.id
   }
 
   storage_profile {
