@@ -607,6 +607,9 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	if vdcTemplate.VdcTemplate.NetworkBackingType != "NSX_T" {
+		return diag.Errorf("could not read VDC Template with ID '%s', '%s' network provider is not supported", vdcTemplate.VdcTemplate.ID, vdcTemplate.VdcTemplate.NetworkBackingType)
+	}
 	if vdcTemplate.VdcTemplate.VdcTemplateSpecification == nil {
 		return diag.Errorf("could not read VDC Template with ID '%s', its specification is nil", vdcTemplate.VdcTemplate.ID)
 	}
