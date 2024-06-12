@@ -27,15 +27,20 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 		"Name2":           t.Name() + "2",
 		"Name3":           t.Name() + "3",
 		"Name4":           t.Name() + "4",
+		"FuncName":        t.Name() + "Step1",
 	}
 	testParamsNotEmpty(t, params)
 
 	step1 := templateFill(testAccVdcTemplateStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION - Step 1: %s", step1)
+	params["FuncName"] = t.Name() + "Step2"
+	step2 := templateFill(testAccVdcTemplateStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION - Step 2: %s", step2)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION - Step 1: %s", step1)
 
 	template1 := "vcd_org_vdc_template.template1"
 
@@ -53,11 +58,15 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 				Check:  resource.ComposeTestCheckFunc(),
 			},
 			{
+				Config: step2,
+				Check:  resource.ComposeTestCheckFunc(),
+			},
+			{
 				ResourceName:            template1,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdTopHierarchy(params["Name1"].(string)),
-				ImportStateVerifyIgnore: []string{"bindings.%", "bindings"},
+				ImportStateVerifyIgnore: []string{"bindings.%", "bindings"}, // TODO: Work with this, what happens after import
 			},
 		},
 	})
@@ -157,6 +166,17 @@ resource "vcd_org_vdc_template" "template2" {
     memory_guaranteed = 30
   }
 
+  edge_gateway {
+    name                 = "edgy"
+    ip_allocation_count  = 10
+    network_name         = "net2"
+    network_gateway_cidr = "1.2.3.4/24"
+    static_ip_pool {
+      start_address = "1.2.3.4"
+      end_address   = "1.2.3.4"
+    }
+  }
+
   provider_vdc {
     id                  = data.vcd_provider_vdc.pvdc.id
     external_network_id = data.vcd_external_network_v2.ext_net.id
@@ -167,12 +187,6 @@ resource "vcd_org_vdc_template" "template2" {
     default = true
     limit   = 1024
   }
-
-  network_pool_id = data.vcd_network_pool.np.id
-
-  readable_by_org_ids = [
-    data.vcd_org.org.id
-  ]
 }
 
 resource "vcd_org_vdc_template" "template3" {

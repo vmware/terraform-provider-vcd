@@ -163,7 +163,7 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 						"limit": {
 							Type:        schema.TypeInt,
 							Required:    true,
-							Description: "Storage limit for the VDCs instantiated from this template, in Megabytes",
+							Description: "Storage limit for the VDCs instantiated from this template, in Megabytes. 0 means unlimited",
 						},
 					},
 				},
@@ -233,7 +233,6 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 			"network_pool_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 				Description: "If set, specifies the Network pool for the instantiated VDCs. Otherwise it is automatically chosen",
 			},
 			"nic_quota": {
@@ -364,7 +363,7 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 		gatewayBlock := g.([]interface{})[0].(map[string]interface{})
 
 		// Static pools. Schema guarantees there's at least 1
-		staticPoolBlocks := gatewayBlock["static_ip_pool"].([]interface{})
+		staticPoolBlocks := gatewayBlock["static_ip_pool"].(*schema.Set).List()
 		staticPools := make([]*types.IPRange, len(staticPoolBlocks))
 		for i, b := range staticPoolBlocks {
 			block := b.(map[string]interface{})
@@ -561,6 +560,10 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 			ID:   networkPoolId.(string),
 			HREF: fmt.Sprintf("%s/cloudapi/%s%s%s", vcdClient.Client.VCDHREF.String(), types.OpenApiPathVersion1_0_0, types.OpenApiEndpointNetworkPools, networkPoolId),
 		}
+		settings.VdcTemplateSpecification.AutomaticNetworkPoolReference = nil
+	} else {
+		settings.VdcTemplateSpecification.NetworkPoolReference = nil
+		settings.VdcTemplateSpecification.AutomaticNetworkPoolReference = &types.AutomaticNetworkPoolReference{}
 	}
 
 	// We set the first Edge cluster available, that we saved during Binding ID generation
