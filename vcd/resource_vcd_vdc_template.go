@@ -254,7 +254,7 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 				Description:      "Quota for the provisioned networks of the instantiated VDCs. 0 means unlimited",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 			},
-			"view_and_instantiate_org_ids": {
+			"readable_by_org_ids": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "IDs of the Organizations that will be able to view and instantiate this VDC template",
@@ -552,11 +552,12 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 	}
 
 	var err error
+	var vdcTemplate *govcd.VdcTemplate
 	switch operation {
 	case "create":
 		_, err = vcdClient.CreateVdcTemplate(settings)
 	case "update":
-		var vdcTemplate *govcd.VdcTemplate
+
 		vdcTemplate, err = vcdClient.GetVdcTemplateById(d.Id())
 		if err != nil {
 			return append(diags, diag.Errorf("could not retrieve the VDC Template to update it: %s", err)...)
@@ -567,6 +568,16 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 	}
 	if err != nil {
 		return append(diags, diag.Errorf("could not %s the VDC Template: %s", operation, err)...)
+	}
+
+	if vdcTemplate != nil {
+		orgs := d.Get("readable_by_org_ids").(*schema.Set)
+		if len(orgs.List()) > 0 {
+			err = vdcTemplate.SetAccess(convertSchemaSetToSliceOfStrings(orgs))
+			if err != nil {
+				return append(diags, diag.Errorf("could not %s VDC Template, setting access list failed: %s", operation, err)...)
+			}
+		}
 	}
 
 	return append(diags, resourceVcdVdcTemplateRead(ctx, d, meta)...)
@@ -684,7 +695,23 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 		}
 	}
 
-	// dSet(d, "view_and_instantiate_org_ids", ????)
+	access, err := vdcTemplate.GetAccess()
+	if err != nil {
+		return diag.Errorf("could not read VDC Template, retrieving its setting access list failed: %s", err)
+	}
+	if access != nil && access.AccessSettings != nil {
+		orgIds := make([]string, len(access.AccessSettings.AccessSetting))
+		for i, setting := range access.AccessSettings.AccessSetting {
+			if setting.Subject != nil {
+				orgIds[i] = fmt.Sprintf("urn:vcloud:org:%s", extractUuid(setting.Subject.HREF))
+			}
+		}
+		err = d.Set("readable_by_org_ids", orgIds)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
 	d.SetId(vdcTemplate.VdcTemplate.ID)
 
 	return nil
