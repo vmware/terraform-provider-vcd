@@ -235,6 +235,25 @@ data "vcd_resource_list" "orgs" {
 }
 ```
 
+### Using site and organization association data sources
+
+To read an association data source (`vcd_multisite_site_association` or `vcd_multisite_org_association`) you need to
+provide the ID of the remote entity (`associated_site_id` or `associated_org_id`). This information is usually found in
+the association data file used to create the association (e.g. `site2.xml`).  To make the data source retrieval easier,
+you can either supply the associated entity ID, or the XML file used to create the association.
+In the examples below, the two data sources are equivalent:
+
+```hcl
+data "vcd_multisite_site_association" "site1-site2a" {
+  associated_site_id = "urn:vcloud:site:deadbeef-fcf3-414a-be95-a3e26cf1296b"
+}
+
+data "vcd_multisite_site_association" "site1-site2b" {
+  association_data_file = "site2.xml"
+}
+```
+
+
 [site-all-at-once]:https://github.com/dataclouder/terraform-provider-vcd/tree/site-org-associations/examples/multi-site/site-all-at-once
 <!-- TODO: After merge, change to https://github.com/vmware/terraform-provider-vcd/tree/main/examples/multi-site/site-all-at-once -->
 [org-all-at-once]:https://github.com/dataclouder/terraform-provider-vcd/tree/site-org-associations/examples/multi-site/org-all-at-once
