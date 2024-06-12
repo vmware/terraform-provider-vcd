@@ -94,6 +94,7 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 						"cpu_limit": {
 							Type:             schema.TypeInt,
 							Optional:         true,
+							Computed:         true, // Is set implicitly when allocation model is  ReservationPool
 							Description:      "AllocationVApp, ReservationPool, Flex: The limit amount of CPU, in MHz, of the VDC that is instantiated from this template. Minimum is 256MHz. 0 means unlimited",
 							ValidateDiagFunc: validation.ToDiagFunc(validation.Any(validation.IntBetween(0, 0), validation.IntAtLeast(256))),
 						},
@@ -103,7 +104,7 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 							Description:      "AllocationVApp, AllocationPool, Flex: The percentage of the CPU guaranteed to be available to VMs running within the VDC instantiated from this template",
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 100)),
 						},
-						"cpu_frequency_limit": {
+						"cpu_speed": {
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Description:      "AllocationVApp, AllocationPool, Flex: Specifies the clock frequency, in MHz, for any virtual CPU that is allocated to a VM. Minimum is 256MHz",
@@ -130,11 +131,13 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 						"elasticity": {
 							Type:        schema.TypeBool,
 							Optional:    true,
+							Computed:    true, // Is set implicitly when allocation model is AllocationVApp
 							Description: "Flex only: True if compute capacity can grow or shrink based on demand",
 						},
 						"include_vm_memory_overhead": {
 							Type:        schema.TypeBool,
 							Optional:    true,
+							Computed:    true, // Is set implicitly when allocation model is AllocationPool
 							Description: "Flex only: True if the instantiated VDC includes memory overhead into its accounting for admission control",
 						},
 					},
@@ -479,15 +482,21 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 		}
 	}
 	if c, ok := d.GetOk("compute_configuration.0.cpu_allocated"); ok {
+		if allocationModel == types.VdcTemplatePayAsYouGoType {
+			return append(diags, diag.Errorf("could not %s the VDC Template, 'cpu_allocated' can only be set when 'allocation_model' is AllocationPool, ReservationPool or Flex, but it is %s", operation, d.Get("allocation_model"))...)
+		}
 		settings.VdcTemplateSpecification.CpuAllocationMhz = c.(int)
 	}
 
 	if c, ok := d.GetOk("compute_configuration.0.cpu_limit"); !ok {
-		if c != 0 && allocationModel == types.VdcTemplatePayAsYouGoType || allocationModel == types.VdcTemplateFlexType {
+		if c != 0 && (allocationModel == types.VdcTemplatePayAsYouGoType || allocationModel == types.VdcTemplateFlexType) {
 			return append(diags, diag.Errorf("could not %s the VDC Template, 'cpu_limit' must be set when 'allocation_model' is AllocationVApp or Flex", operation)...)
 		}
 	}
 	if c, ok := d.GetOk("compute_configuration.0.cpu_limit"); ok {
+		if allocationModel == types.VdcTemplateReservationPoolType && (c.(int) != 0 && c.(int) != settings.VdcTemplateSpecification.CpuAllocationMhz) {
+			return append(diags, diag.Errorf("could not %s the VDC Template, 'cpu_limit' can only be 0 or equal to 'cpu_allocated' when using 'allocation_model=ReservationPool', but it is %d", operation, c)...)
+		}
 		settings.VdcTemplateSpecification.CpuLimitMhz = c.(int)
 	}
 
@@ -497,16 +506,26 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 		}
 	}
 	if c, ok := d.GetOk("compute_configuration.0.cpu_guaranteed"); ok {
+		if allocationModel == types.VdcTemplateReservationPoolType {
+			return append(diags, diag.Errorf("could not %s the VDC Template, 'cpu_guaranteed' can only be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)...)
+		}
 		settings.VdcTemplateSpecification.CpuGuaranteedPercentage = c.(int)
 	}
 
-	if c, ok := d.GetOk("compute_configuration.0.cpu_frequency_limit"); !ok {
-		if c != 0 && (allocationModel == types.VdcTemplatePayAsYouGoType || allocationModel == types.VdcTemplateAllocationPoolType) {
-			return append(diags, diag.Errorf("could not %s the VDC Template, 'cpu_frequency_limit' must be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)...)
+	if _, ok := d.GetOk("compute_configuration.0.cpu_speed"); !ok {
+		if allocationModel == types.VdcTemplatePayAsYouGoType || allocationModel == types.VdcTemplateAllocationPoolType {
+			return append(diags, diag.Errorf("could not %s the VDC Template, 'cpu_speed' must be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)...)
 		}
 	}
-	if c, ok := d.GetOk("compute_configuration.0.cpu_frequency_limit"); ok {
-		settings.VdcTemplateSpecification.CpuLimitMhzPerVcpu = c.(int)
+	if c, ok := d.GetOk("compute_configuration.0.cpu_speed"); ok {
+		if allocationModel == types.VdcTemplateReservationPoolType {
+			return append(diags, diag.Errorf("could not %s the VDC Template, 'cpu_speed' can only be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)...)
+		}
+		if allocationModel != types.VdcTemplateAllocationPoolType {
+			settings.VdcTemplateSpecification.CpuLimitMhzPerVcpu = c.(int)
+		} else {
+			settings.VdcTemplateSpecification.VCpuInMhz = c.(int)
+		}
 	}
 
 	if c, ok := d.GetOk("compute_configuration.0.memory_allocated"); !ok {
@@ -555,14 +574,13 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 	var vdcTemplate *govcd.VdcTemplate
 	switch operation {
 	case "create":
-		_, err = vcdClient.CreateVdcTemplate(settings)
+		vdcTemplate, err = vcdClient.CreateVdcTemplate(settings)
 	case "update":
-
 		vdcTemplate, err = vcdClient.GetVdcTemplateById(d.Id())
 		if err != nil {
 			return append(diags, diag.Errorf("could not retrieve the VDC Template to update it: %s", err)...)
 		}
-		_, err = vdcTemplate.Update(settings)
+		vdcTemplate, err = vdcTemplate.Update(settings)
 	default:
 		return append(diags, diag.Errorf("the operation '%s' is not supported for VDC templates", operation)...)
 	}
@@ -614,10 +632,8 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 					p["gateway_edge_cluster_id"] = binding.Value.ID
 				case getVdcTemplateBinding(d, "services_edge_cluster_id", binding.Name):
 					p["services_edge_cluster_id"] = binding.Value.ID
-				default:
-					return diag.Errorf("the binding ID '%s' is not saved in state, hence the provider can't know whether '%s' is a Primary/Gateway or Secondary/Services edge cluster", binding.Name, binding.Value.ID)
 				}
-			} else {
+			} else if strings.Contains(binding.Value.ID, "urn:vcloud:network") {
 				// We can only have one external network per PVDC, so we don't check bindings here
 				p["external_network_id"] = binding.Value.ID
 			}
@@ -636,6 +652,26 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 		dSet(d, "nic_quota", vdcTemplate.VdcTemplate.VdcTemplateSpecification.NicQuota)
 		dSet(d, "vm_quota", vdcTemplate.VdcTemplate.VdcTemplateSpecification.VmQuota)
 		dSet(d, "provisioned_network_quota", vdcTemplate.VdcTemplate.VdcTemplateSpecification.ProvisionedNetworkQuota)
+		compute := map[string]interface{}{
+			"cpu_allocated":              vdcTemplate.VdcTemplate.VdcTemplateSpecification.CpuAllocationMhz,
+			"cpu_limit":                  vdcTemplate.VdcTemplate.VdcTemplateSpecification.CpuLimitMhz,
+			"cpu_guaranteed":             vdcTemplate.VdcTemplate.VdcTemplateSpecification.CpuGuaranteedPercentage,
+			"memory_allocated":           vdcTemplate.VdcTemplate.VdcTemplateSpecification.MemoryAllocationMB,
+			"memory_limit":               vdcTemplate.VdcTemplate.VdcTemplateSpecification.MemoryLimitMb,
+			"memory_guaranteed":          vdcTemplate.VdcTemplate.VdcTemplateSpecification.MemoryGuaranteedPercentage,
+			"elasticity":                 vdcTemplate.VdcTemplate.VdcTemplateSpecification.IsElastic != nil && *vdcTemplate.VdcTemplate.VdcTemplateSpecification.IsElastic,
+			"include_vm_memory_overhead": vdcTemplate.VdcTemplate.VdcTemplateSpecification.IncludeMemoryOverhead != nil && *vdcTemplate.VdcTemplate.VdcTemplateSpecification.IncludeMemoryOverhead,
+		}
+		if vdcTemplate.VdcTemplate.VdcTemplateSpecification.Type != types.VdcTemplateAllocationPoolType {
+			compute["cpu_speed"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.CpuLimitMhzPerVcpu
+		} else {
+			compute["cpu_speed"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.VCpuInMhz
+		}
+
+		err = d.Set("compute_configuration", []interface{}{compute})
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		if vdcTemplate.VdcTemplate.VdcTemplateSpecification.NetworkPoolReference != nil {
 			dSet(d, "network_pool_id", vdcTemplate.VdcTemplate.VdcTemplateSpecification.NetworkPoolReference.ID)
