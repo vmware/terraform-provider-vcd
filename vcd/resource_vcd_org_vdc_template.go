@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"github.com/vmware/go-vcloud-director/v2/util"
 	"net"
 	"strings"
 )
@@ -76,13 +75,14 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 			"allocation_model": {
 				Type:             schema.TypeString,
 				Required:         true,
-				Description:      "Allocation model that the VDCs instantiated from this template will use. Must be one of: 'AllocationVApp', 'AllocationPool', 'ReservationPool' or 'Flex'}",
+				Description:      "Allocation model that the VDCs instantiated from this template will use. Must be one of: 'AllocationVApp', 'AllocationPool', 'ReservationPool' or 'Flex'",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"AllocationVApp", "AllocationPool", "ReservationPool", "Flex"}, false)),
 			},
 			"compute_configuration": {
-				Type:     schema.TypeList,
-				Required: true,
-				MaxItems: 1,
+				Type:        schema.TypeList,
+				Required:    true,
+				MaxItems:    1,
+				Description: "The compute configuration for the VDCs instantiated from this template",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cpu_allocated": {
@@ -142,7 +142,6 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 						},
 					},
 				},
-				Description: "The compute configuration for the VDCs instantiated from this template",
 			},
 			"storage_profile": {
 				Type:        schema.TypeSet,
@@ -264,11 +263,6 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"bindings": {
-				Type:        schema.TypeMap,
-				Computed:    true,
-				Description: "Auxiliary map that links a binding with its corresponding VCD URN, for internal use of the provider only",
-			},
 		},
 	}
 }
@@ -312,43 +306,42 @@ func resourceVcdVdcTemplateImport(_ context.Context, d *schema.ResourceData, met
 }
 
 func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
-	var diags diag.Diagnostics
-	edgeGatewayBindingId, servicesBindingId := "", ""
 	vcdClient := meta.(*VCDClient)
 
 	providerVdcBlocks := d.Get("provider_vdc").(*schema.Set).List()
 	pvdcs := make([]*types.VMWVdcTemplateProviderVdcSpecification, len(providerVdcBlocks))
 
+	// Generate unique UUIDs as bindings. Each binding "describes a section" in the Provider VDC binding section.
+	// For example, "urn:vcloud:binding:foo" would describe "External network" for each Provider VDC, whereas
+	// "urn:vcloud:binding:bar" would describe the "Gateway Edge cluster" for each PVDC.
+	bindingNs := "urn:vcloud:binding:"
+	externalNetworkBindingId := fmt.Sprintf("%s%s", bindingNs, uuid.NewString())
+	edgeGatewayBindingId := fmt.Sprintf("%s%s", bindingNs, uuid.NewString())
+	servicesBindingId := fmt.Sprintf("%s%s", bindingNs, uuid.NewString())
+	gatewayEdgeClusterSet, servicesEdgeClusterSet := false, false
 	for i, p := range providerVdcBlocks {
 		pvdcBlock := p.(map[string]interface{})
 		var bindings []*types.VMWVdcTemplateBinding
 
-		for _, attribute := range []string{"external_network_id", "gateway_edge_cluster_id", "services_edge_cluster_id"} {
-			if urn := pvdcBlock[attribute]; urn != "" {
-				// We save the Binding IDs in the Terraform state to use them in subsequent operations,
-				// as we need to correlate them with different Edge cluster URNs.
-				bindingId := saveAndGetVdcTemplateBinding(d, attribute, urn.(string))
-
-				// Complete the URN for Edge clusters, just for the API payload (we don't save the URN with prefix in "bindings"
-				// to avoid undesired dirty plans after creation)
-				if attribute != "external_network_id" && !strings.Contains("urn:vcloud:backingEdgeCluster:", urn.(string)) {
-					urn = fmt.Sprintf("urn:vcloud:backingEdgeCluster:%s", urn)
-				}
-
-				bindings = append(bindings, &types.VMWVdcTemplateBinding{
-					Name:  bindingId,
-					Value: &types.Reference{ID: urn.(string)},
-				})
-
-				// We save the first available Edge cluster binding IDs for later, when we
-				// configure the Edge Gateway
-				if attribute == "gateway_edge_cluster_id" && edgeGatewayBindingId == "" {
-					edgeGatewayBindingId = bindingId
-				}
-				if attribute == "services_edge_cluster_id" && servicesBindingId == "" {
-					servicesBindingId = bindingId
-				}
-			}
+		if pvdcBlock["external_network_id"] != "" {
+			bindings = append(bindings, &types.VMWVdcTemplateBinding{
+				Name:  externalNetworkBindingId,
+				Value: &types.Reference{ID: pvdcBlock["external_network_id"].(string)},
+			})
+		}
+		if pvdcBlock["gateway_edge_cluster_id"] != "" {
+			gatewayEdgeClusterSet = true
+			bindings = append(bindings, &types.VMWVdcTemplateBinding{
+				Name:  edgeGatewayBindingId,
+				Value: &types.Reference{ID: fmt.Sprintf("urn:vcloud:backingEdgeCluster:%s", pvdcBlock["gateway_edge_cluster_id"].(string))},
+			})
+		}
+		if pvdcBlock["services_edge_cluster_id"] != "" {
+			servicesEdgeClusterSet = true
+			bindings = append(bindings, &types.VMWVdcTemplateBinding{
+				Name:  servicesBindingId,
+				Value: &types.Reference{ID: fmt.Sprintf("urn:vcloud:backingEdgeCluster:%s", pvdcBlock["services_edge_cluster_id"].(string))},
+			})
 		}
 		pvdcs[i] = &types.VMWVdcTemplateProviderVdcSpecification{
 			ID:      pvdcBlock["id"].(string),
@@ -357,13 +350,11 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 	}
 
 	// If user sets "gateway_edge_cluster_id" inside a "provider_vdc" block, but "edge_gateway" attribute is empty,
-	// we should warn the user
-	if _, ok := d.GetOk("edge_gateway"); ok && edgeGatewayBindingId != "" {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Warning,
-			Summary:  "You have set a 'gateway_edge_cluster_id' attribute inside a 'provider_vdc' block, but it will not be applied if you do not set the 'edge_gateway' block",
-			Detail:   "Missing 'edge_gateway' for the Edge cluster",
-		})
+	// we should throw an error, as subsequent plans won't be able to recover the Gateway Edge cluster field and will
+	// cause unwanted updates-in-place until solved.
+	if _, ok := d.GetOk("edge_gateway"); !ok && gatewayEdgeClusterSet {
+		return diag.Errorf("You have set a 'gateway_edge_cluster_id' attribute inside a 'provider_vdc' block, but no 'edge_gateway' block was found. " +
+			"Either remove the 'gateway_edge_cluster_id' or add the 'edge_gateway' block to the configuration")
 	}
 
 	// Gateway configuration
@@ -384,13 +375,9 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 
 		ip, cidr, err := net.ParseCIDR(gatewayBlock["network_gateway_cidr"].(string))
 		if err != nil {
-			return append(diags, diag.Errorf("could not %s VDC Template: error parsing 'network_gateway_cidr': %s", operation, err)...)
+			return diag.Errorf("could not %s VDC Template: error parsing 'network_gateway_cidr': %s", operation, err)
 		}
 		prefixLength, _ := cidr.Mask.Size()
-
-		// The Edge gateway doesn't have an ID as it does not exist yet, it will only exist when
-		// the VDC template is instantiated. We make up a URN.
-		binding := saveAndGetVdcTemplateBinding(d, "edge_gateway", "edge_gateway")
 
 		gateway = &types.VdcTemplateSpecificationGatewayConfiguration{
 			Gateway: &types.EdgeGateway{
@@ -399,11 +386,11 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 				Configuration: &types.GatewayConfiguration{
 					GatewayInterfaces: &types.GatewayInterfaces{GatewayInterface: []*types.GatewayInterface{
 						{
-							Name:        binding,
-							DisplayName: binding,
+							Name:        edgeGatewayBindingId,
+							DisplayName: edgeGatewayBindingId,
 							Connected:   true,
 							Network: &types.Reference{
-								HREF: binding,
+								HREF: edgeGatewayBindingId,
 							},
 							QuickAddAllocatedIpCount: gatewayBlock["ip_allocation_count"].(int),
 						},
@@ -422,18 +409,16 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 							IPRanges:           &types.IPRanges{IPRange: staticPools},
 						},
 					}},
-
 					FenceMode: "natRouted",
 				},
 			},
 		}
-
-		// We set the first Edge cluster available, that we saved during Binding ID generation
-		if edgeGatewayBindingId != "" {
+		if gatewayEdgeClusterSet {
 			gateway.Gateway.Configuration.EdgeClusterConfiguration = &types.EdgeClusterConfiguration{PrimaryEdgeCluster: &types.Reference{HREF: edgeGatewayBindingId}}
 		}
 	}
 
+	// Storage profiles
 	spBlocks := d.Get("storage_profile").(*schema.Set).List()
 	storageProfiles := make([]*types.VdcStorageProfile, len(spBlocks))
 	for i, sp := range spBlocks {
@@ -473,7 +458,7 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 	if allocationModel != types.VdcTemplateFlexType {
 		for _, attribute := range []string{"compute_configuration.0.elasticity", "compute_configuration.0.include_vm_memory_overhead"} {
 			if _, ok := d.GetOk(attribute); ok {
-				return append(diags, diag.Errorf("could not %s the VDC Template, '%s' can only be set when 'allocation_model=Flex', but it is %s", operation, attribute, d.Get("allocation_model"))...)
+				return diag.Errorf("could not %s the VDC Template, '%s' can only be set when 'allocation_model=Flex', but it is %s", operation, attribute, d.Get("allocation_model"))
 			}
 		}
 	}
@@ -486,48 +471,48 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 
 	if c, ok := d.GetOk("compute_configuration.0.cpu_allocated"); !ok {
 		if c != 0 && (allocationModel == types.VdcTemplateAllocationPoolType || allocationModel == types.VdcTemplateReservationPoolType || allocationModel == types.VdcTemplateFlexType) {
-			return append(diags, diag.Errorf("could not %s the VDC Template, 'cpu_allocated' must be set when 'allocation_model' is AllocationPool, ReservationPool or Flex", operation)...)
+			return diag.Errorf("could not %s the VDC Template, 'cpu_allocated' must be set when 'allocation_model' is AllocationPool, ReservationPool or Flex", operation)
 		}
 	}
 	if c, ok := d.GetOk("compute_configuration.0.cpu_allocated"); ok {
 		if allocationModel == types.VdcTemplatePayAsYouGoType {
-			return append(diags, diag.Errorf("could not %s the VDC Template, 'cpu_allocated' can only be set when 'allocation_model' is AllocationPool, ReservationPool or Flex, but it is %s", operation, d.Get("allocation_model"))...)
+			return diag.Errorf("could not %s the VDC Template, 'cpu_allocated' can only be set when 'allocation_model' is AllocationPool, ReservationPool or Flex, but it is %s", operation, d.Get("allocation_model"))
 		}
 		settings.VdcTemplateSpecification.CpuAllocationMhz = c.(int)
 	}
 
 	if c, ok := d.GetOk("compute_configuration.0.cpu_limit"); !ok {
 		if c != 0 && (allocationModel == types.VdcTemplatePayAsYouGoType || allocationModel == types.VdcTemplateFlexType) {
-			return append(diags, diag.Errorf("could not %s the VDC Template, 'cpu_limit' must be set when 'allocation_model' is AllocationVApp or Flex", operation)...)
+			return diag.Errorf("could not %s the VDC Template, 'cpu_limit' must be set when 'allocation_model' is AllocationVApp or Flex", operation)
 		}
 	}
 	if c, ok := d.GetOk("compute_configuration.0.cpu_limit"); ok {
 		if allocationModel == types.VdcTemplateReservationPoolType && (c.(int) != 0 && c.(int) != settings.VdcTemplateSpecification.CpuAllocationMhz) {
-			return append(diags, diag.Errorf("could not %s the VDC Template, 'cpu_limit' can only be 0 or equal to 'cpu_allocated' when using 'allocation_model=ReservationPool', but it is %d", operation, c)...)
+			return diag.Errorf("could not %s the VDC Template, 'cpu_limit' can only be 0 or equal to 'cpu_allocated' when using 'allocation_model=ReservationPool', but it is %d", operation, c)
 		}
 		settings.VdcTemplateSpecification.CpuLimitMhz = c.(int)
 	}
 
 	if c, ok := d.GetOk("compute_configuration.0.cpu_guaranteed"); !ok {
 		if c != 0 && allocationModel != types.VdcTemplateReservationPoolType {
-			return append(diags, diag.Errorf("could not %s the VDC Template, 'cpu_guaranteed' must be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)...)
+			return diag.Errorf("could not %s the VDC Template, 'cpu_guaranteed' must be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)
 		}
 	}
 	if c, ok := d.GetOk("compute_configuration.0.cpu_guaranteed"); ok {
 		if allocationModel == types.VdcTemplateReservationPoolType {
-			return append(diags, diag.Errorf("could not %s the VDC Template, 'cpu_guaranteed' can only be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)...)
+			return diag.Errorf("could not %s the VDC Template, 'cpu_guaranteed' can only be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)
 		}
 		settings.VdcTemplateSpecification.CpuGuaranteedPercentage = c.(int)
 	}
 
 	if _, ok := d.GetOk("compute_configuration.0.cpu_speed"); !ok {
 		if allocationModel == types.VdcTemplatePayAsYouGoType || allocationModel == types.VdcTemplateAllocationPoolType {
-			return append(diags, diag.Errorf("could not %s the VDC Template, 'cpu_speed' must be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)...)
+			return diag.Errorf("could not %s the VDC Template, 'cpu_speed' must be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)
 		}
 	}
 	if c, ok := d.GetOk("compute_configuration.0.cpu_speed"); ok {
 		if allocationModel == types.VdcTemplateReservationPoolType {
-			return append(diags, diag.Errorf("could not %s the VDC Template, 'cpu_speed' can only be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)...)
+			return diag.Errorf("could not %s the VDC Template, 'cpu_speed' can only be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)
 		}
 		if allocationModel != types.VdcTemplateAllocationPoolType {
 			settings.VdcTemplateSpecification.CpuLimitMhzPerVcpu = c.(int)
@@ -538,7 +523,7 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 
 	if c, ok := d.GetOk("compute_configuration.0.memory_allocated"); !ok {
 		if c != 0 && (allocationModel == types.VdcTemplateAllocationPoolType || allocationModel == types.VdcTemplateReservationPoolType || allocationModel == types.VdcTemplateFlexType) {
-			return append(diags, diag.Errorf("could not %s the VDC Template, 'memory_allocated' must be set when 'allocation_model' is AllocationPool, ReservationPool or Flex", operation)...)
+			return diag.Errorf("could not %s the VDC Template, 'memory_allocated' must be set when 'allocation_model' is AllocationPool, ReservationPool or Flex", operation)
 		}
 	}
 	if c, ok := d.GetOk("compute_configuration.0.memory_allocated"); ok {
@@ -547,7 +532,7 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 
 	if c, ok := d.GetOk("compute_configuration.0.memory_limit"); !ok {
 		if c != 0 && (allocationModel == types.VdcTemplatePayAsYouGoType || allocationModel == types.VdcTemplateFlexType) {
-			return append(diags, diag.Errorf("could not %s the VDC Template, 'memory_limit' must be set when 'allocation_model' is AllocationVApp or Flex", operation)...)
+			return diag.Errorf("could not %s the VDC Template, 'memory_limit' must be set when 'allocation_model' is AllocationVApp or Flex", operation)
 		}
 	}
 	if c, ok := d.GetOk("compute_configuration.0.memory_limit"); ok {
@@ -556,15 +541,17 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 
 	if c, ok := d.GetOk("compute_configuration.0.memory_guaranteed"); !ok {
 		if c != 0 && allocationModel != types.VdcTemplateReservationPoolType {
-			return append(diags, diag.Errorf("could not %s the VDC Template, 'memory_guaranteed' must be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)...)
+			return diag.Errorf("could not %s the VDC Template, 'memory_guaranteed' must be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)
 		}
 	}
 	if c, ok := d.GetOk("compute_configuration.0.memory_guaranteed"); ok {
 		settings.VdcTemplateSpecification.MemoryGuaranteedPercentage = c.(int)
 	}
 
+	// Network pool. If not specified, we need to populate the AutomaticNetworkPoolReference field with an empty object
+	// (it's not a bool for some reason).
 	if networkPoolId, ok := d.GetOk("network_pool_id"); ok {
-		// We need to convert ID to HREF to avoid problems in the backend
+		// We need to convert ID to HREF to avoid problems in the backend.
 		settings.VdcTemplateSpecification.NetworkPoolReference = &types.Reference{
 			ID:   networkPoolId.(string),
 			HREF: fmt.Sprintf("%s/cloudapi/%s%s%s", vcdClient.Client.VCDHREF.String(), types.OpenApiPathVersion1_0_0, types.OpenApiEndpointNetworkPools, networkPoolId),
@@ -575,13 +562,13 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 		settings.VdcTemplateSpecification.AutomaticNetworkPoolReference = &types.AutomaticNetworkPoolReference{}
 	}
 
-	// We set the first Edge cluster available, that we saved during Binding ID generation
-	if servicesBindingId != "" {
+	if servicesEdgeClusterSet {
 		settings.VdcTemplateSpecification.NetworkProfileConfiguration = &types.VdcTemplateNetworkProfile{
 			ServicesEdgeCluster: &types.Reference{HREF: servicesBindingId},
 		}
 	}
 
+	// The create and update operations are almost identical
 	var err error
 	var vdcTemplate *govcd.VdcTemplate
 	switch operation {
@@ -590,14 +577,14 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 	case "update":
 		vdcTemplate, err = vcdClient.GetVdcTemplateById(d.Id())
 		if err != nil {
-			return append(diags, diag.Errorf("could not retrieve the VDC Template to update it: %s", err)...)
+			return diag.Errorf("could not retrieve the VDC Template to update it: %s", err)
 		}
 		vdcTemplate, err = vdcTemplate.Update(settings)
 	default:
-		return append(diags, diag.Errorf("the operation '%s' is not supported for VDC templates", operation)...)
+		return diag.Errorf("the operation '%s' is not supported for VDC templates", operation)
 	}
 	if err != nil {
-		return append(diags, diag.Errorf("could not %s the VDC Template: %s", operation, err)...)
+		return diag.Errorf("could not %s the VDC Template: %s", operation, err)
 	}
 
 	if vdcTemplate != nil {
@@ -605,12 +592,12 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 		if len(orgs.List()) > 0 {
 			err = vdcTemplate.SetAccess(convertSchemaSetToSliceOfStrings(orgs))
 			if err != nil {
-				return append(diags, diag.Errorf("could not %s VDC Template, setting access list failed: %s", operation, err)...)
+				return diag.Errorf("could not %s VDC Template, setting access list failed: %s", operation, err)
 			}
 		}
 	}
 
-	return append(diags, resourceVcdVdcTemplateRead(ctx, d, meta)...)
+	return resourceVcdVdcTemplateRead(ctx, d, meta)
 }
 
 func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -618,12 +605,115 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	if vdcTemplate.VdcTemplate.VdcTemplateSpecification == nil {
+		return diag.Errorf("could not read VDC Template with ID '%s', its specification is nil", vdcTemplate.VdcTemplate.ID)
+	}
+
+	// Retrieve the Binding name for the Services Edge cluster, if present. This will be used later, when reading Provider
+	// VDC information, to put the correct data into the Terraform state.
+	servicesEdgeClusterBindingName := ""
+	if vdcTemplate.VdcTemplate.VdcTemplateSpecification.NetworkProfileConfiguration != nil &&
+		vdcTemplate.VdcTemplate.VdcTemplateSpecification.NetworkProfileConfiguration.ServicesEdgeCluster != nil {
+		servicesEdgeClusterBindingName = vdcTemplate.VdcTemplate.VdcTemplateSpecification.NetworkProfileConfiguration.ServicesEdgeCluster.HREF
+	}
 
 	dSet(d, "name", vdcTemplate.VdcTemplate.Name)
 	dSet(d, "description", vdcTemplate.VdcTemplate.Description)
 	dSet(d, "tenant_name", vdcTemplate.VdcTemplate.TenantName)
 	dSet(d, "tenant_description", vdcTemplate.VdcTemplate.TenantDescription)
+	dSet(d, "allocation_model", getVdcTemplateType(vdcTemplate.VdcTemplate.VdcTemplateSpecification.Type))
+	dSet(d, "enable_fast_provisioning", vdcTemplate.VdcTemplate.VdcTemplateSpecification.FastProvisioningEnabled)
+	dSet(d, "thin_provisioning", vdcTemplate.VdcTemplate.VdcTemplateSpecification.ThinProvision)
+	dSet(d, "nic_quota", vdcTemplate.VdcTemplate.VdcTemplateSpecification.NicQuota)
+	dSet(d, "vm_quota", vdcTemplate.VdcTemplate.VdcTemplateSpecification.VmQuota)
+	dSet(d, "provisioned_network_quota", vdcTemplate.VdcTemplate.VdcTemplateSpecification.ProvisionedNetworkQuota)
 
+	// Compute block
+	compute := map[string]interface{}{
+		"cpu_allocated":              vdcTemplate.VdcTemplate.VdcTemplateSpecification.CpuAllocationMhz,
+		"cpu_limit":                  vdcTemplate.VdcTemplate.VdcTemplateSpecification.CpuLimitMhz,
+		"cpu_guaranteed":             vdcTemplate.VdcTemplate.VdcTemplateSpecification.CpuGuaranteedPercentage,
+		"memory_allocated":           vdcTemplate.VdcTemplate.VdcTemplateSpecification.MemoryAllocationMB,
+		"memory_limit":               vdcTemplate.VdcTemplate.VdcTemplateSpecification.MemoryLimitMb,
+		"memory_guaranteed":          vdcTemplate.VdcTemplate.VdcTemplateSpecification.MemoryGuaranteedPercentage,
+		"elasticity":                 vdcTemplate.VdcTemplate.VdcTemplateSpecification.IsElastic != nil && *vdcTemplate.VdcTemplate.VdcTemplateSpecification.IsElastic,
+		"include_vm_memory_overhead": vdcTemplate.VdcTemplate.VdcTemplateSpecification.IncludeMemoryOverhead != nil && *vdcTemplate.VdcTemplate.VdcTemplateSpecification.IncludeMemoryOverhead,
+	}
+	if vdcTemplate.VdcTemplate.VdcTemplateSpecification.Type != types.VdcTemplateAllocationPoolType {
+		compute["cpu_speed"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.CpuLimitMhzPerVcpu
+	} else {
+		compute["cpu_speed"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.VCpuInMhz
+	}
+	err = d.Set("compute_configuration", []interface{}{compute})
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// Network pool, optional
+	if vdcTemplate.VdcTemplate.VdcTemplateSpecification.NetworkPoolReference != nil {
+		dSet(d, "network_pool_id", vdcTemplate.VdcTemplate.VdcTemplateSpecification.NetworkPoolReference.ID)
+	}
+
+	// Storage profiles
+	storageProfiles := make([]interface{}, len(vdcTemplate.VdcTemplate.VdcTemplateSpecification.StorageProfile))
+	for i, storageProfile := range vdcTemplate.VdcTemplate.VdcTemplateSpecification.StorageProfile {
+		sp := map[string]interface{}{}
+		sp["name"] = storageProfile.Name
+		sp["default"] = storageProfile.Default
+		sp["limit"] = storageProfile.Limit
+		storageProfiles[i] = sp
+	}
+	err = d.Set("storage_profile", storageProfiles)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// Edge gateway configuration, optional.
+	gatewayConfiguration := vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration
+	var edgeGatewayConfig []interface{}
+	edgeGatewayEdgeClusterBindingName := ""
+	if gatewayConfiguration != nil && gatewayConfiguration.Gateway != nil && gatewayConfiguration.Network != nil &&
+		gatewayConfiguration.Gateway.Configuration != nil && gatewayConfiguration.Gateway.Configuration.GatewayInterfaces != nil &&
+		len(gatewayConfiguration.Gateway.Configuration.GatewayInterfaces.GatewayInterface) > 0 &&
+		gatewayConfiguration.Network.Configuration != nil && gatewayConfiguration.Network.Configuration.IPScopes != nil &&
+		len(gatewayConfiguration.Network.Configuration.IPScopes.IPScope) > 0 {
+
+		ec := map[string]interface{}{}
+		ec["name"] = gatewayConfiguration.Gateway.Name
+		ec["description"] = gatewayConfiguration.Gateway.Description
+		ec["ip_allocation_count"] = gatewayConfiguration.Gateway.Configuration.GatewayInterfaces.GatewayInterface[0].QuickAddAllocatedIpCount
+		ec["network_name"] = gatewayConfiguration.Network.Name
+		ec["network_description"] = gatewayConfiguration.Network.Description
+		if gatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].SubnetPrefixLength != nil {
+			ec["network_gateway_cidr"] = fmt.Sprintf("%s/%d", gatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].Gateway, *vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].SubnetPrefixLength)
+		}
+		if gatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].IPRanges != nil {
+			ipRanges := make([]interface{}, len(gatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].IPRanges.IPRange))
+			for i, ir := range gatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].IPRanges.IPRange {
+				ipRange := map[string]interface{}{}
+				ipRange["start_address"] = ir.StartAddress
+				ipRange["end_address"] = ir.EndAddress
+				ipRanges[i] = ipRange
+			}
+			ec["static_ip_pool"] = ipRanges
+		}
+
+		// Retrieve the Binding name for the Gateway Edge cluster, if present. This will be used later, when reading Provider
+		// VDC information, to put the correct data into the Terraform state.
+		if gatewayConfiguration.Gateway.Configuration.EdgeClusterConfiguration != nil &&
+			gatewayConfiguration.Gateway.Configuration.EdgeClusterConfiguration.PrimaryEdgeCluster != nil {
+			edgeGatewayEdgeClusterBindingName = gatewayConfiguration.Gateway.Configuration.EdgeClusterConfiguration.PrimaryEdgeCluster.HREF
+		}
+
+		edgeGatewayConfig = append(edgeGatewayConfig, ec)
+	}
+	err = d.Set("edge_gateway", edgeGatewayConfig)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// Provider VDC information must be handled at the end, because we need the Binding names for the
+	// Gateway and Services edge clusters, which are obtained above.
 	pvdcBlock := make([]interface{}, len(vdcTemplate.VdcTemplate.ProviderVdcReference))
 	for i, providerVdcRef := range vdcTemplate.VdcTemplate.ProviderVdcReference {
 		p := map[string]interface{}{}
@@ -633,22 +723,20 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 		}
 		p["id"] = fmt.Sprintf("urn:vcloud:providervdc:%s", pvdcId)
 		for _, binding := range providerVdcRef.Binding {
-			// The Binding Name is the binding URN auto-generated during create/update.
-			// Each Binding Value is a Reference (we only need the ID)
-			if strings.Contains(binding.Value.ID, "urn:vcloud:backingEdgeCluster") {
-				// We have an Edge Cluster here, it can belong to several attributes:
-				// gateway_edge_cluster_id, services_edge_cluster_id
-				// We review the saved "bindings" to know where the Edge cluster belongs.
-				id := extractUuid(binding.Value.ID)
-				switch id {
-				case getVdcTemplateBinding(d, "gateway_edge_cluster_id", binding.Name):
-					p["gateway_edge_cluster_id"] = id
-				case getVdcTemplateBinding(d, "services_edge_cluster_id", binding.Name):
-					p["services_edge_cluster_id"] = id
+			if binding.Value == nil {
+				continue
+			}
+			switch binding.Name {
+			// We do the ReplaceAll as the UUIDs from vcd_nsxt_edge_cluster (or other API calls) come without any namespace, but the VDC Template uses
+			// "urn:vcloud:backingEdgeCluster:". If we don't remove them, Terraform would ask for a replacement of the whole block in subsequent plans.
+			case edgeGatewayEdgeClusterBindingName:
+				p["gateway_edge_cluster_id"] = strings.ReplaceAll(binding.Value.ID, "urn:vcloud:backingEdgeCluster:", "")
+			case servicesEdgeClusterBindingName:
+				p["services_edge_cluster_id"] = strings.ReplaceAll(binding.Value.ID, "urn:vcloud:backingEdgeCluster:", "")
+			default:
+				if strings.HasPrefix(binding.Value.ID, "urn:vcloud:network:") {
+					p["external_network_id"] = binding.Value.ID
 				}
-			} else if strings.Contains(binding.Value.ID, "urn:vcloud:network") {
-				// We can only have one external network per PVDC, so we don't check bindings here
-				p["external_network_id"] = binding.Value.ID
 			}
 		}
 		pvdcBlock[i] = p
@@ -656,92 +744,6 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 	err = d.Set("provider_vdc", pvdcBlock)
 	if err != nil {
 		return diag.FromErr(err)
-	}
-
-	if vdcTemplate.VdcTemplate.VdcTemplateSpecification != nil {
-		dSet(d, "allocation_model", getVdcTemplateType(vdcTemplate.VdcTemplate.VdcTemplateSpecification.Type))
-		dSet(d, "enable_fast_provisioning", vdcTemplate.VdcTemplate.VdcTemplateSpecification.FastProvisioningEnabled)
-		dSet(d, "thin_provisioning", vdcTemplate.VdcTemplate.VdcTemplateSpecification.ThinProvision)
-		dSet(d, "nic_quota", vdcTemplate.VdcTemplate.VdcTemplateSpecification.NicQuota)
-		dSet(d, "vm_quota", vdcTemplate.VdcTemplate.VdcTemplateSpecification.VmQuota)
-		dSet(d, "provisioned_network_quota", vdcTemplate.VdcTemplate.VdcTemplateSpecification.ProvisionedNetworkQuota)
-		compute := map[string]interface{}{
-			"cpu_allocated":              vdcTemplate.VdcTemplate.VdcTemplateSpecification.CpuAllocationMhz,
-			"cpu_limit":                  vdcTemplate.VdcTemplate.VdcTemplateSpecification.CpuLimitMhz,
-			"cpu_guaranteed":             vdcTemplate.VdcTemplate.VdcTemplateSpecification.CpuGuaranteedPercentage,
-			"memory_allocated":           vdcTemplate.VdcTemplate.VdcTemplateSpecification.MemoryAllocationMB,
-			"memory_limit":               vdcTemplate.VdcTemplate.VdcTemplateSpecification.MemoryLimitMb,
-			"memory_guaranteed":          vdcTemplate.VdcTemplate.VdcTemplateSpecification.MemoryGuaranteedPercentage,
-			"elasticity":                 vdcTemplate.VdcTemplate.VdcTemplateSpecification.IsElastic != nil && *vdcTemplate.VdcTemplate.VdcTemplateSpecification.IsElastic,
-			"include_vm_memory_overhead": vdcTemplate.VdcTemplate.VdcTemplateSpecification.IncludeMemoryOverhead != nil && *vdcTemplate.VdcTemplate.VdcTemplateSpecification.IncludeMemoryOverhead,
-		}
-		if vdcTemplate.VdcTemplate.VdcTemplateSpecification.Type != types.VdcTemplateAllocationPoolType {
-			compute["cpu_speed"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.CpuLimitMhzPerVcpu
-		} else {
-			compute["cpu_speed"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.VCpuInMhz
-		}
-
-		err = d.Set("compute_configuration", []interface{}{compute})
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		if vdcTemplate.VdcTemplate.VdcTemplateSpecification.NetworkPoolReference != nil {
-			dSet(d, "network_pool_id", vdcTemplate.VdcTemplate.VdcTemplateSpecification.NetworkPoolReference.ID)
-		}
-
-		if len(vdcTemplate.VdcTemplate.VdcTemplateSpecification.StorageProfile) > 0 {
-			storageProfiles := make([]interface{}, len(vdcTemplate.VdcTemplate.VdcTemplateSpecification.StorageProfile))
-			for i, storageProfile := range vdcTemplate.VdcTemplate.VdcTemplateSpecification.StorageProfile {
-				sp := map[string]interface{}{}
-				sp["name"] = storageProfile.Name
-				sp["default"] = storageProfile.Default
-				sp["limit"] = storageProfile.Limit
-				storageProfiles[i] = sp
-			}
-			err = d.Set("storage_profile", storageProfiles)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-		}
-
-		if vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration != nil &&
-			vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Gateway != nil &&
-			vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network != nil &&
-			vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Gateway.Configuration != nil &&
-			vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Gateway.Configuration.GatewayInterfaces != nil &&
-			len(vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Gateway.Configuration.GatewayInterfaces.GatewayInterface) > 0 &&
-			vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration != nil &&
-			vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration.IPScopes != nil &&
-			len(vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration.IPScopes.IPScope) > 0 {
-			edgeGatewayConfig := make([]interface{}, 1)
-			ec := map[string]interface{}{}
-
-			ec["name"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Gateway.Name
-			ec["description"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Gateway.Description
-			ec["ip_allocation_count"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Gateway.Configuration.GatewayInterfaces.GatewayInterface[0].QuickAddAllocatedIpCount
-			ec["network_name"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Name
-			ec["network_description"] = vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Description
-			if vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].SubnetPrefixLength != nil {
-				ec["network_gateway_cidr"] = fmt.Sprintf("%s/%d", vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].Gateway, *vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].SubnetPrefixLength)
-			}
-			if vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].IPRanges != nil {
-				ipRanges := make([]interface{}, len(vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].IPRanges.IPRange))
-				for i, ir := range vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].IPRanges.IPRange {
-					ipRange := map[string]interface{}{}
-					ipRange["start_address"] = ir.StartAddress
-					ipRange["end_address"] = ir.EndAddress
-					ipRanges[i] = ipRange
-				}
-				ec["static_ip_pool"] = ipRanges
-			}
-
-			edgeGatewayConfig[0] = ec
-			err = d.Set("edge_gateway", edgeGatewayConfig)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-		}
 	}
 
 	access, err := vdcTemplate.GetAccess()
@@ -783,46 +785,6 @@ func getVdcTemplate(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.VdcTem
 		}
 	}
 	return vdcTemplate, nil
-}
-
-// saveAndGetVdcTemplateBinding saves the given URN (example: urn:vcloud:edgecluster:...) of the given
-// argument (example: gateway_edge_cluster_id) in the Terraform state, and returns the corresponding
-// Binding ID that can be sent to VCD and used again to retrieve the URN on reads.
-// If the URN is already saved, it returns the existing binding ID instead of using a new one.
-func saveAndGetVdcTemplateBinding(d *schema.ResourceData, field, urn string) string {
-	separator := "@@"
-	bindings := d.Get("bindings").(map[string]interface{})
-
-	// Search for an existing binding ID if the URN is already saved.
-	// If the URN is already present, we reuse the same Binding ID
-	for k, v := range bindings {
-		if v == urn {
-			return strings.Split(k, separator)[1]
-		}
-	}
-
-	// Otherwise, generate a new one
-	bindingId := fmt.Sprintf("urn:vcloud:binding:%s", uuid.NewString())
-	bindings[fmt.Sprintf("%s%s%s", field, separator, bindingId)] = urn
-	err := d.Set("bindings", bindings)
-	if err != nil {
-		util.Logger.Printf("[ERROR] could not save binding with URN '%s' for attribute '%s' and ID '%s': %s", urn, field, bindingId, err)
-	}
-	return bindingId
-}
-
-// getVdcTemplateBinding recovers the URN (example: urn:vcloud:edgecluster:...) that was saved
-// in Terraform state, that corresponds to the given Binding ID (urn:vcloud:binding:...). If it's
-// not found, returns an empty string
-func getVdcTemplateBinding(d *schema.ResourceData, field, bindingId string) string {
-	separator := "@@"
-	bindings := d.Get("bindings").(map[string]interface{})
-
-	urn, ok := bindings[fmt.Sprintf("%s%s%s", field, separator, bindingId)]
-	if !ok {
-		return ""
-	}
-	return urn.(string)
 }
 
 // getVdcTemplateType transforms the allocation models used by VDC Templates to the allocation models used by regular

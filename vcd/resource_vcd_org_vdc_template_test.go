@@ -33,18 +33,22 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	step1 := templateFill(testAccVdcTemplateStep1, params)
+	step1 := templateFill(testAccVdcTemplateResource, params)
 	debugPrintf("#[DEBUG] CONFIGURATION - Step 1: %s", step1)
 	params["FuncName"] = t.Name() + "Step2"
-	step2 := templateFill(testAccVdcTemplateStep1, params)
+	step2 := templateFill(testAccVdcTemplateResource, params)
 	debugPrintf("#[DEBUG] CONFIGURATION - Step 2: %s", step2)
+	params["FuncName"] = t.Name() + "Step3"
+	step3 := templateFill(testAccVdcTemplateResourceAndDatasource, params)
+	debugPrintf("#[DEBUG] CONFIGURATION - Step 3: %s", step3)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 
-	template1 := "vcd_org_vdc_template.template1"
+	template := "vcd_org_vdc_template.template"
+	dsTemplate := "data.vcd_org_vdc_template.ds_template"
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -57,14 +61,39 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: step1,
-				Check:  resource.ComposeTestCheckFunc(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(template+"1", "name", params["Name1"].(string)),
+
+					resource.TestCheckResourceAttr(template+"2", "name", params["Name2"].(string)),
+
+					resource.TestCheckResourceAttr(template+"3", "name", params["Name3"].(string)),
+
+					resource.TestCheckResourceAttr(template+"4", "name", params["Name4"].(string)),
+				),
 			},
 			{
 				Config: step2,
-				Check:  resource.ComposeTestCheckFunc(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(template+"1", "name", params["Name1"].(string)),
+
+					resource.TestCheckResourceAttr(template+"2", "name", params["Name2"].(string)),
+
+					resource.TestCheckResourceAttr(template+"3", "name", params["Name3"].(string)),
+
+					resource.TestCheckResourceAttr(template+"4", "name", params["Name4"].(string)),
+				),
 			},
 			{
-				ResourceName:            template1,
+				Config: step3,
+				Check: resource.ComposeTestCheckFunc(
+					resourceFieldsEqual(template+"1", dsTemplate+"1", nil),
+					resourceFieldsEqual(template+"2", dsTemplate+"2", nil),
+					resourceFieldsEqual(template+"3", dsTemplate+"3", nil),
+					resourceFieldsEqual(template+"4", dsTemplate+"4", nil),
+				),
+			},
+			{
+				ResourceName:            template + "1",
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdTopHierarchy(params["Name1"].(string)),
@@ -103,7 +132,7 @@ func testAccCheckVdcTemplateDestroyed(vdcTemplateName string) resource.TestCheck
 	}
 }
 
-const testAccVdcTemplateStep1 = `
+const testAccVdcTemplateResource = `
 data "vcd_org" "org" {
   name = "{{.OrgToPublish}}"
 }
@@ -279,5 +308,23 @@ resource "vcd_org_vdc_template" "template4" {
   readable_by_org_ids = [
     data.vcd_org.org.id
   ]
+}
+`
+
+const testAccVdcTemplateResourceAndDatasource = testAccVdcTemplateResource + `
+data "vcd_org_vdc_template" "ds_template1" {
+  name = vcd_org_vdc_template.template1.name
+}
+
+data "vcd_org_vdc_template" "ds_template2" {
+  name = vcd_org_vdc_template.template2.name
+}
+
+data "vcd_org_vdc_template" "ds_template3" {
+  name = vcd_org_vdc_template.template3.name
+}
+
+data "vcd_org_vdc_template" "ds_template4" {
+  name = vcd_org_vdc_template.template4.name
 }
 `
