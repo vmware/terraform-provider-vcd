@@ -1,46 +1,79 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_org"
-sidebar_current: "docs-vcd-resource-org"
+page_title: "VMware Cloud Director: vcd_org_vdc_template"
+sidebar_current: "docs-vcd-resource-org-vdc-template"
 description: |-
-  Provides a VMware Cloud Director Organization resource. This can be used to create  delete, and update an organization.
+  Provides a resource to create Organization VDC Templates in VMware Cloud Director. This can be used to create, delete, and update a Organization VDC Template.
 ---
 
-# vcd\_org
+# vcd\_org\_vdc\_template
 
-Provides a VMware Cloud Director Org resource. This can be used to create, update, and delete an organization.
+Provides a resource to create Organization VDC Templates in VMware Cloud Director. This can be used to create, delete, and update a Organization VDC Template.
 Requires system administrator privileges.
 
-Supported in provider *v2.0+*
+~> Only supports NSX-T network provider
+
+Supported in provider *v3.13+*
 
 ## Example Usage
 
 ```hcl
-provider "vcd" {
-  user     = var.admin_user
-  password = var.admin_password
-  org      = "System"
-  url      = "https://AcmeVcd/api"
+data "vcd_org" "org" {
+   name = "my_org"
 }
 
-resource "vcd_org" "my-org" {
-  name             = "my-org"
-  full_name        = "My organization"
-  description      = "The pride of my work"
-  is_enabled       = true
-  delete_recursive = true
-  delete_force     = true
+data "vcd_provider_vdc" "pvdc1" {
+   name = "nsxTPvdc1"
+}
 
-  vapp_lease {
-    maximum_runtime_lease_in_sec          = 3600 # 1 hour
-    power_off_on_runtime_lease_expiration = true
-    maximum_storage_lease_in_sec          = 0 # never expires
-    delete_on_storage_lease_expiration    = false
-  }
-  vapp_template_lease {
-    maximum_storage_lease_in_sec       = 604800 # 1 week
-    delete_on_storage_lease_expiration = true
-  }
+data "vcd_provider_vdc" "pvdc2" {
+   name = "nsxTPvdc2"
+}
+
+data "vcd_external_network_v2" "ext_net" {
+   name = "nsxt-extnet"
+}
+
+data "vcd_network_pool" "np1" {
+   name = "NSX-T Overlay 1"
+}
+
+resource "vcd_org_vdc_template" "adam" {
+   name               = "myTemplate"
+   tenant_name        = "myAwesomeTemplate"
+   description        = "Requires System privileges"
+   tenant_description = "Any tenant can use this"
+   allocation_model   = "AllocationVApp"
+
+   compute_configuration {
+      cpu_limit         = 0
+      cpu_guaranteed    = 20
+      cpu_speed         = 256
+      memory_limit      = 1024
+      memory_guaranteed = 30
+   }
+
+   provider_vdc {
+      id                  = data.vcd_provider_vdc.pvdc1.id
+      external_network_id = data.vcd_external_network_v2.ext_net.id
+   }
+
+   provider_vdc {
+      id                  = data.vcd_provider_vdc.pvdc2.id
+      external_network_id = data.vcd_external_network_v2.ext_net.id
+   }
+
+   storage_profile {
+      name    = "*"
+      default = true
+      limit   = 1024
+   }
+
+   network_pool_id = data.vcd_network_pool.np1.id
+
+   readable_by_org_ids = [
+      data.vcd_org.org.id
+   ]
 }
 ```
 
@@ -48,177 +81,77 @@ resource "vcd_org" "my-org" {
 
 The following arguments are supported:
 
-* `name` - (Required) Org name
-* `full_name` - (Required) Org full name
-* `delete_recursive` - (Optional, but recommended) Pass `delete_recursive=true` as query parameter to remove an organization or VDC and any objects it contains that are in a state that normally allows removal. Default is `false`
-* `delete_force` - (Optional, but recommended) Pass `delete_force=true` and `delete_recursive=true` to remove an organization or VDC and any objects it contains, regardless of their state. Default is `false`
-* `is_enabled` - (Optional) True if this organization is enabled (allows login and all other operations). Default is `true`.
-* `description` - (Optional) Org description. Default is empty.
-* `deployed_vm_quota` - (Optional) Maximum number of virtual machines that can be deployed simultaneously by a member of this organization. Default is unlimited (0)
-* `stored_vm_quota` - (Optional) Maximum number of virtual machines in vApps or vApp templates that can be stored in an undeployed state by a member of this organization. Default is unlimited (0)
-* `can_publish_catalogs` - (Optional) True if this organization is allowed to share catalogs. Default is `true`.
-* `can_publish_external_catalogs` - (Optional; *v3.6+*) True if this organization is allowed to publish external catalogs. Default is `false`.
-* `can_subscribe_external_catalogs` - (Optional; *v3.6+*) True if this organization is allowed to subscribe to external catalogs. Default is `false`.
-* `delay_after_power_on_seconds` - (Optional) Specifies this organization's default for virtual machine boot delay after power on. Default is `0`.
-* `metadata` - (Deprecated; *v3.6+*) Use `metadata_entry` instead. Key value map of metadata to assign to this organization.
-* `metadata_entry` - (Optional; *v3.8+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
-* `vapp_lease` - (Optional; *v2.7+*) Defines lease parameters for vApps created in this organization. See [vApp Lease](#vapp-lease) below for details. 
-* `vapp_template_lease` - (Optional; *v2.7+*) Defines lease parameters for vApp templates created in this organization. See [vApp Template Lease](#vapp-template-lease) below for details.
-
-## Attribute Reference
-
-* `number_of_catalogs` - (*v3.11+*) Number of catalogs owned or shared, available to this organization.
-* `list_of_catalogs` - (*v3.11+*) List of catalogs (sorted alphabetically), owned or shared, available to this organization.
-* `number_of_vdcs` - (*v3.11+*) Number of VDCs owned or shared, available to this organization.
-* `list_of_vdcs` - (*v3.11+*) List of VDCs (sorted alphabetically), owned or shared, available to this organization.
-
-<a id="vapp-lease"></a>
-## vApp Lease
-
-The `vapp_lease` section contains lease parameters for vApps created in the current organization, as defined below:
-
-* `maximum_runtime_lease_in_sec` - (Required) How long vApps can run before they are automatically stopped (in seconds). 0 means never expires. Values accepted from 3600+
-<br>Note: Default when the whole `vapp_lease` block is omitted is 604800 (7 days) but may vary depending on vCD version
-* `power_off_on_runtime_lease_expiration` - (Required) When true, vApps are powered off when the runtime lease expires. When false, vApps are suspended when the runtime lease expires.
-<br>Note: Default when the whole `vapp_lease` block is omitted is false
-* `maximum_storage_lease_in_sec` - (Required) How long stopped vApps are available before being automatically cleaned up (in seconds). 0 means never expires. Regular values accepted from 3600+
-<br>Note: Default when the whole `vapp_lease` block is omitted is 2592000 (30 days) but may vary depending on vCD version
-* `delete_on_storage_lease_expiration` - (Required) If true, storage for a vApp is deleted when the vApp's lease expires. If false, the storage is flagged for deletion, but not deleted.
-<br>Note: Default when the whole `vapp_lease` block is omitted is false
-
-<a id="vapp-template-lease"></a>
-## vApp Template Lease
-
-The `vapp_template_lease` section contains lease parameters for vApp templates created in the current organization, as defined below:
-
-* `maximum_storage_lease_in_sec` - (Required) How long vApp templates are available before being automatically cleaned up (in seconds). 0 means never expires. Regular values accepted from 3600+
-<br>Note: Default when the whole `vapp_template_lease` block is omitted is 2592000 (30 days) but may vary depending on vCD version
-* `delete_on_storage_lease_expiration` - (Required) If true, storage for a vAppTemplate is deleted when the vAppTemplate lease expires. If false, the storage is flagged for deletion, but not deleted. 
-<br>Note: Default when the whole `vapp_template_lease` block is omitted is false
-
-<a id="metadata"></a>
-## Metadata
-
-The `metadata_entry` (*v3.8+*) is a set of metadata entries that have the following structure:
-
-* `key` - (Required) Key of this metadata entry.
-* `value` - (Required) Value of this metadata entry.
-* `type` - (Required) Type of this metadata entry. One of: `MetadataStringValue`, `MetadataNumberValue`, `MetadataDateTimeValue`, `MetadataBooleanValue`.
-* `user_access` - (Required) User access level for this metadata entry. One of: `PRIVATE` (hidden), `READONLY` (read only), `READWRITE` (read/write).
-* `is_system` - (Required) Domain for this metadata entry. true if it belongs to `SYSTEM`, false if it belongs to `GENERAL`.
-
-~> Note that `is_system` requires System Administrator privileges, and not all `user_access` options support it.
-   You may use `is_system = true` with `user_access = "PRIVATE"` or `user_access = "READONLY"`.
-
-Example:
-
-```hcl
-resource "vcd_org" "example" {
-  # ...
-  metadata_entry {
-    key         = "foo"
-    type        = "MetadataStringValue"
-    value       = "bar"
-    user_access = "PRIVATE"
-    is_system   = true # Requires System admin privileges
-  }
-
-  metadata_entry {
-    key         = "myBool"
-    type        = "MetadataBooleanValue"
-    value       = "true"
-    user_access = "READWRITE"
-    is_system   = false
-  }
-}
-```
-
-To remove all metadata one needs to specify an empty `metadata_entry`, like:
-
-```
-metadata_entry {}
-```
-
-The same applies also for deprecated `metadata` attribute:
-
-```
-metadata = {}
-```
+* `name` - (Required) Name to give to the Organization VDC Template, as seen by System administrators
+* `description` - (Optional) Description of the Organization VDC Template, as seen by System administrators
+* `tenant_name` - (Required) Name to give to the Organization VDC Template, as seen by the allowed tenants
+* `tenant_description` - (Optional) Description of the Organization VDC Template, as seen by the allowed tenants
+* `provider_vdc` - (Required) A block that defines a candidate location for the instantiated VDCs. There must be **at least one**, which has the following properties:
+  * `id` - (Required) ID of the Provider VDC, can be obtained with
+  [`vcd_provider_vdc` data source](/providers/vmware/vcd/latest/docs/data-sources/provider_vdc)
+  * `external_network_id` - (Required) ID of the Provider Gateway to use, can be obtained with
+  [`vcd_external_network_v2` data source](/providers/vmware/vcd/latest/docs/data-sources/external_network_v2)
+  * `gateway_edge_cluster_id` - (Optional) ID of the Edge Cluster that the VDCs instantiated from this template will use with the Edge Gateway.
+  Can be obtained with [`vcd_nsxt_edge_cluster` data source](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edge_cluster).
+  If set, a `edge_gateway` block **must** be present in the VDC Template configuration (see below).
+  * `services_edge_cluster_id` - (Optional) ID of the Edge Cluster that the VDCs instantiated from this template will use for services.
+  Can be obtained with [`vcd_nsxt_edge_cluster` data source](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edge_cluster)
+* `allocation_model` - (Required) Allocation model that the VDCs instantiated from this template will use.
+  Must be one of: `AllocationVApp`, `AllocationPool`, `ReservationPool` or  `Flex`
+* `compute_configuration`: The compute configuration for the VDCs instantiated from this template:
+  * `cpu_allocated` - (Required for `AllocationPool`, `ReservationPool` or `Flex`) The maximum amount of CPU, in MHz, available to the VMs running within the VDC that is instantiated from this template. Minimum is 256MHz
+  * `cpu_limit` - (Required for `AllocationVApp`, `ReservationPool` or `Flex`) The limit amount of CPU, in MHz, of the VDC that is instantiated from this template. Minimum is 256MHz. 0 means unlimited
+  * `cpu_guaranteed` - (Required for `AllocationVApp`, `AllocationPool` or `Flex`) The percentage of the CPU guaranteed to be available to VMs running within the VDC instantiated from this template
+  * `cpu_speed` - (Required for `AllocationVApp`, `AllocationPool` or `Flex`) Specifies the clock frequency, in MHz, for any virtual CPU that is allocated to a VM. Minimum is 256MHz
+  * `memory_allocated` - (Required for `AllocationPool`, `ReservationPool` or `Flex`) The maximum amount of Memory, in MB, available to the VMs running within the VDC that is instantiated from this template
+  * `memory_limit` - (Required for `AllocationVApp`, `ReservationPool` or `Flex`) The limit amount of Memory, in MB, of the VDC that is instantiated from this template. Minimum is 1024MB. 0 means unlimited
+  * `memory_guaranteed` - (Required for `AllocationVApp`, `AllocationPool` or `Flex`) The percentage of the Memory guaranteed to be available to VMs running within the VDC instantiated from this template
+  * `elasticity` - (Required for `Flex`) True if compute capacity can grow or shrink based on demand
+  * `include_vm_memory_overhead` - (Required for `Flex`) True if the instantiated VDC includes memory overhead into its accounting for admission control
+* `storage_profile` - (Required) A block that defines a storage profile that the VDCs instantiated from this template will use. Must be **at least one**, which has the following properties:
+  * `name` - (Required) Name of Provider VDC storage profile to use for the VDCs instantiated from this template
+  * `default` - (Required) True if this is default storage profile for the VDCs instantiated from this template. Only **one** block should have this set to `true`
+  * `limit` - (Required) Storage limit for the VDCs instantiated from this template, in Megabytes. 0 means unlimited
+* `enable_fast_provisioning` - (Optional) If `true`, the VDCs instantiated from this template will have Fast provisioning enabled. Defaults to `false`
+* `thin_provisioning` - (Optional) If `true`, the VDCs instantiated from this template will have Thin provisioning enabled. Defaults to `false`
+* `edge_gateway` - (Optional) VDCs instantiated from this template will create a new Edge Gateway with the provided setup. Required if any `provider_vdc` block
+  has defined a `gateway_edge_cluster_id`. This **unique** block has the following properties:
+  * `name` - (Required) Name of the Edge Gateway
+  * `description` - (Optional) Description of the Edge Gateway
+  * `ip_allocation_count` - (Optional) Allocated IPs for the Edge Gateway. Defaults to 0
+  * `network_name` - (Required) Name of the network to create with the Edge Gateway
+  * `network_description` - (Optional) Description of the network to create with the Edge Gateway
+  * `network_gateway_cidr` - (Required) CIDR of the Edge Gateway for the created network
+  * `static_ip_pool` - (Required) At least **one block** of IP ranges that have the following properties:
+    * `start_address` - (Required) Start address of the IP range
+    * `end_address` - (Required) End address of the IP range
+* `network_pool_id` - (Optional) If set, specifies the Network pool for the instantiated VDCs. Otherwise, it is automatically chosen
+* `nic_quota` - (Optional) Quota for the NICs of the instantiated VDCs. 0 means unlimited. Defaults to 0
+* `vm_quota` - (Optional) Quota for the VMs of the instantiated VDCs. 0 means unlimited. Defaults to 0
+* `provisioned_network_quota` - (Optional) Quota for the provisioned networks of the instantiated VDCs. 0 means unlimited. Defaults to 0
+* `readable_by_org_ids` - (Optional) A set of Organization IDs that will be able to view and read this VDC template, they can be obtained with
+  [`vcd_org` data source](/providers/vmware/vcd/latest/docs/data-sources/org)
 
 ## Importing
-
-Supported in provider *v2.5+*
 
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
 configuration. [More information.][docs-import]
 
-~> NOTE: when importing and then updating an organization that has LDAP settings, we must import both `vcd_org` and
-`vcd_org_ldap` resources. Setting LDAP outside of Terraform may result in incomplete settings.
-
-An existing Org can be [imported][docs-import] into this resource via supplying the path for an Org. Since the Org is
-at the top of the vCD hierarchy, the path corresponds to the Org name.
-For example, using this structure, representing an existing Org that was **not** created using Terraform:
+An existing Organization VDC Template can be [imported][docs-import] into this resource via supplying its System name (`name`).
+For example, using this structure, representing an existing Organization VDC Template that was **not** created using Terraform:
 
 ```hcl
-resource "vcd_org" "my-orgadmin" {
-  name             = "my-org"
-  full_name        = "guessing"
-  delete_recursive = true
-  delete_force     = true
+resource "vcd_org_vdc_template" "an_existing_vdc_template" {
+  # ...
 }
 ```
 
-You can import such organization into terraform state using this command
+You can import such Organization VDC Template into Terraform state using one of the following commands
 
 ```
-terraform import vcd_org.my-org my-org
+terraform import vcd_org_vdc_template.an_existing_vdc_template "MyTemplate"
 ```
+
+After that, you must expand the configuration file before you can either update or delete the Organization VDC Template. Running `terraform plan`
+at this stage will show the difference between the minimal configuration file and the stored properties.
 
 [docs-import]:https://www.terraform.io/docs/import/
-
-The state (in `terraform.tfstate`) would look like this:
-
-```json
-{
-  "version": 4,
-  "terraform_version": "0.12.0",
-  "serial": 1,
-  "lineage": "4f328a1d-3ac3-a1be-b739-c1edde689335",
-  "outputs": {},
-  "resources": [
-    {
-      "mode": "managed",
-      "type": "vcd_org",
-      "name": "my-org",
-      "provider": "provider.vcd",
-      "instances": [
-        {
-          "schema_version": 0,
-          "attributes": {
-            "can_publish_catalogs": true,
-            "delay_after_power_on_seconds": null,
-            "delete_force": null,
-            "delete_recursive": null,
-            "deployed_vm_quota": 50,
-            "description": "",
-            "full_name": "my-org",
-            "id": "urn:vcloud:org:875e81c4-3d7a-4bf4-b7db-9d0abe0f0b0d",
-            "is_enabled": true,
-            "name": "my-org",
-            "stored_vm_quota": 50
-          }
-        }
-      ]
-    }
-  ]
-}
-```
-After that, you can expand the configuration file and either update or delete the org as needed. Running `terraform plan`
-at this stage will show the difference between the minimal configuration file and the Org's stored properties.
-
-## Sources
-
-* [OrgType](https://code.vmware.com/apis/287/vcloud#/doc/doc/types/OrgType.html)
-* [ReferenceType](https://code.vmware.com/apis/287/vcloud#/doc/doc/types/ReferenceType.html)
-* [Org deletion](https://code.vmware.com/apis/287/vcloud#/doc/doc/operations/DELETE-Organization.html)
-

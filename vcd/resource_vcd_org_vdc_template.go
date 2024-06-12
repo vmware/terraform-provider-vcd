@@ -62,7 +62,7 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 						"gateway_edge_cluster_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "ID of the Edge Cluster that the VDCs instantiated from this template will use with the NSX-T Gateway",
+							Description: "ID of the Edge Cluster that the VDCs instantiated from this template will use with the Edge Gateway",
 						},
 						"services_edge_cluster_id": {
 							Type:        schema.TypeString,
@@ -200,7 +200,7 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Default:          0,
-							Description:      "Storage used in MB",
+							Description:      "Allocated IPs for the Edge Gateway",
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 100)),
 						},
 						"network_name": {
@@ -216,7 +216,7 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 						"network_gateway_cidr": {
 							Type:             schema.TypeString,
 							Required:         true,
-							Description:      "CIDR of the Edge Gateway for the network created with the Edge Gateway",
+							Description:      "CIDR of the Edge Gateway for the created network",
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IsCIDR),
 						},
 						"static_ip_pool": {
@@ -232,7 +232,7 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 			"network_pool_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "If set, specifies the Network pool for the instantiated VDCs. Otherwise it is automatically chosen",
+				Description: "If set, specifies the Network pool for the instantiated VDCs. Otherwise, it is automatically chosen",
 			},
 			"nic_quota": {
 				Type:             schema.TypeInt,
