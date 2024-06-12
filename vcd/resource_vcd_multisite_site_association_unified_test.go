@@ -3,11 +3,17 @@
 package vcd
 
 import (
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"os"
+	"path"
+	"regexp"
 	"testing"
 )
 
 /*
-	TestVcdMultisiteSiteAssociationUnited will test the associations between two sites
+	TestVcdMultisiteSiteAssociationUnified will test the associations between two sites
 	To run this test, make a shell script like the one below, filling the variables
 	in addition to the VCD defined in vcd_test_config.json
 
@@ -24,7 +30,7 @@ $	source connection.sh
 $ go test -tags functional -run TestVcdMultisiteSiteAssociation  -v -timeout 0
 */
 
-func TestVcdMultisiteSiteAssociationUnited(t *testing.T) {
+func TestVcdMultisiteSiteAssociationUnified(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 	err := checkClientConnectionFromEnv()
@@ -32,8 +38,9 @@ func TestVcdMultisiteSiteAssociationUnited(t *testing.T) {
 		t.Skipf("second connection not available: %s", err)
 	}
 
-	site1XmlName := "site1.xml"
-	site2XmlName := "site2.xml"
+	tempDir := os.TempDir()
+	site1XmlName := path.Join(tempDir, "site1.xml")
+	site2XmlName := path.Join(tempDir, "site2.xml")
 
 	params := StringMap{
 		"Site1XmlName":     site1XmlName,
@@ -47,48 +54,44 @@ func TestVcdMultisiteSiteAssociationUnited(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
-	// This test will not run anything, but it will create an appropriate binary test
-	/*
-		secondVcdUrl := os.Getenv(envSecondVcdUrl)
-		secondVcdSysorg := os.Getenv(envSecondVcdSysOrg)
-		secondVcdUser := os.Getenv(envSecondVcdUser)
-		secondVcdPassword := os.Getenv(envSecondVcdPassword)
-		if vcdShortTest {
-			t.Skip(acceptanceTestsSkipped)
-			return
-		}
-		defer func() {
-			// Remove XML files, if they were left behind
-			for _, fName := range []string{site1XmlName, site2XmlName} {
-				if fileExists(fName) {
-					if err := os.Remove(fName); err != nil {
-						fmt.Printf("error removing file %s: %s\n", fName, err)
-					}
+	secondVcdUrl := os.Getenv(envSecondVcdUrl)
+	secondVcdSysorg := os.Getenv(envSecondVcdSysOrg)
+	secondVcdUser := os.Getenv(envSecondVcdUser)
+	secondVcdPassword := os.Getenv(envSecondVcdPassword)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	defer func() {
+		// Remove XML files, if they were left behind
+		for _, fName := range []string{site1XmlName, site2XmlName} {
+			if fileExists(fName) {
+				if err := os.Remove(fName); err != nil {
+					fmt.Printf("error removing file %s: %s\n", fName, err)
 				}
 			}
-		}()
-		resource.Test(t, resource.TestCase{
-			ProviderFactories: buildMultipleSysProviders(secondVcdUrl, secondVcdUser, secondVcdPassword, secondVcdSysorg),
-			ExternalProviders: map[string]resource.ExternalProvider{
-				"local": {
-					Source:            "hashicorp/local",
-					VersionConstraint: "2.4.0",
-				},
+		}
+	}()
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: buildMultipleSysProviders(secondVcdUrl, secondVcdUser, secondVcdPassword, secondVcdSysorg),
+		ExternalProviders: map[string]resource.ExternalProvider{
+			"local": {
+				Source:            "hashicorp/local",
+				VersionConstraint: "2.4.0",
 			},
-			CheckDestroy: resource.ComposeTestCheckFunc(),
-			Steps: []resource.TestStep{
-				{
-					Config: configText,
-					Check: resource.ComposeAggregateTestCheckFunc(
-						// The status, depending on the operation speed, could be either 'ACTIVE' or 'ASYMMETRIC'
-						resource.TestMatchResourceAttr("vcd_multisite_site_association.site1-site2",
-							"status", regexp.MustCompilePOSIX(string(types.StatusAsymmetric)+`|`+string(types.StatusActive))),
-					),
-				},
+		},
+		CheckDestroy: resource.ComposeTestCheckFunc(),
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					// The status, depending on the operation speed, could be either 'ACTIVE' or 'ASYMMETRIC'
+					resource.TestMatchResourceAttr("vcd_multisite_site_association.site1-site2",
+						"status", regexp.MustCompilePOSIX(string(types.StatusAsymmetric)+`|`+string(types.StatusActive))),
+				),
 			},
-		})
-
-	*/
+		},
+	})
 
 	postTestChecks(t)
 }
