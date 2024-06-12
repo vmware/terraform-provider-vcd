@@ -43,6 +43,14 @@ func TestAccVcdRdeDuplicate(t *testing.T) {
 	rde3Tenant := "vcd_rde.rde3_tenant"
 	fetchedSystem := "data.vcd_rde.fetch_rde_system"
 
+	fieldsNotEqual := []string{"id", "org", "org_id"}
+	vcdClient := createSystemTemporaryVCDConnection()
+	if vcdClient.VCDClient.Client.APIVCDMaxVersionIs(">= 39.0") {
+		// Since API >= 39.0, whenever a RDE is created in a tenant by the System Administrator,
+		// the owner is not "administrator" anymore, but "system".
+		fieldsNotEqual = []string{"id", "org", "org_id", "owner_name", "owner_user_id"}
+	}
+
 	// We will cache some RDE identifiers, so we can use them later
 	cachedIds := make([]testCachedFieldValue, 2)
 
@@ -56,7 +64,7 @@ func TestAccVcdRdeDuplicate(t *testing.T) {
 				Config: step1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual(rde2Tenant, rde3Tenant, []string{"id"}),
-					resourceFieldsEqual(rde1System, rde3Tenant, []string{"id", "org", "org_id"}),
+					resourceFieldsEqual(rde1System, rde3Tenant, fieldsNotEqual),
 					// We cache some IDs to use it on later steps
 					cachedIds[0].cacheTestResourceFieldValue(rde2Tenant, "id"),
 					cachedIds[1].cacheTestResourceFieldValue(rde3Tenant, "id"),
