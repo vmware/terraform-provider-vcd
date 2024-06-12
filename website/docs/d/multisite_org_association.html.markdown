@@ -56,3 +56,8 @@ data "vcd_multisite_org_association" "org1-org2" {
 * `associated_org_name` - The name of the associated Org.
 * `associated_site_id` - The ID of the associated site.
 * `status` - The status of the association (one of `ASYMMETRIC`, `ACTIVE`, `UNREACHABLE`, `ERROR`)
+
+## More information
+
+See [Site and Org association](/providers/vmware/vcd/latest/docs/guides/site_org_association) for a broader description
+of association workflows.

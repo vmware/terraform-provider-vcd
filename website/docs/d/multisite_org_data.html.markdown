@@ -39,3 +39,8 @@ data "vcd_multisite_org_data" "current_org" {
   the file defined in `download_to_file`.
 * `number_of_associations` - The number of current associations with other Orgs.
 * `associations` - An alphabetically sorted list of current associations.
+
+## More information
+
+See [Site and Org association](/providers/vmware/vcd/latest/docs/guides/site_org_association) for a broader description
+of association workflows.

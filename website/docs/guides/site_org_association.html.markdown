@@ -6,13 +6,9 @@ description: |-
  Provides guidance to VMware Cloud Site and Org Associations
 ---
 
-WIP
-
 # Site and Org association
 
 Supported in provider *v3.13+*.
-
--> In this document, when we mention **tenants**, the term can be substituted with **organizations**.
 
 ## Overview
 
@@ -62,8 +58,7 @@ the same person.
 4. Common admin runs resource `vcd_multisite_site_association` using `site2.xml` `local_file` data source as input.
 5. Common admin runs resource `vcd_multisite_site_association` using `site1.xml` `local_file` data source as input.
 
-See a full example for this workflow at https://github.com/dataclouder/terraform-provider-vcd/tree/site-org-associations/examples/multi-site/site-all-at-once
-<!-- TODO: After merge, change to https://github.com/vmware/terraform-provider-vcd/tree/main/examples/multi-site/site-all-at-once -->
+See a full example for this workflow at [examples/site-all-at-once][site-all-at-once]
 
 ## Workflow multi-admin for an organization association
 
@@ -87,12 +82,11 @@ the same person (the system administrator).
 3. Common admin runs resource `vcd_multisite_org_association` using the field `association_data` from data source `vcd_multisite_site_data.org2` as input.
 4. Common admin runs resource `vcd_multisite_org_association` using the field `association_data` from data source `vcd_multisite_site_data.org2` as input.
 
-See a full example for this workflow at https://github.com/dataclouder/terraform-provider-vcd/tree/site-org-associations/examples/multi-site/org-all-at-once
-<!-- TODO: After merge, change to https://github.com/vmware/terraform-provider-vcd/tree/main/examples/multi-site/org-all-at-once -->
+See a full example for this workflow at [examples/org-all-at-once][org-all-at-once]
 
 ## Data collection
 
-### Data collection for a Site 
+### Data collection for a Site
 
 Each VCD has only one site. No names or ID are needed to identify it. The data source that performs the data collection
 is `vcd_multisite_site_data`:
@@ -102,3 +96,146 @@ data "vcd_multisite_site_data" "site1" {
   download_to_file = "site1.xml"
 }
 ```
+
+Even if `download_to_file` is not specified, the data is still available in the field `association_data`. 
+
+### Data collection for an organization
+
+Each organization can have only one data collection entity. The only identification needed is the organization ID.
+
+```hcl
+data "vcd_org" "my_org" {
+  name = "my-org"
+}
+
+data "vcd_multisite_org_data" "org1" {
+  org_id           = data.vcd_org.my_org.id
+  download_to_file = "org1.xml"
+}
+```
+
+Even if `download_to_file` is not specified, the data is still available in the field `association_data`.
+
+## Association scenarios
+
+### Associating two sites
+
+To associate your site with another site, you need to have the association data available, either as an XML file or as
+a text string. If you don't own both sites, you should receive the data from the other site administrator, who will
+get the data using [data collection](#data-collection-for-a-site).
+
+Using the XML file (`site2.xml`) received from the other administrator, you can run the following:
+
+```hcl
+# as administrator of site1
+resource "vcd_multisite_site_association" "site1-site2" {
+  association_data_file   = "site2.xml"
+  connection_timeout_mins = 2
+}
+```
+
+This operation will establish one side of the association between site1 and site2. At this stage, if no other operation
+is performed, the association is in state `ASYMMETRIC`, meaning that it has been initiated, but its counterpart has not been
+received yet.
+
+For the association to be completed, the other administrator must perform the same operation, using the XML data file for site1.
+
+```hcl
+# as administrator of site2
+resource "vcd_multisite_site_association" "site2-site1" {
+  association_data_file   = "site1.xml"
+  connection_timeout_mins = 2
+}
+```
+
+### Associating two organizations
+
+To associate your organization with another one, you need to have the association data available, either as an XML file or as
+a text string. If you don't own both organizations, you should receive the data from the other organization administrator, who will
+get the data using [data collection](#data-collection-for-an-organization).
+
+Using the XML file (`org2.xml`) received from the other administrator, you can run the following:
+
+```hcl
+# as administrator of org1
+resource "vcd_multisite_org_association" "org1-org2" {
+  association_data_file   = "org2.xml"
+  connection_timeout_mins = 2
+}
+```
+
+This operation will establish one side of the association between org1 and org2. At this stage, if no other operation
+is performed, the association is in state `ASYMMETRIC`, meaning that it has been initiated, but its counterpart has not been
+received yet.
+
+For the association to be completed, the other administrator must perform the same operation, using the XML data file for org1.
+
+```hcl
+# as administrator of org2
+resource "vcd_multisite_org_association" "org2-org1" {
+  association_data_file   = "org1.xml"
+  connection_timeout_mins = 2
+}
+```
+
+### Checking the association completion
+
+When both sides of the association operation have been performed (in both `vcd_multisite_site_association` or 
+`vcd_multisite_org_association`), you can run `terraform apply` once more. This _update_ operation will use the
+field `connection_timeout_mins` to check the association status. 
+The expression `connection_timeout_mins = 2` means "check for up to
+two minutes whether the status of the connection is `ACTIVE`". If the association reaches the desired status within the
+intended timeout, all is well, and the association is ready to be used. If it fails, it means that either the connection
+at the other side was not executed, or that there is some communication problem.
+
+Note about `connection_timeout_mins`: 
+1. You must not run this check before both sides of the association have run. If you run it with only one side, it will
+  fail, as the status cannot be `ACTIVE`.
+2. The property `connection_timeout_mins` is only evaluated during an _update_. It is safe to have it in the script at
+  creation, as it will be ignored during that operation. 
+
+## Listing associations
+
+### Listing site associations
+
+You can use one of the two methods below:
+
+1. run data source `vcd_resource_list` with `resource_type = "vcd_multisite_site_association"`
+2. run data source `vcd_multisite_site`: it will show the number and the name of site associations.
+
+```hcl
+data "vcd_multisite_site" "sites" {
+}
+
+data "vcd_resource_list" "sites" {
+  name          = "sites"
+  resource_type = "vcd_multisite_site_association"
+}
+```
+
+### Listing organization associations
+
+You can use one of the two methods below:
+
+1. run data source `vcd_resource_list` with `resource_type = "vcd_multisite_org_association"`
+2. run data source `vcd_multisite_org_data`: it will show the number and the name of org associations.
+
+```hcl
+data "vcd_org" "my_org" {
+  name = "my-org"
+}
+
+data "vcd_multisite_org_data" "orgs" {
+  org_id = data.vcd_org.my_org.id
+}
+
+data "vcd_resource_list" "orgs" {
+  name          = "orgs"
+  resource_type = "vcd_multisite_org_association"
+}
+```
+
+[site-all-at-once]:https://github.com/dataclouder/terraform-provider-vcd/tree/site-org-associations/examples/multi-site/site-all-at-once
+<!-- TODO: After merge, change to https://github.com/vmware/terraform-provider-vcd/tree/main/examples/multi-site/site-all-at-once -->
+[org-all-at-once]:https://github.com/dataclouder/terraform-provider-vcd/tree/site-org-associations/examples/multi-site/org-all-at-once
+<!-- TODO: After merge, change to https://github.com/vmware/terraform-provider-vcd/tree/main/examples/multi-site/org-all-at-once -->

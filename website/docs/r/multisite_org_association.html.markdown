@@ -58,3 +58,9 @@ Use this method if it is more convenient than reading XML from a file.
 * `associated_org_id` - ID of the remote org associated with the current one.
 * `associated_org_name` - The name of the associated org.
 * `status` - The status of the association (one of `ASYMMETRIC`, `ACTIVE`, `UNREACHABLE`, `ERROR`)
+
+
+## More information
+
+See [Site and Org association](/providers/vmware/vcd/latest/docs/guides/site_org_association) for a broader description
+of association workflows.
