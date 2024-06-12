@@ -18,24 +18,41 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
-		"OrgToPublish":    testConfig.VCD.Org,
-		"ProviderVdc":     testConfig.VCD.NsxtProviderVdc.Name,
-		"Vdc":             testConfig.Nsxt.Vdc,
-		"EdgeCluster":     testConfig.Nsxt.NsxtEdgeCluster,
-		"ExternalNetwork": testConfig.Nsxt.ExternalNetwork,
-		"NetworkPool":     testConfig.VCD.NsxtProviderVdc.NetworkPool,
-		"StorageProfile":  testConfig.VCD.NsxtProviderVdc.StorageProfile,
-		"Name1":           t.Name() + "1",
-		"Name2":           t.Name() + "2",
-		"Name3":           t.Name() + "3",
-		"Name4":           t.Name() + "4",
-		"FuncName":        t.Name() + "Step1",
+		"OrgToPublish":        testConfig.VCD.Org,
+		"ProviderVdc":         testConfig.VCD.NsxtProviderVdc.Name,
+		"Vdc":                 testConfig.Nsxt.Vdc,
+		"EdgeCluster":         testConfig.Nsxt.NsxtEdgeCluster,
+		"ExternalNetwork":     testConfig.Nsxt.ExternalNetwork,
+		"NetworkPool":         testConfig.VCD.NsxtProviderVdc.NetworkPool,
+		"StorageProfile":      testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		"StorageProfile2":     testConfig.VCD.NsxtProviderVdc.StorageProfile2,
+		"Name1":               t.Name() + "1",
+		"Name2":               t.Name() + "2",
+		"Name3":               t.Name() + "3",
+		"Name4":               t.Name() + "4",
+		"FuncName":            t.Name() + "Step1",
+		"StorageProfileLimit": 1024,
+		"CpuLimit":            0,
+		"CpuGuaranteed":       20,
+		"CpuSpeed":            1000,
+		"CpuAllocated":        256,
+		"MemoryLimit":         0,
+		"MemoryGuaranteed":    50,
+		"MemoryAllocated":     1024,
 	}
 	testParamsNotEmpty(t, params)
 
 	step1 := templateFill(testAccVdcTemplateResource, params)
 	debugPrintf("#[DEBUG] CONFIGURATION - Step 1: %s", step1)
 	params["FuncName"] = t.Name() + "Step2"
+	params["StorageProfileLimit"] = 2048
+	params["CpuLimit"] = 512
+	params["CpuGuaranteed"] = 100
+	params["CpuSpeed"] = 1500
+	params["CpuAllocated"] = 512
+	params["MemoryLimit"] = 1024
+	params["MemoryGuaranteed"] = 60
+	params["MemoryAlllocated"] = 1536
 	step2 := templateFill(testAccVdcTemplateResource, params)
 	debugPrintf("#[DEBUG] CONFIGURATION - Step 2: %s", step2)
 	params["FuncName"] = t.Name() + "Step3"
@@ -93,11 +110,10 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:            template + "1",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdTopHierarchy(params["Name1"].(string)),
-				ImportStateVerifyIgnore: []string{"bindings.%", "bindings"}, // TODO: Work with this, what happens after import
+				ResourceName:      template + "1",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdTopHierarchy(params["Name1"].(string)),
 			},
 		},
 	})
@@ -168,11 +184,11 @@ resource "vcd_org_vdc_template" "template1" {
   allocation_model   = "AllocationVApp"
 
   compute_configuration {
-    cpu_limit         = 0
-    cpu_guaranteed    = 20
-    cpu_speed         = 256
-    memory_limit      = 1024
-    memory_guaranteed = 30
+    cpu_limit         = {{.CpuLimit}}
+    cpu_guaranteed    = {{.CpuGuaranteed}}
+    cpu_speed         = {{.CpuSpeed}}
+    memory_limit      = {{.MemoryLimit}}
+    memory_guaranteed = {{.MemoryGuaranteed}}
   }
 
   provider_vdc {
@@ -183,7 +199,7 @@ resource "vcd_org_vdc_template" "template1" {
   storage_profile {
     name    = "{{.StorageProfile}}"
     default = true
-    limit   = 1024
+    limit   = {{.StorageProfileLimit}}
   }
 
   network_pool_id = data.vcd_network_pool.np.id
@@ -201,11 +217,11 @@ resource "vcd_org_vdc_template" "template2" {
   allocation_model   = "AllocationPool"
 
   compute_configuration {
-	cpu_allocated     = 256
-    cpu_guaranteed    = 20
-    cpu_speed         = 1000
-    memory_allocated  = 1024
-    memory_guaranteed = 30
+	cpu_allocated     = {{.CpuAllocated}}
+    cpu_guaranteed    = {{.CpuGuaranteed}}
+    cpu_speed         = {{.CpuSpeed}}
+    memory_allocated  = {{.MemoryAllocated}}
+    memory_guaranteed = {{.MemoryGuaranteed}}
   }
 
   edge_gateway {
@@ -227,7 +243,12 @@ resource "vcd_org_vdc_template" "template2" {
   storage_profile {
     name    = "{{.StorageProfile}}"
     default = true
-    limit   = 1024
+    limit   = {{.StorageProfileLimit}}
+  }
+  storage_profile {
+    name    = "{{.StorageProfile2}}"
+    default = false
+    limit   = 128
   }
 }
 
@@ -239,10 +260,9 @@ resource "vcd_org_vdc_template" "template3" {
   allocation_model   = "ReservationPool"
 
   compute_configuration {
-    cpu_allocated    = 256
-    cpu_limit        = 0
-    memory_allocated = 1024
-    memory_limit     = 0
+    cpu_allocated    = {{.CpuAllocated}}
+    cpu_limit        = {{.CpuLimit}}
+    memory_allocated = {{.MemoryAllocated}}
   }
 
   edge_gateway {
@@ -265,7 +285,7 @@ resource "vcd_org_vdc_template" "template3" {
   storage_profile {
     name    = "{{.StorageProfile}}"
     default = true
-    limit   = 1024
+    limit   = {{.StorageProfileLimit}}
   }
 
   network_pool_id = data.vcd_network_pool.np.id
@@ -283,13 +303,13 @@ resource "vcd_org_vdc_template" "template4" {
   allocation_model   = "Flex"
 
   compute_configuration {
-    cpu_allocated     = 256
-    cpu_limit         = 0
-    cpu_guaranteed    = 20
-    cpu_speed         = 256
-    memory_allocated  = 1024
-    memory_limit      = 0
-    memory_guaranteed = 30
+    cpu_allocated     = {{.CpuAllocated}}
+    cpu_limit         = {{.CpuLimit}}
+    cpu_guaranteed    = {{.CpuGuaranteed}}
+    cpu_speed         = {{.CpuSpeed}}
+    memory_allocated  = {{.MemoryAllocated}}
+    memory_limit      = {{.MemoryLimit}}
+    memory_guaranteed = {{.MemoryGuaranteed}}
   }
 
   provider_vdc {
@@ -300,7 +320,7 @@ resource "vcd_org_vdc_template" "template4" {
   storage_profile {
     name    = "{{.StorageProfile}}"
     default = true
-    limit   = 1024
+    limit   = {{.StorageProfileLimit}}
   }
 
   network_pool_id = data.vcd_network_pool.np.id

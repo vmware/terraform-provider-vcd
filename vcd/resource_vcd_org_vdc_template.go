@@ -455,17 +455,16 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 
 	// Validate and get the compute configuration.
 	// Schema guarantees that there's exactly 1 item, so we can get it directly
-	if allocationModel != types.VdcTemplateFlexType {
-		for _, attribute := range []string{"compute_configuration.0.elasticity", "compute_configuration.0.include_vm_memory_overhead"} {
-			if _, ok := d.GetOk(attribute); ok {
-				return diag.Errorf("could not %s the VDC Template, '%s' can only be set when 'allocation_model=Flex', but it is %s", operation, attribute, d.Get("allocation_model"))
-			}
-		}
-	}
 	if c, ok := d.GetOk("compute_configuration.0.elasticity"); ok {
+		if allocationModel != types.VdcTemplatePayAsYouGoType && allocationModel != types.VdcTemplateFlexType {
+			return diag.Errorf("could not %s the VDC Template, 'elasticity' can only be set when 'allocation_model' is AllocationVApp or Flex', but it is %s", operation, d.Get("allocation_model"))
+		}
 		settings.VdcTemplateSpecification.IsElastic = addrOf(c.(bool))
 	}
 	if c, ok := d.GetOk("compute_configuration.0.include_vm_memory_overhead"); ok {
+		if allocationModel != types.VdcTemplateAllocationPoolType && allocationModel != types.VdcTemplateReservationPoolType && allocationModel != types.VdcTemplateFlexType {
+			return diag.Errorf("could not %s the VDC Template, 'include_vm_memory_overhead' can only be set when 'allocation_model' is AllocationPool, ReservationPool or Flex', but it is %s", operation, d.Get("allocation_model"))
+		}
 		settings.VdcTemplateSpecification.IncludeMemoryOverhead = addrOf(c.(bool))
 	}
 
@@ -475,7 +474,7 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 		}
 	}
 	if c, ok := d.GetOk("compute_configuration.0.cpu_allocated"); ok {
-		if allocationModel == types.VdcTemplatePayAsYouGoType {
+		if allocationModel != types.VdcTemplateAllocationPoolType && allocationModel != types.VdcTemplateReservationPoolType && allocationModel != types.VdcTemplateFlexType {
 			return diag.Errorf("could not %s the VDC Template, 'cpu_allocated' can only be set when 'allocation_model' is AllocationPool, ReservationPool or Flex, but it is %s", operation, d.Get("allocation_model"))
 		}
 		settings.VdcTemplateSpecification.CpuAllocationMhz = c.(int)
@@ -494,24 +493,24 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 	}
 
 	if c, ok := d.GetOk("compute_configuration.0.cpu_guaranteed"); !ok {
-		if c != 0 && allocationModel != types.VdcTemplateReservationPoolType {
+		if c != 0 && (allocationModel == types.VdcTemplatePayAsYouGoType || allocationModel == types.VdcTemplateAllocationPoolType || allocationModel == types.VdcTemplateFlexType) {
 			return diag.Errorf("could not %s the VDC Template, 'cpu_guaranteed' must be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)
 		}
 	}
 	if c, ok := d.GetOk("compute_configuration.0.cpu_guaranteed"); ok {
-		if allocationModel == types.VdcTemplateReservationPoolType {
+		if allocationModel != types.VdcTemplatePayAsYouGoType && allocationModel != types.VdcTemplateAllocationPoolType && allocationModel != types.VdcTemplateFlexType {
 			return diag.Errorf("could not %s the VDC Template, 'cpu_guaranteed' can only be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)
 		}
 		settings.VdcTemplateSpecification.CpuGuaranteedPercentage = c.(int)
 	}
 
 	if _, ok := d.GetOk("compute_configuration.0.cpu_speed"); !ok {
-		if allocationModel == types.VdcTemplatePayAsYouGoType || allocationModel == types.VdcTemplateAllocationPoolType {
+		if allocationModel == types.VdcTemplatePayAsYouGoType || allocationModel == types.VdcTemplateAllocationPoolType || allocationModel == types.VdcTemplateFlexType {
 			return diag.Errorf("could not %s the VDC Template, 'cpu_speed' must be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)
 		}
 	}
 	if c, ok := d.GetOk("compute_configuration.0.cpu_speed"); ok {
-		if allocationModel == types.VdcTemplateReservationPoolType {
+		if allocationModel != types.VdcTemplatePayAsYouGoType && allocationModel != types.VdcTemplateAllocationPoolType && allocationModel != types.VdcTemplateFlexType {
 			return diag.Errorf("could not %s the VDC Template, 'cpu_speed' can only be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)
 		}
 		if allocationModel != types.VdcTemplateAllocationPoolType {
@@ -536,6 +535,9 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 		}
 	}
 	if c, ok := d.GetOk("compute_configuration.0.memory_limit"); ok {
+		if allocationModel != types.VdcTemplatePayAsYouGoType && allocationModel != types.VdcTemplateAllocationPoolType && allocationModel != types.VdcTemplateFlexType {
+			return diag.Errorf("could not %s the VDC Template, 'memory_limit' can only be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)
+		}
 		settings.VdcTemplateSpecification.MemoryLimitMb = c.(int)
 	}
 
