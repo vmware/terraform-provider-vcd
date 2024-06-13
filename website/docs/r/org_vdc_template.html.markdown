@@ -121,7 +121,7 @@ The following arguments are supported:
   * `network_name` - (Required) Name of the network to create with the Edge Gateway
   * `network_description` - (Optional) Description of the network to create with the Edge Gateway
   * `network_gateway_cidr` - (Required) CIDR of the Edge Gateway for the created network
-  * `static_ip_pool` - (Required) At least **one block** of IP ranges that have the following properties:
+  * `static_ip_pool` - (Required) **One block** with a single IP range (this is a constraint due to a bug in VCD) that have the following properties:
     * `start_address` - (Required) Start address of the IP range
     * `end_address` - (Required) End address of the IP range
 * `network_pool_id` - (Optional) If set, specifies the Network pool for the instantiated VDCs. Otherwise, it is automatically chosen
