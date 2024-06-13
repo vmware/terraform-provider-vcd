@@ -751,20 +751,23 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 
-	access, err := vdcTemplate.GetAccess()
-	if err != nil {
-		return diag.Errorf("could not read VDC Template, retrieving its setting access list failed: %s", err)
-	}
-	if access != nil && access.AccessSettings != nil {
-		orgIds := make([]string, len(access.AccessSettings.AccessSetting))
-		for i, setting := range access.AccessSettings.AccessSetting {
-			if setting.Subject != nil {
-				orgIds[i] = fmt.Sprintf("urn:vcloud:org:%s", extractUuid(setting.Subject.HREF))
-			}
-		}
-		err = d.Set("readable_by_org_ids", orgIds)
+	// Access settings is only available for System administrators
+	if meta.(*VCDClient).Client.IsSysAdmin {
+		access, err := vdcTemplate.GetAccess()
 		if err != nil {
-			return diag.FromErr(err)
+			return diag.Errorf("could not read VDC Template, retrieving its setting access list failed: %s", err)
+		}
+		if access != nil && access.AccessSettings != nil {
+			orgIds := make([]string, len(access.AccessSettings.AccessSetting))
+			for i, setting := range access.AccessSettings.AccessSetting {
+				if setting.Subject != nil {
+					orgIds[i] = fmt.Sprintf("urn:vcloud:org:%s", extractUuid(setting.Subject.HREF))
+				}
+			}
+			err = d.Set("readable_by_org_ids", orgIds)
+			if err != nil {
+				return diag.FromErr(err)
+			}
 		}
 	}
 

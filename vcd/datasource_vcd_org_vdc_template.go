@@ -233,7 +233,7 @@ func datasourceVcdOrgVdcTemplate() *schema.Resource {
 			"readable_by_org_ids": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "IDs of the Organizations that will be able to view and instantiate this VDC template",
+				Description: "IDs of the Organizations that will be able to view and instantiate this VDC template. This attribute is not available for tenants",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
