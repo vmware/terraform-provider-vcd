@@ -53,9 +53,9 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 	params["CpuGuaranteed"] = 100
 	params["CpuSpeed"] = 1500
 	params["CpuAllocated"] = 512
-	params["MemoryLimit"] = 1024
+	params["MemoryLimit"] = 2048
 	params["MemoryGuaranteed"] = 60
-	params["MemoryAlllocated"] = 1536
+	params["MemoryAllocated"] = 1536
 	step2 := templateFill(testAccVdcTemplateResource, params)
 	debugPrintf("#[DEBUG] CONFIGURATION - Step 2: %s", step2)
 	params["FuncName"] = t.Name() + "Step3"
@@ -92,17 +92,17 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 						"external_network_id": regexp.MustCompile(`^urn:vcloud:network:.+$`),
 					}),
 					resource.TestCheckResourceAttr(template+"1", "allocation_model", "AllocationVApp"),
-					//resource.TestCheckTypeSetElemNestedAttrs(template+"1", "compute_configuration.*", map[string]string{
-					//	"cpu_allocated":              "256",
-					//	"cpu_limit":                  "0",
-					//	"cpu_guaranteed":             "20",
-					//	"cpu_speed":                  "1000",
-					//	"memory_allocated":           "1024",
-					//	"memory_guaranteed":          "50",
-					//	"memory_limit":               "0",
-					//	"elasticity":                 "true", // Computed
-					//	"include_vm_memory_overhead": "false",
-					//}),
+					resource.TestCheckTypeSetElemNestedAttrs(template+"1", "compute_configuration.*", map[string]string{
+						"cpu_allocated":              "0", // Not used
+						"cpu_limit":                  "0",
+						"cpu_guaranteed":             "20",
+						"cpu_speed":                  "1000",
+						"memory_allocated":           "0", // Not used
+						"memory_guaranteed":          "50",
+						"memory_limit":               "0",
+						"elasticity":                 "true",  // Computed
+						"include_vm_memory_overhead": "false", // Not used
+					}),
 					resource.TestCheckTypeSetElemNestedAttrs(template+"1", "storage_profile.*", map[string]string{
 						"name":    params["StorageProfile"].(string),
 						"default": "true",
@@ -132,17 +132,17 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 						"external_network_id": regexp.MustCompile(`^urn:vcloud:network:.+$`),
 					}),
 					resource.TestCheckResourceAttr(template+"2", "allocation_model", "AllocationPool"),
-					//resource.TestCheckTypeSetElemNestedAttrs(template+"2", "compute_configuration.*", map[string]string{
-					//	"cpu_allocated":              "256",
-					//	"cpu_limit":                  "0",
-					//	"cpu_guaranteed":             "20",
-					//	"cpu_speed":                  "1000",
-					//	"memory_allocated":           "1024",
-					//	"memory_guaranteed":          "50",
-					//	"memory_limit":               "0",
-					//	"elasticity":                 "true",
-					//	"include_vm_memory_overhead": "true",
-					//}),
+					resource.TestCheckTypeSetElemNestedAttrs(template+"2", "compute_configuration.*", map[string]string{
+						"cpu_allocated":              "256",
+						"cpu_limit":                  "0", // Not used
+						"cpu_guaranteed":             "20",
+						"cpu_speed":                  "1000",
+						"memory_allocated":           "1024",
+						"memory_guaranteed":          "50",
+						"memory_limit":               "0",     // Not used
+						"elasticity":                 "false", // Not used
+						"include_vm_memory_overhead": "true",  // Computed
+					}),
 					resource.TestCheckTypeSetElemNestedAttrs(template+"2", "storage_profile.*", map[string]string{
 						"name":    params["StorageProfile"].(string),
 						"default": "true",
@@ -180,17 +180,17 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 						"gateway_edge_cluster_id": regexp.MustCompile(`^.+$`),
 					}),
 					resource.TestCheckResourceAttr(template+"3", "allocation_model", "ReservationPool"),
-					//resource.TestCheckTypeSetElemNestedAttrs(template+"3", "compute_configuration.*", map[string]string{
-					//	"cpu_allocated":              "256",
-					//	"cpu_limit":                  "0",
-					//	"cpu_guaranteed":             "20",
-					//	"cpu_speed":                  "1000",
-					//	"memory_allocated":           "1024",
-					//	"memory_guaranteed":          "50",
-					//	"memory_limit":               "0",
-					//	"elasticity":                 "true",
-					//	"include_vm_memory_overhead": "true",
-					//}),
+					resource.TestCheckTypeSetElemNestedAttrs(template+"3", "compute_configuration.*", map[string]string{
+						"cpu_allocated":              "256",
+						"cpu_limit":                  "0", // Not used
+						"cpu_guaranteed":             "0", // Not used
+						"cpu_speed":                  "0", // Not used
+						"memory_allocated":           "1024",
+						"memory_guaranteed":          "0", // Not used
+						"memory_limit":               "0", // Not used
+						"elasticity":                 "false",
+						"include_vm_memory_overhead": "true", // Computed
+					}),
 					resource.TestCheckTypeSetElemNestedAttrs(template+"3", "storage_profile.*", map[string]string{
 						"name":    params["StorageProfile"].(string),
 						"default": "true",
@@ -222,17 +222,17 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 						"external_network_id": regexp.MustCompile(`^urn:vcloud:network:.+$`),
 					}),
 					resource.TestCheckResourceAttr(template+"4", "allocation_model", "Flex"),
-					//resource.TestCheckTypeSetElemNestedAttrs(template+"4", "compute_configuration.*", map[string]string{
-					//	"cpu_allocated":              "256",
-					//	"cpu_limit":                  "0",
-					//	"cpu_guaranteed":             "20",
-					//	"cpu_speed":                  "1000",
-					//	"memory_allocated":           "1024",
-					//	"memory_guaranteed":          "50",
-					//	"memory_limit":               "0",
-					//	"elasticity":                 "true",
-					//	"include_vm_memory_overhead": "true",
-					//}),
+					resource.TestCheckTypeSetElemNestedAttrs(template+"4", "compute_configuration.*", map[string]string{
+						"cpu_allocated":              "256",
+						"cpu_limit":                  "0",
+						"cpu_guaranteed":             "20",
+						"cpu_speed":                  "1000",
+						"memory_allocated":           "1024",
+						"memory_guaranteed":          "50",
+						"memory_limit":               "0",
+						"elasticity":                 "true",
+						"include_vm_memory_overhead": "true",
+					}),
 					resource.TestCheckTypeSetElemNestedAttrs(template+"4", "storage_profile.*", map[string]string{
 						"name":    params["StorageProfile"].(string),
 						"default": "true",
@@ -252,12 +252,54 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 				Config: step2,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(template+"1", "name", params["Name1"].(string)),
+					resource.TestCheckTypeSetElemNestedAttrs(template+"1", "compute_configuration.*", map[string]string{
+						"cpu_allocated":              "0", // Not used
+						"cpu_limit":                  "512",
+						"cpu_guaranteed":             "100",
+						"cpu_speed":                  "1500",
+						"memory_allocated":           "0", // Not used
+						"memory_guaranteed":          "60",
+						"memory_limit":               "2048",
+						"elasticity":                 "true",  // Computed
+						"include_vm_memory_overhead": "false", // Not used
+					}),
 
 					resource.TestCheckResourceAttr(template+"2", "name", params["Name2"].(string)),
-
+					resource.TestCheckTypeSetElemNestedAttrs(template+"2", "compute_configuration.*", map[string]string{
+						"cpu_allocated":              "512",
+						"cpu_limit":                  "0", // Not used
+						"cpu_guaranteed":             "100",
+						"cpu_speed":                  "1500",
+						"memory_allocated":           "1536",
+						"memory_guaranteed":          "60",
+						"memory_limit":               "0",     // Not used
+						"elasticity":                 "false", // Not used
+						"include_vm_memory_overhead": "true",  // Computed
+					}),
 					resource.TestCheckResourceAttr(template+"3", "name", params["Name3"].(string)),
-
+					resource.TestCheckTypeSetElemNestedAttrs(template+"3", "compute_configuration.*", map[string]string{
+						"cpu_allocated":              "512",
+						"cpu_limit":                  "0", // Not used
+						"cpu_guaranteed":             "0", // Not used
+						"cpu_speed":                  "0", // Not used
+						"memory_allocated":           "1536",
+						"memory_guaranteed":          "0", // Not used
+						"memory_limit":               "0", // Not used
+						"elasticity":                 "false",
+						"include_vm_memory_overhead": "true", // Computed
+					}),
 					resource.TestCheckResourceAttr(template+"4", "name", params["Name4"].(string)),
+					resource.TestCheckTypeSetElemNestedAttrs(template+"4", "compute_configuration.*", map[string]string{
+						"cpu_allocated":              "512",
+						"cpu_limit":                  "512",
+						"cpu_guaranteed":             "100",
+						"cpu_speed":                  "1500",
+						"memory_allocated":           "1536",
+						"memory_guaranteed":          "60",
+						"memory_limit":               "2048",
+						"elasticity":                 "true",
+						"include_vm_memory_overhead": "true",
+					}),
 				),
 			},
 			{
@@ -269,7 +311,7 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 					resourceFieldsEqual(template+"4", dsTemplate+"4", nil),
 
 					// This one is read by a tenant, so we ignore 'readable_by_org_ids' completely
-					resourceFieldsEqualCustom(template+"4", dsTemplate+"5", []string{"readable_by_org_ids"}, anySliceContainsStrPartially),
+					resourceFieldsEqualCustom(template+"4", dsTemplate+"5", []string{"readable_by_org_ids"}, stringInSlicePartially),
 				),
 			},
 			{
@@ -500,6 +542,9 @@ resource "vcd_org_vdc_template" "template4" {
     memory_allocated  = {{.MemoryAllocated}}
     memory_limit      = {{.MemoryLimit}}
     memory_guaranteed = {{.MemoryGuaranteed}}
+    
+    elasticity                 = true
+    include_vm_memory_overhead = true
   }
 
   provider_vdc {

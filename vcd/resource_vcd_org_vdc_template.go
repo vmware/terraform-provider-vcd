@@ -454,8 +454,9 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 		},
 	}
 
-	// Validate and get the compute configuration.
-	// Schema guarantees that there's exactly 1 item, so we can get it directly
+	// Get the compute configuration. There are too many combinations to perform "smart validations" here,
+	// and given that VCD behaves well when input is incorrect, we skip them.
+	// Schema guarantees that there's exactly 1 item, so we can retrieve every field it directly.
 	if c, ok := d.GetOk("compute_configuration.0.elasticity"); ok {
 		if allocationModel != types.VdcTemplatePayAsYouGoType && allocationModel != types.VdcTemplateFlexType {
 			return diag.Errorf("could not %s the VDC Template, 'elasticity' can only be set when 'allocation_model' is AllocationVApp or Flex', but it is %s", operation, d.Get("allocation_model"))
@@ -469,83 +470,27 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 		settings.VdcTemplateSpecification.IncludeMemoryOverhead = addrOf(c.(bool))
 	}
 
-	if c, ok := d.GetOk("compute_configuration.0.cpu_allocated"); !ok {
-		if c != 0 && (allocationModel == types.VdcTemplateAllocationPoolType || allocationModel == types.VdcTemplateReservationPoolType || allocationModel == types.VdcTemplateFlexType) {
-			return diag.Errorf("could not %s the VDC Template, 'cpu_allocated' must be set when 'allocation_model' is AllocationPool, ReservationPool or Flex", operation)
-		}
-	}
 	if c, ok := d.GetOk("compute_configuration.0.cpu_allocated"); ok {
-		if allocationModel != types.VdcTemplateAllocationPoolType && allocationModel != types.VdcTemplateReservationPoolType && allocationModel != types.VdcTemplateFlexType {
-			return diag.Errorf("could not %s the VDC Template, 'cpu_allocated' can only be set when 'allocation_model' is AllocationPool, ReservationPool or Flex, but it is %s", operation, d.Get("allocation_model"))
-		}
 		settings.VdcTemplateSpecification.CpuAllocationMhz = c.(int)
 	}
-
-	if c, ok := d.GetOk("compute_configuration.0.cpu_limit"); !ok {
-		if c != 0 && (allocationModel == types.VdcTemplatePayAsYouGoType || allocationModel == types.VdcTemplateFlexType) {
-			return diag.Errorf("could not %s the VDC Template, 'cpu_limit' must be set when 'allocation_model' is AllocationVApp or Flex", operation)
-		}
-	}
 	if c, ok := d.GetOk("compute_configuration.0.cpu_limit"); ok {
-		if allocationModel == types.VdcTemplateReservationPoolType && (c.(int) != 0 && c.(int) != settings.VdcTemplateSpecification.CpuAllocationMhz) {
-			return diag.Errorf("could not %s the VDC Template, 'cpu_limit' can only be 0 or equal to 'cpu_allocated' when using 'allocation_model=ReservationPool', but it is %d", operation, c)
-		}
 		settings.VdcTemplateSpecification.CpuLimitMhz = c.(int)
 	}
-
-	if c, ok := d.GetOk("compute_configuration.0.cpu_guaranteed"); !ok {
-		if c != 0 && (allocationModel == types.VdcTemplatePayAsYouGoType || allocationModel == types.VdcTemplateAllocationPoolType || allocationModel == types.VdcTemplateFlexType) {
-			return diag.Errorf("could not %s the VDC Template, 'cpu_guaranteed' must be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)
-		}
-	}
 	if c, ok := d.GetOk("compute_configuration.0.cpu_guaranteed"); ok {
-		if allocationModel != types.VdcTemplatePayAsYouGoType && allocationModel != types.VdcTemplateAllocationPoolType && allocationModel != types.VdcTemplateFlexType {
-			return diag.Errorf("could not %s the VDC Template, 'cpu_guaranteed' can only be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)
-		}
 		settings.VdcTemplateSpecification.CpuGuaranteedPercentage = c.(int)
 	}
-
-	if _, ok := d.GetOk("compute_configuration.0.cpu_speed"); !ok {
-		if allocationModel == types.VdcTemplatePayAsYouGoType || allocationModel == types.VdcTemplateAllocationPoolType || allocationModel == types.VdcTemplateFlexType {
-			return diag.Errorf("could not %s the VDC Template, 'cpu_speed' must be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)
-		}
-	}
 	if c, ok := d.GetOk("compute_configuration.0.cpu_speed"); ok {
-		if allocationModel != types.VdcTemplatePayAsYouGoType && allocationModel != types.VdcTemplateAllocationPoolType && allocationModel != types.VdcTemplateFlexType {
-			return diag.Errorf("could not %s the VDC Template, 'cpu_speed' can only be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)
-		}
 		if allocationModel != types.VdcTemplateAllocationPoolType {
 			settings.VdcTemplateSpecification.CpuLimitMhzPerVcpu = c.(int)
 		} else {
 			settings.VdcTemplateSpecification.VCpuInMhz = c.(int)
 		}
 	}
-
-	if c, ok := d.GetOk("compute_configuration.0.memory_allocated"); !ok {
-		if c != 0 && (allocationModel == types.VdcTemplateAllocationPoolType || allocationModel == types.VdcTemplateReservationPoolType || allocationModel == types.VdcTemplateFlexType) {
-			return diag.Errorf("could not %s the VDC Template, 'memory_allocated' must be set when 'allocation_model' is AllocationPool, ReservationPool or Flex", operation)
-		}
-	}
 	if c, ok := d.GetOk("compute_configuration.0.memory_allocated"); ok {
 		settings.VdcTemplateSpecification.MemoryAllocationMB = c.(int)
 	}
-
-	if c, ok := d.GetOk("compute_configuration.0.memory_limit"); !ok {
-		if c != 0 && (allocationModel == types.VdcTemplatePayAsYouGoType || allocationModel == types.VdcTemplateFlexType) {
-			return diag.Errorf("could not %s the VDC Template, 'memory_limit' must be set when 'allocation_model' is AllocationVApp or Flex", operation)
-		}
-	}
 	if c, ok := d.GetOk("compute_configuration.0.memory_limit"); ok {
-		if allocationModel != types.VdcTemplatePayAsYouGoType && allocationModel != types.VdcTemplateAllocationPoolType && allocationModel != types.VdcTemplateFlexType {
-			return diag.Errorf("could not %s the VDC Template, 'memory_limit' can only be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)
-		}
 		settings.VdcTemplateSpecification.MemoryLimitMb = c.(int)
-	}
-
-	if c, ok := d.GetOk("compute_configuration.0.memory_guaranteed"); !ok {
-		if c != 0 && allocationModel != types.VdcTemplateReservationPoolType {
-			return diag.Errorf("could not %s the VDC Template, 'memory_guaranteed' must be set when 'allocation_model' is AllocationVApp, AllocationPool or Flex", operation)
-		}
 	}
 	if c, ok := d.GetOk("compute_configuration.0.memory_guaranteed"); ok {
 		settings.VdcTemplateSpecification.MemoryGuaranteedPercentage = c.(int)

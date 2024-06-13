@@ -880,8 +880,8 @@ func stringInSlice(str string, list []string) bool {
 	return false
 }
 
-// anySliceContainsStrPartially checks whether any string of the slice contains a part of the input string
-func anySliceContainsStrPartially(str string, list []string) bool {
+// stringInSlicePartially checks whether the input string contains any of the strings of the slice
+func stringInSlicePartially(str string, list []string) bool {
 	for _, v := range list {
 		if strings.Contains(str, v) {
 			return true
