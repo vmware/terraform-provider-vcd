@@ -19,7 +19,7 @@ Supported in provider *v3.13+*
 
 ```hcl
 data "vcd_org_vdc_template" "template" {
-   name               = "myTemplate"
+  name = "myTemplate"
 }
 ```
 
