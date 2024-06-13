@@ -23,12 +23,10 @@ data "vcd_org" "org2" {
 
 data "vcd_multisite_org_data" "org1-data" {
   org_id           = data.vcd_org.org1.id
-  # download_to_file = "${var.vcd_org1}.xml"
 }
 
 data "vcd_multisite_org_data" "org2-data" {
   org_id           = data.vcd_org.org2.id
-  # download_to_file = "${var.vcd_org2}.xml"
 }
 
 data "vcd_resource_list" "orgs" {
