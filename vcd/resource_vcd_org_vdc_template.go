@@ -404,10 +404,10 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 				Configuration: &types.NetworkConfiguration{
 					IPScopes: &types.IPScopes{IPScope: []*types.IPScope{
 						{
-							Gateway:            ip.String(),
-							Netmask:            fmt.Sprintf("%d.%d.%d.%d", cidr.Mask[0], cidr.Mask[1], cidr.Mask[2], cidr.Mask[3]),
-							SubnetPrefixLength: &prefixLength,
-							IPRanges:           &types.IPRanges{IPRange: staticPools},
+							Gateway:               ip.String(),
+							Netmask:               fmt.Sprintf("%d.%d.%d.%d", cidr.Mask[0], cidr.Mask[1], cidr.Mask[2], cidr.Mask[3]),
+							SubnetPrefixLengthInt: &prefixLength,
+							IPRanges:              &types.IPRanges{IPRange: staticPools},
 						},
 					}},
 					FenceMode: "natRouted",
@@ -635,8 +635,8 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 		ec["ip_allocation_count"] = gatewayConfiguration.Gateway.Configuration.GatewayInterfaces.GatewayInterface[0].QuickAddAllocatedIpCount
 		ec["network_name"] = gatewayConfiguration.Network.Name
 		ec["network_description"] = gatewayConfiguration.Network.Description
-		if gatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].SubnetPrefixLength != nil {
-			ec["network_gateway_cidr"] = fmt.Sprintf("%s/%d", gatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].Gateway, *vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].SubnetPrefixLength)
+		if gatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].SubnetPrefixLengthInt != nil {
+			ec["network_gateway_cidr"] = fmt.Sprintf("%s/%d", gatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].Gateway, *vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].SubnetPrefixLengthInt)
 		}
 		if gatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].IPRanges != nil {
 			ipRanges := make([]interface{}, len(gatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].IPRanges.IPRange))
