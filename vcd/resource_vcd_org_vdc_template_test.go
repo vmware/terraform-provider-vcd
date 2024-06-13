@@ -182,7 +182,7 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 					resource.TestCheckResourceAttr(template+"3", "allocation_model", "ReservationPool"),
 					resource.TestCheckTypeSetElemNestedAttrs(template+"3", "compute_configuration.*", map[string]string{
 						"cpu_allocated":              "256",
-						"cpu_limit":                  "0", // Not used
+						"cpu_limit":                  "0", // Unlimited
 						"cpu_guaranteed":             "0", // Not used
 						"cpu_speed":                  "0", // Not used
 						"memory_allocated":           "1024",
@@ -279,7 +279,7 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 					resource.TestCheckResourceAttr(template+"3", "name", params["Name3"].(string)),
 					resource.TestCheckTypeSetElemNestedAttrs(template+"3", "compute_configuration.*", map[string]string{
 						"cpu_allocated":              "512",
-						"cpu_limit":                  "0", // Not used
+						"cpu_limit":                  "512",
 						"cpu_guaranteed":             "0", // Not used
 						"cpu_speed":                  "0", // Not used
 						"memory_allocated":           "1536",
