@@ -79,8 +79,8 @@ func resourceVcdNsxtFirewall() *schema.Resource {
 						"action": {
 							Type:         schema.TypeString,
 							Required:     true,
-							Description:  "Defines if the rule should 'ALLOW' or 'DROP' matching traffic",
-							ValidateFunc: validation.StringInSlice([]string{"ALLOW", "DROP"}, false),
+							Description:  "Defines if the rule should 'ALLOW', 'DROP' or 'REJECT' matching traffic",
+							ValidateFunc: validation.StringInSlice([]string{"ALLOW", "DROP", "REJECT"}, false),
 						},
 						"enabled": {
 							Type:        schema.TypeBool,
@@ -252,7 +252,6 @@ func resourceVcdNsxtFirewallImport(_ context.Context, d *schema.ResourceData, me
 }
 
 func setNsxtFirewallData(fwRules []*types.NsxtFirewallRule, d *schema.ResourceData, edgeGatewayId string) error {
-
 	dSet(d, "edge_gateway_id", edgeGatewayId)
 
 	result := make([]interface{}, len(fwRules))
@@ -270,7 +269,7 @@ func setNsxtFirewallData(fwRules []*types.NsxtFirewallRule, d *schema.ResourceDa
 		result[index] = map[string]interface{}{
 			"id":                   value.ID,
 			"name":                 value.Name,
-			"action":               value.Action,
+			"action":               value.ActionValue,
 			"enabled":              value.Enabled,
 			"ip_protocol":          value.IpProtocol,
 			"direction":            value.Direction,
@@ -292,13 +291,13 @@ func getNsxtFirewallTypes(d *schema.ResourceData) []*types.NsxtFirewallRule {
 			oneRuleMapInterface := oneRule.(map[string]interface{})
 
 			result[index] = &types.NsxtFirewallRule{
-				Name:       oneRuleMapInterface["name"].(string),
-				Action:     oneRuleMapInterface["action"].(string),
-				Enabled:    oneRuleMapInterface["enabled"].(bool),
-				IpProtocol: oneRuleMapInterface["ip_protocol"].(string),
-				Logging:    oneRuleMapInterface["logging"].(bool),
-				Direction:  oneRuleMapInterface["direction"].(string),
-				Version:    nil,
+				Name:        oneRuleMapInterface["name"].(string),
+				ActionValue: oneRuleMapInterface["action"].(string),
+				Enabled:     oneRuleMapInterface["enabled"].(bool),
+				IpProtocol:  oneRuleMapInterface["ip_protocol"].(string),
+				Logging:     oneRuleMapInterface["logging"].(bool),
+				Direction:   oneRuleMapInterface["direction"].(string),
+				Version:     nil,
 			}
 
 			if oneRuleMapInterface["source_ids"] != nil {
