@@ -7,6 +7,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+const defaultImportedValue = "DEFAULT_IMPORTED_VALUE"
+
 // suppressWordToEmptyString is a DiffSuppressFunc which ignore the change from word to empty string "".
 // This is useful when API returns some default value but it is not set (and not sent via API) in config.
 func suppressWordToEmptyString(word string) schema.SchemaDiffSuppressFunc {
@@ -28,6 +30,28 @@ func suppressWordToEmptyString(word string) schema.SchemaDiffSuppressFunc {
 func suppressNetworkUpgradedInterface() schema.SchemaDiffSuppressFunc {
 	return func(k string, old string, new string, d *schema.ResourceData) bool {
 		if old == "" && new == "internal" {
+			return true
+		}
+		return false
+	}
+}
+
+// suppressTextAfterImport will ignore the field value if it was set during import
+func suppressTextAfterImport() schema.SchemaDiffSuppressFunc {
+	return func(k string, old string, new string, d *schema.ResourceData) bool {
+		if old == defaultImportedValue || new == defaultImportedValue {
+			return true
+		}
+		return false
+	}
+}
+
+// suppressFieldAfterImport will ignore the field value if its value has changed
+// (Useful for resources that have values set to default on import)
+// Note: don't use this function unless the resource has a Boolean field named "imported" that is set during import
+func suppressFieldAfterImport(ignoreField string) schema.SchemaDiffSuppressFunc {
+	return func(k string, old string, new string, d *schema.ResourceData) bool {
+		if old != new && k == ignoreField && d.Get("imported").(bool) {
 			return true
 		}
 		return false
