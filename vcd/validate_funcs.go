@@ -171,38 +171,6 @@ func IsIntAndAtLeast(min int) schema.SchemaValidateFunc {
 	}
 }
 
-// minimumValue returns a SchemaValidateDiagFunc that tests if the provided value is at least min (inclusive)
-func minimumValue(min int, errorMessage string) schema.SchemaValidateDiagFunc {
-	return func(v interface{}, path cty.Path) diag.Diagnostics {
-		value, ok := v.(int)
-		if !ok {
-			return diag.Errorf("could not parse int value '%v'", v)
-		}
-		if value < min {
-			return diag.Errorf("%s: %d < %d", errorMessage, value, min)
-		}
-		return nil
-	}
-}
-
-// matchRegex returns a SchemaValidateDiagFunc that tests whether the provided value matches the regular expression
-func matchRegex(regex, errorMessage string) schema.SchemaValidateDiagFunc {
-	return func(v interface{}, path cty.Path) diag.Diagnostics {
-		value, ok := v.(string)
-		if !ok {
-			return diag.Errorf("could not parse string value '%v'", v)
-		}
-		r, err := regexp.Compile(regex)
-		if err != nil {
-			return diag.Errorf("could not compile regular expression '%s': %s", regex, err)
-		}
-		if !r.MatchString(value) {
-			return diag.Errorf("%s", errorMessage)
-		}
-		return nil
-	}
-}
-
 // IsFloatAndBetween returns a SchemaValidateFunc which tests if the provided value convertable to
 // float64 and is between min and max (inclusive).
 func IsFloatAndBetween(min, max float64) schema.SchemaValidateFunc {
