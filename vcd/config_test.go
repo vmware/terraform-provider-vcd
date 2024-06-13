@@ -39,9 +39,6 @@ const (
 	envSecondVcdUser     = "VCD_USER2"
 	envSecondVcdPassword = "VCD_PASSWORD2"
 	envSecondVcdSysOrg   = "VCD_SYSORG2"
-	//secondVcdOrg2             = "VCD_ORG2"
-	//secondVcdOrgUser2         = "VCD_ORGUSER2"
-	//secondVcdOrgUserPassword2 = "VCD_ORGUSER_PASSWORD2"
 )
 
 func init() {

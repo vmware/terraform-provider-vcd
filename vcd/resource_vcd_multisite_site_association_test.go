@@ -85,7 +85,6 @@ func TestVcdMultisiteSiteAssociation(t *testing.T) {
 
 	configTextData := templateFill(testAccMultisiteSiteData, params)
 	params["FuncName"] = t.Name() + "-step2"
-	// TODO: make the test unified, using `local_file` data sources to pass data between users
 	params["SkipNotice"] = "# skip-binary-test: can't persist XML files across different scripts"
 	configTextAssociation := templateFill(testAccMultisiteSiteAssociation, params)
 	params["FuncName"] = t.Name() + "-step3"
