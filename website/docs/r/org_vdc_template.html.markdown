@@ -38,7 +38,7 @@ data "vcd_network_pool" "np1" {
   name = "NSX-T Overlay 1"
 }
 
-resource "vcd_org_vdc_template" "adam" {
+resource "vcd_org_vdc_template" "tmpl" {
   name               = "myTemplate"
   tenant_name        = "myAwesomeTemplate"
   description        = "Requires System privileges"
