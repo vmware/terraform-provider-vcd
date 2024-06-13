@@ -87,7 +87,6 @@ func resourceVcdOrgAssociationCreate(ctx context.Context, d *schema.ResourceData
 	var associationData types.OrgAssociationMember
 	if associationDataFile != "" {
 		associationDataPtr, err := govcd.ReadXmlDataFromFile[types.OrgAssociationMember](path.Clean(associationDataFile))
-		//rawData, err := os.ReadFile(path.Clean(associationDataFile))
 		if err != nil {
 			return diag.Errorf("error reading association data from file '%s' : %s", associationDataFile, err)
 		}
