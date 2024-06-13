@@ -880,6 +880,16 @@ func stringInSlice(str string, list []string) bool {
 	return false
 }
 
+// anySliceContainsStrPartially checks whether any string of the slice contains a part of the input string
+func anySliceContainsStrPartially(str string, list []string) bool {
+	for _, v := range list {
+		if strings.Contains(str, v) {
+			return true
+		}
+	}
+	return false
+}
+
 // resourceVcdNsxvFirewallRuleServiceHash generates a hash for service TypeSet. Its main purpose is to
 // avoid hash changes when port or source_port ar left empty or set as 'any'. Having empty port and
 // source_port is the same as having "any".

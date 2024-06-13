@@ -18,10 +18,12 @@ Supported in provider *v3.13+*
 ## Example Usage
 
 ```hcl
-data "vcd_org_vdc_template" "adam" {
+data "vcd_org_vdc_template" "template" {
    name               = "myTemplate"
 }
 ```
+
+-> Note that when using the data source as a tenant, `name` is the VDC Template name as seen by tenants
 
 ## Argument Reference
 
