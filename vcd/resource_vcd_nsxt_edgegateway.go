@@ -220,7 +220,7 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     defaultReadLimitOfUnusedIps,
-				Description: "How many maximum IPs should be reported in 'used_ipcount' and 'unused_ip_count'",
+				Description: fmt.Sprintf("How many maximum IPs should be reported in 'used_ipcount' and 'unused_ip_count'. Default %d, 0 - unlimited", defaultReadLimitOfUnusedIps),
 			},
 			"use_ip_spaces": {
 				Type:        schema.TypeBool,

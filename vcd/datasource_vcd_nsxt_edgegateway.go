@@ -175,7 +175,7 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     defaultReadLimitOfUnusedIps,
-				Description: "How many maximum IPs should be reported in 'used_ipcount' and 'unused_ip_count'",
+				Description: fmt.Sprintf("How many maximum IPs should be reported in 'used_ipcount' and 'unused_ip_count'. Default %d, 0 - unlimited", defaultReadLimitOfUnusedIps),
 			},
 			"total_allocated_ip_count": {
 				Type:        schema.TypeInt,
