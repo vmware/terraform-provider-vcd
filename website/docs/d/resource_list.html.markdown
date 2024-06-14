@@ -400,6 +400,9 @@ The following arguments are supported:
     * `vcd_importable_port_group`
     * `vcd_multisite_site_association`
     * `vcd_multisite_org_association`
+    * `vcd_vapp_network`
+    * `vcd_vapp_org_network`
+    * `vcd_vapp_all_network`
 * `list_mode` (Optional) How the list should be built. One of:
     * `name` (default): Only the resource name
     * `id`: Only the resource ID

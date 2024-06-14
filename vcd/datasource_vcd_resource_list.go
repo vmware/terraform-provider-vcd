@@ -25,6 +25,14 @@ type resourceRef struct {
 	importId     bool
 }
 
+type vappNetworkType int
+
+const (
+	vntVappNetwork vappNetworkType = iota
+	vntVappOrgNetwork
+	vntVappAllNetworks
+)
+
 func datasourceVcdResourceList() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdResourceListRead,
@@ -1014,6 +1022,48 @@ func vmList(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (list []s
 	return genericResourceList(d, "vcd_vm", []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
+func vappNetworkList(d *schema.ResourceData, vnt vappNetworkType, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
+	if err != nil {
+		return list, err
+	}
+
+	vappName := d.Get("parent").(string)
+
+	vapp, err := vdc.GetVAppByName(vappName, false)
+	if err != nil {
+		return nil, err
+	}
+	var networks []*types.QueryResultVappNetworkRecordType
+
+	switch vnt {
+	case vntVappNetwork:
+		networks, err = vapp.QueryVappNetworks(nil)
+	case vntVappOrgNetwork:
+		networks, err = vapp.QueryVappOrgNetworks(nil)
+	case vntVappAllNetworks:
+		networks, err = vapp.QueryAllVappNetworks(nil)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	var items []resourceRef
+	for _, net := range networks {
+		items = append(items, resourceRef{
+			name:     net.Name,
+			id:       extractUuid(net.HREF),
+			href:     net.HREF,
+			parent:   vappName,
+			importId: true,
+		})
+	}
+	return genericResourceList(d, "vcd_vapp_network", []string{org.Org.Name, vdc.Vdc.Name, vappName}, items)
+}
+
 func genericResourceList(d *schema.ResourceData, resType string, ancestors []string, refs []resourceRef) (list []string, err error) {
 	listMode := d.Get("list_mode").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
@@ -1376,6 +1426,12 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 		list, err = vappList(d, meta, "vcd_vapp_access_control")
 	case "vcd_vapp_vm", "vapp_vm", "vapp_vms":
 		list, err = vmList(d, meta, vappVmType)
+	case "vcd_vapp_network", "vapp_network", "vapp_networks":
+		list, err = vappNetworkList(d, vntVappNetwork, meta)
+	case "vcd_vapp_org_network", "vapp_org_network", "vapp_org_networks":
+		list, err = vappNetworkList(d, vntVappOrgNetwork, meta)
+	case "vcd_vapp_all_network", "vapp_all_network", "vapp_all_networks":
+		list, err = vappNetworkList(d, vntVappAllNetworks, meta)
 	case "vcd_vm", "standalone_vm":
 		list, err = vmList(d, meta, standaloneVmType)
 	case "vcd_all_vm", "vm", "vms":
@@ -1424,7 +1480,6 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 
 		//// place holder to remind of what needs to be implemented
 		//	case "edgegateway_vpn",
-		//		"vapp_network",
 		//		"independent_disk",
 		//		"inserted_media":
 		//		list, err = []string{"not implemented yet"}, nil
