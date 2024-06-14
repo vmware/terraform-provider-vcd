@@ -243,5 +243,5 @@ func datasourceVcdOrgVdcTemplate() *schema.Resource {
 }
 
 func datasourceVcdVdcTemplateRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdVdcTemplateRead(ctx, d, meta)
+	return genericVcdVdcTemplateRead(ctx, d, meta, "datasource")
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"log"
 	"net"
 	"strings"
 )
@@ -273,7 +274,7 @@ func resourceVcdVdcTemplateCreate(ctx context.Context, d *schema.ResourceData, m
 }
 
 func resourceVcdVdcTemplateRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdVdcTemplateRead(ctx, d, meta)
+	return genericVcdVdcTemplateRead(ctx, d, meta, "resource")
 }
 
 func resourceVcdVdcTemplateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -548,8 +549,13 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 	return resourceVcdVdcTemplateRead(ctx, d, meta)
 }
 
-func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vdcTemplate, err := getVdcTemplate(d, meta.(*VCDClient))
+	if govcd.ContainsNotFound(err) && origin == "resource" {
+		log.Printf("[INFO] unable to find VDC Template: %s. Removing from state", err)
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
