@@ -222,7 +222,6 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 						"static_ip_pool": {
 							Type:        schema.TypeSet,
 							MinItems:    1,
-							MaxItems:    1, // Due to a bug in VCD
 							Optional:    true,
 							Description: "IP ranges used for the network created with the Edge Gateway. Only required if the 'edge_gateway' block is used",
 							Elem:        networkV2IpRange,
