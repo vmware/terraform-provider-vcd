@@ -174,7 +174,7 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 				Default:     false,
 				Description: "If 'true', the VDCs instantiated from this template will have Fast provisioning enabled",
 			},
-			"thin_provisioning": {
+			"enable_thin_provisioning": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
@@ -450,7 +450,7 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 			ProvisionedNetworkQuota: d.Get("provisioned_network_quota").(int),
 			GatewayConfiguration:    gateway,
 			StorageProfile:          storageProfiles,
-			ThinProvision:           d.Get("thin_provisioning").(bool),
+			ThinProvision:           d.Get("enable_thin_provisioning").(bool),
 			FastProvisioningEnabled: d.Get("enable_fast_provisioning").(bool),
 		},
 	}
@@ -580,7 +580,7 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 	dSet(d, "tenant_description", vdcTemplate.VdcTemplate.TenantDescription)
 	dSet(d, "allocation_model", getVdcTemplateType(vdcTemplate.VdcTemplate.VdcTemplateSpecification.Type))
 	dSet(d, "enable_fast_provisioning", vdcTemplate.VdcTemplate.VdcTemplateSpecification.FastProvisioningEnabled)
-	dSet(d, "thin_provisioning", vdcTemplate.VdcTemplate.VdcTemplateSpecification.ThinProvision)
+	dSet(d, "enable_thin_provisioning", vdcTemplate.VdcTemplate.VdcTemplateSpecification.ThinProvision)
 	dSet(d, "nic_quota", vdcTemplate.VdcTemplate.VdcTemplateSpecification.NicQuota)
 	dSet(d, "vm_quota", vdcTemplate.VdcTemplate.VdcTemplateSpecification.VmQuota)
 	dSet(d, "provisioned_network_quota", vdcTemplate.VdcTemplate.VdcTemplateSpecification.ProvisionedNetworkQuota)
