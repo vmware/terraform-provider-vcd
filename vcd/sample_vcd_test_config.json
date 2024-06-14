@@ -101,7 +101,11 @@
     "externalNetworkPortGroupType": "DV_PORTGROUP",
     "//": "This should be a LDAP server",
     "//": "configured according to docker testing image https://github.com/rroemhild/docker-test-openldap",
-    "ldapServer": "IP-of-test-LDAP-server"
+    "ldapServer": "IP-of-test-LDAP-server",
+    "oidcServer": {
+      "url": "URL-of-test-OIDC-server",
+      "wellKnownEndpoint": "/.well-known/openid-configuration"
+    }
   },
   "nsxt": {
     "//": "NSX-T manager name to be used as defined in VCD",

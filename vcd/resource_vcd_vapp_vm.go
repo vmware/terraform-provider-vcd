@@ -129,19 +129,21 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Description: "The name of VDC to use, optional if defined at provider level",
 		},
 		"template_name": {
-			Type:          schema.TypeString,
-			Optional:      true,
-			ForceNew:      true,
-			Deprecated:    "Use `vapp_template_id` instead",
-			Description:   "The name of the vApp Template to use",
-			ConflictsWith: []string{"vapp_template_id"},
+			Type:             schema.TypeString,
+			Optional:         true,
+			ForceNew:         true,
+			Deprecated:       "Use `vapp_template_id` instead",
+			Description:      "The name of the vApp Template to use",
+			ConflictsWith:    []string{"vapp_template_id"},
+			DiffSuppressFunc: suppressTextAfterImport(),
 		},
 		"vapp_template_id": {
-			Type:          schema.TypeString,
-			Optional:      true,
-			ForceNew:      true,
-			Description:   "The URN of the vApp Template to use",
-			ConflictsWith: []string{"template_name", "catalog_name"},
+			Type:             schema.TypeString,
+			Optional:         true,
+			ForceNew:         true,
+			Description:      "The URN of the vApp Template to use",
+			ConflictsWith:    []string{"template_name", "catalog_name"},
+			DiffSuppressFunc: suppressTextAfterImport(),
 		},
 		"vm_name_in_template": {
 			Type:        schema.TypeString,
@@ -150,11 +152,12 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Description: "The name of the VM in vApp Template to use. In cases when vApp template has more than one VM",
 		},
 		"catalog_name": {
-			Type:          schema.TypeString,
-			Optional:      true,
-			Deprecated:    "You should use `vapp_template_id` or `boot_image_id` without the need of a catalog name",
-			Description:   "The catalog name in which to find the given vApp Template or media for boot_image",
-			ConflictsWith: []string{"vapp_template_id", "boot_image_id"},
+			Type:             schema.TypeString,
+			Optional:         true,
+			Deprecated:       "You should use `vapp_template_id` or `boot_image_id` without the need of a catalog name",
+			Description:      "The catalog name in which to find the given vApp Template or media for boot_image",
+			ConflictsWith:    []string{"vapp_template_id", "boot_image_id"},
+			DiffSuppressFunc: suppressTextAfterImport(),
 		},
 		"copy_from_vm_id": {
 			Type:          schema.TypeString,
@@ -254,16 +257,18 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Description: "VM Hyper Reference",
 		},
 		"accept_all_eulas": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Default:     true,
-			Description: "Automatically accept EULA if OVA has it",
+			Type:             schema.TypeBool,
+			Optional:         true,
+			Default:          true,
+			Description:      "Automatically accept EULA if OVA has it",
+			DiffSuppressFunc: suppressFieldAfterImport("accept_all_eulas"),
 		},
 		"power_on": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Default:     true,
-			Description: "A boolean value stating if this VM should be powered on",
+			Type:             schema.TypeBool,
+			Optional:         true,
+			Default:          true,
+			Description:      "A boolean value stating if this VM should be powered on",
+			DiffSuppressFunc: suppressFieldAfterImport("power_on"),
 		},
 		"storage_profile": {
 			Type:        schema.TypeString,
@@ -402,11 +407,12 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Set:      resourceVcdVmIndependentDiskHash,
 		},
 		"consolidate_disks_on_create": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Default:     false,
-			ForceNew:    true,
-			Description: "Consolidates disks during creation and allows to change disk size using 'override_template_disk' in fast provisioned VDCs",
+			Type:             schema.TypeBool,
+			Optional:         true,
+			Default:          false,
+			ForceNew:         true,
+			Description:      "Consolidates disks during creation and allows to change disk size using 'override_template_disk' in fast provisioned VDCs",
+			DiffSuppressFunc: suppressFieldAfterImport("consolidate_disks_on_create"),
 		},
 		"override_template_disk": {
 			Type:        schema.TypeSet,
@@ -665,6 +671,49 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 				},
 			},
 		},
+		"set_extra_config": {
+			Type:        schema.TypeSet,
+			Optional:    true,
+			Description: "A block to set extra configuration key-value pairs",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"key": {
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "The key of the extra configuration item",
+					},
+					"value": {
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "The value of the extra configuration item. Leaving the `value` field empty will result in the item deletion",
+					},
+				},
+			},
+		},
+		"extra_config": {
+			Type:        schema.TypeList,
+			Computed:    true,
+			Description: "A block to retrieve extra configuration key-value pairs",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"key": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The key of the extra configuration item",
+					},
+					"value": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The value of the extra configuration item",
+					},
+					"required": {
+						Type:        schema.TypeBool,
+						Computed:    true,
+						Description: "Whether the extra configuration item is required",
+					},
+				},
+			},
+		},
 		"cpu_hot_add_enabled": {
 			Type:        schema.TypeBool,
 			Optional:    true,
@@ -678,10 +727,11 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Description: "True if the virtual machine supports addition of memory while powered on.",
 		},
 		"prevent_update_power_off": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Default:     false,
-			Description: "True if the update of resource should fail when virtual machine power off needed.",
+			Type:             schema.TypeBool,
+			Optional:         true,
+			Default:          false,
+			Description:      "True if the update of resource should fail when virtual machine power off needed.",
+			DiffSuppressFunc: suppressFieldAfterImport("prevent_update_power_off"),
 		},
 		"sizing_policy_id": {
 			Type:        schema.TypeString,
@@ -716,6 +766,11 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Type:        schema.TypeMap,
 			Computed:    true,
 			Description: "A map that contains metadata that is automatically added by VCD (10.5.1+) and provides details on the origin of the VM",
+		},
+		"imported": {
+			Type:        schema.TypeBool,
+			Computed:    true,
+			Description: "Tells whether this resource has been imported",
 		},
 	}
 }
@@ -793,6 +848,7 @@ func resourceVcdVAppVmCreate(_ context.Context, d *schema.ResourceData, meta int
 	if len(diags) != 0 {
 		return append(diags, genericVcdVmRead(d, meta, "resource")...)
 	}
+	dSet(d, "imported", false)
 	return genericVcdVmRead(d, meta, "resource")
 }
 
@@ -923,7 +979,12 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		return diag.Errorf("error setting guest properties: %s", err)
 	}
 
-	// vm.VM structure contains ProductSection so it needs to be refreshed after
+	err = addRemoveExtraConfiguration(d, vm)
+	if err != nil {
+		return diag.Errorf("error setting extra configuration: %s", err)
+	}
+
+	// vm.VM structure contains ProductSection, so it needs to be refreshed after
 	// `addRemoveGuestProperties`
 	if err = vm.Refresh(); err != nil {
 		return diag.Errorf("error refreshing VM: %s", err)
@@ -1745,6 +1806,11 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 		return diag.FromErr(err)
 	}
 
+	err = addRemoveExtraConfiguration(d, vm)
+	if err != nil {
+		return diag.Errorf("error setting extra configuration: %s", err)
+	}
+
 	sizingId, newSizingId := d.GetChange("sizing_policy_id")
 	placementId, newPlacementId := d.GetChange("placement_policy_id")
 
@@ -2351,6 +2417,10 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string) d
 		return diag.Errorf("error storing customization block: %s", err)
 	}
 
+	if err := setExtraCustomizationData(d, vm); err != nil {
+		return diag.Errorf("error storing extra customization block: %s", err)
+	}
+
 	if vm.VM.ComputePolicy != nil {
 		dSet(d, "sizing_policy_id", "")
 		if vm.VM.ComputePolicy.VmSizingPolicy != nil {
@@ -2559,6 +2629,15 @@ func resourceVcdVappVmImport(_ context.Context, d *schema.ResourceData, meta int
 	dSet(d, "org", orgName)
 	dSet(d, "vdc", vdcName)
 	dSet(d, "vapp_name", vappName)
+	// Set defaults value for fields that can't be recovered from VCD
+	dSet(d, "vapp_template_id", defaultImportedValue)
+	dSet(d, "catalog_name", defaultImportedValue)
+	dSet(d, "template_name", defaultImportedValue)
+	dSet(d, "accept_all_eulas", true)
+	dSet(d, "prevent_update_power_off", d.Get("prevent_update_power_off"))
+	dSet(d, "power_on", d.Get("power_on"))
+	dSet(d, "consolidate_disks_on_create", d.Get("consolidate_disks_on_create"))
+	dSet(d, "imported", true)
 	d.SetId(vm.VM.ID)
 	return []*schema.ResourceData{d}, nil
 }
