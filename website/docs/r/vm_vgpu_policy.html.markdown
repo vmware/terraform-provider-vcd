@@ -76,7 +76,8 @@ resource "vcd_org_vdc" "example_org_vdc" {
       allocated = 2048
     }
     memory {
-      allocated = 2048
+      allocated             = 2048
+      reservation_guarantee = "1.0"
     }
   }
 

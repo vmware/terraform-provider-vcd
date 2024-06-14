@@ -444,8 +444,9 @@ resource "vcd_org_vdc" "newVdc" {
     }
 
     memory {
-      allocated = "{{.Allocated}}"
-      limit     = "{{.Limit}}"
+      allocated             = "{{.Allocated}}"
+      limit                 = "{{.Limit}}"
+	  reservation_guarantee = "1.0"
     }
   }
 
