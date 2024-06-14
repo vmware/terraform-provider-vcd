@@ -112,7 +112,7 @@ The following arguments are supported:
   * `default` - (Required) True if this is default storage profile for the VDCs instantiated from this template. Only **one** block should have this set to `true`
   * `limit` - (Required) Storage limit for the VDCs instantiated from this template, in Megabytes. 0 means unlimited
 * `enable_fast_provisioning` - (Optional) If `true`, the VDCs instantiated from this template will have Fast provisioning enabled. Defaults to `false`
-* `thin_provisioning` - (Optional) If `true`, the VDCs instantiated from this template will have Thin provisioning enabled. Defaults to `false`
+* `enable_thin_provisioning` - (Optional) If `true`, the VDCs instantiated from this template will have Thin provisioning enabled. Defaults to `false`
 * `edge_gateway` - (Optional) VDCs instantiated from this template will create a new Edge Gateway with the provided setup. Required if any `provider_vdc` block
   has defined a `gateway_edge_cluster_id`. This **unique** block has the following properties:
   * `name` - (Required) Name of the Edge Gateway

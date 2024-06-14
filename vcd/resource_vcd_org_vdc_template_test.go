@@ -109,7 +109,7 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 						"limit":   "1024",
 					}),
 					resource.TestCheckResourceAttr(template+"1", "enable_fast_provisioning", "false"),
-					resource.TestCheckResourceAttr(template+"1", "thin_provisioning", "false"),
+					resource.TestCheckResourceAttr(template+"1", "enable_thin_provisioning", "false"),
 					resource.TestCheckTypeSetElemNestedAttrs(template+"1", "storage_profile.*", map[string]string{
 						"name":    params["StorageProfile"].(string),
 						"default": "true",
@@ -154,7 +154,7 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 						"limit":   "128",
 					}),
 					resource.TestCheckResourceAttr(template+"2", "enable_fast_provisioning", "true"),
-					resource.TestCheckResourceAttr(template+"2", "thin_provisioning", "true"),
+					resource.TestCheckResourceAttr(template+"2", "enable_thin_provisioning", "true"),
 					resource.TestCheckResourceAttr(template+"2", "edge_gateway.0.name", "edgy2"),
 					resource.TestCheckResourceAttr(template+"2", "edge_gateway.0.ip_allocation_count", "10"),
 					resource.TestCheckResourceAttr(template+"2", "edge_gateway.0.network_name", "net2"),
@@ -197,7 +197,7 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 						"limit":   "1024",
 					}),
 					resource.TestCheckResourceAttr(template+"3", "enable_fast_provisioning", "false"),
-					resource.TestCheckResourceAttr(template+"3", "thin_provisioning", "false"),
+					resource.TestCheckResourceAttr(template+"3", "enable_thin_provisioning", "false"),
 					resource.TestCheckResourceAttr(template+"3", "edge_gateway.0.name", "edgy3"),
 					resource.TestCheckResourceAttr(template+"3", "edge_gateway.0.ip_allocation_count", "15"),
 					resource.TestCheckResourceAttr(template+"3", "edge_gateway.0.network_name", "net3"),
@@ -239,7 +239,7 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 						"limit":   "1024",
 					}),
 					resource.TestCheckResourceAttr(template+"4", "enable_fast_provisioning", "false"),
-					resource.TestCheckResourceAttr(template+"4", "thin_provisioning", "false"),
+					resource.TestCheckResourceAttr(template+"4", "enable_thin_provisioning", "false"),
 					resource.TestCheckNoResourceAttr(template+"4", "edge_gateway.0"),
 					resource.TestMatchResourceAttr(template+"4", "network_pool_id", regexp.MustCompile(`^urn:vcloud:networkpool:.+$`)),
 					resource.TestCheckResourceAttr(template+"4", "nic_quota", "0"),
@@ -473,7 +473,7 @@ resource "vcd_org_vdc_template" "template2" {
   }
 
   enable_fast_provisioning = true
-  thin_provisioning        = true
+  enable_thin_provisioning        = true
 }
 
 resource "vcd_org_vdc_template" "template3" {
