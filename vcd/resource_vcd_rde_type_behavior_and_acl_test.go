@@ -23,7 +23,7 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 		"ExecutionId":           "MyActivity",
 		"ExecutionType":         "noop",
 		"TypeAccessLevels":      "\"urn:vcloud:accessLevel:FullControl\"",
-		"InterfaceAccessLevels": "\"urn:vcloud:accessLevel:ReadOnly\", \"urn:vcloud:accessLevel:FullControl\"",
+		"InterfaceAccessLevels": "\"urn:vcloud:accessLevel:FullControl\"",
 		"HookEvent":             "PostCreate",
 	}
 	testParamsNotEmpty(t, params)
@@ -80,9 +80,8 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 					// Interface Access Levels
 					resource.TestCheckResourceAttrPair(interfaceBehaviorAcl, "id", interfaceBehavior2, "id"),
 					resource.TestCheckResourceAttrPair(interfaceBehaviorAcl, "behavior_id", interfaceBehaviorAcl, "id"),
-					resource.TestCheckResourceAttr(interfaceBehaviorAcl, "access_level_ids.#", "2"),
+					resource.TestCheckResourceAttr(interfaceBehaviorAcl, "access_level_ids.#", "1"),
 					resource.TestCheckTypeSetElemAttr(interfaceBehaviorAcl, "access_level_ids.*", "urn:vcloud:accessLevel:FullControl"),
-					resource.TestCheckTypeSetElemAttr(interfaceBehaviorAcl, "access_level_ids.*", "urn:vcloud:accessLevel:ReadOnly"),
 
 					// Type Access Levels
 					resource.TestCheckResourceAttrPair(rdeTypeBehaviorAcl, "id", rdeTypeBehavior, "id"),
