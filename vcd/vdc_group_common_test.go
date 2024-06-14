@@ -34,9 +34,8 @@ resource "vcd_org_vdc" "newVdc" {
     }
 
     memory {
-      allocated             = "1024"
-      limit                 = "1024"
-      reservation_guarantee = "1.0"
+      allocated = "1024"
+      limit     = "1024"
     }
   }
 
