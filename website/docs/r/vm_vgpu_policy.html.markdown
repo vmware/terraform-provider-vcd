@@ -77,7 +77,6 @@ resource "vcd_org_vdc" "example_org_vdc" {
     }
     memory {
       allocated             = 2048
-      reservation_guarantee = "1.0"
     }
   }
 
@@ -89,6 +88,7 @@ resource "vcd_org_vdc" "example_org_vdc" {
 
   elasticity                 = true
   include_vm_memory_overhead = true
+  memory_guaranteed          = 1.0
   default_compute_policy_id  = vcd_vm_vgpu_policy.example_vgpu_policy.id
   vm_vgpu_policy_ids         = [vcd_vm_vgpu_policy.example_vgpu_policy.id]
 }

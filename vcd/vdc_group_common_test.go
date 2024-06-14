@@ -56,6 +56,7 @@ resource "vcd_org_vdc" "newVdc" {
   delete_recursive           = true
   include_vm_memory_overhead = true
   elasticity                 = true
+  memory_guaranteed          = 1.0
 }
 
 resource "vcd_vdc_group" "test1" {
