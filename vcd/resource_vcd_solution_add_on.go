@@ -35,7 +35,7 @@ func resourceVcdSolutionAddon() *schema.Resource {
 				ForceNew:    true,
 				Description: "Absolute or relative path to Solution Add-On ISO file available locally",
 			},
-			"trust_certificate": {
+			"auto_trust_certificate": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    true,
@@ -62,7 +62,7 @@ func resourceVcdSolutionAddonCreate(ctx context.Context, d *schema.ResourceData,
 		IsoFilePath:          d.Get("addon_path").(string),
 		User:                 "administrator",
 		CatalogItemId:        d.Get("catalog_item_id").(string),
-		AutoTrustCertificate: d.Get("trust_certificate").(bool),
+		AutoTrustCertificate: d.Get("auto_trust_certificate").(bool),
 	}
 
 	addon, err := vcdClient.CreateSolutionAddOn(createCfg)
