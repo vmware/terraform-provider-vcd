@@ -81,7 +81,7 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: step1,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					// First VDC template
 					resource.TestCheckResourceAttr(template+"1", "name", params["Name1"].(string)),
 					resource.TestCheckResourceAttr(template+"1", "description", params["Name1"].(string)+"_description"),
@@ -250,7 +250,7 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 			},
 			{
 				Config: step2,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(template+"1", "name", params["Name1"].(string)),
 					resource.TestCheckTypeSetElemNestedAttrs(template+"1", "compute_configuration.*", map[string]string{
 						"cpu_allocated":              "0", // Not used
@@ -304,7 +304,7 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 			},
 			{
 				Config: step3,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual(template+"1", dsTemplate+"1", nil),
 					resourceFieldsEqual(template+"2", dsTemplate+"2", nil),
 					resourceFieldsEqual(template+"3", dsTemplate+"3", nil),

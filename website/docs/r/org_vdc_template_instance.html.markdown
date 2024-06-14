@@ -73,9 +73,10 @@ resource "vcd_org_vdc_template" "tmpl" {
 }
 
 resource "vcd_org_vdc_template_instance" "my_instance" {
-  org_id = data.vcd_org.org.id
   org_vdc_template_id = vcd_org_vdc_template.tmpl.id
-  name = "myInstantiatedVdc"
+  name                = "myInstantiatedVdc"
+  description         = "A new VDC"
+  org_id              = data.vcd_org.org.id
 }
 ```
 

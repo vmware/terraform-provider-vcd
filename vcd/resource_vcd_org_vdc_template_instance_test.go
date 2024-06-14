@@ -46,25 +46,25 @@ func TestAccVcdVdcTemplateInstance(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: step1,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					// Correctness of the instance
 					resource.TestCheckResourceAttr(template, "name", params["Name"].(string)),
 					resource.TestCheckResourceAttrPair(instance, "org_vdc_template_id", template, "id"),
 					resource.TestCheckResourceAttrPair(instance, "name", template, "name"),
-					resource.TestCheckResourceAttrPair(instance, "description", template, "description"),
+					resource.TestCheckResourceAttrPair(instance, "description", template, "name"),
 					resource.TestCheckResourceAttrPair(instance, "org_id", "data.vcd_org.org", "id"),
 					resource.TestCheckResourceAttrPair(vdc, "id", instance, "id"),
 					resource.TestCheckResourceAttrPair(vdc, "name", instance, "name"),
 					resource.TestCheckResourceAttrPair(vdc, "description", instance, "description"),
 					resource.TestCheckResourceAttrPair(vdc, "org", "data.vcd_org.org", "name"),
 
-					// Correctness of what we put in the template
+					// Correctness of what we put in the template (and default values)
 					resource.TestCheckResourceAttrPair(vdc, "allocation_model", template, "allocation_model"),
 					resource.TestCheckResourceAttrPair(vdc, "nic_quota", template, "nic_quota"),
 					resource.TestCheckResourceAttrPair(vdc, "vm_quota", template, "vm_quota"),
 					resource.TestCheckResourceAttrPair(vdc, "network_quota", template, "provisioned_network_quota"),
-					resource.TestCheckResourceAttrPair(vdc, "enable_thin_provisioning", template, "thin_provisioning"),
-					resource.TestCheckResourceAttrPair(vdc, "enable_fast_provisioning", template, "thin_provisioning"),
+					resource.TestCheckResourceAttrPair(vdc, "enable_thin_provisioning", template, "enable_thin_provisioning"),
+					resource.TestCheckResourceAttrPair(vdc, "enable_fast_provisioning", template, "enable_fast_provisioning"),
 				),
 			},
 		},
@@ -113,6 +113,9 @@ resource "vcd_org_vdc_template" "template" {
     default = true
     limit   = 0
   }
+
+  enable_thin_provisioning = true
+  enable_fast_provisioning = true
 
   readable_by_org_ids = [
     data.vcd_org.org.id
