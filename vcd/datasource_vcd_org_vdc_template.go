@@ -147,7 +147,7 @@ func datasourceVcdOrgVdcTemplate() *schema.Resource {
 				Computed:    true,
 				Description: "If 'true', the VDCs instantiated from this template have Fast provisioning enabled",
 			},
-			"thin_provisioning": {
+			"enable_thin_provisioning": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "If 'true', the VDCs instantiated from this template have Thin provisioning enabled",
