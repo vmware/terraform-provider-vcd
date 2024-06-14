@@ -2,10 +2,9 @@ package vcd
 
 import (
 	"context"
-	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"log"
 )
 
 func resourceVcdOrgVdcTemplateInstance() *schema.Resource {
@@ -29,7 +28,6 @@ func resourceVcdOrgVdcTemplateInstance() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Default:     "",
 				ForceNew:    true,
 				Description: "Description of the VDC to be instantiated",
 			},
@@ -49,7 +47,7 @@ func resourceVcdVdcTemplateInstantiateCreate(ctx context.Context, d *schema.Reso
 	if err != nil {
 		return diag.Errorf("could not instantiate the VDC Template: %s", err)
 	}
-	vdcId, err := vdcTemplate.Instantiate(d.Get("name").(string), d.Get("description").(string), d.Get("organization_id").(string))
+	vdcId, err := vdcTemplate.Instantiate(d.Get("name").(string), d.Get("description").(string), d.Get("org_id").(string))
 	if err != nil {
 		diag.Errorf("failed instantiating the VDC Template: %s", err)
 	}
@@ -58,7 +56,20 @@ func resourceVcdVdcTemplateInstantiateCreate(ctx context.Context, d *schema.Reso
 }
 
 func resourceVcdVdcTemplateInstantiateRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	vdc, err := getInstantiatedVdc(d, meta)
+	if d.Id() == "" {
+		log.Printf("[INFO] unable to find instantiated VDC")
+		return nil
+	}
+	vcdClient := meta.(*VCDClient)
+	org, err := vcdClient.GetOrgById(d.Get("org_id").(string))
+	if err != nil {
+		return diag.Errorf("could not delete the instantiated VDC: %s", err)
+	}
+
+	vdc, err := org.GetVDCById(d.Id(), false)
+	if err != nil {
+		return diag.Errorf("could not delete the instantiated VDC: %s", err)
+	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -67,33 +78,20 @@ func resourceVcdVdcTemplateInstantiateRead(_ context.Context, d *schema.Resource
 }
 
 func resourceVcdVdcTemplateInstantiateDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	vdc, err := getInstantiatedVdc(d, meta)
+	vcdClient := meta.(*VCDClient)
+	org, err := vcdClient.GetOrgById(d.Get("org_id").(string))
 	if err != nil {
-		return diag.FromErr(err)
+		return diag.Errorf("could not delete the instantiated VDC: %s", err)
 	}
+
+	vdc, err := org.GetVDCById(d.Id(), false)
+	if err != nil {
+		return diag.Errorf("could not delete the instantiated VDC: %s", err)
+	}
+
 	err = vdc.DeleteWait(true, true)
 	if err != nil {
 		return diag.Errorf("failed deleting instantiated VDC '%s': %s", vdc.Vdc.ID, err)
 	}
 	return nil
-}
-
-func getInstantiatedVdc(d *schema.ResourceData, meta interface{}) (*govcd.Vdc, error) {
-	vcdClient := meta.(*VCDClient)
-
-	org, err := vcdClient.GetOrgById(d.Get("org_id").(string))
-	if err != nil {
-		return nil, fmt.Errorf("could not retrieve the instantiated VDC: %s", err)
-	}
-
-	var vdc *govcd.Vdc
-	if d.Id() == "" {
-		vdc, err = org.GetVDCById(d.Id(), false)
-	} else {
-		vdc, err = org.GetVDCByName(d.Get("name").(string), false)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("could not retrieve the instantiated VDC: %s", err)
-	}
-	return vdc, nil
 }
