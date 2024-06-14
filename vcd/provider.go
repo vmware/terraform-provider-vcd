@@ -271,6 +271,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_solution_landing_zone":                        resourceVcdSolutionLandingZone(),                     // 3.13
 	"vcd_org_oidc":                                     resourceVcdOrgOidc(),                                 // 3.13
 	"vcd_org_vdc_template":                             resourceVcdOrgVdcTemplate(),                          // 3.13
+	"vcd_org_vdc_template_instance":                    resourceVcdOrgVdcTemplateInstance(),                  // 3.13
 }
 
 // Provider returns a terraform.ResourceProvider.
