@@ -457,7 +457,7 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 
 	// Get the compute configuration. There are too many combinations to perform "smart validations" here,
 	// and given that VCD behaves well when input is incorrect, we skip them.
-	// Schema guarantees that there's exactly 1 item, so we can retrieve every field it directly.
+	// Schema guarantees that there's exactly 1 item, so we can retrieve every field directly.
 	if c, ok := d.GetOk("compute_configuration.0.elasticity"); ok {
 		if allocationModel != types.VdcTemplatePayAsYouGoType && allocationModel != types.VdcTemplateFlexType {
 			return diag.Errorf("could not %s the VDC Template, 'elasticity' can only be set when 'allocation_model' is AllocationVApp or Flex', but it is %s", operation, d.Get("allocation_model"))
