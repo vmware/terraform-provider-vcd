@@ -47,11 +47,11 @@ func resourceVcdVdcTemplateInstantiateCreate(ctx context.Context, d *schema.Reso
 	if err != nil {
 		return diag.Errorf("could not instantiate the VDC Template: %s", err)
 	}
-	vdcId, err := vdcTemplate.Instantiate(d.Get("name").(string), d.Get("description").(string), d.Get("org_id").(string))
+	vdc, err := vdcTemplate.InstantiateVdc(d.Get("name").(string), d.Get("description").(string), d.Get("org_id").(string))
 	if err != nil {
 		diag.Errorf("failed instantiating the VDC Template: %s", err)
 	}
-	d.SetId(vdcId)
+	d.SetId(vdc.Vdc.ID)
 	return resourceVcdVdcTemplateInstantiateRead(ctx, d, meta)
 }
 
