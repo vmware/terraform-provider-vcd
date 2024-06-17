@@ -159,6 +159,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_solution_add_on":                              datasourceVcdSolutionAddon(),                           // 3.13
 	"vcd_solution_add_on_instance":                     datasourceVcdSolutionAddonInstance(),                   // 3.13
 	"vcd_solution_add_on_instance_publish":             datasourceVcdSolutionAddonInstancePublish(),            // 3.13
+	"vcd_dse_config":                                   datasourceVcdDseConfig(),                               // 3.13
 	"vcd_org_oidc":                                     datasourceVcdOrgOidc(),                                 // 3.13
 }
 
@@ -274,7 +275,9 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_solution_add_on":                              resourceVcdSolutionAddon(),                           // 3.13
 	"vcd_solution_add_on_instance":                     resourceVcdSolutionAddonInstance(),                   // 3.13
 	"vcd_solution_add_on_instance_publish":             resourceVcdSolutionAddonInstancePublish(),            // 3.13
-	"vcd_org_oidc":                                     resourceVcdOrgOidc(),                                 // 3.13
+	"vcd_dse_config":                                   resourceVcdDseConfig(),                               // 3.13
+	"vcd_dse_publish":                                  resourceVcdDsePublish(),                              // 3.13
+	"vcd_org_oidc":                                     resourceVcdDseConfig(),                               // 3.13
 }
 
 // Provider returns a terraform.ResourceProvider.
