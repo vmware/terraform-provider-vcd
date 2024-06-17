@@ -109,6 +109,8 @@ written. When running the `terraform plan -generate-config-out=generated_resourc
 
 With a subsequent `terraform apply`, the instantiated VDC will be managed by Terraform as a normal `vcd_org_vdc` resource.
 
-Please take into account that deleting the `vcd_org_vdc_template_instance` resource will attempt to remove the instantiated VDC it created.
-If you would like to avoid that, you can run `terraform state rm vcd_org_vdc_template_instance.my_instance` so it is removed from Terraform state,
-and remove the `vcd_org_vdc_template_instance` resource afterward.
+Please take into account that deleting the `vcd_org_vdc_template_instance` resource will attempt to **delete the instantiated VDC** it created,
+which require the `Organization vDC: Delete` right and other implicit rights for tenant users.
+If you would like to avoid this behavior, you can run `terraform state rm vcd_org_vdc_template_instance.my_instance` so the VDC stops being managed by this resource
+(it is removed from Terraform state). This way you can remove the `vcd_org_vdc_template_instance` resource without any other effect.
+
