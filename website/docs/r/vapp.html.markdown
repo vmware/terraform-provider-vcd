@@ -131,6 +131,9 @@ The following arguments are supported:
 * `status_text` - (Computed; *v2.5+*) The vApp status as text.
 * `inherited_metadata` - (Computed; *v3.11+*; *VCD 10.5.1+*) A map that contains read-only metadata that is automatically added by VCD (10.5.1+) and provides
   details on the origin of the vApp (e.g. `vapp.origin.id`, `vapp.origin.name`, `vapp.origin.type`).
+* `vm_names` - (*v3.13.0+*) A list of VM names included in this vApp
+* `vapp_network_names` - (*v3.13.0+*) A list of vApp network names included in this vApp
+* `vapp_org_network_names` - (*v3.13.0+*) A list of vApp Org network names included in this vApp
 
 <a id="metadata"></a>
 ## Metadata
