@@ -86,7 +86,7 @@ func TestAccVcdOrgOidc(t *testing.T) {
 					testAccCheckVcdOrgExists("vcd_org.org2"),
 					testAccCheckVcdOrgExists("vcd_org.org3"),
 
-					resource.TestMatchResourceAttr(oidcResource1, "redirect_uri", regexp.MustCompile(fmt.Sprintf(".*=tenant:%s", orgName1))),
+					resource.TestMatchResourceAttr(oidcResource1, "redirect_uri", regexp.MustCompile(fmt.Sprintf("(?i).*=tenant:%s", orgName1))),
 					resource.TestCheckResourceAttr(oidcResource1, "client_id", "clientId"),
 					resource.TestCheckResourceAttr(oidcResource1, "client_secret", "clientSecret"),
 					resource.TestCheckResourceAttr(oidcResource1, "enabled", "true"),
