@@ -47,9 +47,9 @@ Use this method if it is more convenient than reading XML from a file.
 ## Argument Reference
 
 * `org_id` - (Required) The ID of the current organization where we start the association with a remote one.
-* `association_data_file` - (Optional, but required if `associated_data` is not used) Name of the file containing the data used to associate to this org from another one.
+* `association_data_file` - (Optional; required if `associated_data` is not used) Name of the file containing the data used to associate to this org from another one.
   (Used instead of `associated_data`). This file can be created (by the other org administrator) using the data source `vcd_multisite_org_data`.
-* `association_data` - (Optional, but required if `associated_data_file` is not used) Data produced from another org, needed to associate to this org from another one.
+* `association_data` - (Optional; required if `associated_data_file` is not used) Data produced from another org, needed to associate to this org from another one.
   (Used instead of `associated_data_file`)
 
 ## Attribute Reference

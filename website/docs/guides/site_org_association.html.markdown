@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: Site and Org Association"
 sidebar_current: "docs-vcd-guides-associations"
 description: |-
- Provides guidance to VMware Cloud Site and Org Associations
+ Provides guidance to VMware Cloud Director Site and Org Associations
 ---
 
 # Site and Org association
@@ -127,7 +127,7 @@ get the data using [data collection](#data-collection-for-a-site).
 Using the XML file (`site2.xml`) received from the other administrator, you can run the following:
 
 ```hcl
-# as administrator of site1
+# As administrator of site1
 resource "vcd_multisite_site_association" "site1-site2" {
   association_data_file   = "site2.xml"
   connection_timeout_mins = 2
@@ -141,7 +141,7 @@ received yet.
 For the association to be completed, the other administrator must perform the same operation, using the XML data file for site1.
 
 ```hcl
-# as administrator of site2
+# As administrator of site2
 resource "vcd_multisite_site_association" "site2-site1" {
   association_data_file   = "site1.xml"
   connection_timeout_mins = 2
@@ -157,7 +157,7 @@ get the data using [data collection](#data-collection-for-an-organization).
 Using the XML file (`org2.xml`) received from the other administrator, you can run the following:
 
 ```hcl
-# as administrator of org1
+# As administrator of org1
 resource "vcd_multisite_org_association" "org1-org2" {
   association_data_file   = "org2.xml"
   connection_timeout_mins = 2
@@ -171,7 +171,7 @@ received yet.
 For the association to be completed, the other administrator must perform the same operation, using the XML data file for org1.
 
 ```hcl
-# as administrator of org2
+# As administrator of org2
 resource "vcd_multisite_org_association" "org2-org1" {
   association_data_file   = "org1.xml"
   connection_timeout_mins = 2
@@ -200,8 +200,8 @@ Note about `connection_timeout_mins`:
 
 You can use one of the two methods below:
 
-1. run data source `vcd_resource_list` with `resource_type = "vcd_multisite_site_association"`
-2. run data source `vcd_multisite_site`: it will show the number and the name of site associations.
+1. Run data source `vcd_resource_list` with `resource_type = "vcd_multisite_site_association"`
+2. Run data source `vcd_multisite_site`: it will show the number and the name of site associations.
 
 ```hcl
 data "vcd_multisite_site" "sites" {
@@ -217,8 +217,8 @@ data "vcd_resource_list" "sites" {
 
 You can use one of the two methods below:
 
-1. run data source `vcd_resource_list` with `resource_type = "vcd_multisite_org_association"`
-2. run data source `vcd_multisite_org_data`: it will show the number and the name of org associations.
+1. Run data source `vcd_resource_list` with `resource_type = "vcd_multisite_org_association"`
+2. Run data source `vcd_multisite_org_data`: it will show the number and the name of org associations.
 
 ```hcl
 data "vcd_org" "my_org" {

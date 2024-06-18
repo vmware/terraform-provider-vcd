@@ -41,9 +41,9 @@ Use this method if it is more convenient than reading XML from a file.
 
 ## Argument Reference
 
-* `association_data_file` - (Optional, but required if `associated_data` is not used) Name of the file containing the data used to associate to this site from another one.
+* `association_data_file` - (Optional; required if `associated_data` is not used) Name of the file containing the data used to associate to this site from another one.
   (Used instead of `associated_data`). This file can be created (by the other site administrator) using the data source `vcd_multisite_site_data`.
-* `association_data` - (Optional, but required if `associated_data_file` is not used) Data produced from another site, needed to associate to this site from another one.
+* `association_data` - (Optional; required if `associated_data_file` is not used) Data produced from another site, needed to associate to this site from another one.
   (Used instead of `associated_data_file`)
 * `connection_timeout_mins` - (Optional) How many minutes we wait for the association to be complete. (0 = no check) 
   This property is only used during update, and should not be used until both sides of the association have been completed.
