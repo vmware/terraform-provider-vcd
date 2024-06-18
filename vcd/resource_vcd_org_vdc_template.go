@@ -539,7 +539,7 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 	if vdcTemplate != nil {
 		orgs := d.Get("readable_by_org_ids").(*schema.Set)
 		if len(orgs.List()) > 0 {
-			err = vdcTemplate.SetAccess(convertSchemaSetToSliceOfStrings(orgs))
+			err = vdcTemplate.SetAccessControl(convertSchemaSetToSliceOfStrings(orgs))
 			if err != nil {
 				return diag.Errorf("could not %s VDC Template, setting access list failed: %s", operation, err)
 			}
@@ -705,7 +705,7 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 
 	// Access settings is only available for System administrators
 	if meta.(*VCDClient).Client.IsSysAdmin {
-		access, err := vdcTemplate.GetAccess()
+		access, err := vdcTemplate.GetAccessControl()
 		if err != nil {
 			return diag.Errorf("could not read VDC Template, retrieving its setting access list failed: %s", err)
 		}
