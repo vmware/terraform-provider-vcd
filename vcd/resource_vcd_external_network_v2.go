@@ -154,6 +154,20 @@ func resourceVcdExternalNetworkV2() *schema.Resource {
 				ForceNew:    true,
 				Description: "Enables IP Spaces for this network (default 'false'). VCD 10.4.1+",
 			},
+			"nat_and_firewall_service_intention": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				Description:  "Defines intentions to configure NAT and Firewall rules (only with IP Spaces, VCD 10.5.1+) One of `PROVIDER_GATEWAY`,`EDGE_GATEWAY`,`PROVIDER_AND_EDGE_GATEWAY`",
+				ValidateFunc: validation.StringInSlice([]string{"PROVIDER_GATEWAY", "EDGE_GATEWAY", "PROVIDER_AND_EDGE_GATEWAY"}, false),
+			},
+			"route_advertisement_intention": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				Description:  "Defines intentions to configure route advertisement (only with IP Spaces, VCD 10.5.1+) One of `IP_SPACE_UPLINKS_ADVERTISED_STRICT`,`IP_SPACE_UPLINKS_ADVERTISED_FLEXIBLE`,`ALL_NETWORKS_ADVERTISED`",
+				ValidateFunc: validation.StringInSlice([]string{"IP_SPACE_UPLINKS_ADVERTISED_STRICT", "IP_SPACE_UPLINKS_ADVERTISED_FLEXIBLE", "ALL_NETWORKS_ADVERTISED"}, false),
+			},
 			"ip_scope": {
 				Type:        schema.TypeSet,
 				Optional:    true, // Not required when `use_ip_spaces` is enabled
@@ -301,11 +315,16 @@ func getExternalNetworkV2Type(vcdClient *VCDClient, d *schema.ResourceData, know
 		return nil, fmt.Errorf("error getting network backing type: %s", err)
 	}
 
+	natAndFirewallIntention := d.Get("nat_and_firewall_service_intention").(string)
+	routeAdvertisementIntention := d.Get("route_advertisement_intention").(string)
+
 	newExtNet := &types.ExternalNetworkV2{
-		Name:            d.Get("name").(string),
-		Description:     d.Get("description").(string),
-		NetworkBackings: networkBackings,
-		DedicatedOrg:    &types.OpenApiReference{ID: d.Get("dedicated_org_id").(string)},
+		Name:                               d.Get("name").(string),
+		Description:                        d.Get("description").(string),
+		NetworkBackings:                    networkBackings,
+		DedicatedOrg:                       &types.OpenApiReference{ID: d.Get("dedicated_org_id").(string)},
+		NatAndFirewallServiceIntention:     natAndFirewallIntention,
+		NetworkRouteAdvertisementIntention: routeAdvertisementIntention,
 	}
 
 	usingIpSpace := d.Get("use_ip_spaces").(bool)
@@ -330,6 +349,10 @@ func getExternalNetworkV2Type(vcdClient *VCDClient, d *schema.ResourceData, know
 
 	if !usingIpSpace && d.Get("dedicated_org_id").(string) != "" {
 		return nil, fmt.Errorf("'dedicated_org_id' can only be set when 'use_ip_spaces' is enabled")
+	}
+
+	if vcdClient.Client.APIVCDMaxVersionIs("< 38.1") && (natAndFirewallIntention != "" || routeAdvertisementIntention != "") {
+		return nil, fmt.Errorf("'nat_and_firewall_service_intention' and 'route_advertisement_intention' are only supported in VCD 10.5.1+")
 	}
 
 	return newExtNet, nil
@@ -485,6 +508,8 @@ func processIpRanges(staticIpPool *schema.Set) []types.ExternalNetworkV2IPRange 
 func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetworkV2) error {
 	dSet(d, "name", net.Name)
 	dSet(d, "description", net.Description)
+	dSet(d, "nat_and_firewall_service_intention", net.NatAndFirewallServiceIntention)
+	dSet(d, "route_advertisement_intention", net.NetworkRouteAdvertisementIntention)
 
 	if net.DedicatedOrg != nil && net.DedicatedOrg.ID != "" {
 		dSet(d, "dedicated_org_id", net.DedicatedOrg.ID)
