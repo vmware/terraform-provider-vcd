@@ -131,6 +131,11 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				Computed:    true,
 				Description: "Storage profile name",
 			},
+			"catalog_item_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Catalog Item ID of this media item",
+			},
 		},
 	}
 }
@@ -309,6 +314,10 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	dSet(d, "size", mediaRecord.MediaRecord.StorageB)
 	dSet(d, "status", mediaRecord.MediaRecord.Status)
 	dSet(d, "storage_profile_name", mediaRecord.MediaRecord.StorageProfileName)
+
+	// Creating URN from HREF for Catalog Item urn:vcloud:catalogitem:
+	catalogItemId := fmt.Sprintf("urn:vcloud:catalogitem:%s", extractUuid(mediaRecord.MediaRecord.CatalogItem))
+	dSet(d, "catalog_item_id", catalogItemId)
 
 	if origin == "datasource" {
 		downloadToFile := d.Get("download_to_file").(string)
