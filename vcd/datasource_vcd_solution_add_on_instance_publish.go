@@ -15,7 +15,7 @@ func datasourceVcdSolutionAddonInstancePublish() *schema.Resource {
 			"add_on_instance_name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of the Solution Add-On Defined Entity",
+				Description: "Name of the Solution Add-On Instance",
 			},
 			"add_on_instance_id": {
 				Type:        schema.TypeString,

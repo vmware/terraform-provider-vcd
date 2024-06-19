@@ -16,7 +16,7 @@ func datasourceVcdSolutionAddonInstance() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Solution Add-On Name",
+				Description: "Solution Add-On Instance Name",
 			},
 			"add_on_id": {
 				Type:        schema.TypeString,
@@ -26,7 +26,7 @@ func datasourceVcdSolutionAddonInstance() *schema.Resource {
 			"input": {
 				Type:        schema.TypeMap,
 				Computed:    true,
-				Description: "Key value map of Solution Add-On instance",
+				Description: "Key value map of Solution Add-On Instance specified input fields",
 			},
 			"rde_state": {
 				Type:        schema.TypeString,

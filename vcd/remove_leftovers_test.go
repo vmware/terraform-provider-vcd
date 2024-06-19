@@ -89,7 +89,7 @@ var alsoDelete = entityList{
 	{Type: "vcd_org_vdc", Name: "ForInternalDiskTest", Comment: "from vcd.TestAccVcdVmInternalDisk-CreateALl.tf: ForInternalDiskTest"},
 	{Type: "vcd_solution_landing_zone", Name: "urn:vcloud:type:vmware:solutions_organization:1.0.0", Comment: "Solution Landing Zone"},
 	{Type: "vcd_solution_add_on", Name: "urn:vcloud:type:vmware:solutions_add_on:1.0.0", Comment: "Solution Add-On"},
-	{Type: "vcd_solution_add_on_instance", NameRegexp: regexp.MustCompile(`^vmware.ds`), Comment: "Solution Add-On"},
+	{Type: "vcd_solution_add_on_instance", NameRegexp: regexp.MustCompile(`^vmware.ds`), Comment: "Solution Add-On Instance"},
 }
 
 // isTest is a regular expression that tells if an entity needs to be deleted
@@ -121,79 +121,11 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		}
 	}
 
-	// --------------------------------------------------------------
-	// Solution Add-On Instances
-	// --------------------------------------------------------------
+	// Cleanup Solution Landing Zones and Solution Add-Ons
 	if govcdClient.Client.IsSysAdmin {
-		allEntries, err := govcdClient.GetAllSolutionAddonInstances(nil)
+		err := removeLeftoversSolutionAddOns(govcdClient, verbose)
 		if err != nil {
-			return fmt.Errorf("error retrieving all Solution Add-On Instances: %s", err)
-		}
-
-		for _, addOnInstance := range allEntries {
-			shouldDeleteAddOn := shouldDeleteEntity(alsoDelete, doNotDelete, addOnInstance.DefinedEntity.DefinedEntity.Name, "vcd_solution_add_on_instance", 0, verbose)
-			if shouldDeleteAddOn {
-				if addOnInstance != nil && addOnInstance.DefinedEntity.State() != "READY" {
-					err := addOnInstance.DefinedEntity.Resolve()
-					if err != nil {
-						return fmt.Errorf("error resolving Solution Add-On Instance: %s", err)
-					}
-				}
-
-				_, err = addOnInstance.Publishing(nil, false)
-				if err != nil {
-					return fmt.Errorf("error unpublishing Solution Add-On Instance: %s", err)
-				}
-
-				_, err = addOnInstance.Delete(nil)
-				if err != nil {
-					return fmt.Errorf("error removing Solution Add-On Instance: %s", err)
-				}
-			}
-		}
-	}
-
-	// --------------------------------------------------------------
-	// Solution Add-ons
-	// --------------------------------------------------------------
-	if govcdClient.Client.IsSysAdmin {
-		allEntries, err := govcdClient.GetAllSolutionAddons(nil)
-		if err != nil {
-			return fmt.Errorf("error retrieving all Solution Add-Ons: %s", err)
-		}
-
-		for _, addOn := range allEntries {
-			shouldDeleteAddOn := shouldDeleteEntity(alsoDelete, doNotDelete, addOn.DefinedEntity.DefinedEntity.Name, "vcd_solution_add_on", 0, verbose)
-			if shouldDeleteAddOn {
-				if addOn.DefinedEntity.State() != "READY" {
-					err := addOn.DefinedEntity.Resolve()
-					if err != nil {
-						return fmt.Errorf("error resolving Solution Add-on: %s", err)
-					}
-				}
-
-				err = addOn.Delete()
-				if err != nil {
-					return fmt.Errorf("error removing Solution Add-on: %s", err)
-				}
-			}
-		}
-	}
-
-	// --------------------------------------------------------------
-	// Solution Landing Zone (SLZ)
-	// --------------------------------------------------------------
-	if govcdClient.Client.IsSysAdmin {
-		allSlzs, err := govcdClient.GetAllSolutionLandingZones(nil)
-		if err != nil {
-			return fmt.Errorf("error retrieving all SLZs: %s", err)
-		}
-		for _, slz := range allSlzs {
-			_ = shouldDeleteEntity(alsoDelete, doNotDelete, slz.DefinedEntity.DefinedEntity.EntityType, "vcd_solution_landing_zone", 0, verbose)
-			err := slz.Delete()
-			if err != nil {
-				return fmt.Errorf("error removing SLZ: %s", err)
-			}
+			return fmt.Errorf("error removing Solution Add-On leftovers: %s", err)
 		}
 	}
 
@@ -721,6 +653,89 @@ func removeLeftoversNsxtAlb(govcdClient *govcd.VCDClient, verbose bool) error {
 			err = albController.Delete()
 			if err != nil {
 				return fmt.Errorf("error deleting NSX-T ALB Controller '%s': %s", albController.NsxtAlbController.Name, err)
+			}
+		}
+	}
+	return nil
+}
+
+func removeLeftoversSolutionAddOns(govcdClient *govcd.VCDClient, verbose bool) error {
+	// --------------------------------------------------------------
+	// Solution Add-On Instances
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		allEntries, err := govcdClient.GetAllSolutionAddonInstances(nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving all Solution Add-On Instances: %s", err)
+		}
+
+		for _, addOnInstance := range allEntries {
+			shouldDeleteAddOn := shouldDeleteEntity(alsoDelete, doNotDelete, addOnInstance.DefinedEntity.DefinedEntity.Name, "vcd_solution_add_on_instance", 0, verbose)
+			if shouldDeleteAddOn {
+
+				// Check if Solution Add-On Instance is published and unpublish if it is so
+				if addOnInstance.SolutionAddOnInstance.Scope.AllTenants || len(addOnInstance.SolutionAddOnInstance.Scope.Tenants) > 0 {
+					_, err = addOnInstance.Publishing(nil, false)
+					if err != nil {
+						return fmt.Errorf("error unpublishing Solution Add-On Instance: %s", err)
+					}
+				}
+
+				if addOnInstance != nil && addOnInstance.DefinedEntity.State() != "READY" {
+					err := addOnInstance.DefinedEntity.Resolve()
+					if err != nil {
+						return fmt.Errorf("error resolving Solution Add-On Instance: %s", err)
+					}
+				}
+
+				_, err = addOnInstance.Delete(nil)
+				if err != nil {
+					return fmt.Errorf("error removing Solution Add-On Instance: %s", err)
+				}
+			}
+		}
+	}
+
+	// --------------------------------------------------------------
+	// Solution Add-ons
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		allEntries, err := govcdClient.GetAllSolutionAddons(nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving all Solution Add-Ons: %s", err)
+		}
+
+		for _, addOn := range allEntries {
+			shouldDeleteAddOn := shouldDeleteEntity(alsoDelete, doNotDelete, addOn.DefinedEntity.DefinedEntity.Name, "vcd_solution_add_on", 0, verbose)
+			if shouldDeleteAddOn {
+				if addOn.DefinedEntity.State() != "READY" {
+					err := addOn.DefinedEntity.Resolve()
+					if err != nil {
+						return fmt.Errorf("error resolving Solution Add-on: %s", err)
+					}
+				}
+
+				err = addOn.Delete()
+				if err != nil {
+					return fmt.Errorf("error removing Solution Add-on: %s", err)
+				}
+			}
+		}
+	}
+
+	// --------------------------------------------------------------
+	// Solution Landing Zone (SLZ)
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		allSlzs, err := govcdClient.GetAllSolutionLandingZones(nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving all SLZs: %s", err)
+		}
+		for _, slz := range allSlzs {
+			_ = shouldDeleteEntity(alsoDelete, doNotDelete, slz.DefinedEntity.DefinedEntity.EntityType, "vcd_solution_landing_zone", 0, verbose)
+			err := slz.Delete()
+			if err != nil {
+				return fmt.Errorf("error removing SLZ: %s", err)
 			}
 		}
 	}

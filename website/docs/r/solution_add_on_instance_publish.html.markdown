@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_solution_add_on_instance_publish"
 sidebar_current: "docs-vcd-resource-solution-add-on-instance-publish"
 description: |-
-  Provides a resource to manage publishing configuration of Solution Add-Ons in Cloud Director.
+  Provides a resource to manage publishing configuration of Solution Add-On Instances in Cloud Director.
 
 ---
 
@@ -11,11 +11,11 @@ description: |-
 
 Supported in provider *v3.13+* and VCD 10.4.1+.
 
-Provides a resource to manage publishing configuration of Solution Add-Ons in Cloud Director.
+Provides a resource to manage publishing configuration of Solution Add-On Instances in Cloud Director.
 
 ~> Only `System Administrator` can create this resource.
 
-## Example Usage (Uploading an image and create a Solution Add-On entry)
+## Example Usage (Creating a Solution Add-On Instance and publishing it to single tenant)
 
 ```hcl
 data "vcd_org" "recipient" {
