@@ -27,7 +27,7 @@ func resourceVcdSolutionAddon() *schema.Resource {
 			"catalog_item_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Solution Add-On Catalog Item ID ",
+				Description: "Solution Add-On Catalog Item ID",
 			},
 			"addon_path": {
 				Type:        schema.TypeString,
