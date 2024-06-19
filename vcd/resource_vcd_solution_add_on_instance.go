@@ -136,7 +136,7 @@ func resourceVcdSolutionAddonInstanceRead(ctx context.Context, d *schema.Resourc
 	dSet(d, "rde_state", addOnInstance.DefinedEntity.State())
 
 	// an existing Solution Add-On instance cannot exist without accepted EULA
-	d.Set("accept_eula", true)
+	dSet(d, "accept_eula", true)
 
 	// Retrieve creation input fields
 	// 'delete_input' values cannot be read from Solution Add-On Instance as they are specified only

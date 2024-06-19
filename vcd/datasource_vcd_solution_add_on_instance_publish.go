@@ -51,7 +51,11 @@ func datasourceVcdSolutionAddonInstancePublishRead(ctx context.Context, d *schem
 		return diag.Errorf("error retrieving Solution Add-On Instance: %s", err)
 	}
 
-	d.Set("publish_to_all_tenants", addOnInstance.SolutionAddOnInstance.Scope.AllTenants)
+	if addOnInstance.SolutionAddOnInstance != nil {
+		dSet(d, "publish_to_all_tenants", addOnInstance.SolutionAddOnInstance.Scope.AllTenants)
+	} else {
+		dSet(d, "publish_to_all_tenants", false)
+	}
 
 	orgNames := addOnInstance.SolutionAddOnInstance.Scope.Tenants
 	orgIds, err := orgNamesToIds(vcdClient, orgNames)

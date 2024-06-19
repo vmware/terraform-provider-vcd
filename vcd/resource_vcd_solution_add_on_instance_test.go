@@ -5,9 +5,7 @@ package vcd
 import (
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccSolutionAddonInstanceAndPublishing(t *testing.T) {
@@ -178,13 +176,13 @@ resource "vcd_solution_add_on" "dse14" {
   addon_path        = "{{.AddonIsoPath}}"
   trust_certificate = true
 
-  depends_on = [ vcd_solution_landing_zone.slz ]
+  depends_on = [vcd_solution_landing_zone.slz]
 }
 
 resource "vcd_solution_add_on_instance" "dse14" {
-  add_on_id     = vcd_solution_add_on.dse14.id
-  accept_eula   = true
-  name = "{{.TestName}}"
+  add_on_id   = vcd_solution_add_on.dse14.id
+  accept_eula = true
+  name        = "{{.TestName}}"
 
   input = {
     delete-previous-uiplugin-versions = true
@@ -226,10 +224,3 @@ resource "vcd_solution_add_on_instance_publish" "public" {
   publish_to_all_tenants = true
 }
 `
-
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
-	}
-}

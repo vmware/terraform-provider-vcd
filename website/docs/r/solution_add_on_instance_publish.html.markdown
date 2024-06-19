@@ -42,9 +42,10 @@ resource "vcd_solution_add_on" "dse14" {
 }
 
 resource "vcd_solution_add_on_instance" "dse14" {
-  add_on_id     = vcd_solution_add_on.dse14.id
-  accept_eula   = true
-  name = "MyDseInstanceName"
+  add_on_id   = vcd_solution_add_on.dse14.id
+  accept_eula = true
+  name        = "MyDseInstanceName"
+
   input = {
     input-delete-previous-uiplugin-versions = false
   }

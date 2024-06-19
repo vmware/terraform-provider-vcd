@@ -19,13 +19,13 @@ Provides a resource to manage Solution Add-Ons instances in Cloud Director.
 
 ```hcl
 resource "vcd_solution_add_on_instance" "dse14" {
- add_on_id     = vcd_solution_add_on.dse14.id
- accept_eula   = true
- name = "MyDseInstance"
+  add_on_id   = vcd_solution_add_on.dse14.id
+  accept_eula = true
+  name        = "MyDseInstance"
 
- input = {
-   delete-previous-uiplugin-versions = true
- }
+  input = {
+    delete-previous-uiplugin-versions = true
+  }
 
   delete_input = {
     force-delete = true
@@ -37,7 +37,7 @@ resource "vcd_solution_add_on" "dse14" {
   addon_path        = "vmware-vcd-ds-1.4.0-23376809.iso"
   trust_certificate = true
 
-  depends_on = [ vcd_solution_landing_zone.slz ]
+  depends_on = [vcd_solution_landing_zone.slz]
 }
 ```
 
