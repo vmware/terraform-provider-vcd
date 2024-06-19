@@ -351,7 +351,7 @@ can be used to lookup ID by name.
 * `external_network` - (Optional, *VCD 10.4.1+*, *v3.11+*) attaches NSX-T Segment backed External
   Networks with a given [configuration block](#edgegateway-subnet-external-network). It *does not
   support IP Spaces*.
-* `read_limit_unused_ip_count` - (Optional, *v3.13+*) Sets a limit of IPs to count for
+* `ip_count_read_limit` - (Optional, *v3.13+*) Sets a limit of IPs to count for
   `used_ip_count` and `unused_ip_count` attributes to avoid exhausting compute resource while
   counting IPs in large IPv6 subnets. It does not affect operation of Edge Gateway configuration,
   only IP count reporting. Defaults to `1000000`, update is a no-op, but will affect newly read

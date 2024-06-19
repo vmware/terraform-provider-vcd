@@ -598,7 +598,7 @@ func TestAccVcdIpv6SupportLargeSubnet(t *testing.T) {
 					}),
 
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.nsxt-edge", "id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "read_limit_unused_ip_count", strconv.Itoa(defaultReadLimitOfUnusedIps)),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "ip_count_read_limit", strconv.Itoa(defaultReadLimitOfUnusedIps)),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "unused_ip_count", "999999"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "used_ip_count", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "subnet.*", map[string]string{
@@ -717,12 +717,12 @@ func TestAccVcdIpv6SupportLargeSubnet(t *testing.T) {
 				},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "unused_ip_count", "199998"),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "read_limit_unused_ip_count", "200000"), // 200k
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "ip_count_read_limit", "200000"), // 200k
 
-					resource.TestCheckResourceAttr("data.vcd_nsxt_edgegateway.nsxt-edge", "read_limit_unused_ip_count", strconv.Itoa(defaultReadLimitOfUnusedIps)),
+					resource.TestCheckResourceAttr("data.vcd_nsxt_edgegateway.nsxt-edge", "ip_count_read_limit", strconv.Itoa(defaultReadLimitOfUnusedIps)),
 					resource.TestCheckResourceAttr("data.vcd_nsxt_edgegateway.nsxt-edge", "unused_ip_count", "999998"), // data source does not have limit
 
-					resourceFieldsEqual("vcd_nsxt_edgegateway.nsxt-edge", "data.vcd_nsxt_edgegateway.nsxt-edge", []string{"%", "unused_ip_count", "read_limit_unused_ip_count"}),
+					resourceFieldsEqual("vcd_nsxt_edgegateway.nsxt-edge", "data.vcd_nsxt_edgegateway.nsxt-edge", []string{"%", "unused_ip_count", "ip_count_read_limit"}),
 				),
 			},
 		},
@@ -987,7 +987,7 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 
   external_network_id = vcd_external_network_v2.ext-net-nsxt.id
   
-  read_limit_unused_ip_count = 200000 # 200k
+  ip_count_read_limit = 200000 # 200k
 
   subnet {
      gateway       = tolist(vcd_external_network_v2.ext-net-nsxt.ip_scope)[0].gateway

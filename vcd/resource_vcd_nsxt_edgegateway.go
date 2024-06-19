@@ -216,7 +216,7 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Number of unused IP addresses",
 			},
-			"read_limit_unused_ip_count": {
+			"ip_count_read_limit": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     defaultReadLimitOfUnusedIps,
@@ -314,9 +314,9 @@ func resourceVcdNsxtEdgeGatewayCreate(ctx context.Context, d *schema.ResourceDat
 func resourceVcdNsxtEdgeGatewayUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] NSX-T Edge Gateway update initiated")
 
-	// read_limit_unused_ip_count is only a setting that is applicable for read, it does not update
+	// ip_count_read_limit is only a setting that is applicable for read, it does not update
 	// anything
-	if !d.HasChangesExcept("read_limit_unused_ip_count") {
+	if !d.HasChangesExcept("ip_count_read_limit") {
 		return resourceVcdNsxtEdgeGatewayRead(ctx, d, meta)
 	}
 
@@ -434,7 +434,7 @@ func resourceVcdNsxtEdgeGatewayImport(_ context.Context, d *schema.ResourceData,
 	// Only setting Org because VDC is a deprecated field. `owner_id` is set by resourceVcdNsxtEdgeGatewayRead by itself
 	dSet(d, "org", orgName)
 
-	dSet(d, "read_limit_unused_ip_count", defaultReadLimitOfUnusedIps)
+	dSet(d, "ip_count_read_limit", defaultReadLimitOfUnusedIps)
 	d.SetId(edge.EdgeGateway.ID)
 
 	return []*schema.ResourceData{d}, nil
@@ -956,8 +956,8 @@ func setNsxtEdgeGatewayData(vcdClient *VCDClient, edgeGateway *govcd.NsxtEdgeGat
 		}
 
 		// Used and unused IPs are reported for all Uplink (NSXT_TIER0 and IMPORTED_T_LOGICAL_SWITCH ones)
-		// read_limit_unused_ip_count
-		readLimitUnusedIpCount := d.Get("read_limit_unused_ip_count").(int) // setting limit to processing IPv6 count
+		// ip_count_read_limit
+		readLimitUnusedIpCount := d.Get("ip_count_read_limit").(int) // setting limit to processing IPv6 count
 		usedIps, unusedIps, err := edgeGateway.GetUsedAndUnusedExternalIPAddressCountWithLimit(false, int64(readLimitUnusedIpCount))
 		if err != nil {
 			return fmt.Errorf("error getting NSX-T Edge Gateway unused IPs after read: %s", err)
