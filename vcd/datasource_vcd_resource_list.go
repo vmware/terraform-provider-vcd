@@ -1059,6 +1059,7 @@ func vdcTemplateList(d *schema.ResourceData, meta interface{}) (list []string, e
 				parent: org.Org.Name,
 			})
 		}
+		ancestors = []string{org.Org.Name}
 	}
 	return genericResourceList(d, "vcd_org_vdc_template", ancestors, items)
 }
