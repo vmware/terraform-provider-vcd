@@ -320,7 +320,7 @@ func resourceVcdNsxtIpSecVpnTunnelUpdate(ctx context.Context, d *schema.Resource
 		return diag.Errorf("[nsx-t ipsec vpn tunnel update] error retrieving Edge Gateway: %s", err)
 	}
 
-	existingIpSecVpnConfiguration, err := nsxtEdge.GetIpSecVpnTunnelById(d.Id())
+	ipSecVpnConfiguration, err := nsxtEdge.GetIpSecVpnTunnelById(d.Id())
 	if err != nil {
 		diag.Errorf("[nsx-t ipsec vpn tunnel update] error retrieving existing NSX-T IPsec VPN Tunnel configuration: %s", err)
 	}
@@ -341,20 +341,20 @@ func resourceVcdNsxtIpSecVpnTunnelUpdate(ctx context.Context, d *schema.Resource
 		ipSecVpnConfig.SecurityType = "DEFAULT"
 	}
 
-	updatedIpSecVpnConfig, err := existingIpSecVpnConfiguration.Update(ipSecVpnConfig)
-	if err != nil {
-		return diag.Errorf("[nsx-t ipsec vpn tunnel update] error updating NSX-T IPsec VPN Tunnel configuration '%s': %s", ipSecVpnConfig.Name, err)
-	}
-
 	if customSecurityProfile {
 		// Get Security Tunnel profile from Terraform state
 		ipSecTunnelProfileConfig := getNsxtIpSecVpnProfileTunnelConfigurationType(d)
 
 		// To set IPsec VPN Tunnel Connection Profile - it must be updated (HTTP PUT) with all the options configured
-		_, err = updatedIpSecVpnConfig.UpdateTunnelConnectionProperties(ipSecTunnelProfileConfig)
+		_, err = ipSecVpnConfiguration.UpdateTunnelConnectionProperties(ipSecTunnelProfileConfig)
 		if err != nil {
 			return diag.Errorf("[nsx-t ipsec vpn tunnel update] error updating NSX-T IPsec VPN Tunnel Security Profile: %s", err)
 		}
+	}
+
+	_, err = ipSecVpnConfiguration.Update(ipSecVpnConfig)
+	if err != nil {
+		return diag.Errorf("[nsx-t ipsec vpn tunnel update] error updating NSX-T IPsec VPN Tunnel configuration '%s': %s", ipSecVpnConfig.Name, err)
 	}
 
 	return resourceVcdNsxtIpSecVpnTunnelRead(ctx, d, meta)
