@@ -465,8 +465,9 @@ resource "vcd_org_vdc" "newVdc" {
   enable_fast_provisioning   = true
   delete_force               = true
   delete_recursive           = true
-  elasticity      			 = true
+  elasticity                 = true
   include_vm_memory_overhead = true
+  memory_guaranteed          = 1.0
 }
 `
 const testAccVcdVdcGroupOrgProvider = testAccVcdVdcGroupNewVdc + `
