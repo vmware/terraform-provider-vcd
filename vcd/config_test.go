@@ -1,4 +1,4 @@
-//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || uiPlugin || providerVdc || cse || ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || uiPlugin || providerVdc || cse || slz || ALL
 
 package vcd
 
@@ -131,6 +131,7 @@ type TestConfig struct {
 			VmName1InMultiVmItem      string `json:"vmName1InMultiVmItem,omitempty"`
 			VmName2InMultiVmItem      string `json:"VmName2InMultiVmItem,omitempty"`
 			NsxtBackedCatalogName     string `json:"nsxtBackedCatalogName,omitempty"`
+			NsxtCatalogAddonDse       string `json:"nsxtCatalogAddonDse,omitempty"`
 			NsxtCatalogItem           string `json:"nsxtCatalogItem,omitempty"`
 			VSphereSubscribedCatalog  string `json:"vSphereSubscribedCatalog,omitempty"`
 		} `json:"catalog"`
