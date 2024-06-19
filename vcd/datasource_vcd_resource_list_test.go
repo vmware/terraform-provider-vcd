@@ -40,6 +40,10 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		{name: "user", resourceType: "vcd_org_user"},
 	}
 
+	if usingSysAdmin() {
+		lists = append(lists, listDef{name: "admin-vdc-template", resourceType: "vcd_org_vdc_template"})
+	}
+
 	knownNetworkPool1 := testConfig.VCD.ProviderVdc.NetworkPool
 	if knownNetworkPool1 != "" && usingSysAdmin() {
 		lists = append(lists, listDef{name: "network_pool", resourceType: "vcd_network_pool", knownItem: knownNetworkPool1})
@@ -82,6 +86,7 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		} else {
 			fmt.Print("`Nsxt.Vdc` value isn't configured, datasource test using this will be skipped\n")
 		}
+		lists = append(lists, listDef{name: "vdc-template", resourceType: "vcd_org_vdc_template", parent: testConfig.VCD.Org})
 	} else {
 		fmt.Print("`VCD.Org` value isn't configured, datasource test will be skipped\n")
 	}
