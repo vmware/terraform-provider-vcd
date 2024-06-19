@@ -172,9 +172,9 @@ data "vcd_catalog_media" "dse14" {
 }
 
 resource "vcd_solution_add_on" "dse14" {
-  catalog_item_id   = data.vcd_catalog_media.dse14.catalog_item_id
-  addon_path        = "{{.AddonIsoPath}}"
-  trust_certificate = true
+  catalog_item_id        = data.vcd_catalog_media.dse14.catalog_item_id
+  addon_path             = "{{.AddonIsoPath}}"
+  auto_trust_certificate = true
 
   depends_on = [vcd_solution_landing_zone.slz]
 }
