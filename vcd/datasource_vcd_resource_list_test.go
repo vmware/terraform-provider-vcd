@@ -34,6 +34,7 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		{name: "global_role", resourceType: "vcd_global_role", knownItem: "vApp Author"},
 		{name: "rights_bundle", resourceType: "vcd_rights_bundle", knownItem: "Default Rights Bundle"},
 		{name: "right", resourceType: "vcd_right", knownItem: "Catalog: Change Owner"},
+		{name: "admin-vdc-template", resourceType: "vcd_org_vdc_template"},
 
 		// entities belonging to an Org don't require an explicit parent, as it is given from the Org passed in the provider
 		// For each resource, we test with and without and explicit parent
@@ -82,6 +83,7 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		} else {
 			fmt.Print("`Nsxt.Vdc` value isn't configured, datasource test using this will be skipped\n")
 		}
+		lists = append(lists, listDef{name: "vdc-template", resourceType: "vcd_org_vdc_template", parent: testConfig.VCD.Org})
 	} else {
 		fmt.Print("`VCD.Org` value isn't configured, datasource test will be skipped\n")
 	}
