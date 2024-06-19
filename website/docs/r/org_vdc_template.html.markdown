@@ -40,8 +40,8 @@ data "vcd_network_pool" "np1" {
 
 resource "vcd_org_vdc_template" "tmpl" {
   name               = "myTemplate"
-  tenant_name        = "myAwesomeTemplate"
   description        = "Requires System privileges"
+  tenant_name        = "myAwesomeTemplate"
   tenant_description = "Any tenant can use this"
   allocation_model   = "AllocationVApp"
 
@@ -110,7 +110,7 @@ The following arguments are supported:
 * `storage_profile` - (Required) A block that defines a storage profile that the VDCs instantiated from this template will use. Must be **at least one**, which has the following properties:
   * `name` - (Required) Name of Provider VDC storage profile to use for the VDCs instantiated from this template
   * `default` - (Required) True if this is default storage profile for the VDCs instantiated from this template. Only **one** block should have this set to `true`
-  * `limit` - (Required) Storage limit for the VDCs instantiated from this template, in Megabytes. 0 means unlimited
+  * `limit` - (Required) Storage limit for the VDCs instantiated from this template, in MB. 0 means unlimited
 * `enable_fast_provisioning` - (Optional) If `true`, the VDCs instantiated from this template will have Fast provisioning enabled. Defaults to `false`
 * `enable_thin_provisioning` - (Optional) If `true`, the VDCs instantiated from this template will have Thin provisioning enabled. Defaults to `false`
 * `edge_gateway` - (Optional) VDCs instantiated from this template will create a new Edge Gateway with the provided setup. Required if any `provider_vdc` block
