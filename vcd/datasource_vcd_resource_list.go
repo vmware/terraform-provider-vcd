@@ -1022,13 +1022,14 @@ func vdcTemplateList(d *schema.ResourceData, meta interface{}) (list []string, e
 	client := meta.(*VCDClient)
 
 	parentOrg := d.Get("parent").(string)
-	if parentOrg == "" && !client.Client.IsSysAdmin {
+	isSystemOrg := parentOrg == "" || strings.ToLower(parentOrg) == "system"
+	if isSystemOrg && !client.Client.IsSysAdmin {
 		return nil, fmt.Errorf("'parent' is not set: Only an administrator can list all VDC Templates from System org")
 	}
 
 	var items []resourceRef
 	var ancestors []string
-	if parentOrg == "" {
+	if isSystemOrg {
 		adminVdcTemplates, err := client.QueryAdminVdcTemplates()
 		if err != nil {
 			return nil, err
