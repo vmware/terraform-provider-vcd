@@ -16,7 +16,7 @@ Provides a data source to read publishing configuration of Solution Add-Ons in C
 
 ```hcl
 data "vcd_solution_add_on_instance_publish" "public" {
-  add_on_instance_name = "MyDseInstanceName"MyDseInstanceName
+  add_on_instance_name = "MyDseInstanceName"
 }
 ```
 

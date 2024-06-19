@@ -4,8 +4,9 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -160,9 +161,9 @@ data "vcd_vapp_network" "network-ds" {
   org                = "{{.Org}}"
   vdc                = "{{.VDC}}"
 
-  name       =  vcd_vapp_network.createdVappNetwork.name
+  name       = vcd_vapp_network.createdVappNetwork.name
   vapp_name  = "{{.vappName}}"
-  depends_on =  [vcd_vapp_network.createdVappNetwork]
+  depends_on = [vcd_solution_landing_zone.slz]
 }
 
 output "netmask" {

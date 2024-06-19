@@ -202,8 +202,8 @@ data "vcd_org" "recipient" {
 }
 
 resource "vcd_solution_add_on_instance_publish" "public" {
-  add_on_instance_id = vcd_solution_add_on_instance.dse14.id
-  org_ids = [data.vcd_org.recipient.id]
+  add_on_instance_id     = vcd_solution_add_on_instance.dse14.id
+  org_ids                = [data.vcd_org.recipient.id]
   publish_to_all_tenants = false
 }
 `
@@ -222,7 +222,7 @@ data "vcd_solution_add_on_instance_publish" "published" {
 
 const testAccSolutionAddonInstancePublishAll = `
 resource "vcd_solution_add_on_instance_publish" "public" {
-  add_on_instance_id = vcd_solution_add_on_instance.dse14.id
+  add_on_instance_id     = vcd_solution_add_on_instance.dse14.id
   publish_to_all_tenants = true
 }
 `

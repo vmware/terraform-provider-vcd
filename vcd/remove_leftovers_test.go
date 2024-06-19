@@ -165,7 +165,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		for _, addOn := range allEntries {
 			shouldDeleteAddOn := shouldDeleteEntity(alsoDelete, doNotDelete, addOn.DefinedEntity.DefinedEntity.Name, "vcd_solution_add_on", 0, verbose)
 			if shouldDeleteAddOn {
-				if *addOn.DefinedEntity.State() != "READY" {
+				if addOn.DefinedEntity.State() != "READY" {
 					err := addOn.DefinedEntity.Resolve()
 					if err != nil {
 						return fmt.Errorf("error resolving Solution Add-on: %s", err)
