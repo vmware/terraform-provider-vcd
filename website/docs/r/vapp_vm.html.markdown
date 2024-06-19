@@ -570,6 +570,7 @@ example for usage details.
 * `inherited_metadata` - (*v3.11+*; *VCD 10.5.1+*) A map that contains read-only metadata that is automatically added by VCD (10.5.1+) and provides
   details on the origin of the VM (e.g. `vm.origin.id`, `vm.origin.name`, `vm.origin.type`).
 * `extra_config` - (*v3.13.+*) The VM extra configuration. See [Extra Configuration](#extra-configuration) for more detail.
+* `imported` - (*v3.13.+*) A true/false value telling whether the resource was imported.
 
 <a id="disk"></a>
 ## Disk

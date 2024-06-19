@@ -1,4 +1,4 @@
-//go:build api || functional || ALL
+//go:build slz || api || functional || ALL
 
 package vcd
 
@@ -14,6 +14,11 @@ import (
 
 func TestAccSolutionAddon(t *testing.T) {
 	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.1") {
+		t.Skipf("Solution Landing Zones are supported in VCD 10.4.1+. Skipping")
+	}
 
 	if testConfig.VCD.Catalog.NsxtCatalogAddonDse == "" {
 		t.Skipf("Add-On config value not specified ")
@@ -22,7 +27,7 @@ func TestAccSolutionAddon(t *testing.T) {
 	vcdClient := createTemporaryVCDConnection(true)
 	org, err := vcdClient.GetOrgByName(testConfig.VCD.Org)
 	if err != nil {
-		t.Fatalf("rrror creating temporary VCD connection: %s", err)
+		t.Fatalf("error creating temporary VCD connection: %s", err)
 	}
 
 	catalog, err := org.GetCatalogByName(testConfig.VCD.Catalog.NsxtBackedCatalogName, false)
@@ -73,7 +78,7 @@ func TestAccSolutionAddon(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_solution_add_on.dse14", "id"),
 					resource.TestCheckResourceAttrSet("vcd_solution_add_on.dse14", "catalog_item_id"),
 					resource.TestCheckResourceAttr("vcd_solution_add_on.dse14", "rde_state", "RESOLVED"),
-					resource.TestCheckResourceAttr("vcd_solution_add_on.dse14", "trust_certificate", "true"),
+					resource.TestCheckResourceAttr("vcd_solution_add_on.dse14", "auto_trust_certificate", "true"),
 					cacheAddOnId.cacheTestResourceFieldValue("vcd_solution_add_on.dse14", "id"),
 					cacheAddOnName.cacheTestResourceFieldValue("vcd_solution_add_on.dse14", "name"),
 				),
@@ -81,7 +86,7 @@ func TestAccSolutionAddon(t *testing.T) {
 			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
-					resourceFieldsEqual("vcd_solution_add_on.dse14", "data.vcd_solution_add_on.dse14", []string{"%", "trust_certificate", "addon_path"}),
+					resourceFieldsEqual("vcd_solution_add_on.dse14", "data.vcd_solution_add_on.dse14", []string{"%", "auto_trust_certificate", "addon_path"}),
 				),
 			},
 			{ // Import by ID
@@ -89,14 +94,14 @@ func TestAccSolutionAddon(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateId:           cacheAddOnId.fieldValue,
-				ImportStateVerifyIgnore: []string{"addon_path", "trust_certificate"},
+				ImportStateVerifyIgnore: []string{"addon_path", "auto_trust_certificate"},
 			},
 			{ // Import by Name
 				ResourceName:            "vcd_solution_add_on.dse14",
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateId:           cacheAddOnName.fieldValue,
-				ImportStateVerifyIgnore: []string{"addon_path", "trust_certificate"},
+				ImportStateVerifyIgnore: []string{"addon_path", "auto_trust_certificate"},
 			},
 		},
 	})
@@ -163,11 +168,12 @@ data "vcd_catalog_media" "dse14" {
 resource "vcd_solution_add_on" "dse14" {
   catalog_item_id   = data.vcd_catalog_media.dse14.catalog_item_id
   addon_path        = "{{.AddonIsoPath}}"
-  trust_certificate = true
+  auto_trust_certificate = true
 }
 `
 
 const testAccSolutionAddonStep2 = testAccSolutionAddonStep1 + `
+# skip-binary-test: data source test
 data "vcd_solution_add_on" "dse14" {
   name = vcd_solution_add_on.dse14.name
 }
@@ -182,9 +188,18 @@ func fetchCacheFile(catalog *govcd.Catalog, fileName string, t *testing.T) (stri
 	cacheDirPath := pwd + "/.." + "/test-resources/cache"
 	cacheFilePath := cacheDirPath + "/" + fileName
 
-	if _, err := os.Stat(cacheFilePath); errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(cacheFilePath); errors.Is(err, os.ErrNotExist) || !dirExists(cacheDirPath) {
 		// Create cache directory if it doesn't exist
-		if _, err := os.Stat(cacheDirPath); os.IsNotExist(err) {
+		if fileInfo, err := os.Stat(cacheDirPath); os.IsNotExist(err) || !fileInfo.IsDir() {
+			// test-resources/cache is a file, not a directory, it should be removed
+			if !os.IsNotExist(err) && !fileInfo.IsDir() {
+				fmt.Printf("# %s is a file, not a directory - removing\n", cacheDirPath)
+				err := os.Remove(cacheDirPath)
+				if err != nil {
+					t.Fatalf("error removing cache directory: %s", err)
+				}
+			}
+
 			err := os.Mkdir(cacheDirPath, 0750)
 			if err != nil {
 				t.Fatalf("error creating cache directory: %s", err)

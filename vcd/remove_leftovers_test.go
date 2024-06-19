@@ -43,8 +43,8 @@ var doNotDelete = entityList{
 	{Type: "vcd_vapp", Name: "Test_EmptyVmVapp1", Comment: "created by test, but to be preserved"},
 	{Type: "vcd_vapp", Name: "Test_EmptyVmVapp2", Comment: "created by test, but to be preserved"},
 	{Type: "vcd_vapp", Name: "Test_EmptyVmVapp3", Comment: "created by test, but to be preserved"},
-	{Type: "vcd_solution_add_on", Name: "vmware.solution-addon-landing-zone-1.2.0-22957452", Comment: "Built-in Solution Add-On"},
-	{Type: "vcd_solution_add_on", Name: "vmware.autoscale-1.4.0-23130968", Comment: "Built-in Solution Add-On"},
+	{Type: "vcd_solution_add_on", NameRegexp: regexp.MustCompile(`^vmware.solution-addon-landing-zone`), Comment: "Built-in Solution Add-On"},
+	{Type: "vcd_solution_add_on", NameRegexp: regexp.MustCompile(`^vmware.autoscale`), Comment: "Built-in Solution Add-On"},
 }
 
 // alsoDelete contains a list of entities that should be removed , in addition to the ones
@@ -133,10 +133,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		for _, addOnInstance := range allEntries {
 			shouldDeleteAddOn := shouldDeleteEntity(alsoDelete, doNotDelete, addOnInstance.DefinedEntity.DefinedEntity.Name, "vcd_solution_add_on_instance", 0, verbose)
 			if shouldDeleteAddOn {
-				if addOnInstance != nil && addOnInstance.DefinedEntity != nil &&
-					addOnInstance.DefinedEntity.DefinedEntity != nil &&
-					addOnInstance.DefinedEntity.DefinedEntity.State != nil &&
-					*addOnInstance.DefinedEntity.DefinedEntity.State != "READY" {
+				if addOnInstance != nil && addOnInstance.DefinedEntity.State() != "READY" {
 					err := addOnInstance.DefinedEntity.Resolve()
 					if err != nil {
 						return fmt.Errorf("error resolving Solution Add-On Instance: %s", err)
@@ -145,7 +142,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 
 				_, err = addOnInstance.Publishing(nil, false)
 				if err != nil {
-					return fmt.Errorf("error unpublishig Solution Add-On Instance: %s", err)
+					return fmt.Errorf("error unpublishing Solution Add-On Instance: %s", err)
 				}
 
 				_, err = addOnInstance.Delete(nil)
@@ -168,7 +165,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		for _, addOn := range allEntries {
 			shouldDeleteAddOn := shouldDeleteEntity(alsoDelete, doNotDelete, addOn.DefinedEntity.DefinedEntity.Name, "vcd_solution_add_on", 0, verbose)
 			if shouldDeleteAddOn {
-				if addOn.DefinedEntity.DefinedEntity.State != addrOf("READY") {
+				if *addOn.DefinedEntity.State() != "READY" {
 					err := addOn.DefinedEntity.Resolve()
 					if err != nil {
 						return fmt.Errorf("error resolving Solution Add-on: %s", err)
