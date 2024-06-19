@@ -201,6 +201,23 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.ip", "12.10.0.152"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.connected", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.mac", "00:00:00:11:11:11"),
+					resource.TestCheckResourceAttr("vcd_vapp."+netVappName, "vapp_network_names.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp."+netVappName, "vapp_org_network_names.#", "3"),
+
+					resource.TestCheckResourceAttr("vcd_vapp."+netVappName, "vm_names.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp."+netVappName, "vm_names.0", "TestAccVcdVAppVmMultiNICVM"),
+					// Names of vApp networks are stored in alphabetic order
+					resource.TestCheckResourceAttr("vcd_vapp."+netVappName, "vapp_network_names.0", "vapp-net"),
+					resource.TestCheckResourceAttr("vcd_vapp."+netVappName, "vapp_org_network_names.0", "multinic-net"),
+					resource.TestCheckResourceAttr("vcd_vapp."+netVappName, "vapp_org_network_names.1", "multinic-net2"),
+					resource.TestCheckResourceAttr("vcd_vapp."+netVappName, "vapp_org_network_names.2", "vapp-routed-net"),
+
+					resource.TestCheckResourceAttr("data.vcd_resource_list.vapp_networks", "list.#", "1"),
+					checkListForKnownItem("vapp_networks", "vapp-net", "", true, false),
+					resource.TestCheckResourceAttr("data.vcd_resource_list.vapp_org_networks", "list.#", "3"),
+					checkListForKnownItem("vapp_org_networks", "multinic-net", "", true, false),
+					checkListForKnownItem("vapp_org_networks", "multinic-net2", "", true, false),
+					checkListForKnownItem("vapp_org_networks", "vapp-routed-net", "", true, false),
 				),
 			},
 			// Step 2 - update (remove all NICs)
@@ -498,6 +515,22 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     name              = vcd_vapp_org_network.vappAttachedRoutedNet2.org_network_name
     ip_allocation_mode = "POOL"
   }
+}
+
+data "vcd_resource_list" "vapp_networks" {
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  name          = "vapp_networks"
+  parent        = "{{.VAppName}}"
+  resource_type = "vcd_vapp_network"
+}
+
+data "vcd_resource_list" "vapp_org_networks" {
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  name          = "vapp_org_networks"
+  parent        = "{{.VAppName}}"
+  resource_type = "vcd_vapp_org_network"
 }
 `
 

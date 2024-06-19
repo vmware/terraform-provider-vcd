@@ -71,7 +71,7 @@ resource "vcd_rde_type_behavior" "behavior_override" {
 resource "vcd_rde_type_behavior_acl" "acl1" {
   rde_type_id      = vcd_rde_type.type.id
   behavior_id      = vcd_rde_type_behavior.behavior_override.id
-  access_level_ids = ["urn:vcloud:accessLevel:FullControl", "urn:vcloud:accessLevel:ReadOnly"]
+  access_level_ids = ["urn:vcloud:accessLevel:ReadOnly"]
 }
 
 # Access levels for the Behavior defined in a RDE Interface that is inherited by the RDE Type
@@ -89,7 +89,9 @@ The following arguments are supported:
 * `rde_type_id` - (Required) The ID of the RDE Type
 * `behavior_id` - (Required) The ID of either a [RDE Type Behavior](/providers/vmware/vcd/latest/docs/resources/rde_type_behavior)
   or a [RDE Interface Behavior](/providers/vmware/vcd/latest/docs/resources/rde_interface_behavior)
-* `access_level_ids` - (Required) Set of Access Level IDs to associate to the Behavior defined in `behavior_id` argument
+* `access_level_ids` - (Required) Set of Access Level IDs to associate to the Behavior defined in `behavior_id` argument.
+  Take into account that `"urn:vcloud:accessLevel:FullControl"` implicitly contains `"urn:vcloud:accessLevel:ReadOnly"`.
+  To avoid undesired updates during Terraform plans, avoid setting redundant access levels.
 
 ## Importing
 

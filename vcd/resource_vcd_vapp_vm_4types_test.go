@@ -63,6 +63,9 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
+
+	params["FuncName"] = t.Name() + "-step2"
+	configTextStep2 := templateFill(testAccVcdVAppVm_4types+testAccVcdVAppVm_4typesChecks, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep1)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -294,6 +297,34 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "status", "8"), // 8 - means POWERED OFF
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "status_text", "POWERED_OFF"),
 					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, "", t.Name()+"-empty-standalone-vm-copy", "POWERED_OFF"),
+				),
+			},
+			{
+				Config: configTextStep2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+
+					// checking  name collections in vApp resource
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "vapp_network_names.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "vapp_org_network_names.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "vm_names.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "vm_names.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "vm_names.0", t.Name()+"-template-vapp-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "vapp_network_names.0", t.Name()+"-template-vm"),
+					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "vapp_org_network_names.0", t.Name()),
+
+					// checking  name collections in vApp data source
+					resource.TestCheckResourceAttr("data.vcd_vapp.template-vm-ds", "vapp_network_names.#", "1"),
+					resource.TestCheckResourceAttr("data.vcd_vapp.template-vm-ds", "vapp_org_network_names.#", "1"),
+					resource.TestCheckResourceAttr("data.vcd_vapp.template-vm-ds", "vm_names.#", "1"),
+					resource.TestCheckResourceAttr("data.vcd_vapp.template-vm-ds", "vm_names.0", t.Name()+"-template-vapp-vm"),
+					resource.TestCheckResourceAttr("data.vcd_vapp.template-vm-ds", "vapp_network_names.0", t.Name()+"-template-vm"),
+					resource.TestCheckResourceAttr("data.vcd_vapp.template-vm-ds", "vapp_org_network_names.0", t.Name()),
+
+					// checking  name collections in vcd_resource_list
+					resource.TestCheckResourceAttr("data.vcd_resource_list.vapp_networks", "list.#", "1"),
+					checkListForKnownItem("vapp_networks", t.Name()+"-template-vm", "", true, false),
+					resource.TestCheckResourceAttr("data.vcd_resource_list.vapp_org_networks", "list.#", "1"),
+					checkListForKnownItem("vapp_org_networks", t.Name(), "", true, false),
 				),
 			},
 		},
@@ -731,6 +762,30 @@ resource "vcd_vm" "empty-vm-copy" {
   }
 
   prevent_update_power_off = true
+}
+`
+
+const testAccVcdVAppVm_4typesChecks = `
+data "vcd_vapp" "template-vm-ds" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  name = vcd_vapp.template-vm.name
+}
+
+data "vcd_resource_list" "vapp_networks" {
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  name          = "vapp_networks"
+  parent        = data.vcd_vapp.template-vm-ds.name
+  resource_type = "vcd_vapp_network"
+}
+
+data "vcd_resource_list" "vapp_org_networks" {
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  name          = "vapp_org_networks"
+  parent        = data.vcd_vapp.template-vm-ds.name
+  resource_type = "vcd_vapp_org_network"
 }
 `
 
