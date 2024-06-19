@@ -109,7 +109,7 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Description:      "AllocationVApp, AllocationPool, Flex: Specifies the clock frequency, in MHz, for any virtual CPU that is allocated to a VM. Minimum is 256MHz",
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(256)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.Any(validation.IntBetween(0, 0), validation.IntAtLeast(256))),
 						},
 						"memory_allocated": {
 							Type:             schema.TypeInt,

@@ -4,8 +4,8 @@ github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migc
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
 github.com/ProtonMail/go-crypto v1.1.0-alpha.2 h1:bkyFVUP+ROOARdgCiJzNQo2V2kiB97LyUpzH9P6Hrlg=
 github.com/ProtonMail/go-crypto v1.1.0-alpha.2/go.mod h1:rA3QumHc/FZ8pAHreoekgiAbzpNsfQAosU5td4SnOrE=
-github.com/adambarreiro/go-vcloud-director/v2 v2.17.0-alpha.1.0.20240619101545-b561b5bb2054 h1:PrlHSVddRoWhzANeC0J7tKYwYMR51asC1Jpffqnn4i8=
-github.com/adambarreiro/go-vcloud-director/v2 v2.17.0-alpha.1.0.20240619101545-b561b5bb2054/go.mod h1:vbuNYzuADDBFhi9i2dIKWeNxMK1VFF0dACq01amYBIM=
+github.com/adambarreiro/go-vcloud-director/v2 v2.17.0-alpha.1.0.20240619134850-05ce5ba67413 h1:aBDbkUau4D2q5aptXv5CWIh+lB/+o73qW5ZDHyEGrg8=
+github.com/adambarreiro/go-vcloud-director/v2 v2.17.0-alpha.1.0.20240619134850-05ce5ba67413/go.mod h1:vbuNYzuADDBFhi9i2dIKWeNxMK1VFF0dACq01amYBIM=
 github.com/agext/levenshtein v1.2.2 h1:0S/Yg6LYmFJ5stwQeRp6EeOcCbj7xiqQSdNelsXvaqE=
 github.com/agext/levenshtein v1.2.2/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
 github.com/apparentlymart/go-textseg/v12 v12.0.0/go.mod h1:S/4uRK2UtaQttw1GenVJEynmyUenKwP++x/+DdGV/Ec=
