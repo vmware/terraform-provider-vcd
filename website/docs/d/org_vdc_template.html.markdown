@@ -13,7 +13,8 @@ Can be used by System Administrators or tenants, only if the template is publish
 
 Supported in provider *v3.13+*
 
-~> Can only read VDC Templates that use NSX-T
+-> This data source is intended to read VDC Templates that use NSX-T, although it may be used
+to retrieve NSX-V ones, that may have some information missing
 
 ## Example Usage
 
