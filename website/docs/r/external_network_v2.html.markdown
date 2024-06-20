@@ -39,6 +39,28 @@ resource "vcd_external_network_v2" "ext-net-nsxt-t0" {
 }
 ```
 
+## Example Usage (NSX-T Tier 0 Router backed with topology intentions)
+
+```hcl
+resource "vcd_external_network_v2" "ext-net-nsxt-t0" {
+  name        = "nsxt-external-network"
+  description = "IP Space backed"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  use_ip_spaces = true
+  # optional argument to dedicate network to a particular Org
+  dedicated_org_id = data.vcd_org.org1.id
+
+  # Topology intention settings require VCD 10.5.1+
+  nat_and_firewall_service_intention = "PROVIDER_AND_EDGE_GATEWAY"
+  route_advertisement_intention      = "ALL_NETWORKS_ADVERTISED"
+}
+```
+
 ## Example Usage (NSX-T Tier 0 Router backed External Network)
 
 ```hcl
@@ -195,6 +217,26 @@ The following arguments are supported:
 * `ip_scope` - (Optional) One or more IP scopes for the network. See [IP Scope](#ipscope) below for details.
 * `vsphere_network` - (Optional) One or more blocks of [vSphere Network](#vspherenetwork)..
 * `nsxt_network` - (Optional) NSX-T network definition. See [NSX-T Network](#nsxtnetwork) below for details.
+* `nat_and_firewall_service_intention` - (Optional; *v3.13+*; *VCD 10.5.1+*) Configure intentions for
+ NAT and Firewall rule configuration:
+ * `EDGE_GATEWAY` - Allow management of NAT and firewall rules only on Edge Gateways. This is the
+   default behavior.
+ * `PROVIDER_GATEWAY` - Allow management of NAT and firewall rules only on Provider Gateways.
+ * `PROVIDER_AND_EDGE_GATEWAY` - Allow management of NAT and firewall rules on both the Provider and
+ Edge gateways.
+* `route_advertisement_intention` - (Optional; *v3.13+*; *VCD 10.5.1+*) Configure intentions for
+ Org VDC network Route Advertisement:
+ * `IP_SPACE_UPLINKS_ADVERTISED_STRICT` - All networks within IP Space associated with IP Space
+  Uplink will be advertised by default. This can be changed on an individual network level later,
+  if necessary. All other networks outside of IP Spaces associated with IP Space Uplinks cannot be
+  configured to be advertised. This is the default behavior.
+ * `IP_SPACE_UPLINKS_ADVERTISED_FLEXIBLE` - All networks within IP Space associated with IP Space
+	Uplink will be advertised by default. This can be changed on an individual network level later,
+	if necessary. All other networks outside of IP Spaces associated with IP Space Uplinks are not
+	advertised by default but can be configured to be advertised after creation.
+ * `ALL_NETWORKS_ADVERTISED` - All networks, regardless on whether they fall inside of any IP Spaces
+	associated with IP Space Uplinks, will be advertised by default. This can be changed on an
+	individual network level later, if necessary.
 
 <a id="ipscope"></a>
 ## IP Scope

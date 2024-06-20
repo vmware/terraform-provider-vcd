@@ -191,35 +191,45 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Default:          1, // As suggested in UI
-							Description:      "The number of nodes that this worker pool has. Must be higher than or equal to 0",
+							Description:      "The number of nodes that this worker pool has. Must be higher than or equal to 0. Ignored if 'autoscaler_max_replicas' and 'autoscaler_min_replicas' are set",
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 						},
 						"disk_size_gi": {
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Default:          20, // As suggested in UI
-							Description:      "Disk size, in Gibibytes (Gi), for the control plane nodes",
+							Description:      "Disk size, in Gibibytes (Gi), for this worker pool",
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(20)),
 						},
 						"sizing_policy_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "VM Sizing policy for the control plane nodes",
+							Description: "VM Sizing policy for this worker pool",
 						},
 						"placement_policy_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "VM Placement policy for the control plane nodes",
+							Description: "VM Placement policy for this worker pool",
 						},
 						"vgpu_policy_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "vGPU policy for the control plane nodes",
+							Description: "vGPU policy for this worker pool",
 						},
 						"storage_profile_id": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "Storage profile for the control plane nodes",
+							Description: "Storage profile for this worker pool",
+						},
+						"autoscaler_max_replicas": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "Maximum replicas for the autoscaling capabilities of this worker pool. Requires 'autoscaler_min_replicas'",
+						},
+						"autoscaler_min_replicas": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "Minimum replicas for the autoscaling capabilities of this worker pool. Requires 'autoscaler_max_replicas'",
 						},
 					},
 				},
@@ -454,12 +464,34 @@ func resourceVcdCseKubernetesClusterCreate(ctx context.Context, d *schema.Resour
 		workerPool := w.(map[string]interface{})
 		workerPools[i] = govcd.CseWorkerPoolSettings{
 			Name:              workerPool["name"].(string),
-			MachineCount:      workerPool["machine_count"].(int),
 			DiskSizeGi:        workerPool["disk_size_gi"].(int),
 			SizingPolicyId:    workerPool["sizing_policy_id"].(string),
 			PlacementPolicyId: workerPool["placement_policy_id"].(string),
 			VGpuPolicyId:      workerPool["vgpu_policy_id"].(string),
 			StorageProfileId:  workerPool["storage_profile_id"].(string),
+		}
+		autoscalerMaxReplicas := workerPool["autoscaler_max_replicas"].(int)
+		autoscalerMinReplicas := workerPool["autoscaler_min_replicas"].(int)
+
+		if autoscalerMaxReplicas > 0 && autoscalerMinReplicas <= 0 {
+			return diag.Errorf("Worker Pool '%s' 'autoscaler_max_replicas=%d' requires 'autoscaler_min_replicas=%d' to be higher than 0", workerPools[i].Name, autoscalerMaxReplicas, autoscalerMinReplicas)
+		}
+		if autoscalerMinReplicas > 0 && autoscalerMaxReplicas <= 0 {
+			return diag.Errorf("Worker Pool '%s' 'autoscaler_min_replicas=%d' requires 'autoscaler_max_replicas=%d' to be higher than 0", workerPools[i].Name, autoscalerMinReplicas, autoscalerMaxReplicas)
+		}
+		if autoscalerMinReplicas > autoscalerMaxReplicas {
+			return diag.Errorf("Worker Pool '%s' 'autoscaler_min_replicas=%d' should not be higher than 'autoscaler_max_replicas=%d'", workerPools[i].Name, autoscalerMinReplicas, autoscalerMaxReplicas)
+		}
+		if autoscalerMaxReplicas > 0 && autoscalerMinReplicas > 0 {
+			if workerPool["machine_count"].(int) != 0 {
+				return diag.Errorf("Worker Pool '%s' 'machine_count=%d' should be set to 0 when 'autoscaler_min_replicas=%d'/'autoscaler_max_replicas=%d'", workerPools[i].Name, workerPool["machine_count"], autoscalerMinReplicas, autoscalerMaxReplicas)
+			}
+			workerPools[i].Autoscaler = &govcd.CseWorkerPoolAutoscaler{
+				MaxSize: autoscalerMaxReplicas,
+				MinSize: autoscalerMinReplicas,
+			}
+		} else {
+			workerPools[i].MachineCount = workerPool["machine_count"].(int)
 		}
 	}
 	creationData.WorkerPools = workerPools
@@ -560,7 +592,31 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 					if oldPool["storage_profile_id"] != newPool["storage_profile_id"] {
 						return diag.Errorf("'storage_profile_id' of Worker Pool '%s' cannot be changed", oldPool["name"])
 					}
-					changePoolsPayload[newPool["name"].(string)] = govcd.CseWorkerPoolUpdateInput{MachineCount: newPool["machine_count"].(int)}
+					autoscalerMaxReplicas := newPool["autoscaler_max_replicas"].(int)
+					autoscalerMinReplicas := newPool["autoscaler_min_replicas"].(int)
+
+					if autoscalerMaxReplicas > 0 && autoscalerMinReplicas <= 0 {
+						return diag.Errorf("Worker Pool '%s' 'autoscaler_max_replicas=%d' requires 'autoscaler_min_replicas=%d' to be higher than 0", newPool["name"], autoscalerMaxReplicas, autoscalerMinReplicas)
+					}
+					if autoscalerMinReplicas > 0 && autoscalerMaxReplicas <= 0 {
+						return diag.Errorf("Worker Pool '%s' 'autoscaler_min_replicas=%d' requires 'autoscaler_max_replicas=%d' to be higher than 0", newPool["name"], autoscalerMinReplicas, autoscalerMaxReplicas)
+					}
+					if autoscalerMinReplicas > autoscalerMaxReplicas {
+						return diag.Errorf("Worker Pool '%s' 'autoscaler_min_replicas=%d' should not be higher than 'autoscaler_max_replicas=%d'", newPool["name"], autoscalerMinReplicas, autoscalerMaxReplicas)
+					}
+					wpUpdateInput := govcd.CseWorkerPoolUpdateInput{}
+					if autoscalerMaxReplicas > 0 && autoscalerMinReplicas > 0 {
+						if newPool["machine_count"].(int) != 0 {
+							return diag.Errorf("Worker Pool '%s' 'machine_count=%d' should be set to 0 when 'autoscaler_min_replicas=%d'/'autoscaler_max_replicas=%d'", newPool["name"], newPool["machine_count"], autoscalerMinReplicas, autoscalerMaxReplicas)
+						}
+						wpUpdateInput.Autoscaler = &govcd.CseWorkerPoolAutoscaler{
+							MaxSize: autoscalerMaxReplicas,
+							MinSize: autoscalerMinReplicas,
+						}
+					} else {
+						wpUpdateInput.MachineCount = newPool["machine_count"].(int)
+					}
+					changePoolsPayload[newPool["name"].(string)] = wpUpdateInput
 					existingPools[newPool["name"].(string)] = true // Register this pool as not new
 				}
 			}
@@ -580,15 +636,38 @@ func resourceVcdCseKubernetesUpdate(ctx context.Context, d *schema.ResourceData,
 		for _, n := range newPools.([]interface{}) {
 			newPool := n.(map[string]interface{})
 			if _, ok := existingPools[newPool["name"].(string)]; !ok {
-				addPoolsPayload = append(addPoolsPayload, govcd.CseWorkerPoolSettings{
+				wp := govcd.CseWorkerPoolSettings{
 					Name:              newPool["name"].(string),
-					MachineCount:      newPool["machine_count"].(int),
 					DiskSizeGi:        newPool["disk_size_gi"].(int),
 					SizingPolicyId:    newPool["sizing_policy_id"].(string),
 					PlacementPolicyId: newPool["placement_policy_id"].(string),
 					VGpuPolicyId:      newPool["vgpu_policy_id"].(string),
 					StorageProfileId:  newPool["storage_profile_id"].(string),
-				})
+				}
+				autoscalerMaxReplicas := newPool["autoscaler_max_replicas"].(int)
+				autoscalerMinReplicas := newPool["autoscaler_min_replicas"].(int)
+
+				if autoscalerMaxReplicas > 0 && autoscalerMinReplicas <= 0 {
+					return diag.Errorf("Worker Pool '%s' 'autoscaler_max_replicas=%d' requires 'autoscaler_min_replicas=%d' to be higher than 0", wp.Name, autoscalerMaxReplicas, autoscalerMinReplicas)
+				}
+				if autoscalerMinReplicas > 0 && autoscalerMaxReplicas <= 0 {
+					return diag.Errorf("Worker Pool '%s' 'autoscaler_min_replicas=%d' requires 'autoscaler_max_replicas=%d' to be higher than 0", wp.Name, autoscalerMinReplicas, autoscalerMaxReplicas)
+				}
+				if autoscalerMinReplicas > autoscalerMaxReplicas {
+					return diag.Errorf("Worker Pool '%s' 'autoscaler_min_replicas=%d' should not be higher than 'autoscaler_max_replicas=%d'", wp.Name, autoscalerMinReplicas, autoscalerMaxReplicas)
+				}
+				if autoscalerMaxReplicas > 0 && autoscalerMinReplicas > 0 {
+					if newPool["machine_count"].(int) != 0 {
+						return diag.Errorf("Worker Pool '%s' 'machine_count=%d' should be set to 0 when 'autoscaler_min_replicas=%d'/'autoscaler_max_replicas=%d'", wp.Name, newPool["machine_count"].(int), autoscalerMinReplicas, autoscalerMaxReplicas)
+					}
+					wp.Autoscaler = &govcd.CseWorkerPoolAutoscaler{
+						MaxSize: autoscalerMaxReplicas,
+						MinSize: autoscalerMinReplicas,
+					}
+				} else {
+					wp.MachineCount = newPool["machine_count"].(int)
+				}
+				addPoolsPayload = append(addPoolsPayload, wp)
 			}
 		}
 		payload.NewWorkerPools = &addPoolsPayload
@@ -719,6 +798,10 @@ func saveClusterDataToState(d *schema.ResourceData, vcdClient *VCDClient, cluste
 			"placement_policy_id": workerPool.PlacementPolicyId,
 			"storage_profile_id":  workerPool.StorageProfileId,
 			"disk_size_gi":        workerPool.DiskSizeGi,
+		}
+		if workerPool.Autoscaler != nil {
+			workerPoolBlocks[i]["autoscaler_max_replicas"] = workerPool.Autoscaler.MaxSize
+			workerPoolBlocks[i]["autoscaler_min_replicas"] = workerPool.Autoscaler.MinSize
 		}
 	}
 	// The "worker_pool" argument is a TypeList, not a TypeSet (check the Schema comments for context),

@@ -109,7 +109,7 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 							Type:             schema.TypeInt,
 							Optional:         true,
 							Description:      "AllocationVApp, AllocationPool, Flex: Specifies the clock frequency, in MHz, for any virtual CPU that is allocated to a VM. Minimum is 256MHz",
-							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(256)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.Any(validation.IntBetween(0, 0), validation.IntAtLeast(256))),
 						},
 						"memory_allocated": {
 							Type:             schema.TypeInt,
@@ -558,9 +558,6 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 	}
 	if err != nil {
 		return diag.FromErr(err)
-	}
-	if vdcTemplate.VdcTemplate.NetworkBackingType != "NSX_T" {
-		return diag.Errorf("could not read VDC Template with ID '%s', '%s' network provider is not supported", vdcTemplate.VdcTemplate.ID, vdcTemplate.VdcTemplate.NetworkBackingType)
 	}
 	if vdcTemplate.VdcTemplate.VdcTemplateSpecification == nil {
 		return diag.Errorf("could not read VDC Template with ID '%s', its specification is nil", vdcTemplate.VdcTemplate.ID)

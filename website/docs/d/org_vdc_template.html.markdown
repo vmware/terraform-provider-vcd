@@ -13,7 +13,7 @@ Can be used by System Administrators or tenants, only if the template is publish
 
 Supported in provider *v3.13+*
 
-~> Can only read VDC Templates that use NSX-T
+-> VDC Templates that do not use NSX-T can be read, but may be missing some details.
 
 ## Example Usage
 
