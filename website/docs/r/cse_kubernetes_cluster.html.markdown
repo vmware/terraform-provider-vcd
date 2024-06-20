@@ -174,12 +174,78 @@ Each block asks for the following arguments:
 
 * `name` - (Required) The name of the worker pool. It must be unique per cluster, and must contain only lowercase alphanumeric characters or "-",
   start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters
-* `machine_count` - (Optional) The number of VMs that the worker pool has. Must be higher than `0`. Defaults to `1`
+* `machine_count` - (Optional) The number of VMs that the worker pool has. Must be higher than `0`, unless `autoscaler_max_replicas` and `autoscaler_min_replicas` are set,
+  in this case it must be `0` (in this particular case, this value will not be used). Defaults to `1`
 * `disk_size_gi` - (Optional) Disk size, in **Gibibytes (Gi)**, for the worker pool VMs. Must be at least `20`. Defaults to `20`
 * `sizing_policy_id` - (Optional) VM Sizing policy for the control plane VMs. Must be one of the ones made available during CSE installation
 * `placement_policy_id` - (Optional) VM Placement policy for the worker pool VMs. If this one is set, `vgpu_policy_id` must be empty
 * `vgpu_policy_id` - (Optional) vGPU policy for the worker pool VMs. If this one is set, `placement_policy_id` must be empty
 * `storage_profile_id` - (Optional) Storage profile for the worker pool VMs
+* `autoscaler_max_replicas` - (Optional; *v3.13+*) Together with `autoscaler_min_replicas`, and **only when `machine_count=0` (or unset)**, defines the maximum number of nodes that
+  the Kubernetes Autoscaler will deploy for this worker pool. Read the section below for details.
+* `autoscaler_min_replicas` - (Optional; *v3.13+*) Together with `autoscaler_max_replicas`, and **only when `machine_count=0` (or unset)**, defines the minimum number of nodes that
+  the Kubernetes Autoscaler will deploy for this worker pool. Read the section below for details.
+
+#### Worker pools with Kubernetes Autoscaler enabled
+
+-> Supported in provider *v3.13+*
+
+~> The Autoscaler can only work in clusters with Internet access, as it needs to download the Docker image from
+k8s.gcr.io/autoscaling/cluster-autoscaler
+
+The **Kubernetes Autoscaler** is a component that automatically adjusts the size of a Kubernetes Cluster so that all pods have a
+place to run and there are no unneeded nodes. You can read more about it [here](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/clusterapi/README.md).
+
+This provider has two arguments for the `worker_pool` block since version v3.13.0: `autoscaler_max_replicas` and `autoscaler_min_replicas`.
+They allow to define the maximum and minimum amount of nodes of a pool, respectively. They specify the autoscaling
+capabilities of the given Worker Pool as defined [here](https://www.vmware.com/content/dam/digitalmarketing/vmware/en/pdf/docs/vmw-whitepaper-cluster-auto-scaler.pdf).
+
+If at least **one** `worker_pool` block has `autoscaler_max_replicas` and `autoscaler_min_replicas` defined (and subsequently, `machine_count=0`), 
+the provider will deploy the Kubernetes Autoscaler in the cluster `kube-system` namespace, with the following components:
+
+* A `Deployment`, this is the Autoscaler deployment definition
+* Dependencies for the Autoscaler: A `ServiceAccount`, a `ClusterRole`, a `Role` and a `ClusterRoleBinding`
+
+These elements are the ones defined in [the documentation](https://www.vmware.com/content/dam/digitalmarketing/vmware/en/pdf/docs/vmw-whitepaper-cluster-auto-scaler.pdf).
+
+The Kubernetes Autoscaler will be deployed only **once**, as soon as **one** `worker_pool` requires it, and it will be scaled up/down
+depending on the requirements of the worker pools throughout their lifecycle: If **all** of the `worker_pool` blocks unset the autoscaling
+arguments during following updates, the Autoscaler deployment will be **scaled down to 0 replicas**.
+If one of the `worker_pool` blocks requires autoscaling again, it will be **scaled up to 1 replica**.
+
+~> From the [FAQ](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md), be aware that "by default, Cluster Autoscaler does
+not enforce the node group size. If your cluster is below the minimum number of nodes configured for CA, it will be scaled up only in presence of
+unschedulable pods. On the other hand, if your cluster is above the minimum number of nodes configured for CA, it will be scaled down only if it
+has unneeded nodes."
+
+```hcl
+resource "vcd_cse_kubernetes_cluster" "my_cluster" {
+  name = "test"
+  # ... Omitted
+
+  control_plane {
+    # ... Omitted
+  }
+
+  worker_pool {
+    name               = "node-pool-1"
+    disk_size_gi       = 20
+    sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id
+    storage_profile_id = data.vcd_storage_profile.sp.id
+
+    # Enables the Kubernetes Autoscaler for this Worker Pool
+    autoscaler_max_replicas = 10
+    autoscaler_min_replicas = 2
+  }
+  worker_pool {
+    name               = "node-pool-1"
+    machine_count      = 1 # Regular static replicas
+    disk_size_gi       = 20
+    sizing_policy_id   = data.vcd_vm_sizing_policy.tkg_small.id
+    storage_profile_id = data.vcd_storage_profile.sp.id
+  }
+}
+```
 
 ### Default Storage Class
 
@@ -222,7 +288,7 @@ The following attributes are available for consumption as read-only attributes a
 Only the following arguments can be updated:
 
 * `kubernetes_template_id`: The cluster must allow upgrading to the new TKG version. You can check `supported_upgrades` attribute to know
-  the available OVAs.
+  the available OVAs. Upgrading the Kubernetes version will also upgrade the Cluster Autoscaler to its corresponding minor version, if it is being used by any `worker_pool`.
 * `machine_count` of the `control_plane`: Supports scaling up and down. Nothing else can be updated.
 * `machine_count` of any `worker_pool`: Supports scaling up and down. Use caution when resizing down to 0 nodes.
   The cluster must always have at least 1 running node, or else the cluster will enter an unrecoverable error state.
@@ -236,8 +302,7 @@ be scaled down to zero.
 
 Updating any other argument will delete the existing cluster and create a new one, when the Terraform plan is applied.
 
-Upgrading CSE version with `cse_version` is not supported as this operation would require human intervention,
-as stated [in the official documentation](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1/VMware-Cloud-Director-Container-Service-Extension-Using-Tenant-4.1/GUID-092C40B4-D0BA-4B90-813F-D36929F2F395.html).
+Modifying the CSE version of a cluster with `cse_version` is not supported.
 
 ## Accessing the Kubernetes cluster
 
