@@ -36,6 +36,11 @@ func resourceVcdSolutionAddonInstance() *schema.Resource {
 				ForceNew:    true,
 				Description: "Solution Add-On Instance Name",
 			},
+			"validate_only_required_inputs": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Defines if all or only required inputs should be validated",
+			},
 			"input": {
 				Type:        schema.TypeMap,
 				Optional:    true,
@@ -92,7 +97,8 @@ func resourceVcdSolutionAddonInstanceCreate(ctx context.Context, d *schema.Resou
 	// Validation will print field information and missing fields as described in the Solution
 	// Add-On manifest. Due to RDEs being very sensitive to input - user has to provide all field
 	// values instead of only required ones in the schema.
-	err = addOn.ValidateInputs(convertedInputs, false, false)
+	validateOnlyRequiredInputs := d.Get("validate_only_required_inputs").(bool)
+	err = addOn.ValidateInputs(convertedInputs, validateOnlyRequiredInputs, false)
 	if err != nil {
 		return diag.Errorf("dynamic creation input field validation error: %s", err)
 	}
@@ -111,7 +117,8 @@ func resourceVcdSolutionAddonInstanceCreate(ctx context.Context, d *schema.Resou
 func resourceVcdSolutionAddonInstanceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// delete_input are only effective for deletion time therefore they must be updateable.
 	// In reality this is a noop, but Terraform has to
-	if !d.HasChangeExcept("delete_input") {
+	// validate_only_required_inputs might need to be changed on demand
+	if !d.HasChangesExcept("delete_input", "validate_only_required_inputs") {
 		return nil
 	}
 
@@ -187,7 +194,8 @@ func resourceVcdSolutionAddonInstanceDelete(ctx context.Context, d *schema.Resou
 	// Validation will print field information and missing fields as described in the Add-On
 	// manifest. Due to RDEs being very sensitive to input - user has to provide all field values
 	// instead of only required ones in the schema.
-	err = addOn.ValidateInputs(convertedInputs, false, true)
+	validateOnlyRequiredInputs := d.Get("validate_only_required_inputs").(bool)
+	err = addOn.ValidateInputs(convertedInputs, validateOnlyRequiredInputs, true)
 	if err != nil {
 		return diag.Errorf("dynamic deletion field validation error: %s", err)
 	}
