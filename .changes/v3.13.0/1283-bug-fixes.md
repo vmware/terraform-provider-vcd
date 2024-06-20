@@ -1,0 +1,1 @@
+* Fix resource `vcd_nsxt_alb_settings` so update operations don't fail in VCD 10.6+ [GH-1283]
