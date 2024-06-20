@@ -148,6 +148,16 @@ func datasourceVcdCseKubernetesCluster() *schema.Resource {
 							Computed:    true,
 							Description: "Storage profile of the control plane nodes",
 						},
+						"autoscaler_max_replicas": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Maximum replicas of the autoscaling capabilities of this worker pool",
+						},
+						"autoscaler_min_replicas": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Minimum replicas of the autoscaling capabilities of this worker pool",
+						},
 					},
 				},
 			},

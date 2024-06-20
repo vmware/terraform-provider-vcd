@@ -14,6 +14,8 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
+const defaultReadLimitOfUnusedIps = 1000000 // 1 million
+
 var nsxtEdgeSubnetRange = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"start_address": {
@@ -214,6 +216,12 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Number of unused IP addresses",
 			},
+			"ip_count_read_limit": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     defaultReadLimitOfUnusedIps,
+				Description: fmt.Sprintf("How many maximum IPs should be reported in 'used_ipcount' and 'unused_ip_count'. Default %d, 0 - unlimited", defaultReadLimitOfUnusedIps),
+			},
 			"use_ip_spaces": {
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -305,6 +313,12 @@ func resourceVcdNsxtEdgeGatewayCreate(ctx context.Context, d *schema.ResourceDat
 
 func resourceVcdNsxtEdgeGatewayUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	log.Printf("[TRACE] NSX-T Edge Gateway update initiated")
+
+	// ip_count_read_limit is only a setting that is applicable for read, it does not update
+	// anything
+	if !d.HasChangesExcept("ip_count_read_limit") {
+		return resourceVcdNsxtEdgeGatewayRead(ctx, d, meta)
+	}
 
 	// `vdc` field is deprecated. `vdc` value should not be changed unless it is removal of the
 	// field at all to allow easy migration to `owner_id` path
@@ -420,6 +434,7 @@ func resourceVcdNsxtEdgeGatewayImport(_ context.Context, d *schema.ResourceData,
 	// Only setting Org because VDC is a deprecated field. `owner_id` is set by resourceVcdNsxtEdgeGatewayRead by itself
 	dSet(d, "org", orgName)
 
+	dSet(d, "ip_count_read_limit", defaultReadLimitOfUnusedIps)
 	d.SetId(edge.EdgeGateway.ID)
 
 	return []*schema.ResourceData{d}, nil
@@ -941,18 +956,15 @@ func setNsxtEdgeGatewayData(vcdClient *VCDClient, edgeGateway *govcd.NsxtEdgeGat
 		}
 
 		// Used and unused IPs are reported for all Uplink (NSXT_TIER0 and IMPORTED_T_LOGICAL_SWITCH ones)
-		unusedIps, err := edgeGateway.GetAllUnusedExternalIPAddresses(false)
+		// ip_count_read_limit
+		readLimitUnusedIpCount := d.Get("ip_count_read_limit").(int) // setting limit to processing IPv6 count
+		usedIps, unusedIps, err := edgeGateway.GetUsedAndUnusedExternalIPAddressCountWithLimit(false, int64(readLimitUnusedIpCount))
 		if err != nil {
 			return fmt.Errorf("error getting NSX-T Edge Gateway unused IPs after read: %s", err)
 		}
 
-		usedIps, err := edgeGateway.GetUsedIpAddressSlice(false)
-		if err != nil {
-			return fmt.Errorf("error getting NSX-T Edge Gateway used IPs after read: %s", err)
-		}
-
-		dSet(d, "used_ip_count", len(usedIps))
-		dSet(d, "unused_ip_count", len(unusedIps))
+		dSet(d, "used_ip_count", usedIps)
+		dSet(d, "unused_ip_count", unusedIps)
 	}
 
 	// store attached NSX-T Segment backed External Networks only for VCD 10.4.1+ (some required
