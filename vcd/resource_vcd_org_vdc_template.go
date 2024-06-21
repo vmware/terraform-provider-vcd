@@ -204,20 +204,20 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 							Description:      "Allocated IPs for the Edge Gateway",
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(0, 100)),
 						},
-						"network_name": {
+						"routed_network_name": {
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "Name of the network to create with the Edge Gateway",
+							Description: "Name of the routed network to create with the Edge Gateway",
 						},
-						"network_description": {
+						"routed_network_description": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "Description of the network to create with the Edge Gateway",
+							Description: "Description of the routed network to create with the Edge Gateway",
 						},
-						"network_gateway_cidr": {
+						"routed_network_gateway_cidr": {
 							Type:             schema.TypeString,
 							Required:         true,
-							Description:      "CIDR of the Edge Gateway for the created network",
+							Description:      "CIDR of the Edge Gateway for the created routed network",
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IsCIDR),
 						},
 						"static_ip_pool": {
@@ -375,9 +375,9 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 			}
 		}
 
-		ip, cidr, err := net.ParseCIDR(gatewayBlock["network_gateway_cidr"].(string))
+		ip, cidr, err := net.ParseCIDR(gatewayBlock["routed_network_gateway_cidr"].(string))
 		if err != nil {
-			return diag.Errorf("could not %s VDC Template: error parsing 'network_gateway_cidr': %s", operation, err)
+			return diag.Errorf("could not %s VDC Template: error parsing 'routed_network_gateway_cidr': %s", operation, err)
 		}
 		prefixLength, _ := cidr.Mask.Size()
 
@@ -400,8 +400,8 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 				},
 			},
 			Network: &types.OrgVDCNetwork{
-				Name:        gatewayBlock["network_name"].(string),
-				Description: gatewayBlock["network_description"].(string),
+				Name:        gatewayBlock["routed_network_name"].(string),
+				Description: gatewayBlock["routed_network_description"].(string),
 				Configuration: &types.NetworkConfiguration{
 					IPScopes: &types.IPScopes{IPScope: []*types.IPScope{
 						{
@@ -636,10 +636,10 @@ func genericVcdVdcTemplateRead(_ context.Context, d *schema.ResourceData, meta i
 		ec["name"] = gatewayConfiguration.Gateway.Name
 		ec["description"] = gatewayConfiguration.Gateway.Description
 		ec["ip_allocation_count"] = gatewayConfiguration.Gateway.Configuration.GatewayInterfaces.GatewayInterface[0].QuickAddAllocatedIpCount
-		ec["network_name"] = gatewayConfiguration.Network.Name
-		ec["network_description"] = gatewayConfiguration.Network.Description
+		ec["routed_network_name"] = gatewayConfiguration.Network.Name
+		ec["routed_network_description"] = gatewayConfiguration.Network.Description
 		if gatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].SubnetPrefixLengthInt != nil {
-			ec["network_gateway_cidr"] = fmt.Sprintf("%s/%d", gatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].Gateway, *vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].SubnetPrefixLengthInt)
+			ec["routed_network_gateway_cidr"] = fmt.Sprintf("%s/%d", gatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].Gateway, *vdcTemplate.VdcTemplate.VdcTemplateSpecification.GatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].SubnetPrefixLengthInt)
 		}
 		if gatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].IPRanges != nil {
 			ipRanges := make([]interface{}, len(gatewayConfiguration.Network.Configuration.IPScopes.IPScope[0].IPRanges.IPRange))
