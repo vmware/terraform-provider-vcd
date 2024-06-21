@@ -147,8 +147,8 @@ resource "vcd_org_vdc_template_instance" "instance" {
 
 # This one depends on the VDC Template instance, so it waits for it to be finished creating the VDC
 data "vcd_org_vdc" "new_vdc" {
-	org  = data.vcd_org.org.name
-    name = vcd_org_vdc_template_instance.instance.name
+  org  = data.vcd_org.org.name
+  name = vcd_org_vdc_template_instance.instance.name
 }
 `
 
