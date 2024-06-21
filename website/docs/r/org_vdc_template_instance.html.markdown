@@ -92,7 +92,8 @@ The following arguments are supported:
 ## Attribute Reference
 
 There are no read-only attributes. However, after the `vcd_org_vdc_template_instance` resource is created successfully,
-the identifier of the new VDC is saved in the Terraform state as the `vcd_org_vdc_template_instance` resource ID.
+the identifier of the new VDC is saved in the Terraform state, as the `id` of the `vcd_org_vdc_template_instance` resource
+(example: `vcd_org_vdc_template_instance.my_instance.id`).
 
 ## How to manage the VDC instantiated from a template using Terraform
 
