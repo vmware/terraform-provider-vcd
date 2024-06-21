@@ -102,7 +102,18 @@ There are no read-only attributes. However, after the `vcd_org_vdc_template_inst
 the identifier of the new VDC is saved in the Terraform state, as the `id` of the `vcd_org_vdc_template_instance` resource
 (example: `vcd_org_vdc_template_instance.my_instance.id`).
 
-## How to manage the VDC instantiated from a template using Terraform
+## Deletion of the VDC Template
+
+When configuring the `vcd_org_vdc_template_instance`, one must set the required `delete_instantiated_vdc_on_removal` argument.
+* When set to `true`, removing this resource will attempt to delete the VDC that it instantiated.
+The flags `delete_force` and `delete_recursive` should be considered in this scenario, as they behave the same way as in [`vcd_org_vdc`](/providers/vmware/vcd/latest/docs/resources/org_vdc).
+* When set to `false`, removing this resource will leave the instantiated VDC behind. This is useful when the VDC is being managed
+by Terraform after importing it to a `vcd_org_vdc` (see section below), therefore this resource is not needed anymore.
+
+-> When changing `delete_instantiated_vdc_on_removal`, `delete_force` or `delete_recursive`, take into account that you need to perform a `terraform apply` to
+save the changes in these flags.
+
+## How to manage the VDC instantiated from a VDC Template using Terraform
 
 If users want to modify the new instantiated VDC, they can [import](/providers/vmware/vcd/latest/docs/guides/importing_resources#semi-automated-import-terraform-v15) it.
 In the same `.tf` file (once the VDC has been instantiated), or in a new one, we can place the following snippet: 
@@ -122,13 +133,6 @@ With a subsequent `terraform apply`, the instantiated VDC will be managed by Ter
 
 -> After importing, bear in mind that `vcd_org_vdc` will have the arguments `delete_force` and `delete_recursive` set to `false`.
 They should be modified accordingly.
-
-If the `delete_instantiated_vdc_on_removal` argument of `vcd_org_vdc_template_instance` is set to `true`, removing
-this resource will attempt to delete the VDC that it instantiated, even after the new VDC has been imported into a different
-`vcd_org_vdc`.
-
--> When changing `delete_instantiated_vdc_on_removal`, `delete_force` or `delete_recursive`, take into account that you need to perform a `terraform apply` to
-save the changes.
 
 ## Importing
 
