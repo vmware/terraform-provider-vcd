@@ -89,12 +89,14 @@ The following arguments are supported:
 * `description` - (Optional) Description of the instantiated Organization VDC
 * `org_id` - (Required) ID of the Organization where the VDC will be instantiated
 
+## Attribute Reference
+
+There are no read-only attributes. However, after the `vcd_org_vdc_template_instance` resource is created successfully,
+the identifier of the new VDC is saved in the Terraform state as the `vcd_org_vdc_template_instance` resource ID.
+
 ## How to manage the instantiated VDC using Terraform
 
-After the `vcd_org_vdc_template_instance` resource is created successfully,
-the instantiated VDC identifier is saved in Terraform state as the `vcd_org_vdc_template_instance` resource ID.
-
-If users want to modify the new VDC, they can [import](/providers/vmware/vcd/latest/docs/guides/importing_resources#semi-automated-import-terraform-v15) it.
+If users want to modify the new instantiated VDC, they can [import](/providers/vmware/vcd/latest/docs/guides/importing_resources#semi-automated-import-terraform-v15) it.
 In the same `.tf` file (once the VDC has been instantiated), or in a new one, we can place the following snippet: 
 
 ```hcl
