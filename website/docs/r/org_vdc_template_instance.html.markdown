@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_org_vdc_template_instance"
 sidebar_current: "docs-vcd-resource-org-vdc-template-instance"
 description: |-
-  Provides a resource to instantiate Organization VDC Templates in VMware Cloud Director.
+  Provides a resource to instantiate VDCs with a VDC Template in VMware Cloud Director.
 ---
 
 # vcd\_org\_vdc\_template\_instance
 
-Provides a resource to instantiate Organization VDC Templates in VMware Cloud Director.
+Provides a resource to instantiate VDCs with a [VDC Template](/providers/vmware/vcd/latest/docs/resources/org_vdc_template) in VMware Cloud Director.
 Supported in provider *v3.13+*
 
 ## Example Usage
@@ -89,11 +89,12 @@ The following arguments are supported:
 * `description` - (Optional) Description of the instantiated Organization VDC
 * `org_id` - (Required) ID of the Organization where the VDC will be instantiated
 
-## Next Steps
+## How to manage the instantiated VDC using Terraform
 
-The instantiated VDC unique identifier is saved in Terraform state as the `vcd_org_vdc_template_instance` resource ID.
+After the `vcd_org_vdc_template_instance` resource is created successfully,
+the instantiated VDC identifier is saved in Terraform state as the `vcd_org_vdc_template_instance` resource ID.
 
-If users want to modify the created VDC, they can [import](/providers/vmware/vcd/latest/docs/guides/importing_resources#semi-automated-import-terraform-v15) it.
+If users want to modify the new VDC, they can [import](/providers/vmware/vcd/latest/docs/guides/importing_resources#semi-automated-import-terraform-v15) it.
 In the same `.tf` file (once the VDC has been instantiated), or in a new one, we can place the following snippet: 
 
 ```hcl
@@ -114,3 +115,7 @@ which require the `Organization vDC: Delete` right and other implicit rights for
 If you would like to avoid this behavior, you can run `terraform state rm vcd_org_vdc_template_instance.my_instance` so the VDC stops being managed by this resource
 (it is removed from Terraform state). This way you can remove the `vcd_org_vdc_template_instance` resource without any other effect.
 
+## Importing
+
+There is no importing for this resource, as it should be used only on creation.
+The instantiated VDC can be imported using `vcd_org_vdc` by following the steps of the section above.
