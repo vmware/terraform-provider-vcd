@@ -4,10 +4,11 @@ go 1.22.3
 
 require (
 	github.com/davecgh/go-spew v1.1.1
+	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.34.0
 	github.com/kr/pretty v0.3.1
-	github.com/vmware/go-vcloud-director/v2 v2.25.0-alpha.13
+	github.com/vmware/go-vcloud-director/v2 v2.25.0-alpha.14
 )
 
 require (

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -878,6 +879,11 @@ func stringInSlice(str string, list []string) bool {
 		}
 	}
 	return false
+}
+
+// stringInSlicePartially checks whether the input string contains any of the strings of the slice
+func stringInSlicePartially(str string, list []string) bool {
+	return slices.ContainsFunc(list, func(s string) bool { return strings.Contains(str, s) })
 }
 
 // resourceVcdNsxvFirewallRuleServiceHash generates a hash for service TypeSet. Its main purpose is to

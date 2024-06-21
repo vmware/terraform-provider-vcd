@@ -1018,6 +1018,52 @@ func vappNetworkList(d *schema.ResourceData, vnt vappNetworkType, meta interface
 	return genericResourceList(d, "vcd_vapp_network", []string{org.Org.Name, vdc.Vdc.Name, vappName}, items)
 }
 
+func vdcTemplateList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	parentOrg := d.Get("parent").(string)
+	isSystemOrg := parentOrg == "" || strings.ToLower(parentOrg) == "system"
+	if isSystemOrg && !client.Client.IsSysAdmin {
+		return nil, fmt.Errorf("'parent' is not set or is 'System': Only an administrator can list all VDC Templates from System")
+	}
+
+	var items []resourceRef
+	var ancestors []string
+	if isSystemOrg {
+		adminVdcTemplates, err := client.QueryAdminVdcTemplates()
+		if err != nil {
+			return nil, err
+		}
+		for _, adminVdcTemplate := range adminVdcTemplates {
+			items = append(items, resourceRef{
+				name:   adminVdcTemplate.Name,
+				id:     extractUuid(adminVdcTemplate.HREF),
+				href:   adminVdcTemplate.HREF,
+				parent: "System",
+			})
+		}
+	} else {
+		org, err := client.GetOrg(parentOrg)
+		if err != nil {
+			return nil, err
+		}
+		vdcTemplates, err := org.QueryVdcTemplates()
+		if err != nil {
+			return nil, err
+		}
+		for _, vdcTemplate := range vdcTemplates {
+			items = append(items, resourceRef{
+				name:   vdcTemplate.Name,
+				id:     extractUuid(vdcTemplate.HREF),
+				href:   vdcTemplate.HREF,
+				parent: org.Org.Name,
+			})
+		}
+		ancestors = []string{org.Org.Name}
+	}
+	return genericResourceList(d, "vcd_org_vdc_template", ancestors, items)
+}
+
 func genericResourceList(d *schema.ResourceData, resType string, ancestors []string, refs []resourceRef) (list []string, err error) {
 	listMode := d.Get("list_mode").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
@@ -1427,6 +1473,8 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 		list, err = globalRolesList(d, meta)
 	case "vcd_library_certificate":
 		list, err = libraryCertificateList(d, meta)
+	case "vcd_org_vdc_template":
+		list, err = vdcTemplateList(d, meta)
 
 		//// place holder to remind of what needs to be implemented
 		//	case "edgegateway_vpn",
