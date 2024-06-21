@@ -105,8 +105,11 @@ the identifier of the new VDC is saved in the Terraform state, as the `id` of th
 ## Deletion of the vcd\_org\_vdc\_template\_instance resource
 
 When configuring the `vcd_org_vdc_template_instance`, one must set the required `delete_instantiated_vdc_on_removal` argument.
+
 * When set to `true`, removing this resource will attempt to delete the VDC that it instantiated.
-The flags `delete_force` and `delete_recursive` should be considered in this scenario, as they behave the same way as in [`vcd_org_vdc`](/providers/vmware/vcd/latest/docs/resources/org_vdc).
+
+  The flags `delete_force` and `delete_recursive` should be considered in this scenario, as they behave the same way as in [`vcd_org_vdc`](/providers/vmware/vcd/latest/docs/resources/org_vdc).
+
 * When set to `false`, removing this resource will leave the instantiated VDC behind. This is useful when the VDC is being managed
 by Terraform after importing it to a `vcd_org_vdc` (see section below), therefore this resource is not needed anymore.
 
