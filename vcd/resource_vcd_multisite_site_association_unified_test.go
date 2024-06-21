@@ -119,12 +119,12 @@ data "local_file" "site2_data" {
 }
 
 resource "vcd_multisite_site_association" "{{.Site1Association}}" {
-  provider                = vcd
-  association_data        = data.local_file.site2_data.content
+  provider         = vcd
+  association_data = data.local_file.site2_data.content
 }
 
 resource "vcd_multisite_site_association" "{{.Site2Association}}" {
-  provider                = {{.VcdSystem2}}
-  association_data        = data.local_file.site1_data.content
+  provider         = {{.VcdSystem2}}
+  association_data = data.local_file.site1_data.content
 }
 `
