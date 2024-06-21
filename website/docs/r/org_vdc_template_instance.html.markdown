@@ -77,6 +77,10 @@ resource "vcd_org_vdc_template_instance" "my_instance" {
   name                = "myInstantiatedVdc"
   description         = "A new VDC"
   org_id              = data.vcd_org.org.id
+
+  delete_instantiated_vdc_on_removal = true
+  delete_force                       = true
+  delete_recursive                   = true
 }
 ```
 
@@ -112,6 +116,8 @@ written. When running the `terraform plan -generate-config-out=generated_resourc
 `generated_resources.tf` with the instantiated VDC code.
 
 With a subsequent `terraform apply`, the instantiated VDC will be managed by Terraform as a normal `vcd_org_vdc` resource.
+
+!!!! TODO: After import: set delete_force and delete_recursive
 
 Please take into account that deleting the `vcd_org_vdc_template_instance` resource will attempt to **delete the instantiated VDC** it created,
 which require the `Organization vDC: Delete` right and other implicit rights for tenant users.

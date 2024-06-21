@@ -103,6 +103,18 @@ resource "vcd_org_vdc_template" "template" {
     include_vm_memory_overhead = true
   }
 
+  edge_gateway {
+    name = "{{.Name}}"
+    ip_allocation_count = 0
+    routed_network_name = "{{.Name}}"
+    routed_network_description = "{{.Name}}"
+    routed_network_gateway_cidr = "192.168.1.1/24"
+    static_ip_pool {
+      start_address = "192.168.1.10"
+      end_address = "192.168.1.20"
+    }
+  }
+
   provider_vdc {
     id                  = data.vcd_provider_vdc.pvdc.id
     external_network_id = data.vcd_external_network_v2.ext_net.id
@@ -127,6 +139,10 @@ resource "vcd_org_vdc_template_instance" "instance" {
   name                = vcd_org_vdc_template.template.name
   org_id              = data.vcd_org.org.id
   description         = vcd_org_vdc_template.template.name
+
+  delete_instantiated_vdc_on_removal = true
+  delete_force                       = true
+  delete_recursive                   = true
 }
 
 # This one depends on the VDC Template instance, so it waits for it to be finished creating the VDC

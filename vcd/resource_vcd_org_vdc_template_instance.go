@@ -12,6 +12,7 @@ func resourceVcdOrgVdcTemplateInstance() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdVdcTemplateInstantiateCreate,
 		ReadContext:   resourceVcdVdcTemplateInstantiateRead,
+		UpdateContext: resourceVcdVdcTemplateInstantiateUpdate,
 		DeleteContext: resourceVcdVdcTemplateInstantiateDelete,
 		Schema: map[string]*schema.Schema{
 			"org_vdc_template_id": {
@@ -38,6 +39,23 @@ func resourceVcdOrgVdcTemplateInstance() *schema.Resource {
 				ForceNew:    true,
 				Description: "ID of the Organization where the VDC will be instantiated",
 			},
+			"delete_instantiated_vdc_on_removal": {
+				Type:        schema.TypeBool,
+				Required:    true,
+				Description: "If this flag is set to 'true', removing this resource will attempt to delete the instantiated VDC",
+			},
+			"delete_force": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "If this flag is set to 'true', it forcefully deletes the VDC, only when delete_instantiated_vdc_on_removal=true",
+			},
+			"delete_recursive": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "If this flag is set to 'true', it recursively deletes the VDC, only when delete_instantiated_vdc_on_removal=true",
+			},
 		},
 	}
 }
@@ -50,7 +68,7 @@ func resourceVcdVdcTemplateInstantiateCreate(ctx context.Context, d *schema.Reso
 	}
 	vdc, err := vdcTemplate.InstantiateVdc(d.Get("name").(string), d.Get("description").(string), d.Get("org_id").(string))
 	if err != nil {
-		diag.Errorf("failed instantiating the VDC Template: %s", err)
+		return diag.Errorf("failed instantiating the VDC Template: %s", err)
 	}
 	d.SetId(vdc.Vdc.ID)
 	return resourceVcdVdcTemplateInstantiateRead(ctx, d, meta)
@@ -78,7 +96,18 @@ func resourceVcdVdcTemplateInstantiateRead(_ context.Context, d *schema.Resource
 	return nil
 }
 
+func resourceVcdVdcTemplateInstantiateUpdate(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	// No-op. This is needed as "delete_instantiated_vdc_on_removal", "delete_force" and "delete_recursive"
+	// are not marked as "ForceNew: true" (they can be modified after creation), but they are just flags, not obtained from
+	// VCD.
+	return nil
+}
+
 func resourceVcdVdcTemplateInstantiateDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if !d.Get("delete_instantiated_vdc_on_removal").(bool) {
+		return nil
+	}
+
 	vcdClient := meta.(*VCDClient)
 	org, err := vcdClient.GetOrgById(d.Get("org_id").(string))
 	if err != nil {
@@ -94,9 +123,10 @@ func resourceVcdVdcTemplateInstantiateDelete(_ context.Context, d *schema.Resour
 		return diag.Errorf("could not retrieve the instantiated VDC: %s", err)
 	}
 
-	err = vdc.DeleteWait(true, true)
+	err = vdc.DeleteWait(d.Get("delete_force").(bool), d.Get("delete_recursive").(bool))
 	if err != nil {
 		return diag.Errorf("failed deleting instantiated VDC '%s': %s", vdc.Vdc.ID, err)
 	}
+
 	return nil
 }
