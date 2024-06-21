@@ -45,7 +45,7 @@ func resourceVcdVdcTemplateInstantiateCreate(ctx context.Context, d *schema.Reso
 	vdcTemplateId := d.Get("org_vdc_template_id").(string)
 	vdcTemplate, err := meta.(*VCDClient).GetVdcTemplateById(vdcTemplateId)
 	if err != nil {
-		return diag.Errorf("could not instantiate the VDC Template: %s", err)
+		return diag.Errorf("could not retrieve the VDC Template: %s", err)
 	}
 	vdc, err := vdcTemplate.InstantiateVdc(d.Get("name").(string), d.Get("description").(string), d.Get("org_id").(string))
 	if err != nil {
