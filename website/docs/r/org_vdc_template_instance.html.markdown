@@ -92,6 +92,9 @@ The following arguments are supported:
 * `name` - (Required) Name to give to the instantiated Organization VDC
 * `description` - (Optional) Description of the instantiated Organization VDC
 * `org_id` - (Required) ID of the Organization where the VDC will be instantiated
+* `delete_instantiated_vdc_on_removal` - (Required) If this flag is set to `true`, removing this resource will attempt to delete the instantiated VDC
+* `delete_force` - (Optional) Defaults to `false`. If this flag is set to `true`, it forcefully deletes the VDC, only when `delete_instantiated_vdc_on_removal=true`
+* `delete_recursive` - (Optional) Defaults to `false`. If this flag is set to `true`, it recursively deletes the VDC, only when `delete_instantiated_vdc_on_removal=true`
 
 ## Attribute Reference
 
@@ -117,12 +120,12 @@ written. When running the `terraform plan -generate-config-out=generated_resourc
 
 With a subsequent `terraform apply`, the instantiated VDC will be managed by Terraform as a normal `vcd_org_vdc` resource.
 
-!!!! TODO: After import: set delete_force and delete_recursive
+-> After importing, bear in mind that `vcd_org_vdc` will have the arguments `delete_force` and `delete_recursive` set to `false`.
+They should be modified accordingly.
 
-Please take into account that deleting the `vcd_org_vdc_template_instance` resource will attempt to **delete the instantiated VDC** it created,
-which require the `Organization vDC: Delete` right and other implicit rights for tenant users.
-If you would like to avoid this behavior, you can run `terraform state rm vcd_org_vdc_template_instance.my_instance` so the VDC stops being managed by this resource
-(it is removed from Terraform state). This way you can remove the `vcd_org_vdc_template_instance` resource without any other effect.
+If the `delete_instantiated_vdc_on_removal` argument of `vcd_org_vdc_template_instance` is set to `true`, removing
+this resource will attempt to delete the VDC that it instantiated, even after the new VDC has been imported into a different
+`vcd_org_vdc`.
 
 ## Importing
 
