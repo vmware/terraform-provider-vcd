@@ -363,6 +363,7 @@ The following arguments are supported:
     * `vcd_org`
     * `vcd_external_network`
     * `vcd_org_vdc`
+    * `vcd_org_vdc_template`
     * `vcd_catalog`
     * `vcd_catalog_item`
     * `vcd_catalog_vapp_template`

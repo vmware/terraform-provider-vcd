@@ -376,7 +376,7 @@ func genericVcdOrgOidcRead(_ context.Context, d *schema.ResourceData, meta inter
 	orgId := d.Get("org_id").(string)
 
 	adminOrg, err := vcdClient.GetAdminOrgByNameOrId(orgId)
-	if govcd.IsNotFound(err) && origin == "resource" {
+	if govcd.ContainsNotFound(err) && origin == "resource" {
 		log.Printf("[INFO] unable to find Organization '%s' Open ID Connect settings: %s. Removing from state", orgId, err)
 		d.SetId("")
 		return nil
