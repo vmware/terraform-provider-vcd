@@ -102,7 +102,7 @@ There are no read-only attributes. However, after the `vcd_org_vdc_template_inst
 the identifier of the new VDC is saved in the Terraform state, as the `id` of the `vcd_org_vdc_template_instance` resource
 (example: `vcd_org_vdc_template_instance.my_instance.id`).
 
-## Deletion of the VDC Template
+## Deletion of the vcd\_org\_vdc\_template\_instance resource
 
 When configuring the `vcd_org_vdc_template_instance`, one must set the required `delete_instantiated_vdc_on_removal` argument.
 * When set to `true`, removing this resource will attempt to delete the VDC that it instantiated.
