@@ -127,7 +127,7 @@ If the `delete_instantiated_vdc_on_removal` argument of `vcd_org_vdc_template_in
 this resource will attempt to delete the VDC that it instantiated, even after the new VDC has been imported into a different
 `vcd_org_vdc`.
 
--> When changing `delete_instantiated_vdc_on_removal`, take into account that you need to perform a `terraform apply` to
+-> When changing `delete_instantiated_vdc_on_removal`, `delete_force` or `delete_recursive`, take into account that you need to perform a `terraform apply` to
 save the changes.
 
 ## Importing
