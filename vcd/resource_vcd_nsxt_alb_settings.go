@@ -99,7 +99,7 @@ func resourceVcdAlbSettingsCreateUpdate(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}
 
-	albConfig, err := getNsxtAlbConfigurationType(d, vcdClient)
+	albConfig, err := getNsxtAlbConfigurationType(d, vcdClient, nsxtEdge)
 	if err != nil {
 		return diag.Errorf("error getting ALB configuration: %s", err)
 	}
@@ -197,7 +197,7 @@ func resourceVcdAlbSettingsImport(_ context.Context, d *schema.ResourceData, met
 	return []*schema.ResourceData{d}, nil
 }
 
-func getNsxtAlbConfigurationType(d *schema.ResourceData, vcdClient *VCDClient) (*types.NsxtAlbConfig, error) {
+func getNsxtAlbConfigurationType(d *schema.ResourceData, vcdClient *VCDClient, nsxtEdge *govcd.NsxtEdgeGateway) (*types.NsxtAlbConfig, error) {
 	albConfig := &types.NsxtAlbConfig{
 		Enabled:                  d.Get("is_active").(bool),
 		ServiceNetworkDefinition: d.Get("service_network_specification").(string),
@@ -221,6 +221,15 @@ func getNsxtAlbConfigurationType(d *schema.ResourceData, vcdClient *VCDClient) (
 			return nil, fmt.Errorf("setting 'ipv6_service_network_specification' is only supported in VCD 10.4.0+ (37.0+)")
 		}
 		albConfig.Ipv6ServiceNetworkDefinition = ipv6ServiceNetworkDefinition
+	}
+
+	// LoadBalancerCloudRef must be correctly sent since VCD 10.6+
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 39.0") {
+		previousSettings, err := nsxtEdge.GetAlbSettings()
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve ALB settings from Edge gateway '%s' for update: %s", nsxtEdge.EdgeGateway.Name, err)
+		}
+		albConfig.LoadBalancerCloudRef = previousSettings.LoadBalancerCloudRef
 	}
 
 	return albConfig, nil

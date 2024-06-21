@@ -834,6 +834,7 @@ func spawnTestOrgVdcSharedCatalog(client *VCDClient, name string) (govcd.AdminCa
 				},
 			},
 		},
+		ResourceGuaranteedMemory: addrOf(0.8),
 		VdcStorageProfile: []*types.VdcStorageProfileConfiguration{{
 			Enabled: addrOf(true),
 			Units:   "MB",
