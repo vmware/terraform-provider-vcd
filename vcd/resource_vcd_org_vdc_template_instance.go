@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"log"
 )
 
@@ -63,12 +64,12 @@ func resourceVcdVdcTemplateInstantiateRead(_ context.Context, d *schema.Resource
 	vcdClient := meta.(*VCDClient)
 	org, err := vcdClient.GetOrgById(d.Get("org_id").(string))
 	if err != nil {
-		return diag.Errorf("could not read the instantiated VDC: %s", err)
+		return diag.Errorf("could not retrieve the Organization of the instantiated VDC: %s", err)
 	}
 
 	vdc, err := org.GetVDCById(d.Id(), false)
 	if err != nil {
-		return diag.Errorf("could not read the instantiated VDC: %s", err)
+		return diag.Errorf("could not retrieve the instantiated VDC: %s", err)
 	}
 	if err != nil {
 		return diag.FromErr(err)
@@ -81,12 +82,16 @@ func resourceVcdVdcTemplateInstantiateDelete(_ context.Context, d *schema.Resour
 	vcdClient := meta.(*VCDClient)
 	org, err := vcdClient.GetOrgById(d.Get("org_id").(string))
 	if err != nil {
-		return diag.Errorf("could not delete the instantiated VDC: %s", err)
+		return diag.Errorf("could not retrieve the Organization of the instantiated VDC: %s", err)
 	}
 
 	vdc, err := org.GetVDCById(d.Id(), false)
 	if err != nil {
-		return diag.Errorf("could not delete the instantiated VDC: %s", err)
+		if govcd.ContainsNotFound(err) {
+			// The VDC is already gone
+			return nil
+		}
+		return diag.Errorf("could not retrieve the instantiated VDC: %s", err)
 	}
 
 	err = vdc.DeleteWait(true, true)
