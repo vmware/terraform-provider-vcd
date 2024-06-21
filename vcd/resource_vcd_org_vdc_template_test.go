@@ -157,8 +157,8 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 					resource.TestCheckResourceAttr(template+"2", "enable_thin_provisioning", "true"),
 					resource.TestCheckResourceAttr(template+"2", "edge_gateway.0.name", "edgy2"),
 					resource.TestCheckResourceAttr(template+"2", "edge_gateway.0.ip_allocation_count", "10"),
-					resource.TestCheckResourceAttr(template+"2", "edge_gateway.0.network_name", "net2"),
-					resource.TestCheckResourceAttr(template+"2", "edge_gateway.0.network_gateway_cidr", "1.2.3.4/24"),
+					resource.TestCheckResourceAttr(template+"2", "edge_gateway.0.routed_network_name", "net2"),
+					resource.TestCheckResourceAttr(template+"2", "edge_gateway.0.routed_network_gateway_cidr", "1.2.3.4/24"),
 					resource.TestCheckTypeSetElemNestedAttrs(template+"2", "edge_gateway.0.static_ip_pool.*", map[string]string{
 						"start_address": "1.2.3.4",
 						"end_address":   "1.2.3.4",
@@ -200,8 +200,8 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 					resource.TestCheckResourceAttr(template+"3", "enable_thin_provisioning", "false"),
 					resource.TestCheckResourceAttr(template+"3", "edge_gateway.0.name", "edgy3"),
 					resource.TestCheckResourceAttr(template+"3", "edge_gateway.0.ip_allocation_count", "15"),
-					resource.TestCheckResourceAttr(template+"3", "edge_gateway.0.network_name", "net3"),
-					resource.TestCheckResourceAttr(template+"3", "edge_gateway.0.network_gateway_cidr", "1.1.1.1/2"),
+					resource.TestCheckResourceAttr(template+"3", "edge_gateway.0.routed_network_name", "net3"),
+					resource.TestCheckResourceAttr(template+"3", "edge_gateway.0.routed_network_gateway_cidr", "1.1.1.1/2"),
 					resource.TestCheckTypeSetElemNestedAttrs(template+"3", "edge_gateway.0.static_ip_pool.*", map[string]string{
 						"start_address": "1.1.1.1",
 						"end_address":   "1.1.1.1",
@@ -446,10 +446,10 @@ resource "vcd_org_vdc_template" "template2" {
   }
 
   edge_gateway {
-    name                 = "edgy2"
-    ip_allocation_count  = 10
-    network_name         = "net2"
-    network_gateway_cidr = "1.2.3.4/24"
+    name                        = "edgy2"
+    ip_allocation_count         = 10
+    routed_network_name         = "net2"
+    routed_network_gateway_cidr = "1.2.3.4/24"
     static_ip_pool {
       start_address = "1.2.3.4"
       end_address   = "1.2.3.4"
@@ -473,7 +473,7 @@ resource "vcd_org_vdc_template" "template2" {
   }
 
   enable_fast_provisioning = true
-  enable_thin_provisioning        = true
+  enable_thin_provisioning = true
 }
 
 resource "vcd_org_vdc_template" "template3" {
@@ -492,10 +492,10 @@ resource "vcd_org_vdc_template" "template3" {
   }
 
   edge_gateway {
-    name                 = "edgy3"
-    ip_allocation_count  = 15
-    network_name         = "net3"
-    network_gateway_cidr = "1.1.1.1/2"
+    name                        = "edgy3"
+    ip_allocation_count         = 15
+    routed_network_name         = "net3"
+    routed_network_gateway_cidr = "1.1.1.1/2"
     static_ip_pool {
       start_address = "1.1.1.1"
       end_address   = "1.1.1.1"

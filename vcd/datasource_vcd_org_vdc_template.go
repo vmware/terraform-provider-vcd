@@ -173,20 +173,20 @@ func datasourceVcdOrgVdcTemplate() *schema.Resource {
 							Computed:    true,
 							Description: "Storage used in MB",
 						},
-						"network_name": {
+						"routed_network_name": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Name of the network to create with the Edge Gateway",
+							Description: "Name of the routed network to create with the Edge Gateway",
 						},
-						"network_description": {
+						"routed_network_description": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Description of the network to create with the Edge Gateway",
+							Description: "Description of the routed network to create with the Edge Gateway",
 						},
-						"network_gateway_cidr": {
+						"routed_network_gateway_cidr": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "CIDR of the Edge Gateway for the network created with the Edge Gateway",
+							Description: "CIDR of the Edge Gateway for the routed network created with the Edge Gateway",
 						},
 						"static_ip_pool": {
 							Type:        schema.TypeSet,
