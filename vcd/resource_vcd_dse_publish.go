@@ -83,12 +83,10 @@ func resourceVcdDsePublishCreate(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	orgIds := convertSchemaSetToSliceOfStrings(d.Get("org_ids").(*schema.Set))
-	for _, orgId := range orgIds {
-		err = dataSolution.Publish(orgId)
-		if err != nil {
-			return diag.Errorf("error publishing Data Solution '%s' to Org ID '%s': %s",
-				dataSolution.Name(), orgId, err)
-		}
+	err = dataSolution.Publish(orgIds)
+	if err != nil {
+		return diag.Errorf("error publishing Data Solution '%s' to Orgs with IDs '%s': %s",
+			dataSolution.Name(), strings.Join(orgIds, ","), err)
 	}
 
 	d.SetId(dataSolution.RdeId())

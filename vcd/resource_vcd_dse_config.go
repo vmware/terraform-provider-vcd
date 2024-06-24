@@ -41,14 +41,14 @@ var dseContainerRegistry = &schema.Resource{
 	},
 }
 
-func resourceVcdDseConfig() *schema.Resource {
+func resourceVcdDseRegistryConfiguration() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdDseConfigCreate,
-		ReadContext:   resourceVcdDseConfigRead,
-		UpdateContext: resourceVcdDseConfigUpdate,
-		DeleteContext: resourceVcdDseConfigDelete,
+		CreateContext: resourceVcdDseRegistryConfigurationCreate,
+		ReadContext:   resourceVcdDseRegistryConfigurationRead,
+		UpdateContext: resourceVcdDseRegistryConfigurationUpdate,
+		DeleteContext: resourceVcdDseRegistryConfigurationDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdDseConfigImport,
+			StateContext: resourceVcdDseRegistryConfigurationImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -143,15 +143,15 @@ func resourceVcdDseConfig() *schema.Resource {
 	}
 }
 
-func resourceVcdDseConfigCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceVcdDseConfigCreateUpdate(ctx, d, meta, "CREATE")
+func resourceVcdDseRegistryConfigurationCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceVcdDseRegistryConfigurationCreateUpdate(ctx, d, meta, "CREATE")
 }
 
-func resourceVcdDseConfigUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return resourceVcdDseConfigCreateUpdate(ctx, d, meta, "UPDATE")
+func resourceVcdDseRegistryConfigurationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return resourceVcdDseRegistryConfigurationCreateUpdate(ctx, d, meta, "UPDATE")
 }
 
-func resourceVcdDseConfigCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
+func resourceVcdDseRegistryConfigurationCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
 	util.Logger.Printf("[TRACE] DSE Configuration %s started", operation)
 	vcdClient := meta.(*VCDClient)
 
@@ -238,10 +238,10 @@ func resourceVcdDseConfigCreateUpdate(ctx context.Context, d *schema.ResourceDat
 	d.SetId(dseEntryConfig.RdeId())
 	util.Logger.Printf("[TRACE] DSE Configuration %s started", operation)
 
-	return resourceVcdDseConfigRead(ctx, d, meta)
+	return resourceVcdDseRegistryConfigurationRead(ctx, d, meta)
 }
 
-func resourceVcdDseConfigRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdDseRegistryConfigurationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	configInstance, err := vcdClient.GetDataSolutionByName(d.Get("name").(string))
@@ -289,7 +289,7 @@ func resourceVcdDseConfigRead(ctx context.Context, d *schema.ResourceData, meta 
 	return nil
 }
 
-func resourceVcdDseConfigDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdDseRegistryConfigurationDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	dseEntryConfig, err := vcdClient.GetDataSolutionByName(d.Get("name").(string))
@@ -327,7 +327,7 @@ func resourceVcdDseConfigDelete(ctx context.Context, d *schema.ResourceData, met
 	return nil
 }
 
-func resourceVcdDseConfigImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdDseRegistryConfigurationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
 	configInstance, err := vcdClient.GetDataSolutionByName(d.Get("name").(string))
@@ -411,5 +411,3 @@ func resolveRdeIfNotYetResolved(name string, dseEntity *govcd.DataSolution) erro
 
 	return nil
 }
-
-// func runtimeConfigValidations()

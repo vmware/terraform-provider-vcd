@@ -8,9 +8,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func datasourceVcdDseConfig() *schema.Resource {
+func datasourceVcdDseRegistryConfiguration() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdDseConfigRead,
+		ReadContext: datasourceVcdDseRegistryConfigurationRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -87,7 +87,7 @@ func datasourceVcdDseConfig() *schema.Resource {
 	}
 }
 
-func datasourceVcdDseConfigRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdDseRegistryConfigurationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	configInstance, err := vcdClient.GetDataSolutionByName(d.Get("name").(string))
