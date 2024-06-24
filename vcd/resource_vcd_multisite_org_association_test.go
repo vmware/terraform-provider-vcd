@@ -5,6 +5,8 @@ package vcd
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"os"
 	"regexp"
@@ -49,7 +51,6 @@ func TestVcdMultisiteOrgAssociation(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-
 	defer func() {
 		// Remove XML files, if they were left behind
 		for _, fName := range []string{org1Xml, org2Xml} {
@@ -93,10 +94,41 @@ func TestVcdMultisiteOrgAssociation(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_multisite_org_association.org2-org1", "status", string(types.StatusActive)),
 				),
 			},
+			{
+				ResourceName:            "vcd_multisite_org_association.org1-org2",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importOrgStateIdFromXmlFile(org2Xml, org1Name),
+				ImportStateVerifyIgnore: []string{"association_data_file", "connection_timeout_mins"},
+			},
+			{
+				ResourceName:            "vcd_multisite_org_association.org2-org1",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importOrgStateIdFromXmlFile(org1Xml, org2Name),
+				ImportStateVerifyIgnore: []string{"association_data_file", "connection_timeout_mins"},
+			},
 		},
 	})
 
 	postTestChecks(t)
+}
+
+func importOrgStateIdFromXmlFile(fileName, orgName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		result, err := govcd.ReadXmlDataFromFile[types.OrgAssociationMember](fileName)
+		if err != nil {
+			return "", fmt.Errorf("error getting %T from file %s: %s", types.OrgAssociationMember{}, fileName, err)
+		}
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		org, err := conn.GetOrgByName(orgName)
+		if err != nil {
+			return "", fmt.Errorf("error retrieving org %s: %s", orgName, err)
+		}
+
+		return org.Org.ID + ImportSeparator + result.OrgID, nil
+	}
 }
 
 const testAccMultisiteOrgCommon = `

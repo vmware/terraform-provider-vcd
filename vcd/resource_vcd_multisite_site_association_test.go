@@ -5,6 +5,8 @@ package vcd
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"os"
 	"regexp"
@@ -141,10 +143,34 @@ func TestVcdMultisiteSiteAssociation(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_multisite_site_association.site2-site1", "status", string(types.StatusActive)),
 				),
 			},
+			{
+				ResourceName:            "vcd_multisite_site_association.site1-site2",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importSiteStateIdFromXmlFile(site2XmlName),
+				ImportStateVerifyIgnore: []string{"association_data_file", "connection_timeout_mins"},
+			},
+			{
+				ResourceName:            "vcd_multisite_site_association.site2-site1",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importSiteStateIdFromXmlFile(site1XmlName),
+				ImportStateVerifyIgnore: []string{"association_data_file", "connection_timeout_mins"},
+			},
 		},
 	})
 
 	postTestChecks(t)
+}
+
+func importSiteStateIdFromXmlFile(fileName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		result, err := govcd.ReadXmlDataFromFile[types.SiteAssociationMember](fileName)
+		if err != nil {
+			return "", fmt.Errorf("error getting %T from file %s: %s", types.SiteAssociationMember{}, fileName, err)
+		}
+		return result.SiteID, nil
+	}
 }
 
 const testAccMultisiteSiteData = `
