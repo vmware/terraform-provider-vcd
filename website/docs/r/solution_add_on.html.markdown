@@ -3,11 +3,11 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_solution_add_on"
 sidebar_current: "docs-vcd-resource-solution-add-on"
 description: |-
-  Provides a resource to manage Solution Add-Ons in Cloud Director. A solution add-on is the
-  representation of a solution that is custom built for VMware Cloud Director in the VMware Cloud
-  Director extensibility ecosystem. A solution add-on can encapsulate UI and API VMware Cloud
+  Provides a resource to manage Solution Add-Ons in Cloud Director. A Solution Add-On is the
+  representation of a solution that is custom built for Cloud Director in the Cloud
+  Director extensibility ecosystem. A Solution Add-On can encapsulate UI and API Cloud
   Director extensions together with their backend services and lifecycle management. Solution
-  аdd-оns are distributed as .iso files. A solution add-on can contain numerous
+  Add-Ons are distributed as .iso files. A Solution Add-on can contain numerous
   elements: UI plugins, vApps, users, roles, runtime defined entities, and more.
 ---
 
@@ -15,16 +15,16 @@ description: |-
 
 Supported in provider *v3.13+* and VCD 10.4.1+.
 
-Provides a resource to manage Solution Add-Ons in Cloud Director. A solution add-on is the
-representation of a solution that is custom built for VMware Cloud Director in the VMware Cloud
-Director extensibility ecosystem. A solution add-on can encapsulate UI and API VMware Cloud Director
+Provides a resource to manage Solution Add-Ons in Cloud Director. A Solution Add-On is the
+representation of a solution that is custom built for Cloud Director in the Cloud
+Director extensibility ecosystem. A Solution Add-On can encapsulate UI and API Cloud Director
 extensions together with their backend services and lifecycle management. Solution аdd-оns are
-distributed as .iso files. A solution add-on can contain numerous elements: UI plugins, vApps,
+distributed as .iso files. A Solution Add-On can contain numerous elements: UI plugins, vApps,
 users, roles, runtime defined entities, and more.
 
 ~> Only `System Administrator` can create this resource.
 
-## Example Usage (Uploading an image and create a Solution Add-On entry)
+## Example Usage (Uploading an image and creating a Solution Add-On entry)
 
 ```hcl
 data "vcd_solution_landing_zone" "slz" {}
@@ -41,10 +41,9 @@ resource "vcd_catalog_media" "dse14" {
 }
 
 resource "vcd_solution_add_on" "dse14" {
-  catalog_item_id   = data.vcd_catalog_media.dse14.catalog_item_id
-  addon_path        = "/Users/demo/Downloads/vmware-vcd-ds-1.4.0-23376809.iso"
-  trust_certificate = true
-  accept_eula       = true
+  catalog_item_id        = data.vcd_catalog_media.dse14.catalog_item_id
+  addon_path             = "/Users/demo/Downloads/vmware-vcd-ds-1.4.0-23376809.iso"
+  auto_trust_certificate = true
 }
 
 ```
@@ -61,11 +60,10 @@ data "vcd_catalog_media" "dse14" {
 }
 
 resource "vcd_solution_add_on" "dse14" {
-  org               = "solution_org"
-  catalog_item_id   = data.vcd_catalog_media.dse14.catalog_item_id
-  addon_path        = "/Users/demo/Downloads/vmware-vcd-ds-1.4.0-23376809.iso"
-  trust_certificate = true
-  accept_eula       = true
+  org                    = "solution_org"
+  catalog_item_id        = data.vcd_catalog_media.dse14.catalog_item_id
+  addon_path             = "/Users/demo/Downloads/vmware-vcd-ds-1.4.0-23376809.iso"
+  auto_trust_certificate = true
 }
 ```
 
@@ -75,16 +73,21 @@ The following arguments are supported:
 
 * `catalog_item_id` - (Required) The catalog item ID of Solution Add-On. It can be uploaded using
   [`vcd_catalog_media`](/providers/vmware/vcd/latest/docs/resources/catalog_media)
-* `addon_path` - (Required) Local filesystem path of Solution Add-On
-* `trust_certificate` - (Optional) Plugin can automatically trust the certificate of Solution
+* `addon_path` - (Required) Local filesystem path of Solution Add-On. The Add-On image is required
+locally as some of the metadata must be extracted for creating the Solution Add-On entry in Cloud
+Director.
+* `auto_trust_certificate` - (Optional) Plugin can automatically trust the certificate of Solution
   Add-On. This is required for Solution Add-Ons to work and one will have to do it manually before
-  using the Solution Add-On.
+  using the Solution Add-On if not enabled here.
 
 
 ## Attribute Reference
 
 The following attributes are exported on this resource:
 
+* `name` - reports the name of Solution Add-On as defined in the system. This name can be also used
+  in data source
+  [`vcd_solution_add_on`](/providers/vmware/vcd/latest/docs/data-sources/solution_add_on)
 * `state` - reports the state of parent [Runtime Defined
   Entity](/providers/vmware/vcd/latest/docs/resources/rde)
 

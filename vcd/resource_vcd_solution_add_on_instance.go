@@ -63,8 +63,8 @@ func resourceVcdSolutionAddonInstanceCreate(ctx context.Context, d *schema.Resou
 		return diag.Errorf("error retrieving Solution Add-On: %s", err)
 	}
 
-	if addOn.SolutionEntity.Eula != "" && !d.Get("accept_eula").(bool) {
-		return diag.Errorf("cannot create Add-On instance without accepting EULA.\n\n%s\n\n: %s", addOn.SolutionEntity.Eula, err)
+	if addOn.SolutionAddOnEntity.Eula != "" && !d.Get("accept_eula").(bool) {
+		return diag.Errorf("cannot create Add-On instance without accepting EULA.\n\n%s\n\n: %s", addOn.SolutionAddOnEntity.Eula, err)
 	}
 
 	// making a copy of `input` map because mutating it caused terraform state errors

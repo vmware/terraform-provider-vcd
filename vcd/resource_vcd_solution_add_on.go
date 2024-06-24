@@ -27,7 +27,7 @@ func resourceVcdSolutionAddon() *schema.Resource {
 			"catalog_item_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Solution Add-On Catalog Item ID ",
+				Description: "Solution Add-On Catalog Item ID",
 			},
 			"addon_path": {
 				Type:        schema.TypeString,
@@ -35,7 +35,7 @@ func resourceVcdSolutionAddon() *schema.Resource {
 				ForceNew:    true,
 				Description: "Absolute or relative path to Solution Add-On ISO file available locally",
 			},
-			"trust_certificate": {
+			"auto_trust_certificate": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    true,
@@ -62,7 +62,7 @@ func resourceVcdSolutionAddonCreate(ctx context.Context, d *schema.ResourceData,
 		IsoFilePath:          d.Get("addon_path").(string),
 		User:                 "administrator",
 		CatalogItemId:        d.Get("catalog_item_id").(string),
-		AutoTrustCertificate: d.Get("trust_certificate").(bool),
+		AutoTrustCertificate: d.Get("auto_trust_certificate").(bool),
 	}
 
 	addon, err := vcdClient.CreateSolutionAddOn(createCfg)
@@ -84,9 +84,9 @@ func resourceVcdSolutionAddonUpdate(ctx context.Context, d *schema.ResourceData,
 			return diag.Errorf("error retrieving ID: %s", err)
 		}
 
-		addon.SolutionEntity.Origin.CatalogItemId = d.Get("catalog_item_id").(string)
+		addon.SolutionAddOnEntity.Origin.CatalogItemId = d.Get("catalog_item_id").(string)
 
-		_, err = addon.Update(addon.SolutionEntity)
+		_, err = addon.Update(addon.SolutionAddOnEntity)
 		if err != nil {
 			return diag.Errorf("error updating Solution Add-On: %s", err)
 		}
@@ -104,7 +104,7 @@ func resourceVcdSolutionAddonRead(ctx context.Context, d *schema.ResourceData, m
 	}
 
 	dSet(d, "rde_state", slzAddOn.DefinedEntity.DefinedEntity.State)
-	dSet(d, "catalog_item_id", slzAddOn.SolutionEntity.Origin.CatalogItemId)
+	dSet(d, "catalog_item_id", slzAddOn.SolutionAddOnEntity.Origin.CatalogItemId)
 	dSet(d, "name", slzAddOn.DefinedEntity.DefinedEntity.Name)
 
 	return nil
@@ -119,7 +119,7 @@ func resourceVcdSolutionAddonDelete(ctx context.Context, d *schema.ResourceData,
 	}
 	err = entity.Delete()
 	if err != nil {
-		return diag.Errorf("error deleting Solution Add-On RDE: %s", err)
+		return diag.Errorf("error deleting Solution Add-On: %s", err)
 	}
 
 	return nil
@@ -144,7 +144,7 @@ func resourceVcdSolutionAddonImport(ctx context.Context, d *schema.ResourceData,
 		if err != nil {
 			addOnTable, err2 := listSolutionAddons(vcdClient)
 			if err2 != nil {
-				return nil, fmt.Errorf("error finding Solution Add-On by ID '%s' and couldn't retrieve list: %s", d.Id(), err2)
+				return nil, fmt.Errorf("error finding Solution Add-On by ID '%s' and couldn't retrieve list: %s, %s", d.Id(), err2, err)
 			}
 
 			return nil, fmt.Errorf("error finding Solution Add-On by ID '%s': %s\n Available Add-Ons:\n %s", d.Id(), err, addOnTable)
@@ -156,7 +156,7 @@ func resourceVcdSolutionAddonImport(ctx context.Context, d *schema.ResourceData,
 		if err != nil {
 			addOnTable, err2 := listSolutionAddons(vcdClient)
 			if err2 != nil {
-				return nil, fmt.Errorf("error finding Solution Add-On by ID '%s' and couldn't retrieve list: %s", d.Id(), err2)
+				return nil, fmt.Errorf("error finding Solution Add-On by ID '%s' and couldn't retrieve list: %s, %s", d.Id(), err2, err)
 			}
 			return nil, fmt.Errorf("error finding Solution Add-On by ID '%s': %s\n Available Add-Ons:\n %s", d.Id(), err, addOnTable)
 		}
@@ -190,9 +190,9 @@ func listSolutionAddons(vcdClient *VCDClient) (string, error) {
 		_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%s\t%s\n", index+1,
 			addon.RdeId(),
 			addon.DefinedEntity.DefinedEntity.Name,
-			addon.SolutionEntity.Status,
-			addon.SolutionEntity.Manifest["name"].(string),
-			addon.SolutionEntity.Manifest["version"].(string),
+			addon.SolutionAddOnEntity.Status,
+			addon.SolutionAddOnEntity.Manifest["name"].(string),
+			addon.SolutionAddOnEntity.Manifest["version"].(string),
 		)
 		if err != nil {
 			return "", fmt.Errorf("error writing to buffer: %s", err)

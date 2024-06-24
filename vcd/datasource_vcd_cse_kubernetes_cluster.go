@@ -148,6 +148,16 @@ func datasourceVcdCseKubernetesCluster() *schema.Resource {
 							Computed:    true,
 							Description: "Storage profile of the control plane nodes",
 						},
+						"autoscaler_max_replicas": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Maximum replicas of the autoscaling capabilities of this worker pool",
+						},
+						"autoscaler_min_replicas": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Minimum replicas of the autoscaling capabilities of this worker pool",
+						},
 					},
 				},
 			},
@@ -247,6 +257,7 @@ func datasourceVcdCseKubernetesCluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The contents of the kubeconfig of the Kubernetes cluster, only available when 'state=provisioned'",
+				Sensitive:   true,
 			},
 			"supported_upgrades": {
 				Type:        schema.TypeSet,

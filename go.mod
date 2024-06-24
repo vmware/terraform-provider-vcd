@@ -1,23 +1,27 @@
 module github.com/vmware/terraform-provider-vcd/v3
 
-go 1.22
+go 1.22.3
 
 require (
 	github.com/davecgh/go-spew v1.1.1
+	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.34.0
-	github.com/kr/pretty v0.2.1
-	github.com/vmware/go-vcloud-director/v2 v2.25.0-alpha.4
+	github.com/kr/pretty v0.3.1
+	github.com/vmware/go-vcloud-director/v2 v2.25.0-alpha.15
 )
 
 require (
 	github.com/ProtonMail/go-crypto v1.1.0-alpha.2 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
+	github.com/rogpeppe/go-internal v1.11.0 // indirect
+	github.com/stretchr/testify v1.9.0 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	golang.org/x/tools v0.17.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240227224415-6ceb2ff114de // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 

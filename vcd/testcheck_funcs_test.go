@@ -1,4 +1,4 @@
-//go:build api || vapp || vm || user || nsxt || extnetwork || network || gateway || catalog || standaloneVm || alb || vdcGroup || ldap || vdc || access_control || rde || uiPlugin || org || disk || providerVdc || cse || ALL || functional
+//go:build api || vapp || vm || user || nsxt || extnetwork || network || gateway || catalog || standaloneVm || alb || vdcGroup || ldap || vdc || access_control || rde || uiPlugin || org || disk || providerVdc || cse || ALL || slz || functional
 
 package vcd
 
@@ -116,6 +116,9 @@ func testCheckOutputNonEmpty(name string) resource.TestCheckFunc {
 // firstObject except `[]excludeFields`. This is very useful to check if data sources have all
 // the same values as resources
 func resourceFieldsEqual(firstObject, secondObject string, excludeFields []string) resource.TestCheckFunc {
+	return resourceFieldsEqualCustom(firstObject, secondObject, excludeFields, stringInSlice)
+}
+func resourceFieldsEqualCustom(firstObject, secondObject string, excludeFields []string, exclusionChecker func(str string, list []string) bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resource1, ok := s.RootModule().Resources[firstObject]
 		if !ok {
@@ -129,7 +132,7 @@ func resourceFieldsEqual(firstObject, secondObject string, excludeFields []strin
 
 		for fieldName := range resource1.Primary.Attributes {
 			// Do not validate the fields marked for exclusion
-			if excludeFields != nil && stringInSlice(fieldName, excludeFields) {
+			if excludeFields != nil && exclusionChecker(fieldName, excludeFields) {
 				continue
 			}
 

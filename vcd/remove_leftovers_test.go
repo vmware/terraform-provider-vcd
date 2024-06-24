@@ -3,6 +3,7 @@ package vcd
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
 
@@ -89,7 +90,7 @@ var alsoDelete = entityList{
 	{Type: "vcd_org_vdc", Name: "ForInternalDiskTest", Comment: "from vcd.TestAccVcdVmInternalDisk-CreateALl.tf: ForInternalDiskTest"},
 	{Type: "vcd_solution_landing_zone", Name: "urn:vcloud:type:vmware:solutions_organization:1.0.0", Comment: "Solution Landing Zone"},
 	{Type: "vcd_solution_add_on", Name: "urn:vcloud:type:vmware:solutions_add_on:1.0.0", Comment: "Solution Add-On"},
-	{Type: "vcd_solution_add_on_instance", NameRegexp: regexp.MustCompile(`^vmware.ds`), Comment: "Solution Add-On"},
+	{Type: "vcd_solution_add_on_instance", NameRegexp: regexp.MustCompile(`^vmware.ds`), Comment: "Solution Add-On Instance"},
 }
 
 // isTest is a regular expression that tells if an entity needs to be deleted
@@ -168,7 +169,8 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		for _, addOn := range allEntries {
 			shouldDeleteAddOn := shouldDeleteEntity(alsoDelete, doNotDelete, addOn.DefinedEntity.DefinedEntity.Name, "vcd_solution_add_on", 0, verbose)
 			if shouldDeleteAddOn {
-				if addOn.DefinedEntity.DefinedEntity.State != addrOf("READY") {
+				os.Exit(1)
+				if *addOn.DefinedEntity.DefinedEntity.State != "READY" {
 					err := addOn.DefinedEntity.Resolve()
 					if err != nil {
 						return fmt.Errorf("error resolving Solution Add-on: %s", err)

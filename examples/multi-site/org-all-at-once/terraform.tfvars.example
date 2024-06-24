@@ -1,0 +1,7 @@
+# Rename this file to 'terraform.tfvars' and update the variables to their intended values
+vcd_url       = "https://example1.com/api"
+vcd_admin     = "administrator"
+vcd_password  = "myPassword"
+vcd_sysorg    = "System"
+vcd_org1       = "nameOfMyOrg"
+vcd_org2       = "nameOfMyOtherOrg"

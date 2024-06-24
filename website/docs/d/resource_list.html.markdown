@@ -363,6 +363,7 @@ The following arguments are supported:
     * `vcd_org`
     * `vcd_external_network`
     * `vcd_org_vdc`
+    * `vcd_org_vdc_template`
     * `vcd_catalog`
     * `vcd_catalog_item`
     * `vcd_catalog_vapp_template`
@@ -398,6 +399,11 @@ The following arguments are supported:
     * `vcd_nsxt_transport_zone`
     * `vcd_distributed_switch`
     * `vcd_importable_port_group`
+    * `vcd_multisite_site_association`
+    * `vcd_multisite_org_association`
+    * `vcd_vapp_network`
+    * `vcd_vapp_org_network`
+    * `vcd_vapp_all_network`
 * `list_mode` (Optional) How the list should be built. One of:
     * `name` (default): Only the resource name
     * `id`: Only the resource ID

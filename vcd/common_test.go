@@ -1,4 +1,4 @@
-//go:build network || nsxt || gateway || org || catalog || access_control || networkPool || providerVdc || ALL || functional
+//go:build network || nsxt || gateway || org || catalog || access_control || networkPool || providerVdc || vm || vapp || standaloneVm || user || multisite || ALL || functional
 
 package vcd
 
@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"strings"
 	"testing"
 	"time"
 )
@@ -75,5 +76,52 @@ func testAccCheckOrgDestroy(orgName string) resource.TestCheckFunc {
 			return fmt.Errorf("org %s was found", orgName)
 		}
 		return nil
+	}
+}
+
+func checkListForKnownItem(resName, target, unwanted string, isWanted, importing bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		// If we didn't indicate any known item, the check is always true, even if no item was returned
+		if target == "" {
+			return nil
+		}
+
+		resourcePath := "data.vcd_resource_list." + resName
+
+		res, ok := s.RootModule().Resources[resourcePath]
+		if !ok {
+			return fmt.Errorf("resource %s not found", resName)
+		}
+
+		var list = make([]string, 0)
+
+		for key, value := range res.Primary.Attributes {
+			if strings.HasPrefix(key, "list.") {
+				list = append(list, value)
+			}
+		}
+
+		for _, item := range list {
+			// if we want ANY item, the comparison is true as long as at least one was found
+			found := item == target || target == "*"
+			if unwanted != "" && item == unwanted {
+				return fmt.Errorf("found unwanted item '%s'", unwanted)
+			}
+			if importing {
+				found = strings.Contains(item, target) || target == "*"
+			}
+			if found {
+				if isWanted {
+					return nil
+				} else {
+					return fmt.Errorf("item '%s' found in '%s'", target, resName)
+				}
+			}
+		}
+		if isWanted {
+			return fmt.Errorf("item '%s' not found in list %s", target, resourcePath)
+		} else {
+			return nil
+		}
 	}
 }
