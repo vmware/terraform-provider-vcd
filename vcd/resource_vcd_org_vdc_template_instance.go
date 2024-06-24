@@ -96,11 +96,11 @@ func resourceVcdVdcTemplateInstantiateRead(_ context.Context, d *schema.Resource
 	return nil
 }
 
-func resourceVcdVdcTemplateInstantiateUpdate(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+func resourceVcdVdcTemplateInstantiateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// No-op. This is needed as "delete_instantiated_vdc_on_removal", "delete_force" and "delete_recursive"
 	// are not marked as "ForceNew: true" (they can be modified after creation), but they are just flags, not obtained from
 	// VCD.
-	return nil
+	return resourceVcdVdcTemplateRead(ctx, d, meta)
 }
 
 func resourceVcdVdcTemplateInstantiateDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
