@@ -113,6 +113,52 @@ func datasourceVcdResourceList() *schema.Resource {
 	}
 }
 
+func getSiteAssociationList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	siteAssociationList, err := client.VCDClient.Client.QueryAllSiteAssociations(nil, nil)
+	if err != nil {
+		return list, err
+	}
+	var items []resourceRef
+	for _, site := range siteAssociationList {
+		if site.Status == string(types.StatusError) {
+			continue
+		}
+		items = append(items, resourceRef{
+			name:     site.AssociatedSiteName,
+			id:       site.AssociatedSiteId,
+			href:     site.Href,
+			parent:   "",
+			importId: false,
+		})
+	}
+	return genericResourceList(d, resType, nil, items)
+}
+
+func getOrgAssociationList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	orgAssociationList, err := client.VCDClient.Client.QueryAllOrgAssociations(nil, nil)
+	if err != nil {
+		return list, err
+	}
+	var items []resourceRef
+	for _, org := range orgAssociationList {
+		if org.Status == string(types.StatusError) {
+			continue
+		}
+		items = append(items, resourceRef{
+			name:     org.OrgName,
+			id:       org.OrgId,
+			href:     org.Href,
+			parent:   "",
+			importId: false,
+		})
+	}
+	return genericResourceList(d, resType, nil, items)
+}
+
 func getOrgList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
 
@@ -1018,6 +1064,52 @@ func vappNetworkList(d *schema.ResourceData, vnt vappNetworkType, meta interface
 	return genericResourceList(d, "vcd_vapp_network", []string{org.Org.Name, vdc.Vdc.Name, vappName}, items)
 }
 
+func vdcTemplateList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	parentOrg := d.Get("parent").(string)
+	isSystemOrg := parentOrg == "" || strings.ToLower(parentOrg) == "system"
+	if isSystemOrg && !client.Client.IsSysAdmin {
+		return nil, fmt.Errorf("'parent' is not set or is 'System': Only an administrator can list all VDC Templates from System")
+	}
+
+	var items []resourceRef
+	var ancestors []string
+	if isSystemOrg {
+		adminVdcTemplates, err := client.QueryAdminVdcTemplates()
+		if err != nil {
+			return nil, err
+		}
+		for _, adminVdcTemplate := range adminVdcTemplates {
+			items = append(items, resourceRef{
+				name:   adminVdcTemplate.Name,
+				id:     extractUuid(adminVdcTemplate.HREF),
+				href:   adminVdcTemplate.HREF,
+				parent: "System",
+			})
+		}
+	} else {
+		org, err := client.GetOrg(parentOrg)
+		if err != nil {
+			return nil, err
+		}
+		vdcTemplates, err := org.QueryVdcTemplates()
+		if err != nil {
+			return nil, err
+		}
+		for _, vdcTemplate := range vdcTemplates {
+			items = append(items, resourceRef{
+				name:   vdcTemplate.Name,
+				id:     extractUuid(vdcTemplate.HREF),
+				href:   vdcTemplate.HREF,
+				parent: org.Org.Name,
+			})
+		}
+		ancestors = []string{org.Org.Name}
+	}
+	return genericResourceList(d, "vcd_org_vdc_template", ancestors, items)
+}
+
 func genericResourceList(d *schema.ResourceData, resType string, ancestors []string, refs []resourceRef) (list []string, err error) {
 	listMode := d.Get("list_mode").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
@@ -1332,6 +1424,10 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 	// Note: do not try to get the data sources list, as it would result in a circular reference
 	case "resource", "resources":
 		list, err = getResourcesList()
+	case "vcd_multisite_site_association":
+		list, err = getSiteAssociationList(d, meta, "vcd_multisite_site_association")
+	case "vcd_multisite_org_association":
+		list, err = getOrgAssociationList(d, meta, "vcd_multisite_org_association")
 	case "vcd_org", "org", "orgs":
 		list, err = getOrgList(d, meta, "vcd_org")
 	case "vcd_org_ldap", "vcd_org_saml":
@@ -1427,6 +1523,8 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 		list, err = globalRolesList(d, meta)
 	case "vcd_library_certificate":
 		list, err = libraryCertificateList(d, meta)
+	case "vcd_org_vdc_template":
+		list, err = vdcTemplateList(d, meta)
 
 		//// place holder to remind of what needs to be implemented
 		//	case "edgegateway_vpn",
