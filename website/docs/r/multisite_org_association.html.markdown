@@ -63,7 +63,24 @@ You can see an example of one such method in the folder `/examples/multi-site/or
 * `status` - The status of the association (one of `ASYMMETRIC`, `ACTIVE`, `UNREACHABLE`, `ERROR`)
 
 
+## Importing
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+configuration. [More information.](https://www.terraform.io/docs/import/)
+
+An existing org association can be [imported][docs-import] into this resource
+via supplying the full dot separated path for the association, which requires the ID of the current org and the 
+associated one. For example, to import the association definied in example 1, we would run:
+
+```
+terraform import vcd_multisite_org_association.imported my-org-id.associated-org-id
+```
+
+To find the ID of the associated organization it might be necessary to inspect the XML file that was used to create the association.
+
 ## More information
 
 See [Site and Org association](/providers/vmware/vcd/latest/docs/guides/site_org_association) for a broader description
 of association workflows.
+
+[docs-import]: https://www.terraform.io/docs/import/
