@@ -242,7 +242,7 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 					resource.TestCheckResourceAttr(template+"4", "enable_thin_provisioning", "false"),
 					resource.TestCheckNoResourceAttr(template+"4", "edge_gateway.0"),
 					resource.TestMatchResourceAttr(template+"4", "network_pool_id", regexp.MustCompile(`^urn:vcloud:networkpool:.+$`)),
-					resource.TestCheckResourceAttr(template+"4", "nic_quota", "10"),
+					resource.TestCheckResourceAttr(template+"4", "nic_quota", "100"),
 					resource.TestCheckResourceAttr(template+"4", "vm_quota", "0"),
 					resource.TestCheckResourceAttr(template+"4", "provisioned_network_quota", "1000"),
 					resource.TestCheckResourceAttr(template+"4", "readable_by_org_ids.#", "1"),
