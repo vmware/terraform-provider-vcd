@@ -40,7 +40,6 @@ func datasourceVcdMultisiteOrgAssociation() *schema.Resource {
 			"association_data_file": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
 				ExactlyOneOf: []string{"associated_org_id", "association_data_file"},
 				Description:  "Name of the file filled with association data for this Org. Used when user doesn't have associated org ID",
 			},
