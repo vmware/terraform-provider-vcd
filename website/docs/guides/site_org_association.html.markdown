@@ -254,7 +254,5 @@ data "vcd_multisite_site_association" "site1-site2b" {
 ```
 
 
-[site-all-at-once]:https://github.com/dataclouder/terraform-provider-vcd/tree/site-org-associations/examples/multi-site/site-all-at-once
-<!-- TODO: After merge, change to https://github.com/vmware/terraform-provider-vcd/tree/main/examples/multi-site/site-all-at-once -->
-[org-all-at-once]:https://github.com/dataclouder/terraform-provider-vcd/tree/site-org-associations/examples/multi-site/org-all-at-once
-<!-- TODO: After merge, change to https://github.com/vmware/terraform-provider-vcd/tree/main/examples/multi-site/org-all-at-once -->
+[site-all-at-once]:https://github.com/vmware/terraform-provider-vcd/tree/main/examples/multi-site/site-all-at-once
+[org-all-at-once]:https://github.com/vmware/terraform-provider-vcd/tree/main/examples/multi-site/org-all-at-once
