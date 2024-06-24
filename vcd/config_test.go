@@ -1,4 +1,4 @@
-//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || uiPlugin || providerVdc || cse || slz || ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || uiPlugin || providerVdc || cse || slz || multisite || ALL
 
 package vcd
 
@@ -31,6 +31,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/util"
+)
+
+// #nosec G101 -- These credentials are fake for testing purposes
+const (
+	envSecondVcdUrl      = "VCD_URL2"
+	envSecondVcdUser     = "VCD_USER2"
+	envSecondVcdPassword = "VCD_PASSWORD2"
+	envSecondVcdSysOrg   = "VCD_SYSORG2"
 )
 
 func init() {
@@ -318,11 +326,16 @@ var (
 )
 
 const (
-	providerVcdSystem              = "vcd"
-	providerVcdOrg1                = "vcdorg1"
-	providerVcdOrg1Alias           = "vcd.org1"
-	providerVcdOrg2                = "vcdorg2"
-	providerVcdOrg2Alias           = "vcd.org2"
+	providerVcdSystem    = "vcd"
+	providerVcdOrg1      = "vcdorg1"
+	providerVcdOrg1Alias = "vcd.org1"
+	providerVcdOrg2      = "vcdorg2"
+	providerVcdOrg2Alias = "vcd.org2"
+	providerVcdSystem1   = "vcdsys1"
+	providerVcdSys1Alias = "vcd.sys1"
+	providerVcdSystem2   = "vcdsys2"
+	providerVcdSys2Alias = "vcd.sys2"
+
 	customTemplatesDirectory       = "test-templates"
 	testArtifactsDirectory         = "test-artifacts"
 	envVcdAddProvider              = "VCD_ADD_PROVIDER"
@@ -560,15 +573,17 @@ func templateFill(tmpl string, inputData StringMap) string {
 		}
 		reProvider1 := regexp.MustCompile(`\bprovider\s*=\s*` + providerVcdOrg1)
 		reProvider2 := regexp.MustCompile(`\bprovider\s*=\s*` + providerVcdOrg2)
+		reSystemProvider2 := regexp.MustCompile(`\bprovider\s*=\s*` + providerVcdSystem2)
 
 		templateText := string(populatedStr)
 
 		usingProvider1 := reProvider1.MatchString(templateText)
 		usingProvider2 := reProvider2.MatchString(templateText)
+		usingSysProvider2 := reSystemProvider2.MatchString(templateText)
 		// Since the integrated test framework does not support aliases, but the Terraform tool
 		// requires them, we change the explicit provider names used in the framework
 		// with properly aliased ones (for use in the binary tests)
-		if vcdAddProvider && (usingProvider1 || usingProvider2) {
+		if vcdAddProvider && (usingProvider1 || usingProvider2 || usingSysProvider2) {
 			if usingProvider1 {
 				templateText = fmt.Sprintf("%s\n%s", templateText, getOrgProviderText("org1", testConfig.VCD.Org))
 				templateText = strings.Replace(templateText, providerVcdOrg1, providerVcdOrg1Alias, -1)
@@ -576,6 +591,10 @@ func templateFill(tmpl string, inputData StringMap) string {
 			if usingProvider2 {
 				templateText = fmt.Sprintf("%s\n%s", templateText, getOrgProviderText("org2", testConfig.VCD.Org+"-1"))
 				templateText = strings.Replace(templateText, providerVcdOrg2, providerVcdOrg2Alias, -1)
+			}
+			if usingSysProvider2 {
+				templateText = fmt.Sprintf("%s\n%s", templateText, getSysProviderText("sys2"))
+				templateText = strings.Replace(templateText, providerVcdSystem2, providerVcdSys2Alias, -1)
 			}
 		}
 		resourceFile := path.Join(testArtifactsDirectory, caller) + ".tf"
@@ -1683,6 +1702,41 @@ provider "vcd" {
 		"Alias":           "",
 	}
 	unfilledTemplate := template.Must(template.New("getOrgProvider").Parse(orgProviderTemplate))
+	buf := &bytes.Buffer{}
+
+	// If an error occurs, returns an empty string
+	if err := unfilledTemplate.Execute(buf, data); err != nil {
+		return ""
+	}
+	return buf.String()
+}
+
+func getSysProviderText(providerName string) string {
+	providerSysTemplate := `
+provider "vcd" {
+  alias                = "{{.ProviderName}}"
+  user                 = "{{.User}}"
+  password             = "{{.UserPassword}}"
+  auth_type            = "integrated"
+  url                  = "{{.VcdUrl}}"
+  sysorg               = "{{.Org}}"
+  org                  = "{{.Org}}"
+  allow_unverified_ssl = "true"
+  max_retry_timeout    = 600
+  logging              = true
+  logging_file         = "go-vcloud-director-{{.Org}}.log"
+}`
+
+	data := StringMap{
+		"User":         os.Getenv(envSecondVcdUser),
+		"UserPassword": os.Getenv(envSecondVcdPassword),
+		"VcdUrl":       os.Getenv(envSecondVcdUrl),
+		"SysOrg":       os.Getenv(envSecondVcdSysOrg),
+		"Org":          os.Getenv(envSecondVcdSysOrg),
+		"ProviderName": providerName,
+		"Alias":        "",
+	}
+	unfilledTemplate := template.Must(template.New("getSysProvider").Parse(providerSysTemplate))
 	buf := &bytes.Buffer{}
 
 	// If an error occurs, returns an empty string

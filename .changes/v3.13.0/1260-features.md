@@ -1,0 +1,8 @@
+* **New Data Source:** `vcd_multisite_site` to read the state and associations of current site [GH-1260]
+* **New Data Source:** `vcd_multisite_site_data` to produce the association data needed to start a site association [GH-1260]
+* **New Data Source:** `vcd_multisite_site_association` to read the details of a site association [GH-1260]
+* **New Resource:** `vcd_multisite_site_association` to associate the current site with a remote one [GH-1260]
+* **New Data Source:** `vcd_multisite_org_data` to produce the association data needed to start an organization association [GH-1260]
+* **New Data Source:** `vcd_multisite_org_association` to read the details of an organization association [GH-1260]
+* **New Resource:** `vcd_multisite_org_association` to associate a local organization with a remote one [GH-1260]
+* **New Guide** `Site and Org associations` to describe association operations for sites and organizations [GH-1260]

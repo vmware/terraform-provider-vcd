@@ -54,6 +54,14 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 				dataSourceName: "vcd_version",
 				reason:         "The VCD version is always available",
 			},
+			{
+				dataSourceName: "vcd_multisite_site",
+				reason:         "The VCD site is always available",
+			},
+			{
+				dataSourceName: "vcd_multisite_site_data",
+				reason:         "The VCD site data is always available",
+			},
 		}
 		for _, skip := range skipAlwaysSlice {
 			if dataSourceName == skip.dataSourceName {
@@ -138,6 +146,9 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			"vcd_nsxt_network_context_profile",
 			"vcd_nsxt_edgegateway_l2_vpn_tunnel",
 			"vcd_vgpu_profile",
+			"vcd_multisite_site_association",
+			"vcd_multisite_site_data",
+			"vcd_multisite_site",
 		}
 		dataSourcesRequiringAlbConfig := []string{
 			"vcd_nsxt_alb_cloud",
@@ -185,6 +196,13 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			"MandatoryFields": addedParams,
 		}
 
+		if dataSourceName == "vcd_multisite_site_association" {
+			params["MandatoryFields"] = ` associated_site_id = "urn:vcloud:site:deadbeef-87e4-4905-202a-bfe9faa5476f"` + "\n"
+		}
+		if dataSourceName == "vcd_multisite_org_association" {
+			params["MandatoryFields"] = params["MandatoryFields"].(string) +
+				` associated_org_id = "urn:vcloud:org:deadbeef-87e4-4905-202a-bfe9faa5476f"` + "\n"
+		}
 		if dataSourceName == "vcd_nsxv_distributed_firewall" {
 			params["MandatoryFields"] = `vdc_id = "deadbeef-dead-beef-dead-beefdeadbeef"`
 		}
@@ -276,7 +294,9 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			dataSourceName == "vcd_org_ldap" ||
 			dataSourceName == "vcd_org_oidc" ||
 			dataSourceName == "vcd_ip_space_custom_quota" ||
-			dataSourceName == "vcd_ip_space_ip_allocation") &&
+			dataSourceName == "vcd_ip_space_ip_allocation" ||
+			dataSourceName == "vcd_multisite_org_association" ||
+			dataSourceName == "vcd_multisite_org_data") &&
 			mandatoryFields[fieldIndex] == "org_id" {
 			// injecting fake Org ID
 			templateFields = templateFields + `org_id = "urn:vcloud:org:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"

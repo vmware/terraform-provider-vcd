@@ -399,6 +399,8 @@ The following arguments are supported:
     * `vcd_nsxt_transport_zone`
     * `vcd_distributed_switch`
     * `vcd_importable_port_group`
+    * `vcd_multisite_site_association`
+    * `vcd_multisite_org_association`
     * `vcd_vapp_network`
     * `vcd_vapp_org_network`
     * `vcd_vapp_all_network`
