@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -202,7 +201,7 @@ func testAccCheckVDCControlAccessDestroy() resource.TestCheckFunc {
 		}
 
 		if controlAccessParams.IsSharedToEveryone || controlAccessParams.AccessSettings != nil {
-			spew.Dump(controlAccessParams)
+			fmt.Printf("%#v", controlAccessParams)
 			return fmt.Errorf("expected to have VDC sharing settings set to none and got something else: %v", controlAccessParams)
 		}
 		return nil
