@@ -39,6 +39,11 @@ func resourceVcdSolutionAddonInstancePublish() *schema.Resource {
 				Optional:    true,
 				Description: "Publish Solution Add-On Instance to all tenants",
 			},
+			"rde_state": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Parent RDE state",
+			},
 		},
 	}
 }
@@ -80,7 +85,12 @@ func resourceVcdSolutionAddonInstancePublishRead(ctx context.Context, d *schema.
 		return diag.Errorf("error retrieving Solution Add-On Instance: %s", err)
 	}
 
-	d.Set("publish_to_all_tenants", addOnInstance.SolutionAddOnInstance.Scope.AllTenants)
+	if addOnInstance.SolutionAddOnInstance != nil {
+		dSet(d, "publish_to_all_tenants", addOnInstance.SolutionAddOnInstance.Scope.AllTenants)
+	} else {
+		dSet(d, "publish_to_all_tenants", false)
+	}
+
 	orgNames := addOnInstance.SolutionAddOnInstance.Scope.Tenants
 
 	orgIds, err := orgNamesToIds(vcdClient, orgNames)
@@ -95,6 +105,7 @@ func resourceVcdSolutionAddonInstancePublishRead(ctx context.Context, d *schema.
 	}
 
 	dSet(d, "add_on_instance_id", addOnInstance.RdeId())
+	dSet(d, "rde_state", addOnInstance.DefinedEntity.DefinedEntity.State)
 
 	return nil
 }

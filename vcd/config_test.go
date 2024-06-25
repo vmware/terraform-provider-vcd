@@ -263,7 +263,7 @@ type TestConfig struct {
 		StoragePolicy string `json:"storagePolicy,omitempty"`
 
 		Catalog       string `json:"catalog,omitempty"`
-		AddonImageDse string `json:"addonImageDse,omitempty"`
+		AddOnImageDse string `json:"addonImageDse,omitempty"`
 	} `json:"solutionAddOn,omitempty"`
 }
 

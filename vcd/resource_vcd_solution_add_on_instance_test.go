@@ -5,16 +5,14 @@ package vcd
 import (
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccSolutionAddonInstanceAndPublishing(t *testing.T) {
 	preTestChecks(t)
 
 	if testConfig.SolutionAddOn.Org == "" {
-		t.Skipf("SolutionAddOn config value not specified")
+		t.Skipf("Solution Add-On config value not specified")
 	}
 
 	vcdClient := createTemporaryVCDConnection(true)
@@ -28,7 +26,7 @@ func TestAccSolutionAddonInstanceAndPublishing(t *testing.T) {
 		t.Fatalf("error retrieving catalog: %s", err)
 	}
 
-	localAddOnPath, err := fetchCacheFile(catalog, testConfig.SolutionAddOn.AddonImageDse, t)
+	localAddOnPath, err := fetchCacheFile(catalog, testConfig.SolutionAddOn.AddOnImageDse, t)
 	if err != nil {
 		t.Fatalf("error finding Solution Add-On cache file: %s", err)
 	}
@@ -51,7 +49,7 @@ func TestAccSolutionAddonInstanceAndPublishing(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "step2"
 	configText2 := templateFill(testAccSolutionAddonInstanceStep2+testAccSolutionAddonInstancePublishAll, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText2)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -174,17 +172,17 @@ data "vcd_catalog_media" "dse14" {
 }
 
 resource "vcd_solution_add_on" "dse14" {
-  catalog_item_id   = data.vcd_catalog_media.dse14.catalog_item_id
-  addon_path        = "{{.AddonIsoPath}}"
-  trust_certificate = true
+  catalog_item_id        = data.vcd_catalog_media.dse14.catalog_item_id
+  add_on_path            = "{{.AddonIsoPath}}"
+  auto_trust_certificate = true
 
-  depends_on = [ vcd_solution_landing_zone.slz ]
+  depends_on = [vcd_solution_landing_zone.slz]
 }
 
 resource "vcd_solution_add_on_instance" "dse14" {
-  add_on_id     = vcd_solution_add_on.dse14.id
-  accept_eula   = true
-  name = "{{.TestName}}"
+  add_on_id   = vcd_solution_add_on.dse14.id
+  accept_eula = true
+  name        = "{{.TestName}}"
 
   input = {
     delete-previous-uiplugin-versions = true
@@ -202,8 +200,8 @@ data "vcd_org" "recipient" {
 }
 
 resource "vcd_solution_add_on_instance_publish" "public" {
-  add_on_instance_id = vcd_solution_add_on_instance.dse14.id
-  org_ids = [data.vcd_org.recipient.id]
+  add_on_instance_id     = vcd_solution_add_on_instance.dse14.id
+  org_ids                = [data.vcd_org.recipient.id]
   publish_to_all_tenants = false
 }
 `
@@ -222,14 +220,7 @@ data "vcd_solution_add_on_instance_publish" "published" {
 
 const testAccSolutionAddonInstancePublishAll = `
 resource "vcd_solution_add_on_instance_publish" "public" {
-  add_on_instance_id = vcd_solution_add_on_instance.dse14.id
+  add_on_instance_id     = vcd_solution_add_on_instance.dse14.id
   publish_to_all_tenants = true
 }
 `
-
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
-	}
-}

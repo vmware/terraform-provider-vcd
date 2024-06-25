@@ -15,7 +15,7 @@ func datasourceVcdSolutionAddonInstancePublish() *schema.Resource {
 			"add_on_instance_name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of the Solution Add-On Defined Entity",
+				Description: "Name of the Solution Add-On Instance",
 			},
 			"add_on_instance_id": {
 				Type:        schema.TypeString,
@@ -51,7 +51,11 @@ func datasourceVcdSolutionAddonInstancePublishRead(ctx context.Context, d *schem
 		return diag.Errorf("error retrieving Solution Add-On Instance: %s", err)
 	}
 
-	d.Set("publish_to_all_tenants", addOnInstance.SolutionAddOnInstance.Scope.AllTenants)
+	if addOnInstance.SolutionAddOnInstance != nil {
+		dSet(d, "publish_to_all_tenants", addOnInstance.SolutionAddOnInstance.Scope.AllTenants)
+	} else {
+		dSet(d, "publish_to_all_tenants", false)
+	}
 
 	orgNames := addOnInstance.SolutionAddOnInstance.Scope.Tenants
 	orgIds, err := orgNamesToIds(vcdClient, orgNames)
@@ -66,7 +70,7 @@ func datasourceVcdSolutionAddonInstancePublishRead(ctx context.Context, d *schem
 	}
 
 	dSet(d, "add_on_instance_id", addOnInstance.RdeId())
-	dSet(d, "rde_state", addOnInstance.DefinedEntity.DefinedEntity.State)
+	dSet(d, "rde_state", addOnInstance.DefinedEntity.State())
 	d.SetId(addOnInstance.RdeId())
 
 	return nil

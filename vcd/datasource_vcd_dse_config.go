@@ -132,28 +132,3 @@ func datasourceVcdDseRegistryConfigurationRead(ctx context.Context, d *schema.Re
 
 	return nil
 }
-
-/*
-"name": "VCD Data Solutions",
-"type": "PackageRepository",
-"image": "harbor-repo.vmware.com/vcdtds/dev/vcd-data-solutions-package-repo:1.4.0-dev.104.g2266851b",
-"version": "1.4.0",
-"manifests": "apiVersion: v1\nkind: Namespace\nmetadata:\n  name: vcd-ds-system\n  labels:\n    vcd-ds/installation-manifest: \"true\"\n---\napiVersion: v1\nkind: Namespace\nmetadata:\n  name: vcd-ds-workloads\n  labels:\n    vcd-ds/installation-manifest: \"true\"\n---\napiVersion: v1\ndata:\n  .dockerconfigjson: {{{registryCreds}}}\nkind: Secret\nmetadata:\n  name: vcd-ds-registry-creds\n  namespace: vcd-ds-system\n  labels:\n    vcd-ds/installation-manifest: \"true\"\ntype: kubernetes.io/dockerconfigjson\n---\napiVersion: secretgen.carvel.dev/v1alpha1\nkind: SecretExport\nmetadata:\n  name: vcd-ds-registry-creds\n  namespace: vcd-ds-system\n  labels:\n    vcd-ds/installation-manifest: \"true\"\nspec:\n  toNamespaces:\n  - vcd-ds-system\n  - vcd-ds-workloads\n---\napiVersion: v1\nkind: ServiceAccount\nmetadata:\n  name: vcd-data-solutions-install\n  namespace: vcd-ds-system\n  labels:\n    vcd-ds/installation-manifest: \"true\"\n---\napiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRole\nmetadata:\n  name: vcd-data-solutions-install\n  labels:\n    vcd-ds/installation-manifest: \"true\"\nrules:\n- apiGroups:\n  - \"\"\n  resources:\n  - configmaps\n  - secrets\n  - serviceaccounts\n  - pods\n  verbs:\n  - \"*\"\n- apiGroups:\n  - apps\n  resources:\n  - deployments\n  verbs:\n  - \"*\"\n- apiGroups:\n  - rbac.authorization.k8s.io\n  resources:\n  - clusterrolebindings\n  - clusterroles\n  verbs:\n  - \"*\"\n- apiGroups:\n  - secretgen.carvel.dev\n  resources:\n  - secretexports\n  - secretimports\n  verbs:\n  - \"*\"\n- apiGroups:\n  - cert-manager.io\n  resources:\n  - certificates\n  - issuers\n  verbs:\n  - \"*\"\n---\napiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRoleBinding\nmetadata:\n  name: vcd-data-solutions-install\n  labels:\n    vcd-ds/installation-manifest: \"true\"\nroleRef:\n  apiGroup: rbac.authorization.k8s.io\n  kind: ClusterRole\n  name: vcd-data-solutions-install\nsubjects:\n- kind: ServiceAccount\n  name: vcd-data-solutions-install\n  namespace: vcd-ds-system\n---\napiVersion: v1\nkind: Secret\nmetadata:\n  name: vcd-data-solutions-install-values\n  namespace: vcd-ds-system\n  labels:\n    vcd-ds/installation-manifest: \"true\"\nstringData:\n  values.yml: |\n    ---\n    vcdURL: {{vcdURL}}\n    vcdOrg: \"{{vcdOrg}}\"\n    clusterID: {{clusterID}}\n    apiToken: {{apiToken}}\n---\napiVersion: packaging.carvel.dev/v1alpha1\nkind: PackageRepository\nmetadata:\n  name: vcd-data-solutions\n  namespace: vcd-ds-system\n  labels:\n    vcd-ds/installation-manifest: \"true\"\nspec:\n  fetch:\n    imgpkgBundle:\n      image: {{dsRepoImage}}\n---\napiVersion: packaging.carvel.dev/v1alpha1\nkind: PackageInstall\nmetadata:\n  name: vcd-data-solutions-install\n  namespace: vcd-ds-system\n  annotations:\n    packaging.carvel.dev/downgradable: \"\"\n  labels:\n    vcd-ds/installation-manifest: \"true\"\nspec:\n  serviceAccountName: vcd-data-solutions-install\n  packageRef:\n    refName: data-solutions.vcloud.vmware.com\n    versionSelection:\n      constraints: \"{{dsVersion}}\"\n      prereleases: {}\n  values:\n  - secretRef:\n      name: vcd-data-solutions-install-values",
-"defaultImage": "projects.registry.vmware.com/vcdds/vcd-data-solutions-package-repo:1.4.0",
-"defaultVersion": "1.4.0",
-"compatibleVersions": ">=1.0.0 <=1.4.0",
-"requireVersionCompatibility": true
-*/
-
-/*
-"name": "MongoDB",
-"type": "ChartRepository",
-"version": "",
-"packageName": "",
-"defaultVersion": "1.24.0",
-"chartRepository": "",
-"compatibleVersions": ">=1.23.0 <1.25.0",
-"defaultPackageName": "enterprise-operator",
-"defaultChartRepository": "https://mongodb.github.io/helm-charts",
-"requireVersionCompatibility": false
-*/

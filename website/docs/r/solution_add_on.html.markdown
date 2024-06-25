@@ -42,7 +42,7 @@ resource "vcd_catalog_media" "dse14" {
 
 resource "vcd_solution_add_on" "dse14" {
   catalog_item_id        = data.vcd_catalog_media.dse14.catalog_item_id
-  addon_path             = "/Users/demo/Downloads/vmware-vcd-ds-1.4.0-23376809.iso"
+  add_on_path            = "/Users/demo/Downloads/vmware-vcd-ds-1.4.0-23376809.iso"
   auto_trust_certificate = true
 }
 
@@ -62,7 +62,7 @@ data "vcd_catalog_media" "dse14" {
 resource "vcd_solution_add_on" "dse14" {
   org                    = "solution_org"
   catalog_item_id        = data.vcd_catalog_media.dse14.catalog_item_id
-  addon_path             = "/Users/demo/Downloads/vmware-vcd-ds-1.4.0-23376809.iso"
+  add_on_path            = "/Users/demo/Downloads/vmware-vcd-ds-1.4.0-23376809.iso"
   auto_trust_certificate = true
 }
 ```
@@ -73,7 +73,7 @@ The following arguments are supported:
 
 * `catalog_item_id` - (Required) The catalog item ID of Solution Add-On. It can be uploaded using
   [`vcd_catalog_media`](/providers/vmware/vcd/latest/docs/resources/catalog_media)
-* `addon_path` - (Required) Local filesystem path of Solution Add-On. The Add-On image is required
+* `add_on_path` - (Required) Local filesystem path of Solution Add-On. The Add-On image is required
 locally as some of the metadata must be extracted for creating the Solution Add-On entry in Cloud
 Director.
 * `auto_trust_certificate` - (Optional) Plugin can automatically trust the certificate of Solution

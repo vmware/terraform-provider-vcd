@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_solution_add_on_instance_publish"
 sidebar_current: "docs-vcd-resource-solution-add-on-instance-publish"
 description: |-
-  Provides a resource to manage publishing configuration of Solution Add-Ons in Cloud Director.
+  Provides a resource to manage publishing configuration of Solution Add-On Instances in Cloud Director.
 
 ---
 
@@ -11,11 +11,11 @@ description: |-
 
 Supported in provider *v3.13+* and VCD 10.4.1+.
 
-Provides a resource to manage publishing configuration of Solution Add-Ons in Cloud Director.
+Provides a resource to manage publishing configuration of Solution Add-On Instances in Cloud Director.
 
 ~> Only `System Administrator` can create this resource.
 
-## Example Usage (Uploading an image and create a Solution Add-On entry)
+## Example Usage (Creating a Solution Add-On Instance and publishing it to single tenant)
 
 ```hcl
 data "vcd_org" "recipient" {
@@ -23,8 +23,8 @@ data "vcd_org" "recipient" {
 }
 
 resource "vcd_solution_add_on_instance_publish" "public" {
-  add_on_instance_id = vcd_solution_add_on_instance.dse14.id
-  org_ids = [data.vcd_org.recipient.id]
+  add_on_instance_id     = vcd_solution_add_on_instance.dse14.id
+  org_ids                = [data.vcd_org.recipient.id]
   publish_to_all_tenants = false
 }
 
@@ -42,9 +42,10 @@ resource "vcd_solution_add_on" "dse14" {
 }
 
 resource "vcd_solution_add_on_instance" "dse14" {
-  add_on_id     = vcd_solution_add_on.dse14.id
-  accept_eula   = true
-  name = "MyDseInstanceName"
+  add_on_id   = vcd_solution_add_on.dse14.id
+  accept_eula = true
+  name        = "MyDseInstanceName"
+
   input = {
     input-delete-previous-uiplugin-versions = false
   }
