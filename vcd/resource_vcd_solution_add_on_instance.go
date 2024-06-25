@@ -22,13 +22,14 @@ func resourceVcdSolutionAddonInstance() *schema.Resource {
 			"add_on_id": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "Parent Solution Add-On ID",
 			},
 			"accept_eula": {
 				Type:        schema.TypeBool,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Defines if EULA is accepted. `false` will and print EULA",
+				Description: "Defines if EULA is accepted. `false` will return an error and print EULA",
 			},
 			"name": {
 				Type:        schema.TypeString,

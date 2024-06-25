@@ -70,7 +70,7 @@ func datasourceVcdSolutionAddonInstancePublishRead(ctx context.Context, d *schem
 	}
 
 	dSet(d, "add_on_instance_id", addOnInstance.RdeId())
-	dSet(d, "rde_state", addOnInstance.DefinedEntity.DefinedEntity.State)
+	dSet(d, "rde_state", addOnInstance.DefinedEntity.State())
 	d.SetId(addOnInstance.RdeId())
 
 	return nil

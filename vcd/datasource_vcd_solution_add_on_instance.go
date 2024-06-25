@@ -15,7 +15,6 @@ func datasourceVcdSolutionAddonInstance() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Solution Add-On Instance Name",
 			},
 			"add_on_id": {
@@ -47,7 +46,7 @@ func datasourceVcdSolutionAddonInstanceRead(ctx context.Context, d *schema.Resou
 
 	dSet(d, "add_on_id", addOnInstance.SolutionAddOnInstance.Prototype)
 	dSet(d, "name", addOnInstance.SolutionAddOnInstance.Name)
-	dSet(d, "rde_state", addOnInstance.DefinedEntity.DefinedEntity.State)
+	dSet(d, "rde_state", addOnInstance.DefinedEntity.State())
 
 	// Retrieve creation input fields
 	// 'delete_input' values cannot be read from Solution Add-On Instance as they are specified only

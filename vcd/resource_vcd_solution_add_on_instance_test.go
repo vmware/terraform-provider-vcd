@@ -49,7 +49,7 @@ func TestAccSolutionAddonInstanceAndPublishing(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "step2"
 	configText2 := templateFill(testAccSolutionAddonInstanceStep2+testAccSolutionAddonInstancePublishAll, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText2)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
