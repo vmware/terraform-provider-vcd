@@ -81,7 +81,7 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: step1,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					// First VDC template
 					resource.TestCheckResourceAttr(template+"1", "name", params["Name1"].(string)),
 					resource.TestCheckResourceAttr(template+"1", "description", params["Name1"].(string)+"_description"),
@@ -117,9 +117,9 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 					}),
 					resource.TestCheckNoResourceAttr(template+"1", "edge_gateway.0"),
 					resource.TestMatchResourceAttr(template+"1", "network_pool_id", regexp.MustCompile(`^urn:vcloud:networkpool:.+$`)),
-					resource.TestCheckResourceAttr(template+"1", "nic_quota", "0"),
+					resource.TestCheckResourceAttr(template+"1", "nic_quota", "100"),
 					resource.TestCheckResourceAttr(template+"1", "vm_quota", "0"),
-					resource.TestCheckResourceAttr(template+"1", "provisioned_network_quota", "0"),
+					resource.TestCheckResourceAttr(template+"1", "provisioned_network_quota", "1000"),
 					resource.TestCheckResourceAttr(template+"1", "readable_by_org_ids.#", "1"),
 
 					// Second VDC template
@@ -164,9 +164,9 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 						"end_address":   "1.2.3.4",
 					}),
 					resource.TestCheckNoResourceAttr(template+"2", "network_pool_id"),
-					resource.TestCheckResourceAttr(template+"2", "nic_quota", "0"),
+					resource.TestCheckResourceAttr(template+"2", "nic_quota", "100"),
 					resource.TestCheckResourceAttr(template+"2", "vm_quota", "0"),
-					resource.TestCheckResourceAttr(template+"2", "provisioned_network_quota", "0"),
+					resource.TestCheckResourceAttr(template+"2", "provisioned_network_quota", "1000"),
 					resource.TestCheckResourceAttr(template+"2", "readable_by_org_ids.#", "0"),
 
 					// Third VDC template
@@ -242,15 +242,15 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 					resource.TestCheckResourceAttr(template+"4", "enable_thin_provisioning", "false"),
 					resource.TestCheckNoResourceAttr(template+"4", "edge_gateway.0"),
 					resource.TestMatchResourceAttr(template+"4", "network_pool_id", regexp.MustCompile(`^urn:vcloud:networkpool:.+$`)),
-					resource.TestCheckResourceAttr(template+"4", "nic_quota", "0"),
+					resource.TestCheckResourceAttr(template+"4", "nic_quota", "100"),
 					resource.TestCheckResourceAttr(template+"4", "vm_quota", "0"),
-					resource.TestCheckResourceAttr(template+"4", "provisioned_network_quota", "0"),
+					resource.TestCheckResourceAttr(template+"4", "provisioned_network_quota", "1000"),
 					resource.TestCheckResourceAttr(template+"4", "readable_by_org_ids.#", "1"),
 				),
 			},
 			{
 				Config: step2,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(template+"1", "name", params["Name1"].(string)),
 					resource.TestCheckTypeSetElemNestedAttrs(template+"1", "compute_configuration.*", map[string]string{
 						"cpu_allocated":              "0", // Not used
@@ -304,7 +304,7 @@ func TestAccVcdVdcTemplate(t *testing.T) {
 			},
 			{
 				Config: step3,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual(template+"1", dsTemplate+"1", nil),
 					resourceFieldsEqual(template+"2", dsTemplate+"2", nil),
 					resourceFieldsEqual(template+"3", dsTemplate+"3", nil),

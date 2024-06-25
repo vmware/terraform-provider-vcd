@@ -118,15 +118,15 @@ The following arguments are supported:
   * `name` - (Required) Name of the Edge Gateway
   * `description` - (Optional) Description of the Edge Gateway
   * `ip_allocation_count` - (Optional) Allocated IPs for the Edge Gateway. Defaults to 0
-  * `network_name` - (Required) Name of the routed network to create with the Edge Gateway
-  * `network_description` - (Optional) Description of the routed network to create with the Edge Gateway
-  * `network_gateway_cidr` - (Required) CIDR of the Edge Gateway for the created routed network
+  * `routed_network_name` - (Required) Name of the routed network to create with the Edge Gateway
+  * `routed_network_description` - (Optional) Description of the routed network to create with the Edge Gateway
+  * `routed_network_gateway_cidr` - (Required) CIDR of the Edge Gateway for the created routed network
   * `static_ip_pool` - (Required) **One block** with a single IP range (this is a constraint due to a bug in VCD 10.5+) that has two properties: `start_address`, the start address of the IP range;
     `end_address`, the end address of the IP range
 * `network_pool_id` - (Optional) If set, specifies the Network pool for the instantiated VDCs. Otherwise, it is automatically chosen
-* `nic_quota` - (Optional) Quota for the NICs of the instantiated VDCs. 0 means unlimited. Defaults to 0
+* `nic_quota` - (Optional) Quota for the NICs of the instantiated VDCs. Defaults to 100
 * `vm_quota` - (Optional) Quota for the VMs of the instantiated VDCs. 0 means unlimited. Defaults to 0
-* `provisioned_network_quota` - (Optional) Quota for the provisioned networks of the instantiated VDCs. 0 means unlimited. Defaults to 0
+* `provisioned_network_quota` - (Optional) Quota for the provisioned networks of the instantiated VDCs. Defaults to 1000
 * `readable_by_org_ids` - (Optional) A set of Organization IDs that will be able to view and read this VDC template, they can be obtained with
   [`vcd_org` data source](/providers/vmware/vcd/latest/docs/data-sources/org)
 

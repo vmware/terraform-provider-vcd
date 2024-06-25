@@ -239,8 +239,8 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 			"nic_quota": {
 				Type:             schema.TypeInt,
 				Optional:         true,
-				Default:          0,
-				Description:      "Quota for the NICs of the instantiated VDCs. 0 means unlimited",
+				Default:          100,
+				Description:      "Quota for the NICs of the instantiated VDCs",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 			},
 			"vm_quota": {
@@ -253,8 +253,8 @@ func resourceVcdOrgVdcTemplate() *schema.Resource {
 			"provisioned_network_quota": {
 				Type:             schema.TypeInt,
 				Optional:         true,
-				Default:          0,
-				Description:      "Quota for the provisioned networks of the instantiated VDCs. 0 means unlimited",
+				Default:          1000,
+				Description:      "Quota for the provisioned networks of the instantiated VDCs",
 				ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 			},
 			"readable_by_org_ids": {
@@ -388,11 +388,11 @@ func genericVcdVdcTemplateCreateOrUpdate(ctx context.Context, d *schema.Resource
 				Configuration: &types.GatewayConfiguration{
 					GatewayInterfaces: &types.GatewayInterfaces{GatewayInterface: []*types.GatewayInterface{
 						{
-							Name:        edgeGatewayBindingId,
-							DisplayName: edgeGatewayBindingId,
+							Name:        externalNetworkBindingId,
+							DisplayName: externalNetworkBindingId,
 							Connected:   true,
 							Network: &types.Reference{
-								HREF: edgeGatewayBindingId,
+								HREF: externalNetworkBindingId,
 							},
 							QuickAddAllocatedIpCount: gatewayBlock["ip_allocation_count"].(int),
 						},
