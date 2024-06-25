@@ -29,7 +29,7 @@ func resourceVcdSolutionAddon() *schema.Resource {
 				Required:    true,
 				Description: "Solution Add-On Catalog Item ID",
 			},
-			"addon_path": {
+			"add_on_path": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -59,7 +59,7 @@ func resourceVcdSolutionAddonCreate(ctx context.Context, d *schema.ResourceData,
 	vcdClient := meta.(*VCDClient)
 
 	createCfg := govcd.SolutionAddOnConfig{
-		IsoFilePath:          d.Get("addon_path").(string),
+		IsoFilePath:          d.Get("add_on_path").(string),
 		User:                 "administrator",
 		CatalogItemId:        d.Get("catalog_item_id").(string),
 		AutoTrustCertificate: d.Get("auto_trust_certificate").(bool),
