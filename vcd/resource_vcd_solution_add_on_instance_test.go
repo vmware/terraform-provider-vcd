@@ -12,7 +12,7 @@ func TestAccSolutionAddonInstanceAndPublishing(t *testing.T) {
 	preTestChecks(t)
 
 	if testConfig.SolutionAddOn.Org == "" {
-		t.Skipf("SolutionAddOn config value not specified")
+		t.Skipf("Solution Add-On config value not specified")
 	}
 
 	vcdClient := createTemporaryVCDConnection(true)
@@ -26,7 +26,7 @@ func TestAccSolutionAddonInstanceAndPublishing(t *testing.T) {
 		t.Fatalf("error retrieving catalog: %s", err)
 	}
 
-	localAddOnPath, err := fetchCacheFile(catalog, testConfig.SolutionAddOn.AddonImageDse, t)
+	localAddOnPath, err := fetchCacheFile(catalog, testConfig.SolutionAddOn.AddOnImageDse, t)
 	if err != nil {
 		t.Fatalf("error finding Solution Add-On cache file: %s", err)
 	}
@@ -173,7 +173,7 @@ data "vcd_catalog_media" "dse14" {
 
 resource "vcd_solution_add_on" "dse14" {
   catalog_item_id        = data.vcd_catalog_media.dse14.catalog_item_id
-  addon_path             = "{{.AddonIsoPath}}"
+  add_on_path            = "{{.AddonIsoPath}}"
   auto_trust_certificate = true
 
   depends_on = [vcd_solution_landing_zone.slz]
