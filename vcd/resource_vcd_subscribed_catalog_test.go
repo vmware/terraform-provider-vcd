@@ -228,12 +228,13 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 								resource.TestCheckResourceAttr(resourceSubscriber, "metadata.identity", "published catalog")),
 
 							// Subscribed catalog items also get their metadata from the corresponding published items
+							// Note: Skipping when API version is 39.0 (VCD 10.6.0) due to a bug.
 							checkWithTimeout(checkTimeout, checkDelay,
-								resource.TestCheckResourceAttr("data.vcd_catalog_vapp_template.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog))),
+								testCheckResourceAttrWhenVersionMatches("data.vcd_catalog_vapp_template.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog), "< 39.0")),
 							checkWithTimeout(checkTimeout, checkDelay,
-								resource.TestCheckResourceAttr("data.vcd_catalog_media.test-media-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog))),
+								testCheckResourceAttrWhenVersionMatches("data.vcd_catalog_media.test-media-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog), "< 39.0")),
 							checkWithTimeout(checkTimeout, checkDelay,
-								resource.TestCheckResourceAttr("data.vcd_catalog_item.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog))),
+								testCheckResourceAttrWhenVersionMatches("data.vcd_catalog_item.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog), "< 39.0")),
 
 							// If these VM exist, it means that the corresponding vApp template and Media items are fully functional
 							resource.TestCheckResourceAttr("vcd_vm."+testVm, "name", testVm),
