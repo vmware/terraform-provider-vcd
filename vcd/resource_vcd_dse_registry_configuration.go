@@ -1,6 +1,3 @@
-// TODO TODO TODO
-// Investigate resolution of host and possibly docker auth config being present
-
 package vcd
 
 import (
@@ -36,7 +33,7 @@ var dseContainerRegistry = &schema.Resource{
 			Optional:    true,
 			Type:        schema.TypeString,
 			Description: "Password for registry user",
-			// Sensitive:   true,
+			Sensitive:   true,
 		},
 	},
 }
@@ -152,7 +149,7 @@ func resourceVcdDseRegistryConfigurationUpdate(ctx context.Context, d *schema.Re
 }
 
 func resourceVcdDseRegistryConfigurationCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
-	util.Logger.Printf("[TRACE] DSE Configuration %s started", operation)
+	util.Logger.Printf("[TRACE] DSE Registry Configuration %s started", operation)
 	vcdClient := meta.(*VCDClient)
 
 	dseEntryConfig, err := vcdClient.GetDataSolutionByName(d.Get("name").(string))
