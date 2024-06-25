@@ -78,9 +78,12 @@ resource "vcd_org_vdc_template_instance" "my_instance" {
   description         = "A new VDC"
   org_id              = data.vcd_org.org.id
 
-  delete_instantiated_vdc_on_removal = true
-  delete_force                       = true
-  delete_recursive                   = true
+  # This guarantees that removing this resource from HCL won't remove
+  # the instantiated VDC. Set it to "true" to remove the VDC when this
+  # resource is removed.
+  delete_instantiated_vdc_on_removal = false
+  delete_force                       = false
+  delete_recursive                   = false
 }
 ```
 
