@@ -252,7 +252,7 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 							"sync_catalog", "sync_all", "sync_on_refresh", "subscription_password",
 							"cancel_failed_tasks", "store_tasks", "sync_all_vapp_templates",
 							"sync_vapp_templates", "sync_all_media_items", "tasks_file_name",
-							"sync_media_items",
+							"sync_media_items", "catalog_version",
 						},
 					},
 				},
