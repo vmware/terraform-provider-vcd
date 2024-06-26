@@ -262,8 +262,9 @@ type TestConfig struct {
 		ComputePolicy string `json:"computePolicy,omitempty"`
 		StoragePolicy string `json:"storagePolicy,omitempty"`
 
-		Catalog       string `json:"catalog,omitempty"`
-		AddOnImageDse string `json:"addonImageDse,omitempty"`
+		Catalog       string                       `json:"catalog,omitempty"`
+		AddOnImageDse string                       `json:"addonImageDse,omitempty"`
+		DseSolutions  map[string]map[string]string `json:"dseSolutions,omitempty"`
 	} `json:"solutionAddOn,omitempty"`
 }
 

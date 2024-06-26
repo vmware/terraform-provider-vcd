@@ -165,6 +165,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_solution_add_on_instance":                     datasourceVcdSolutionAddonInstance(),                   // 3.13
 	"vcd_solution_add_on_instance_publish":             datasourceVcdSolutionAddonInstancePublish(),            // 3.13
 	"vcd_dse_registry_configuration":                   datasourceVcdDseRegistryConfiguration(),                // 3.13
+	"vcd_dse_solution_publish":                         datasourceVcdDsePublish(),                              // 3.13
 	"vcd_org_oidc":                                     datasourceVcdOrgOidc(),                                 // 3.13
 	"vcd_org_vdc_template":                             datasourceVcdOrgVdcTemplate(),                          // 3.13
 }

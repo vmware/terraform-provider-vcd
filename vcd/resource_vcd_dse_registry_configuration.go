@@ -12,6 +12,10 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
+// Name of Data Solutions Operator package. It cannot be published itself, but it is still seen in
+// the list.
+var defaultDsoName = "VCD Data Solutions" // Data Solutions Operator (DSO) name
+
 var dseContainerRegistry = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"host": {
@@ -53,64 +57,64 @@ func resourceVcdDseRegistryConfiguration() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "Artifact name",
+				Description: "Data Solution Name",
 			},
 			"use_default_value": {
 				Type:          schema.TypeBool,
 				Optional:      true,
-				Description:   "Use the versions provided by ",
+				Description:   "Use the default settings as provided by the Solution",
 				ConflictsWith: []string{"package_repository", "chart_repository", "version", "package_name"},
 			},
-			"package_repository": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Computed:      true,
-				Description:   "",
-				ConflictsWith: []string{"package_name", "chart_repository"},
+			"package_name": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				Description:  "Package name",
+				RequiredWith: []string{"chart_repository"},
+			},
+			"default_package_name": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Default Package name provided by Data Solution",
 			},
 			"version": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "",
+				Description: "Version of package to use",
+			},
+			"default_version": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Default version provided by Data Solution",
 			},
 			"chart_repository": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "",
-			},
-			"type": {
-				Type:     schema.TypeString,
-				Computed: true,
-				Description: "The name of organization to use, optional if defined at provider " +
-					"level. Useful when connected as sysadmin working across different organizations",
-			},
-			"package_name": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				Description: "",
-			},
-			"default_package_name": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "",
-			},
-			"default_repository": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "",
+				Description: "Chart repository to use",
 			},
 			"default_chart_repository": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "Default chart repository provided by Data Solution",
 			},
-			"default_version": {
+			"type": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "Type of Data Solution package. One of 'PackageRepository', 'ChartRepository' ",
+			},
+			"package_repository": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				Description:   "Package repository to use",
+				ConflictsWith: []string{"package_name", "chart_repository"},
+			},
+			"default_repository": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Default package repository provided by Solution",
 			},
 			"container_registry": {
 				Type:        schema.TypeSet,
@@ -129,12 +133,12 @@ func resourceVcdDseRegistryConfiguration() *schema.Resource {
 			"requires_version_compatibility": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "",
+				Description: "Boolean flag if the Data Solution requires version compatibility",
 			},
 			"rde_state": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "Parent RDE state",
 			},
 		},
 	}
@@ -157,7 +161,6 @@ func resourceVcdDseRegistryConfigurationCreateUpdate(ctx context.Context, d *sch
 		return diag.Errorf("error retrieving DSE Configuration: %s", err)
 	}
 	cfg := dseEntryConfig.DataSolution
-
 	packageType := cfg.Spec.Artifacts[0]["type"]
 
 	// Simulate UI button 'Use Default Value' - pass any value that is not nil in the default fields
@@ -214,8 +217,8 @@ func resourceVcdDseRegistryConfigurationCreateUpdate(ctx context.Context, d *sch
 	containerRegistrySet := d.Get("container_registry").(*schema.Set)
 	if len(containerRegistrySet.List()) > 0 {
 
-		if d.Get("name").(string) != "VCD Data Solutions" {
-			return diag.Errorf("only VCD Data Solutions repository can configure container registries")
+		if d.Get("name").(string) != defaultDsoName {
+			return diag.Errorf("only %s repository can configure container registries", defaultDsoName)
 		}
 
 		auths := getRegistryConfigurationType(containerRegistrySet)
@@ -233,12 +236,17 @@ func resourceVcdDseRegistryConfigurationCreateUpdate(ctx context.Context, d *sch
 	}
 
 	d.SetId(dseEntryConfig.RdeId())
-	util.Logger.Printf("[TRACE] DSE Configuration %s started", operation)
+	util.Logger.Printf("[TRACE] DSE Configuration %s ended", operation)
 
 	return resourceVcdDseRegistryConfigurationRead(ctx, d, meta)
 }
 
 func resourceVcdDseRegistryConfigurationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdDseRegistryConfigurationRead(ctx, d, meta, "resource")
+}
+
+func genericVcdDseRegistryConfigurationRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+	util.Logger.Printf("[TRACE] DSE Registry Configuration read for %s started", origin)
 	vcdClient := meta.(*VCDClient)
 
 	configInstance, err := vcdClient.GetDataSolutionByName(d.Get("name").(string))
@@ -283,37 +291,44 @@ func resourceVcdDseRegistryConfigurationRead(ctx context.Context, d *schema.Reso
 		dSet(d, "rde_state", *configInstance.DefinedEntity.DefinedEntity.State)
 	}
 
+	d.SetId(configInstance.RdeId())
+
 	return nil
 }
 
 func resourceVcdDseRegistryConfigurationDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	util.Logger.Printf("[TRACE] DSE Registry Configuration delete started")
 	vcdClient := meta.(*VCDClient)
 
 	dseEntryConfig, err := vcdClient.GetDataSolutionByName(d.Get("name").(string))
 	if err != nil {
 		return diag.Errorf("error retrieving DSE Configuration: %s", err)
 	}
+
+	// There is no real deletion once configurations are created, but
+	// restoring default values is the closest to deletion.
 	cfg := dseEntryConfig.DataSolution
+	artifacts := dseEntryConfig.DataSolution.Spec.Artifacts[0]
 
-	// Simulate UI button 'Use Default Value' - pass any value that is not nil in the default fields
-	if d.Get("use_default_value").(bool) {
-		artifacts := dseEntryConfig.DataSolution.Spec.Artifacts[0]
+	if artifacts["defaultImage"] != nil {
+		cfg.Spec.Artifacts[0]["image"] = artifacts["defaultImage"].(string)
+	}
 
-		if artifacts["defaultImage"] != nil {
-			cfg.Spec.Artifacts[0]["image"] = artifacts["defaultImage"].(string)
-		}
+	if artifacts["defaultChartRepository"] != nil {
+		cfg.Spec.Artifacts[0]["chartRepository"] = artifacts["defaultChartRepository"].(string)
+	}
+	if artifacts["defaultVersion"] != nil {
+		cfg.Spec.Artifacts[0]["version"] = artifacts["defaultVersion"].(string)
+	}
 
-		if artifacts["defaultChartRepository"] != nil {
-			cfg.Spec.Artifacts[0]["chartRepository"] = artifacts["defaultChartRepository"].(string)
-		}
-		if artifacts["defaultVersion"] != nil {
-			cfg.Spec.Artifacts[0]["version"] = artifacts["defaultVersion"].(string)
-		}
+	if artifacts["defaultPackageName"] != nil {
+		cfg.Spec.Artifacts[0]["packageName"] = artifacts["defaultPackageName"].(string)
+	}
 
-		if artifacts["defaultPackageName"] != nil {
-			cfg.Spec.Artifacts[0]["packageName"] = artifacts["defaultPackageName"].(string)
-		}
-
+	// Data Solutions Operator (DSO) repository additionally has registry host configuration, it
+	// must also be removed
+	if dseEntryConfig.Name() == defaultDsoName {
+		cfg.Spec.DockerConfig = &types.DockerConfig{Auths: types.Auths{}}
 	}
 
 	_, err = dseEntryConfig.Update(cfg)
@@ -327,11 +342,15 @@ func resourceVcdDseRegistryConfigurationDelete(ctx context.Context, d *schema.Re
 func resourceVcdDseRegistryConfigurationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
-	configInstance, err := vcdClient.GetDataSolutionByName(d.Get("name").(string))
+	util.Logger.Printf("[TRACE] DSE Registry Configuration import started with ID %s", d.Id())
+
+	configInstance, err := vcdClient.GetDataSolutionByName(d.Id())
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving DSE Configuration: %s", err)
 	}
 
+	dSet(d, "name", d.Id())
+	dSet(d, "use_default_value", false)
 	d.SetId(configInstance.RdeId())
 
 	return []*schema.ResourceData{d}, nil
