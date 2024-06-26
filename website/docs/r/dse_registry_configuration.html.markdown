@@ -34,7 +34,7 @@ Helm based configurations apply to:
 * `MongoDB`
 
 
-Container bases configurations apply to:
+Container based configurations apply to:
 
 * `VMware SQL with Postgres`
 * `VMware RabbitMQ`

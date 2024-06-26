@@ -16,7 +16,6 @@ func datasourceVcdDsePublish() *schema.Resource {
 			"data_solution_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "The ID of Data Solution",
 			},
 			"org_id": {

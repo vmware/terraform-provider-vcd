@@ -70,7 +70,7 @@ func datasourceVcdDseRegistryConfiguration() *schema.Resource {
 			},
 			"compatible_version_constraints": {
 				Type:        schema.TypeSet,
-				Optional:    true,
+				Computed:    true,
 				Description: "A set of version compatibility constraints",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,

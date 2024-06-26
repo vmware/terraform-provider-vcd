@@ -328,7 +328,7 @@ func resourceVcdDseRegistryConfigurationDelete(ctx context.Context, d *schema.Re
 
 	_, err = dseEntryConfig.Update(cfg)
 	if err != nil {
-		return diag.Errorf("error updating Data Solution R repository details for '%s': %s", d.Get("name").(string), err)
+		return diag.Errorf("error updating Data Solution repository details for '%s': %s", d.Get("name").(string), err)
 	}
 
 	return nil
