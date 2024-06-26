@@ -50,7 +50,7 @@ func datasourceVcdDseRegistryConfiguration() *schema.Resource {
 			"default_version": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Default version provided by Solution",
+				Description: "Default version provided by Data Solution",
 			},
 			"package_repository": {
 				Type:        schema.TypeString,
@@ -60,7 +60,7 @@ func datasourceVcdDseRegistryConfiguration() *schema.Resource {
 			"default_repository": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Default package repository provided by Solution",
+				Description: "Default package repository provided by Data Solution",
 			},
 			"container_registry": {
 				Type:        schema.TypeSet,

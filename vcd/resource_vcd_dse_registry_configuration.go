@@ -62,7 +62,7 @@ func resourceVcdDseRegistryConfiguration() *schema.Resource {
 			"use_default_value": {
 				Type:          schema.TypeBool,
 				Optional:      true,
-				Description:   "Use the default settings as provided by the Solution",
+				Description:   "Use the default settings as provided by the Data Solution",
 				ConflictsWith: []string{"package_repository", "chart_repository", "version", "package_name"},
 			},
 			"package_name": {
@@ -114,7 +114,7 @@ func resourceVcdDseRegistryConfiguration() *schema.Resource {
 			"default_repository": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Default package repository provided by Solution",
+				Description: "Default package repository provided by Data Solution",
 			},
 			"container_registry": {
 				Type:        schema.TypeSet,
@@ -153,12 +153,12 @@ func resourceVcdDseRegistryConfigurationUpdate(ctx context.Context, d *schema.Re
 }
 
 func resourceVcdDseRegistryConfigurationCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}, operation string) diag.Diagnostics {
-	util.Logger.Printf("[TRACE] DSE Registry Configuration %s started", operation)
+	util.Logger.Printf("[TRACE] Data Solution Registry Configuration %s started", operation)
 	vcdClient := meta.(*VCDClient)
 
 	dseEntryConfig, err := vcdClient.GetDataSolutionByName(d.Get("name").(string))
 	if err != nil {
-		return diag.Errorf("error retrieving DSE Configuration: %s", err)
+		return diag.Errorf("error retrieving Data Solution Configuration: %s", err)
 	}
 	cfg := dseEntryConfig.DataSolution
 	packageType := cfg.Spec.Artifacts[0]["type"]
@@ -196,7 +196,7 @@ func resourceVcdDseRegistryConfigurationCreateUpdate(ctx context.Context, d *sch
 			return diag.Errorf("Package of type ChartRepository must have 'package_name', 'chart_repository', 'version' set")
 
 		}
-		// validations for user configurable options
+		// end of validations for user configurable options
 
 		if d.Get("package_repository").(string) != "" {
 			cfg.Spec.Artifacts[0]["image"] = d.Get("package_repository").(string)
@@ -213,7 +213,7 @@ func resourceVcdDseRegistryConfigurationCreateUpdate(ctx context.Context, d *sch
 
 	}
 
-	// 'container_registry' are only configured for DSO (name "VCD Data Solutions")
+	// 'container_registry' blocks are only configured for DSO (name "VCD Data Solutions")
 	containerRegistrySet := d.Get("container_registry").(*schema.Set)
 	if len(containerRegistrySet.List()) > 0 {
 
@@ -227,7 +227,7 @@ func resourceVcdDseRegistryConfigurationCreateUpdate(ctx context.Context, d *sch
 
 	updatedDseEntry, err := dseEntryConfig.Update(cfg)
 	if err != nil {
-		return diag.Errorf("error updating DSE repository details for '%s': %s", d.Get("name").(string), err)
+		return diag.Errorf("error updating Data Solution repository for '%s': %s", d.Get("name").(string), err)
 	}
 
 	err = resolveRdeIfNotYetResolved(d.Get("name").(string), updatedDseEntry)
@@ -236,7 +236,7 @@ func resourceVcdDseRegistryConfigurationCreateUpdate(ctx context.Context, d *sch
 	}
 
 	d.SetId(dseEntryConfig.RdeId())
-	util.Logger.Printf("[TRACE] DSE Configuration %s ended", operation)
+	util.Logger.Printf("[TRACE] Data Solution Configuration %s ended", operation)
 
 	return resourceVcdDseRegistryConfigurationRead(ctx, d, meta)
 }
@@ -246,16 +246,14 @@ func resourceVcdDseRegistryConfigurationRead(ctx context.Context, d *schema.Reso
 }
 
 func genericVcdDseRegistryConfigurationRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
-	util.Logger.Printf("[TRACE] DSE Registry Configuration read for %s started", origin)
+	util.Logger.Printf("[TRACE] Data Solution Registry Configuration read for %s started", origin)
 	vcdClient := meta.(*VCDClient)
 
 	configInstance, err := vcdClient.GetDataSolutionByName(d.Get("name").(string))
 	if err != nil {
-		return diag.Errorf("error retrieving DSE Configuration: %s", err)
+		return diag.Errorf("error retrieving Data Solution Configuration: %s", err)
 	}
-
 	artifacts := configInstance.DataSolution.Spec.Artifacts[0]
-
 	artifactType := artifacts["type"].(string)
 	dSet(d, "type", artifactType)
 
@@ -287,26 +285,23 @@ func genericVcdDseRegistryConfigurationRead(_ context.Context, d *schema.Resourc
 		return diag.FromErr(err)
 	}
 
-	if configInstance.DefinedEntity.DefinedEntity.State != nil {
-		dSet(d, "rde_state", *configInstance.DefinedEntity.DefinedEntity.State)
-	}
-
+	dSet(d, "rde_state", configInstance.DefinedEntity.State())
 	d.SetId(configInstance.RdeId())
 
 	return nil
 }
 
 func resourceVcdDseRegistryConfigurationDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	util.Logger.Printf("[TRACE] DSE Registry Configuration delete started")
+	util.Logger.Printf("[TRACE] Data Solution Registry Configuration delete started")
 	vcdClient := meta.(*VCDClient)
 
 	dseEntryConfig, err := vcdClient.GetDataSolutionByName(d.Get("name").(string))
 	if err != nil {
-		return diag.Errorf("error retrieving DSE Configuration: %s", err)
+		return diag.Errorf("error retrieving Data Solution Configuration: %s", err)
 	}
 
 	// There is no real deletion once configurations are created, but
-	// restoring default values is the closest to deletion.
+	// restoring default values provided by Data Solutions is the closest to deletion.
 	cfg := dseEntryConfig.DataSolution
 	artifacts := dseEntryConfig.DataSolution.Spec.Artifacts[0]
 
@@ -333,7 +328,7 @@ func resourceVcdDseRegistryConfigurationDelete(ctx context.Context, d *schema.Re
 
 	_, err = dseEntryConfig.Update(cfg)
 	if err != nil {
-		return diag.Errorf("error updating DSE repository details for '%s': %s", d.Get("name").(string), err)
+		return diag.Errorf("error updating Data Solution R repository details for '%s': %s", d.Get("name").(string), err)
 	}
 
 	return nil
@@ -341,12 +336,11 @@ func resourceVcdDseRegistryConfigurationDelete(ctx context.Context, d *schema.Re
 
 func resourceVcdDseRegistryConfigurationImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
-
-	util.Logger.Printf("[TRACE] DSE Registry Configuration import started with ID %s", d.Id())
+	util.Logger.Printf("[TRACE] Data Solution Registry Configuration import started with ID %s", d.Id())
 
 	configInstance, err := vcdClient.GetDataSolutionByName(d.Id())
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving DSE Configuration: %s", err)
+		return nil, fmt.Errorf("error retrieving Data Solution Configuration: %s", err)
 	}
 
 	dSet(d, "name", d.Id())
@@ -416,11 +410,11 @@ func resolveRdeIfNotYetResolved(name string, dseEntity *govcd.DataSolution) erro
 	if dseEntity.DefinedEntity.State() != "RESOLVED" {
 		err = dseEntity.DefinedEntity.Resolve()
 		if err != nil {
-			return fmt.Errorf("error resolving DSE Config with Name '%s', ID '%s': %s", name, dseEntity.RdeId(), err)
+			return fmt.Errorf("error resolving Data Solution Config with Name '%s', ID '%s': %s", name, dseEntity.RdeId(), err)
 		}
 		// error might be nill but there might be RESOLUTION error
 		if dseEntity.DefinedEntity.State() == "RESOLUTION_ERROR" {
-			return fmt.Errorf("error resolving DSE Config with Name '%s', ID '%s':\n\nError message: %s",
+			return fmt.Errorf("error resolving Data Solution Config with Name '%s', ID '%s':\n\nError message: %s",
 				name, dseEntity.RdeId(), dseEntity.DefinedEntity.DefinedEntity.Message)
 		}
 	}

@@ -6,11 +6,11 @@ description: |-
   Provides a resource to manage Data Solution Extension (DSE) publishing settings.
 ---
 
-# vcd\_dse\_registry\_configuration
+# vcd\_dse\_solution\_publish
 
 Supported in provider *v3.13+* with Data Solution Extension.
 
-Provides a resource to manage Data Solution Extension (DSE) registry configuration.
+Provides a resource to manage Data Solution Extension (DSE) publishing settings.
 
 ~> Only `System Administrator` can create this resource.
 
@@ -40,7 +40,7 @@ resource "vcd_dse_solution_publish" "confluent-platform" {
 
   confluent_license_type = "With License"
   confluent_license_key  = "XXXXXXXXXX"
-  
+
   org_id = data.vcd_org.tenant-org.id
 }
 

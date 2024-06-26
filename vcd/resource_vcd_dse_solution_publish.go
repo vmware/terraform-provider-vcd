@@ -98,11 +98,10 @@ func resourceVcdDsePublishCreate(ctx context.Context, d *schema.ResourceData, me
 	// Check if the data solution provided exists at all
 	dataSolution, err := vcdClient.GetDataSolutionById(d.Get("data_solution_id").(string))
 	if err != nil {
-		return diag.Errorf("error retrieving DSE Configuration: %s", err)
+		return diag.Errorf("error retrieving Data Solution Configuration: %s", err)
 	}
 
 	orgId := d.Get("org_id").(string)
-
 	// Data Solution "Confluent Platform" has a custom baked menu for choosing licensing type
 	// that cannot be dynamically defined.
 	if dataSolution.Name() == "Confluent Platform" {
@@ -134,8 +133,10 @@ func resourceVcdDsePublishCreate(ctx context.Context, d *schema.ResourceData, me
 
 	// The main ACL is what matters when UI is showing whether a particular Data Solution is published to a tenant or not
 	// For reference - publishing does more than that:
-	// * Publishes rights bundle
-	// * Publishes access for that particular Data Solution (this defines if UI shows whether a Data Solution is published to a particular tenant)
+	// * Publishes rights bundle "vmware:dataSolutionsRightsBundle" which is created upon Solution
+	// Add-On Instatiation
+	// * Publishes access for that particular Data Solution (this defines if UI shows whether a Data
+	// Solution is published to a particular tenant)
 	// * Publishes access for Data Solutions Operator (DSO)
 	// * Publishes all Data Solution Instance Templates
 
@@ -227,7 +228,6 @@ func genericVcdDsePublishRead(_ context.Context, d *schema.ResourceData, meta in
 	}
 
 	// Read Template ACL IDs
-
 	allAclIds := make([]string, 0)
 	allTemplates, err := dataSolution.GetAllInstanceTemplates()
 	if err != nil {
@@ -257,12 +257,12 @@ func resourceVcdDsePublishDelete(ctx context.Context, d *schema.ResourceData, me
 	util.Logger.Printf("[TRACE] Data Solution unpublishing started")
 	vcdClient := meta.(*VCDClient)
 
-	// Check if the data solution provided exists at all
 	dataSolution, err := vcdClient.GetDataSolutionById(d.Get("data_solution_id").(string))
 	if err != nil {
 		return diag.Errorf("error retrieving Data Solution: %s", err)
 	}
 
+	// Confluent Platform requires cleanup
 	if dataSolution.Name() == "Confluent Platform" {
 		dsOrgConfig, err := dataSolution.GetDataSolutionOrgConfigForTenant(d.Get("org_id").(string))
 		if err != nil {
@@ -355,13 +355,15 @@ func createConfluentOrgConfig(vcdClient *VCDClient, dataSolution *govcd.DataSolu
 
 	dsOrgConfig, err := vcdClient.CreateDataSolutionOrgConfig(orgId, cfg)
 	if err != nil {
-		return "", fmt.Errorf("error submitting Data Solution Org Configuration: %s", err)
+		return "", fmt.Errorf("error creating Data Solution Org Configuration: %s", err)
 	}
-	util.Logger.Printf("[TRACE] Created Org Config for Data Solution 'Confluent Platform' %s", dsOrgConfig.RdeId())
+	util.Logger.Printf("[TRACE] Created Org Config for Data Solution '%s' %s",
+		dataSolution.Name(), dsOrgConfig.RdeId())
 
 	err = dsOrgConfig.DefinedEntity.Resolve()
 	if err != nil {
-		return dsOrgConfig.RdeId(), fmt.Errorf("error resolving Data Solution Org Config for 'Confluent Platform': %s", err)
+		return dsOrgConfig.RdeId(), fmt.Errorf("error resolving Data Solution Org Config for '%s': %s",
+			dataSolution.Name(), err)
 	}
 
 	return dsOrgConfig.RdeId(), nil

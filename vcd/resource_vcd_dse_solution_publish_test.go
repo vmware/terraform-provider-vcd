@@ -170,7 +170,6 @@ func TestAccDse(t *testing.T) {
 }
 
 const testAccDseStep1pre = testAccSolutionAddonInstanceStep1 + testAccSolutionAddonInstancePublishAll
-
 const testAccDseStep2 = testAccDseStep1pre + testAccDseRegistryConfig
 const testAccDseStep3DS = testAccDseStep2 + testAccDseRegistryConfigDS
 

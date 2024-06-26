@@ -43,7 +43,7 @@ Container bases configurations apply to:
 
 Additionally, `VCD Data Solutions` provide [Container Registry Configuration ](#container-registry).
 
-## Example Usage (Configure package repository)
+## Example Usage (Configure chart repository)
 
 ```hcl
 resource "vcd_dse_registry_configuration" "mongodb-community" {
@@ -56,7 +56,7 @@ resource "vcd_dse_registry_configuration" "mongodb-community" {
 }
 ```
 
-## Example Usage (Configure chart repository)
+## Example Usage (Configure package repository)
 
 ```hcl
 resource "vcd_dse_registry_configuration" "mysql" {
