@@ -132,7 +132,7 @@ func resourceVcdDsePublishCreate(ctx context.Context, d *schema.ResourceData, me
 		return diag.Errorf("error storing Solution Template ACL IDs: %s", err)
 	}
 
-	// The main ACL is what matter when UI is showing whether a particular Data Solution is published to a tenant or not
+	// The main ACL is what matters when UI is showing whether a particular Data Solution is published to a tenant or not
 	// For reference - publishing does more than that:
 	// * Publishes rights bundle
 	// * Publishes access for that particular Data Solution (this defines if UI shows whether a Data Solution is published to a particular tenant)

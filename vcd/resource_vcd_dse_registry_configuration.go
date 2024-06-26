@@ -328,7 +328,7 @@ func resourceVcdDseRegistryConfigurationDelete(ctx context.Context, d *schema.Re
 	// Data Solutions Operator (DSO) repository additionally has registry host configuration, it
 	// must also be removed
 	if dseEntryConfig.Name() == defaultDsoName {
-		cfg.Spec.DockerConfig = &types.DockerConfig{Auths: types.Auths{}}
+		cfg.Spec.DockerConfig = &types.DseDockerConfig{Auths: types.DseDockerAuths{}}
 	}
 
 	_, err = dseEntryConfig.Update(cfg)
@@ -379,9 +379,9 @@ func setRegistryConfigurationData(configInstance *govcd.DataSolution, d *schema.
 	return nil
 }
 
-func getRegistryConfigurationType(containerRegistrySet *schema.Set) types.Auths {
+func getRegistryConfigurationType(containerRegistrySet *schema.Set) types.DseDockerAuths {
 	containerRegistryList := containerRegistrySet.List()
-	auths := make(map[string]types.Auth)
+	auths := make(map[string]types.DseDockerAuth)
 
 	for _, entry := range containerRegistryList {
 		entryMap := entry.(map[string]interface{})
@@ -391,7 +391,7 @@ func getRegistryConfigurationType(containerRegistrySet *schema.Set) types.Auths 
 		username := entryMap["username"].(string)
 		password := entryMap["password"].(string)
 
-		authEntry := types.Auth{}
+		authEntry := types.DseDockerAuth{}
 		if username != "" {
 			authEntry.Username = username
 		}
