@@ -220,7 +220,11 @@ func genericVcdDsePublishRead(_ context.Context, d *schema.ResourceData, meta in
 	if err != nil {
 		return diag.Errorf("error retrieving %s ACLs: %s", defaultDsoName, err)
 	}
-	dSet(d, "dso_acl_id", dsoAcls[0].Id)
+	if len(dsoAcls) > 1 {
+		dSet(d, "dso_acl_id", dsoAcls[0].Id)
+	} else {
+		dSet(d, "dso_acl_id", "")
+	}
 
 	// Read Template ACL IDs
 
@@ -292,6 +296,7 @@ func resourceVcdDsePublishImport(ctx context.Context, d *schema.ResourceData, me
 		return nil, fmt.Errorf("resource name must be specified as \"data solution name\".org-name")
 	}
 	dataSolutionName, orgName := resourceURI[0], resourceURI[1]
+	util.Logger.Printf("[TRACE] Data Solution publishing import started. Data Solution Name '%s', Org Name '%s'", dataSolutionName, orgName)
 
 	dataSolution, err := vcdClient.GetDataSolutionByName(dataSolutionName)
 	if err != nil {
@@ -308,6 +313,8 @@ func resourceVcdDsePublishImport(ctx context.Context, d *schema.ResourceData, me
 		return nil, fmt.Errorf("error retrieving Data Solution '%s' ACL for Org '%s': %s", dataSolutionName, orgName, err)
 	}
 
+	dSet(d, "data_solution_id", dataSolution.RdeId())
+	dSet(d, "org_id", org.Org.ID)
 	d.SetId(mainAcl[0].Id)
 
 	return []*schema.ResourceData{d}, nil

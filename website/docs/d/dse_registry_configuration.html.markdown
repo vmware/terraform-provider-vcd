@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_dse\_registry\_configuration
 
-Supported in provider *v3.13+* and VCD 10.5.0+ with Data Solution Extension.
+Supported in provider *v3.13+* with Data Solution Extension.
 
 Provides a data source to read Data Solution Extension (DSE) registry configuration.
 
@@ -27,7 +27,6 @@ data "vcd_dse_registry_configuration" "mongodb" {
 The following arguments are supported:
 
 * `name` - (Required) The name of Data Solution as it appears in repository configuration
-
 
 ## Attribute Reference
 

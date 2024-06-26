@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_dse\_registry\_configuration
 
-Supported in provider *v3.13+* and VCD 10.5.0+ with Data Solution Extension.
+Supported in provider *v3.13+* with Data Solution Extension.
 
 Provides a resource to manage Data Solution Extension (DSE) registry configuration.
 
@@ -20,14 +20,12 @@ There are 2 types of Data Solution configurations:
 * Helm based
 * Container based
 
-All of Data Solutions provide default versions and repositories and one can use `use_default_value`
-flag that will set these defaults in configuration.
+All of Data Solutions provide default versions and repositories that can be used by setting
+`use_default_value` flag that will set these defaults in configuration.
 
 One can also set custom repositories, package names and their versions. For Helm based configuration
 one should specify `chart_repository`, `version` and `package_name`. For container based
 configuration, `package_repository` and `version` should be set.
-
-In addition to this, 
 
 Helm based configurations apply to:
 

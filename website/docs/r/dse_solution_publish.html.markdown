@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_dse\_registry\_configuration
 
-Supported in provider *v3.13+* and VCD 10.5.0+ with Data Solution Extension.
+Supported in provider *v3.13+* with Data Solution Extension.
 
 Provides a resource to manage Data Solution Extension (DSE) registry configuration.
 
