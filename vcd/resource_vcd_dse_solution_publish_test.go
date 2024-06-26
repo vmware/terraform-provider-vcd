@@ -176,7 +176,8 @@ const testAccDseStep3DS = testAccDseStep2 + testAccDseRegistryConfigDS
 const testAccDseRegistryConfig = `
 {{.SkipBinary}}
 resource "vcd_dse_registry_configuration" "dso" {
-  name               = "VCD Data Solutions"
+  name = "VCD Data Solutions"
+
   # Using default versions for packages
   use_default_value = true
 
