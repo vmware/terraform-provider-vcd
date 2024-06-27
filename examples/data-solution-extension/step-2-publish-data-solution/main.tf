@@ -27,9 +27,9 @@ data "vcd_rights_bundle" "k8s-rights" {
 }
 
 resource "vcd_global_role" "dse" {
-  name        = "DSE Role"
-  description = "Global role for consuming DSE"
-  rights = setunion(data.vcd_rights_bundle.k8s-rights.rights, data.vcd_rights_bundle.dse-rb.rights)
+  name                   = "DSE Role"
+  description            = "Global role for consuming DSE"
+  rights                 = setunion(data.vcd_rights_bundle.k8s-rights.rights, data.vcd_rights_bundle.dse-rb.rights)
   publish_to_all_tenants = false
   tenants = [
     data.vcd_org.dse-consumer.name
@@ -44,7 +44,7 @@ resource "vcd_org_user" "my-org-admin" {
   role        = vcd_global_role.dse.name
   password    = var.vcd_tenant_password
 
-  depends_on = [ vcd_global_role.dse ]
+  depends_on = [vcd_global_role.dse]
 }
 
 
@@ -79,7 +79,7 @@ output "tenant_user" {
 }
 
 output "tenant_password" {
-  value = vcd_org_user.my-org-admin.password
+  value     = vcd_org_user.my-org-admin.password
   sensitive = true
 }
 
