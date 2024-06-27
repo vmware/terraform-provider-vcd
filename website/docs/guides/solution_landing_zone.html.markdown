@@ -1,0 +1,273 @@
+---
+layout: "vcd"
+page_title: "VMware Cloud Director: Solution Landing Zone and Solution Add-Ons"
+sidebar_current: "docs-vcd-guides-solution-landing-zone"
+description: |-
+ Provides guidance to VMware Cloud Director Solution Landing Zone and Solution Add-On management
+---
+
+# Solution Landing Zone and Solution Add-Ons
+
+Solution Add-Ons extend Cloud Director offering with value-added functionalities. One can manage
+multiple Solution Add-Ons within a Cloud Director Solution Landing Zone.
+
+The Solution Add-Ons come packed as `.iso` files and Terraform Provider for VCD v3.13+ is capable of
+leveraging them to configure Solution Add-Ons within VCD.
+
+*Note:* For a more hands-on experience, one can check [deployment HCL
+examples](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/data-solution-extension/).
+
+## Terraform resources and data sources
+
+Terraform provider VCD 3.13 adds support for Solution Landing Zone and Solution Add-On management
+using the following resources and their respective data sources:
+
+* [`vcd_solution_landing_zone`](/providers/vmware/vcd/latest/docs/resources/solution_landing_zone)
+* [`vcd_solution_add_on`](/providers/vmware/vcd/latest/docs/resources/solution_add_on)
+* [`vcd_solution_add_on_instance`](/providers/vmware/vcd/latest/docs/resources/solution_add_on_instance)
+
+The above listed resources can be leveraged to configure Solution Add-Ons from scratch.
+Additionally, after deploying Solution Add-On, one can leverage already existing resources and data
+sources for role management to provision access to new Add-On features:
+
+* [`vcd_rights_bundle`](/providers/vmware/vcd/latest/docs/resources/rights_bundle)
+* [`vcd_global_role`](/providers/vmware/vcd/latest/docs/resources/global_role)
+
+## Solution Landing Zone configuration
+
+The first step for deploying a Solution Add-On is to have a configured Solution Landing Zone and
+[`vcd_solution_landing_zone`](/providers/vmware/vcd/latest/docs/resources/solution_landing_zone)
+does that. It requires specifying an Organization, Catalog, VDC, Routed Org VDC network and both -
+Storage and Compute policies. There can be only *one Solution Landing Zone per VCD*.
+
+```hcl
+resource "vcd_catalog" "solution_add_ons" {
+  org = var.vcd_solutions_org
+
+  name             = "solution_add_ons"
+  description      = "Catalog hoss Data Solution Add-Ons"
+  delete_recursive = true
+  delete_force     = true
+}
+
+data "vcd_org_vdc" "solutions_vdc" {
+  org  = var.vcd_solutions_org
+  name = var.vcd_solutions_vdc
+}
+
+data "vcd_network_routed_v2" "solutions" {
+  org  = var.vcd_solutions_org
+  vdc  = var.vcd_solutions_vdc
+  name = var.vcd_solutions_vdc_routed_network
+}
+
+data "vcd_storage_profile" "solutions" {
+  org  = var.vcd_solutions_org
+  vdc  = var.vcd_solutions_vdc
+  name = var.vcd_solutions_vdc_storage_profile_name
+}
+
+resource "vcd_solution_landing_zone" "slz" {
+  org = var.vcd_solutions_org
+
+  catalog {
+    id = vcd_catalog.solution_add_ons.id
+  }
+
+  vdc {
+    id         = data.vcd_org_vdc.solutions_vdc.id
+    is_default = true
+
+    org_vdc_network {
+      id         = data.vcd_network_routed_v2.solutions.id
+      is_default = true
+    }
+
+    compute_policy {
+      id         = data.vcd_org_vdc.solutions_vdc.default_compute_policy_id
+      is_default = true
+    }
+
+    storage_policy {
+      id         = data.vcd_storage_profile.solutions.id
+      is_default = true
+    }
+  }
+}
+```
+
+
+
+## Solution Add-On configuration
+
+Once the Solution Landing Zone is setup, the next step is creating a Solution Add-On. This requires
+having a Solution Add-On `.iso` file. Due to the deployment process, Solution Add-On `.iso` image
+must be present both - locally and in the catalog defined in Solution Landing Zones.
+
+Each Solution Add-On image file contains a certificate that must be trusted so that a Solution
+Add-On can be used. To do that automatically, one can leverage `auto_trust_certificate` within
+[`vcd_solution_add_on`](/providers/vmware/vcd/latest/docs/resources/solution_add_on) resource.
+
+```hcl
+resource "vcd_catalog_media" "dse14" {
+  org        = var.vcd_solutions_org
+  catalog_id = vcd_catalog.solution_add_ons.id
+
+  name              = basename(var.vcd_dse_add_on_iso_path)
+  description       = "DSE Solution Add-On"
+  media_path        = var.vcd_dse_add_on_iso_path
+  upload_piece_size = 10
+}
+
+resource "vcd_solution_add_on" "dse14" {
+  catalog_item_id        = data.vcd_catalog_media.dse14.catalog_item_id
+  add_on_path            = var.vcd_dse_add_on_iso_path
+  auto_trust_certificate = true
+
+  depends_on = [ vcd_solution_landing_zone.slz ]
+}
+```
+
+## Solution Add-On instantiation
+
+After deployment, the Solution Add-On must be instantiated with correct `input` parameters. More
+details about setting `input` and `delete-input` values below.
+
+EULA must be accepted with `accept_eula` field. If it is isn't - instatianting an add-on will fail
+with an error message that contains EULA.
+
+```hcl
+resource "vcd_solution_add_on_instance" "dse14" {
+  add_on_id     = vcd_solution_add_on.dse14.id
+  accept_eula   = true
+  name          = "dse-14"
+
+  input = {
+    delete-previous-uiplugin-versions = true
+  }
+
+  delete_input = {
+    force-delete = true
+  }
+}
+```
+
+### About Solution Add-On instantiation inputs
+
+Each Solution Add-On comes with their own input values used for instantiation and removal. UI
+renders these values as an input form. It is not that trivial to provide such option for CLI
+applications, like Terraform. Terraform provider VCD attempts to provide as much convenience as
+possible by providing dynamic input validation in
+[`vcd_solution_add_on_instance`](/providers/vmware/vcd/latest/docs/resources/solution_add_on_instance)
+resource.
+
+The way it works is it will read provided input schema of a Solution Add-On and dynamically validate
+(during `apply` operation) if the provided inputs match requested ones. If they don't - it will
+print all the missing inputs with an error message that contains details for each of the missing
+fields (example below).
+
+In the printed error message, each field has an `IsDelete` flag which defines whether it should be
+specified in `input` or `delete_input` value in
+[`vcd_solution_add_on_instance`](/providers/vmware/vcd/latest/docs/resources/solution_add_on_instance)
+resource.
+
+All fields also have `Required` flag which hints if they are mandatory or not. By default,
+[`vcd_solution_add_on_instance`](/providers/vmware/vcd/latest/docs/resources/solution_add_on_instance)
+resource requires providing all `input` and `delete_input` values. If one doesn't want to specify
+some of the non-mandatory fields, it is possible to disable validation for non required fields by
+setting `validate_only_required_inputs = true`.
+
+**Note.** The `delete_input` fields are validated during removal (`destroy` operation). It may occur
+that these values have to be adjusted during removal phase - for that reason it is safe to update
+`delete_input`, perform `apply` (update operation will be no-op) and then retry `destroy` operation.
+
+
+```shell
+...
+╷
+│ Error: dynamic creation input field validation error: 
+│ -----------------
+│ Field: registry-ca-bundle
+│ Title: Container Registry CA Bundle
+│ Type: String
+│ Required: false
+│ IsDelete: false
+│ Description: This is CA bundle in PEM format of the container registry's TLS certificate.
+│ -----------------
+│ Field: registry-username
+│ Title: Container Registry User Name
+│ Type: String
+│ Required: false
+│ IsDelete: false
+│ Description: The username of the container registry for Basic authentication.
+│ -----------------
+│ Field: registry-password
+│ Title: Container Registry Password
+│ Type: String
+│ Required: false
+│ IsDelete: false
+│ Description: The password of the container registry for Basic authentication.
+│ -----------------
+│ 
+│ 
+│ ERROR: Missing fields 'registry-ca-bundle, registry-username, registry-password' for Solution Add-On 'vmware.ose-3.0.0-23443325'
+│ 
+│   with vcd_solution_add_on_instance.dse15,
+│   on vcd.TestAccSolutionAddonInstanceAndPublishingstep1.tf line 96, in resource "vcd_solution_add_on_instance" "dse15":
+│   96: resource "vcd_solution_add_on_instance" "dse15" {
+...
+```
+
+
+## Publishing a Solution Add-On Instance
+
+The last step is publishing the Solution Add-On to tenants. It is 
+
+```
+resource "vcd_solution_add_on_instance_publish" "public" {
+  add_on_instance_id = vcd_solution_add_on_instance.dse14.id
+  org_ids = [data.vcd_org.recipient.id]
+  publish_to_all_tenants = false
+}
+```
+
+
+
+## Publishing rights (leveraging Data Solutions and Kubernetes rights bundles to create a new role)
+
+Solutions Add-On bring additional rights to VCD. Usually, to leverage new functionality introduced
+by a Solution Add-On, one should leverage those new rights. This functionality has been long present
+in Terraform provider VCD, but this is just a refreshed how one can combine multiples rights bundles
+to create a new role and user.
+
+Read more about [roles and rights in a designated guide page](https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/roles_management).
+
+```hcl
+data "vcd_rights_bundle" "dse-rb" {
+  name = "vmware:dataSolutionsRightsBundle"
+
+  depends_on = [ vcd_solution_add_on_instance.dse14 ]
+}
+
+data "vcd_rights_bundle" "k8s-rights" {
+  name = "Kubernetes Clusters Rights Bundle"
+
+  depends_on = [ vcd_solution_add_on_instance.dse14 ]
+}
+
+resource "vcd_global_role" "dse" {
+  name        = "DSE Role"
+  description = "DSE Role"
+  rights = setunion(data.vcd_rights_bundle.k8s-rights.rights, data.vcd_rights_bundle.dse-rb.rights)
+  publish_to_all_tenants = true
+}
+```
+
+## References
+
+* [Deployment HCL example in Terraform provider VCD
+  repository](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/data-solution-extension/)
+* [Data Solution Extension guide page for Terraform provider VCD](/providers/vmware/vcd/latest/docs/guides/data_solution_extension)
+* [Roles and Rights guide for Terraform provider VCD](https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/roles_management)
+* [Official Solution Add-On documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.5/VMware-Cloud-Director-Service-Provider-Admin-Guide/GUID-4F12C8F7-7CD3-44E8-9711-A5F43F8DCEB5.html)
+* [Data Solution Extension documentation](https://www.vmware.com/products/cloud-director/data-solutions.html)
