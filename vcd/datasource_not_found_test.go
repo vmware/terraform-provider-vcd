@@ -296,11 +296,20 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			dataSourceName == "vcd_ip_space_custom_quota" ||
 			dataSourceName == "vcd_ip_space_ip_allocation" ||
 			dataSourceName == "vcd_multisite_org_association" ||
-			dataSourceName == "vcd_multisite_org_data") &&
+			dataSourceName == "vcd_multisite_org_data" ||
+			dataSourceName == "vcd_dse_solution_publish") &&
 			mandatoryFields[fieldIndex] == "org_id" {
 			// injecting fake Org ID
 			templateFields = templateFields + `org_id = "urn:vcloud:org:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
 			// return templateFields
+		}
+
+		if dataSourceName == "vcd_solution_add_on_instance_publish" && mandatoryFields[fieldIndex] == "add_on_instance_name" {
+			templateFields = templateFields + `add_on_instance_name = "non-existing-add-on-instance"` + "\n"
+		}
+
+		if dataSourceName == "vcd_dse_solution_publish" && mandatoryFields[fieldIndex] == "data_solution_id" {
+			templateFields = templateFields + `data_solution_id = "urn:vcloud:entity:vmware:dsConfig:00000000-f256-4d9b-b04b-12582ce918ec"` + "\n"
 		}
 
 		if dataSourceName == "vcd_ip_space_ip_allocation" && mandatoryFields[fieldIndex] == "type" {
