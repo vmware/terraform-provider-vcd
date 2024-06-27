@@ -174,18 +174,33 @@ func resourceFieldIntNotEqual(object, field string, notEqualTo int) resource.Tes
 	}
 }
 
+// testMatchResourceAttrWhenVersionMatches is equivalent to resource.TestMatchResourceAttr but only runs this function
+// if the VCD version matches the one from the input. Otherwise, this will be a no-op.
 func testMatchResourceAttrWhenVersionMatches(name, key string, r *regexp.Regexp, versionConstraint string) resource.TestCheckFunc {
-	if !checkVersion(testConfig.Provider.ApiVersion, versionConstraint) {
-		debugPrintf("This test requires %s features. Skipping this assertion", versionConstraint)
-		return resource.TestCheckResourceAttrSet(name, "id") // Returns a dummy checker that always passes
-	}
-	return resource.TestMatchResourceAttr(name, key, r)
+	return testCheckResourceGenericWhenVersionMatches(resource.TestMatchResourceAttr(name, key, r), versionConstraint)
 }
 
+// testCheckResourceAttrWhenVersionMatches is equivalent to resource.TestCheckResourceAttr but only runs this function
+// if the VCD version matches the one from the input. Otherwise, this will be a no-op.
+func testCheckResourceAttrWhenVersionMatches(name, key, value string, versionConstraint string) resource.TestCheckFunc {
+	return testCheckResourceGenericWhenVersionMatches(resource.TestCheckResourceAttr(name, key, value), versionConstraint)
+}
+
+// testCheckResourceAttrSetWhenVersionMatches is equivalent to resource.TestCheckResourceAttrSet but only runs this function
+// if the VCD version matches the one from the input. Otherwise, this will be a no-op.
 func testCheckResourceAttrSetWhenVersionMatches(name, key, versionConstraint string) resource.TestCheckFunc {
+	return testCheckResourceGenericWhenVersionMatches(resource.TestCheckResourceAttrSet(name, key), versionConstraint)
+}
+
+// testCheckResourceGenericWhenVersionMatches runs the given test checking function if the VCD version matches
+// the one from the input. Otherwise, this will be a no-op.
+func testCheckResourceGenericWhenVersionMatches(checker resource.TestCheckFunc, versionConstraint string) resource.TestCheckFunc {
 	if !checkVersion(testConfig.Provider.ApiVersion, versionConstraint) {
-		debugPrintf("This test requires %s features. Skipping this assertion", versionConstraint)
-		return resource.TestCheckResourceAttrSet(name, "id") // Returns a dummy checker that always passes
+		debugPrintf("This test check requires VCD version to be '%s'. Skipping", versionConstraint)
+		// Returns a dummy checker that does nothing
+		return func(state *terraform.State) error {
+			return nil
+		}
 	}
-	return resource.TestCheckResourceAttrSet(name, key)
+	return checker
 }
