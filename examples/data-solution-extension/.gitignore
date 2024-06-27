@@ -1,5 +1,1 @@
 *.iso
-.terraform*
-terraform.tfvars
-terraform.tfstate*
-*.log
