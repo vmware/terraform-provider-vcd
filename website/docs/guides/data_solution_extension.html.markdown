@@ -58,7 +58,7 @@ management to provision access to new Add-On features:
 
 [Read more about role and rights management.](https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/roles_management)
 
-## Solution Landing Zone configuration
+## Solution Landing Zone configuration (Step 1)
 
 The first step for deploying a Solution Add-On is to have a configured Solution Landing Zone and
 [`vcd_solution_landing_zone`](/providers/vmware/vcd/latest/docs/resources/solution_landing_zone)
@@ -121,11 +121,13 @@ resource "vcd_solution_landing_zone" "slz" {
 }
 ```
 
-## Solution Add-On configuration
+## Solution Add-On configuration (Step 2)
 
 Once the Solution Landing Zone is set up, the next step is creating a Solution Add-On. This requires
-having a Solution Add-On `.iso` file. Due to the deployment process, Solution Add-On `.iso` image
-must be present both - locally and in the catalog defined in Solution Landing Zones.
+having a [Solution Add-On `.iso`
+file](https://docs.vmware.com/en/VMware-Cloud-Director/10.6/VMware-Cloud-Director-Service-Provider-Admin-Guide/GUID-8633A240-DC05-438B-96C1-4A3762B55ED0.html).
+Due to the deployment process, Solution Add-On `.iso` image must be present both - locally and in
+the catalog defined in Solution Landing Zones.
 
 Each Solution Add-On image file contains a certificate that must be trusted so that a Solution
 Add-On can be used. To do that automatically, one can leverage `auto_trust_certificate` within
@@ -151,7 +153,7 @@ resource "vcd_solution_add_on" "dse14" {
 }
 ```
 
-## Solution Add-On instantiation
+## Solution Add-On instantiation (Step 3)
 
 After deployment, the Solution Add-On must be instantiated with correct `input` parameters. More
 details about setting `input` and `delete_input` values below.
@@ -228,7 +230,7 @@ that these values have to be adjusted during removal phase - for that reason it 
 ...
 ```
 
-## Publishing a Solution Add-On Instance
+## Publishing a Solution Add-On Instance (Step 4)
 
 The last step for making the Solution Add-On available is publishing it to tenants.
 
@@ -243,7 +245,7 @@ resource "vcd_solution_add_on_instance_publish" "public" {
 ~> Clients must logout and login back to VCD so that newly published Solution Add-On can
 be managed.
 
-## Configuring Data Solution Extension (DSE) and publishing Data Solutions
+## Configuring Data Solution Extension (DSE) and publishing Data Solutions (Step 5)
 
 Once DSE is deployed, the first step for a provider is to configure registry information for each
 Data Solution. Below is a minimized example that takes default registry values that come with Data
@@ -251,7 +253,7 @@ Solution itself, but [resource
 docs](/providers/vmware/vcd/latest/docs/resources/dse_registry_configuration) have examples how to
 set up custom values.
 
-The last bit of Data Solution configuration is publishing it to a given tenant.
+The last step of Data Solution configuration is publishing it to a given tenant.
 
 ```hcl
 resource "vcd_dse_registry_configuration" "dso" {
@@ -272,7 +274,7 @@ resource "vcd_dse_solution_publish" "mongodb-community" {
 }
 ```
 
-## Creating new tenant user with required rights
+## Creating new tenant user with required rights (Step 6)
 
 Solutions Add-On brings additional rights to VCD. Usually, to leverage new functionalities introduced
 by a Solution Add-On, one should have those new rights. This functionality has been long present in
