@@ -50,13 +50,13 @@ resource "vcd_org_user" "my-org-admin" {
 
 # Configure VCD Data Solutions (DSO) and Mongo DB Community version with default repositories
 resource "vcd_dse_registry_configuration" "dso" {
-  name              = "VCD Data Solutions"
-  use_default_value = true
+  name               = "VCD Data Solutions"
+  use_default_values = true
 }
 
 resource "vcd_dse_registry_configuration" "mongodb-community" {
-  name              = "MongoDB Community"
-  use_default_value = true
+  name               = "MongoDB Community"
+  use_default_values = true
 }
 
 # Publish Mongo DB Data Solution to tenant

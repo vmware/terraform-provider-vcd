@@ -248,13 +248,13 @@ The last bit of Data Solution configuration is publishing it to a given tenant.
 
 ```hcl
 resource "vcd_dse_registry_configuration" "dso" {
-  name              = "VCD Data Solutions"
-  use_default_value = true
+  name               = "VCD Data Solutions"
+  use_default_values = true
 }
 
 resource "vcd_dse_registry_configuration" "mongodb-community" {
-  name              = "MongoDB Community"
-  use_default_value = true
+  name               = "MongoDB Community"
+  use_default_values = true
 }
 
 # Publish Mongo DB Data Solution to tenant

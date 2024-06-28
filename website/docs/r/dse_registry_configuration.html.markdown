@@ -21,7 +21,7 @@ There are 2 types of Data Solution configurations:
 * Container based
 
 All of Data Solutions provide default versions and repositories that can be used by setting
-`use_default_value` flag that will set these defaults in configuration.
+`use_default_values` flag that will set these defaults in configuration.
 
 One can also set custom repositories, package names and their versions. For Helm based configuration
 one should specify `chart_repository`, `version` and `package_name`. For container based
@@ -75,7 +75,7 @@ resource "vcd_dse_registry_configuration" "dso" {
   name = "VCD Data Solutions"
 
   # Using default versions for packages
-  use_default_value = true
+  use_default_values = true
 
   container_registry {
     host        = "first-host.sample"
@@ -100,9 +100,9 @@ resource "vcd_dse_registry_configuration" "dso" {
 The following arguments are supported:
 
 * `name` - (Required) The name of Data Solution as it appears in repository configuration
-* `use_default_value` - (Optional) Defines if repository settings should be inherited from Data
+* `use_default_values` - (Optional) Defines if repository settings should be inherited from Data
   Solution itself. Default `false`
-* `version` - (Optional) Version of package to use. Required when `use_default_value` is not used.
+* `version` - (Optional) Version of package to use. Required when `use_default_values` is not used.
 * `package_repository` - (Optional) Package repository for container based images
 * `chart_repository` - (Optional) Chart repository for Helm based images
 * `package_name` - (Optional) Helm package name. Only for Helm based images
