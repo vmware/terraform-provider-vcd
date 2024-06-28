@@ -20,9 +20,8 @@ examples](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/da
 
 # Data Solution Extension (DSE)
 
-Data Solution Extension is one of the Solution Add-Ons available on VCD. It provides capability to
-extend VCD multi-tenancy customers to deliver a portfolio of on-demand caching, messaging and
-database software.
+Data Solution Extension is one of the Solution Add-Ons available for VCD. It provides capability to
+extend VCD and deliver a portfolio of on-demand caching, messaging and database software.
 
 Terraform provider VCD v3.13 added initial support for configuring DSE and publishing it to tenants.
 
@@ -44,7 +43,7 @@ Data Solution Extension configuration resources with their respective data sourc
 
 ### Right management resources
 
-In addition, after deploying Solution Add-On, one can leverage resources and data sources for role
+Additionally, after deploying Solution Add-On, one can leverage resources and data sources for role
 management to provision access to new Add-On features:
 
 * [`vcd_rights_bundle`](/providers/vmware/vcd/latest/docs/resources/rights_bundle)
@@ -155,9 +154,9 @@ with an error message that contains EULA.
 
 ```hcl
 resource "vcd_solution_add_on_instance" "dse14" {
-  add_on_id     = vcd_solution_add_on.dse14.id
-  accept_eula   = true
-  name          = "dse-14"
+  add_on_id   = vcd_solution_add_on.dse14.id
+  accept_eula = true
+  name        = "dse-14"
 
   input = {
     delete-previous-uiplugin-versions = true
