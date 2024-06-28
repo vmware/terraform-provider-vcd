@@ -14,17 +14,34 @@ multiple Solution Add-Ons within a Cloud Director Solution Landing Zone.
 The Solution Add-Ons come packed as `.iso` files and Terraform Provider for VCD v3.13+ is capable of
 leveraging them to configure Solution Add-Ons within VCD.
 
-*Note:* For a more hands-on experience, one can check [deployment HCL
+*Note:* For a more hands-on experience, one can check [DSE deployment
 examples](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/data-solution-extension/).
+
+# Data Solution Extension (DSE)
+
+Data Solution Extension is one of the Solution Add-Ons available on VCD. It provides capability to
+extend VCD multi-tenancy customers to deliver a portfolio of on-demand caching, messaging and
+database software.
+
+Terraform provider VCD v3.13 added initial support for configuring DSE and publishing it to tenants.
 
 ## Terraform resources and data sources
 
-Terraform provider VCD 3.13 adds support for Solution Landing Zone and Solution Add-On management
-using the following resources and their respective data sources:
+Terraform provider VCD 3.13 adds support for Solution Landing Zone,Solution Add-On management and
+Data Solution Extension configuration resources with their respective data sources.
+
+### Solution Landing Zone and Add-On resources
 
 * [`vcd_solution_landing_zone`](/providers/vmware/vcd/latest/docs/resources/solution_landing_zone)
 * [`vcd_solution_add_on`](/providers/vmware/vcd/latest/docs/resources/solution_add_on)
 * [`vcd_solution_add_on_instance`](/providers/vmware/vcd/latest/docs/resources/solution_add_on_instance)
+
+### Data Solution Extension resources
+
+* [`vcd_dse_registry_configuration`](/providers/vmware/vcd/latest/docs/resources/dse_registry_configuration)
+* [`vcd_dse_solution_publish`](/providers/vmware/vcd/latest/docs/resources/dse_solution_publish)
+
+### Right management resources
 
 The above listed resources can be leveraged to configure Solution Add-Ons from scratch.
 Additionally, after deploying Solution Add-On, one can leverage already existing resources and data
@@ -32,6 +49,8 @@ sources for role management to provision access to new Add-On features:
 
 * [`vcd_rights_bundle`](/providers/vmware/vcd/latest/docs/resources/rights_bundle)
 * [`vcd_global_role`](/providers/vmware/vcd/latest/docs/resources/global_role)
+
+[Read more about role and right management.](https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/roles_management)
 
 ## Solution Landing Zone configuration
 
@@ -95,8 +114,6 @@ resource "vcd_solution_landing_zone" "slz" {
   }
 }
 ```
-
-
 
 ## Solution Add-On configuration
 
@@ -267,7 +284,6 @@ resource "vcd_global_role" "dse" {
 
 * [Deployment HCL example in Terraform provider VCD
   repository](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/data-solution-extension/)
-* [Data Solution Extension guide page for Terraform provider VCD](/providers/vmware/vcd/latest/docs/guides/data_solution_extension)
 * [Roles and Rights guide for Terraform provider VCD](https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/roles_management)
 * [Official Solution Add-On documentation](https://docs.vmware.com/en/VMware-Cloud-Director/10.5/VMware-Cloud-Director-Service-Provider-Admin-Guide/GUID-4F12C8F7-7CD3-44E8-9711-A5F43F8DCEB5.html)
 * [Data Solution Extension documentation](https://www.vmware.com/products/cloud-director/data-solutions.html)
