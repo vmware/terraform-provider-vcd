@@ -125,7 +125,7 @@ resource "vcd_solution_landing_zone" "slz" {
 
 Once the Solution Landing Zone is set up, the next step is creating a Solution Add-On. This requires
 having a [Solution Add-On `.iso`
-file](https://docs.vmware.com/en/VMware-Cloud-Director/10.6/VMware-Cloud-Director-Service-Provider-Admin-Guide/GUID-8633A240-DC05-438B-96C1-4A3762B55ED0.html).
+file](https://support.broadcom.com/group/ecx/productdownloads?subfamily=VMware%20Cloud%20Director%20Extension%20for%20VMware%20Data%20Solutions).
 Due to the deployment process, Solution Add-On `.iso` image must be present both - locally and in
 the catalog defined in Solution Landing Zones.
 
