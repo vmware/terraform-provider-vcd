@@ -1,9 +1,10 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: Solution Landing Zone and Solution Add-Ons"
-sidebar_current: "docs-vcd-guides-solution-landing-zone"
+page_title: "VMware Cloud Director: Data Solution Extension guide"
+sidebar_current: "docs-vcd-guides-data-solution-extension"
 description: |-
- Provides guidance to VMware Cloud Director Solution Landing Zone and Solution Add-On management
+ Provides guidance to Cloud Director Solution Landing Zone, Solution Add-On and Data Solution
+ Extension management using Terraform
 ---
 
 # Solution Landing Zone and Solution Add-Ons
@@ -27,7 +28,7 @@ Terraform provider VCD v3.13 added initial support for configuring DSE and publi
 
 ## Terraform resources and data sources
 
-Terraform provider VCD 3.13 adds support for Solution Landing Zone,Solution Add-On management and
+Terraform provider VCD 3.13 adds support for Solution Landing Zone, Solution Add-On management and
 Data Solution Extension configuration resources with their respective data sources.
 
 ### Solution Landing Zone and Add-On resources
@@ -43,9 +44,8 @@ Data Solution Extension configuration resources with their respective data sourc
 
 ### Right management resources
 
-The above listed resources can be leveraged to configure Solution Add-Ons from scratch.
-Additionally, after deploying Solution Add-On, one can leverage already existing resources and data
-sources for role management to provision access to new Add-On features:
+In addition, after deploying Solution Add-On, one can leverage resources and data sources for role
+management to provision access to new Add-On features:
 
 * [`vcd_rights_bundle`](/providers/vmware/vcd/latest/docs/resources/rights_bundle)
 * [`vcd_global_role`](/providers/vmware/vcd/latest/docs/resources/global_role)
@@ -64,7 +64,7 @@ resource "vcd_catalog" "solution_add_ons" {
   org = var.vcd_solutions_org
 
   name             = "solution_add_ons"
-  description      = "Catalog hoss Data Solution Add-Ons"
+  description      = "Catalog host Data Solution Add-Ons"
   delete_recursive = true
   delete_force     = true
 }
@@ -150,7 +150,7 @@ resource "vcd_solution_add_on" "dse14" {
 After deployment, the Solution Add-On must be instantiated with correct `input` parameters. More
 details about setting `input` and `delete-input` values below.
 
-EULA must be accepted with `accept_eula` field. If it is isn't - instatianting an add-on will fail
+EULA must be accepted with `accept_eula` field. If it is isn't - instantiating an add-on will fail
 with an error message that contains EULA.
 
 ```hcl
@@ -169,7 +169,7 @@ resource "vcd_solution_add_on_instance" "dse14" {
 }
 ```
 
-### About Solution Add-On instantiation inputs
+### About dynamic Solution Add-On instantiation input validation
 
 Each Solution Add-On comes with their own input values used for instantiation and removal. UI
 renders these values as an input form. It is not that trivial to provide such option for CLI
@@ -204,37 +204,23 @@ that these values have to be adjusted during removal phase - for that reason it 
 ╷
 │ Error: dynamic creation input field validation error: 
 │ -----------------
-│ Field: registry-ca-bundle
-│ Title: Container Registry CA Bundle
-│ Type: String
-│ Required: false
+│ Field: delete-previous-uiplugin-versions
+│ Title: Delete Previous UI Plugin Versions
+│ Type: Boolean
+│ Required: true
 │ IsDelete: false
-│ Description: This is CA bundle in PEM format of the container registry's TLS certificate.
+│ Description: If setting true, the installation will delete all previous versions of this ui plugin. If setting false, the installation will just disable previous versions
+│ Default: false
 │ -----------------
-│ Field: registry-username
-│ Title: Container Registry User Name
-│ Type: String
-│ Required: false
-│ IsDelete: false
-│ Description: The username of the container registry for Basic authentication.
-│ -----------------
-│ Field: registry-password
-│ Title: Container Registry Password
-│ Type: String
-│ Required: false
-│ IsDelete: false
-│ Description: The password of the container registry for Basic authentication.
-│ -----------------
+│
 │ 
+│ ERROR: Missing fields 'delete-previous-uiplugin-versions' for Solution Add-On 'vmware.ds-1.4.0-23376809'
 │ 
-│ ERROR: Missing fields 'registry-ca-bundle, registry-username, registry-password' for Solution Add-On 'vmware.ose-3.0.0-23443325'
-│ 
-│   with vcd_solution_add_on_instance.dse15,
-│   on vcd.TestAccSolutionAddonInstanceAndPublishingstep1.tf line 96, in resource "vcd_solution_add_on_instance" "dse15":
-│   96: resource "vcd_solution_add_on_instance" "dse15" {
+│   with vcd_solution_add_on_instance.dse14,
+│   on vcd.TestAccSolutionAddonInstanceAndPublishingstep1.tf line 96, in resource "vcd_solution_add_on_instance" "dse14":
+│   96: resource "vcd_solution_add_on_instance" "dse14" {
 ...
 ```
-
 
 ## Publishing a Solution Add-On Instance
 
@@ -248,9 +234,39 @@ resource "vcd_solution_add_on_instance_publish" "public" {
 }
 ```
 
+## Configuring Data Solution Extension (DSE) and publishing Data Solutions
 
+After deployment of DSE, the first step for provider is to configure registry information for each
+Data Solution. This is minimized example that takes default registry values that come with Data
+Solution itself, but [resource
+docs](/providers/vmware/vcd/latest/docs/resources/dse_registry_configuration) have examples how to
+setup custom values.
 
-## Publishing rights (leveraging Data Solutions and Kubernetes rights bundles to create a new role)
+The last bit of Data Solution configuration is publishing it to a given tenant.
+
+```hcl
+resource "vcd_dse_registry_configuration" "dso" {
+  name              = "VCD Data Solutions"
+  use_default_value = true
+}
+
+resource "vcd_dse_registry_configuration" "mongodb-community" {
+  name              = "MongoDB Community"
+  use_default_value = true
+}
+
+# Publish Mongo DB Data Solution to tenant
+resource "vcd_dse_solution_publish" "mongodb-community" {
+  data_solution_id = vcd_dse_registry_configuration.mongodb-community.id
+
+  org_id = data.vcd_org.dse-consumer.id
+}
+```
+
+**Important** It is not possible to publish DSE Solution Add-On and start configuring it in one
+connection session, because it needs to be reestablished once the DSE Add-On is published.
+
+## Creating new tenant user with required rights
 
 Solutions Add-On bring additional rights to VCD. Usually, to leverage new functionality introduced
 by a Solution Add-On, one should leverage those new rights. This functionality has been long present
@@ -262,23 +278,36 @@ Read more about [roles and rights in a designated guide page](https://registry.t
 ```hcl
 data "vcd_rights_bundle" "dse-rb" {
   name = "vmware:dataSolutionsRightsBundle"
-
-  depends_on = [ vcd_solution_add_on_instance.dse14 ]
 }
 
 data "vcd_rights_bundle" "k8s-rights" {
   name = "Kubernetes Clusters Rights Bundle"
-
-  depends_on = [ vcd_solution_add_on_instance.dse14 ]
 }
 
 resource "vcd_global_role" "dse" {
-  name        = "DSE Role"
-  description = "DSE Role"
-  rights = setunion(data.vcd_rights_bundle.k8s-rights.rights, data.vcd_rights_bundle.dse-rb.rights)
-  publish_to_all_tenants = true
+  name                   = "DSE Role"
+  description            = "Global role for consuming DSE"
+  rights                 = setunion(data.vcd_rights_bundle.k8s-rights.rights, data.vcd_rights_bundle.dse-rb.rights)
+  publish_to_all_tenants = false
+  tenants = [
+    data.vcd_org.dse-consumer.name
+  ]
+}
+
+resource "vcd_org_user" "my-org-admin" {
+  org = data.vcd_org.dse-consumer.name
+
+  name        = var.vcd_tenant_user
+  description = "DSE User"
+  role        = vcd_global_role.dse.name
+  password    = var.vcd_tenant_password
+
+  depends_on = [vcd_global_role.dse]
 }
 ```
+
+After executing this last step - one should be able to login to tenant Organization with newly
+created user and find Data Solution "MongoDB Community" available.
 
 ## References
 
