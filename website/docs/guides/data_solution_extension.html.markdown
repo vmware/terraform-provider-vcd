@@ -7,7 +7,14 @@ description: |-
  Extension management using Terraform
 ---
 
-# Solution Landing Zone and Solution Add-Ons
+# About
+
+Supported in provider *v3.13+*.
+
+This is a guide page that introduces Terraform users to managing Solution Landing Zone, Solution
+Add-Ons and Data Solution Extension (DSE) Add-On.
+
+## Solution Landing Zone and Solution Add-Ons
 
 Solution Add-Ons extend Cloud Director offering with value-added functionalities. One can manage
 multiple Solution Add-Ons within a Cloud Director Solution Landing Zone.
@@ -18,7 +25,7 @@ leveraging them to configure Solution Add-Ons within VCD.
 *Note:* For a more hands-on experience, one can check [DSE deployment
 examples](https://github.com/vmware/terraform-provider-vcd/tree/main/examples/data-solution-extension/).
 
-# Data Solution Extension (DSE)
+## Data Solution Extension (DSE)
 
 Data Solution Extension is one of the Solution Add-Ons available for VCD. It provides capability to
 extend VCD and deliver a portfolio of on-demand caching, messaging and database software.
@@ -41,7 +48,7 @@ Data Solution Extension configuration resources with their respective data sourc
 * [`vcd_dse_registry_configuration`](/providers/vmware/vcd/latest/docs/resources/dse_registry_configuration)
 * [`vcd_dse_solution_publish`](/providers/vmware/vcd/latest/docs/resources/dse_solution_publish)
 
-### Right management resources
+### Rights management resources
 
 Additionally, after deploying a Solution Add-On, one can leverage resources and data sources for role
 management to provision access to new Add-On features:
@@ -49,7 +56,7 @@ management to provision access to new Add-On features:
 * [`vcd_rights_bundle`](/providers/vmware/vcd/latest/docs/resources/rights_bundle)
 * [`vcd_global_role`](/providers/vmware/vcd/latest/docs/resources/global_role)
 
-[Read more about role and right management.](https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/roles_management)
+[Read more about role and rights management.](https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/roles_management)
 
 ## Solution Landing Zone configuration
 
@@ -170,15 +177,15 @@ resource "vcd_solution_add_on_instance" "dse14" {
 
 ### About dynamic Solution Add-On instantiation input validation
 
-Each Solution Add-On comes with their own input values used for instantiation and removal. UI
+Each Solution Add-On comes with its own input values used for instantiation and removal. UI
 renders these values as an input form. It is not that trivial to provide such option for CLI
-applications, like Terraform. Terraform provider VCD attempts to provide as much convenience as
+applications, like Terraform. Terraform provider VCD attempts to present as much convenience as
 possible by providing dynamic input validation in
 [`vcd_solution_add_on_instance`](/providers/vmware/vcd/latest/docs/resources/solution_add_on_instance)
 resource.
 
-The way it works is it will read provided input schema of a Solution Add-On and dynamically validate
-(during `apply` operation) if the provided inputs match requested ones. If they don't - it will
+It works by reading the provided input schema of a Solution Add-On and dynamically validating
+(during `apply` operation) if the provided inputs match the requested ones. If they don't - it will
 print all the missing inputs with an error message that contains details for each of the missing
 fields (example below).
 
@@ -187,10 +194,10 @@ specified in `input` or `delete_input` value in
 [`vcd_solution_add_on_instance`](/providers/vmware/vcd/latest/docs/resources/solution_add_on_instance)
 resource.
 
-All fields also have `Required` flag which hints if they are mandatory or not. By default,
+All fields also have a `Required` flag which hints if they are mandatory or not. By default,
 [`vcd_solution_add_on_instance`](/providers/vmware/vcd/latest/docs/resources/solution_add_on_instance)
 resource requires providing all `input` and `delete_input` values. If one doesn't want to specify
-some of the non-mandatory fields, it is possible to disable validation for non required fields by
+some of the non-mandatory fields, it is possible to disable validation for the non required fields by
 setting `validate_only_required_inputs = true`.
 
 -> The `delete_input` fields are validated during removal (`destroy` operation). It may occur
@@ -233,13 +240,13 @@ resource "vcd_solution_add_on_instance_publish" "public" {
 }
 ```
 
-~> Client must logout and login back to VCD so that newly published Solution Add-On can
+~> Clients must logout and login back to VCD so that newly published Solution Add-On can
 be managed.
 
 ## Configuring Data Solution Extension (DSE) and publishing Data Solutions
 
-Once DSE is deployed, the first step for provider is to configure registry information for each
-Data Solution. This is minimized example that takes default registry values that come with Data
+Once DSE is deployed, the first step for a provider is to configure registry information for each
+Data Solution. Below is a minimized example that takes default registry values that come with Data
 Solution itself, but [resource
 docs](/providers/vmware/vcd/latest/docs/resources/dse_registry_configuration) have examples how to
 set up custom values.
@@ -267,7 +274,7 @@ resource "vcd_dse_solution_publish" "mongodb-community" {
 
 ## Creating new tenant user with required rights
 
-Solutions Add-On brings additional rights to VCD. Usually, to leverage new functionality introduced
+Solutions Add-On brings additional rights to VCD. Usually, to leverage new functionalities introduced
 by a Solution Add-On, one should have those new rights. This functionality has been long present in
 Terraform provider VCD, but this is just a tiny example on how one can combine multiples rights
 bundles to create a new role and user.
