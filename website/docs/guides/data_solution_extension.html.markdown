@@ -223,7 +223,7 @@ that these values have to be adjusted during removal phase - for that reason it 
 
 ## Publishing a Solution Add-On Instance
 
-The last step for making the Solution Add-On available is publishing the Solution Add-On to tenants.
+The last step for making the Solution Add-On available is publishing it to tenants.
 
 ```hcl
 resource "vcd_solution_add_on_instance_publish" "public" {
@@ -233,7 +233,7 @@ resource "vcd_solution_add_on_instance_publish" "public" {
 }
 ```
 
-**Important** Client must logout and login back to VCD so that newly published Solution Add-On can
+**Important!** Client must logout and login back to VCD so that newly published Solution Add-On can
 be managed.
 
 ## Configuring Data Solution Extension (DSE) and publishing Data Solutions
