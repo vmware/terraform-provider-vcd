@@ -140,7 +140,7 @@ resource "vcd_solution_add_on" "dse14" {
   add_on_path            = var.vcd_dse_add_on_iso_path
   auto_trust_certificate = true
 
-  depends_on = [ vcd_solution_landing_zone.slz ]
+  depends_on = [vcd_solution_landing_zone.slz]
 }
 ```
 
@@ -223,19 +223,22 @@ that these values have to be adjusted during removal phase - for that reason it 
 
 ## Publishing a Solution Add-On Instance
 
-The last step is publishing the Solution Add-On to tenants. It is 
+The last step for making the Solution Add-On available is publishing the Solution Add-On to tenants.
 
-```
+```hcl
 resource "vcd_solution_add_on_instance_publish" "public" {
-  add_on_instance_id = vcd_solution_add_on_instance.dse14.id
-  org_ids = [data.vcd_org.recipient.id]
+  add_on_instance_id     = vcd_solution_add_on_instance.dse14.id
+  org_ids                = [data.vcd_org.recipient.id]
   publish_to_all_tenants = false
 }
 ```
 
+**Important** Client must logout and login back to VCD so that newly published Solution Add-On can
+be managed.
+
 ## Configuring Data Solution Extension (DSE) and publishing Data Solutions
 
-After deployment of DSE, the first step for provider is to configure registry information for each
+Once DSE is deployed, the first step for provider is to configure registry information for each
 Data Solution. This is minimized example that takes default registry values that come with Data
 Solution itself, but [resource
 docs](/providers/vmware/vcd/latest/docs/resources/dse_registry_configuration) have examples how to
@@ -262,15 +265,12 @@ resource "vcd_dse_solution_publish" "mongodb-community" {
 }
 ```
 
-**Important** It is not possible to publish DSE Solution Add-On and start configuring it in one
-connection session, because it needs to be reestablished once the DSE Add-On is published.
-
 ## Creating new tenant user with required rights
 
 Solutions Add-On bring additional rights to VCD. Usually, to leverage new functionality introduced
-by a Solution Add-On, one should leverage those new rights. This functionality has been long present
-in Terraform provider VCD, but this is just a refreshed how one can combine multiples rights bundles
-to create a new role and user.
+by a Solution Add-On, one should have those new rights. This functionality has been long present in
+Terraform provider VCD, but this is just a tiny example on how one can combine multiples rights
+bundles to create a new role and user.
 
 Read more about [roles and rights in a designated guide page](https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/roles_management).
 
@@ -306,7 +306,7 @@ resource "vcd_org_user" "my-org-admin" {
 ```
 
 After executing this last step - one should be able to login to tenant Organization with newly
-created user and find Data Solution "MongoDB Community" available.
+created user and find Data Solution *"MongoDB Community"* available.
 
 ## References
 
