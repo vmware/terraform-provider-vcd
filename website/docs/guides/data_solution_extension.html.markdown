@@ -27,7 +27,7 @@ Terraform provider VCD v3.13 added initial support for configuring DSE and publi
 
 ## Terraform resources and data sources
 
-Terraform provider VCD 3.13 adds support for Solution Landing Zone, Solution Add-On management and
+Terraform provider VCD v3.13 adds support for Solution Landing Zone, Solution Add-On management and
 Data Solution Extension configuration resources with their respective data sources.
 
 ### Solution Landing Zone and Add-On resources
@@ -116,7 +116,7 @@ resource "vcd_solution_landing_zone" "slz" {
 
 ## Solution Add-On configuration
 
-Once the Solution Landing Zone is setup, the next step is creating a Solution Add-On. This requires
+Once the Solution Landing Zone is set up, the next step is creating a Solution Add-On. This requires
 having a Solution Add-On `.iso` file. Due to the deployment process, Solution Add-On `.iso` image
 must be present both - locally and in the catalog defined in Solution Landing Zones.
 
@@ -147,7 +147,7 @@ resource "vcd_solution_add_on" "dse14" {
 ## Solution Add-On instantiation
 
 After deployment, the Solution Add-On must be instantiated with correct `input` parameters. More
-details about setting `input` and `delete-input` values below.
+details about setting `input` and `delete_input` values below.
 
 EULA must be accepted with `accept_eula` field. If it is isn't - instantiating an add-on will fail
 with an error message that contains EULA.
@@ -242,7 +242,7 @@ Once DSE is deployed, the first step for provider is to configure registry infor
 Data Solution. This is minimized example that takes default registry values that come with Data
 Solution itself, but [resource
 docs](/providers/vmware/vcd/latest/docs/resources/dse_registry_configuration) have examples how to
-setup custom values.
+set up custom values.
 
 The last bit of Data Solution configuration is publishing it to a given tenant.
 
@@ -267,7 +267,7 @@ resource "vcd_dse_solution_publish" "mongodb-community" {
 
 ## Creating new tenant user with required rights
 
-Solutions Add-On bring additional rights to VCD. Usually, to leverage new functionality introduced
+Solutions Add-On brings additional rights to VCD. Usually, to leverage new functionality introduced
 by a Solution Add-On, one should have those new rights. This functionality has been long present in
 Terraform provider VCD, but this is just a tiny example on how one can combine multiples rights
 bundles to create a new role and user.
