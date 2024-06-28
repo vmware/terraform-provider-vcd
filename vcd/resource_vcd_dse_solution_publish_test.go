@@ -111,13 +111,13 @@ func TestAccDse(t *testing.T) {
 			{
 				Config: configText3DS,
 				Check: resource.ComposeTestCheckFunc(
-					resourceFieldsEqual("data.vcd_dse_registry_configuration.dso", "vcd_dse_registry_configuration.dso", []string{"%", "use_default_value"}),
-					resourceFieldsEqual("data.vcd_dse_registry_configuration.mongodb-community", "vcd_dse_registry_configuration.mongodb-community", []string{"%", "use_default_value"}),
-					resourceFieldsEqual("data.vcd_dse_registry_configuration.confluent-platform", "vcd_dse_registry_configuration.confluent-platform", []string{"%", "use_default_value"}),
-					resourceFieldsEqual("data.vcd_dse_registry_configuration.mongodb", "vcd_dse_registry_configuration.mongodb", []string{"%", "use_default_value"}),
-					resourceFieldsEqual("data.vcd_dse_registry_configuration.postgres", "vcd_dse_registry_configuration.postgres", []string{"%", "use_default_value"}),
-					resourceFieldsEqual("data.vcd_dse_registry_configuration.rabbit-mq", "vcd_dse_registry_configuration.rabbit-mq", []string{"%", "use_default_value"}),
-					resourceFieldsEqual("data.vcd_dse_registry_configuration.mysql", "vcd_dse_registry_configuration.mysql", []string{"%", "use_default_value"}),
+					resourceFieldsEqual("data.vcd_dse_registry_configuration.dso", "vcd_dse_registry_configuration.dso", []string{"%", "use_default_values"}),
+					resourceFieldsEqual("data.vcd_dse_registry_configuration.mongodb-community", "vcd_dse_registry_configuration.mongodb-community", []string{"%", "use_default_values"}),
+					resourceFieldsEqual("data.vcd_dse_registry_configuration.confluent-platform", "vcd_dse_registry_configuration.confluent-platform", []string{"%", "use_default_values"}),
+					resourceFieldsEqual("data.vcd_dse_registry_configuration.mongodb", "vcd_dse_registry_configuration.mongodb", []string{"%", "use_default_values"}),
+					resourceFieldsEqual("data.vcd_dse_registry_configuration.postgres", "vcd_dse_registry_configuration.postgres", []string{"%", "use_default_values"}),
+					resourceFieldsEqual("data.vcd_dse_registry_configuration.rabbit-mq", "vcd_dse_registry_configuration.rabbit-mq", []string{"%", "use_default_values"}),
+					resourceFieldsEqual("data.vcd_dse_registry_configuration.mysql", "vcd_dse_registry_configuration.mysql", []string{"%", "use_default_values"}),
 				),
 			},
 			{
@@ -125,14 +125,14 @@ func TestAccDse(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateId:           "VCD Data Solutions",
-				ImportStateVerifyIgnore: []string{"use_default_value"},
+				ImportStateVerifyIgnore: []string{"use_default_values"},
 			},
 			{
 				ResourceName:            "vcd_dse_registry_configuration.mongodb-community",
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateId:           "MongoDB Community",
-				ImportStateVerifyIgnore: []string{"use_default_value"},
+				ImportStateVerifyIgnore: []string{"use_default_values"},
 			},
 			{
 				Config: configText4,
@@ -179,7 +179,7 @@ resource "vcd_dse_registry_configuration" "dso" {
   name = "VCD Data Solutions"
 
   # Using default versions for packages
-  use_default_value = true
+  use_default_values = true
 
   container_registry {
     host        = "test.host"

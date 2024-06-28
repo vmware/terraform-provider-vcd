@@ -59,7 +59,7 @@ func resourceVcdDseRegistryConfiguration() *schema.Resource {
 				ForceNew:    true,
 				Description: "Data Solution Name",
 			},
-			"use_default_value": {
+			"use_default_values": {
 				Type:          schema.TypeBool,
 				Optional:      true,
 				Description:   "Use the default settings as provided by the Data Solution",
@@ -164,7 +164,7 @@ func resourceVcdDseRegistryConfigurationCreateUpdate(ctx context.Context, d *sch
 	packageType := cfg.Spec.Artifacts[0]["type"]
 
 	// Simulate UI button 'Use Default Value' - pass any value that is not nil in the default fields
-	if d.Get("use_default_value").(bool) {
+	if d.Get("use_default_values").(bool) {
 		artifacts := dseEntryConfig.DataSolution.Spec.Artifacts[0]
 
 		if artifacts["defaultImage"] != nil {
@@ -344,7 +344,7 @@ func resourceVcdDseRegistryConfigurationImport(ctx context.Context, d *schema.Re
 	}
 
 	dSet(d, "name", d.Id())
-	dSet(d, "use_default_value", false)
+	dSet(d, "use_default_values", false)
 	d.SetId(configInstance.RdeId())
 
 	return []*schema.ResourceData{d}, nil
