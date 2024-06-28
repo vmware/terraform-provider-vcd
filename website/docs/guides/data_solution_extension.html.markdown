@@ -43,7 +43,7 @@ Data Solution Extension configuration resources with their respective data sourc
 
 ### Right management resources
 
-Additionally, after deploying Solution Add-On, one can leverage resources and data sources for role
+Additionally, after deploying a Solution Add-On, one can leverage resources and data sources for role
 management to provision access to new Add-On features:
 
 * [`vcd_rights_bundle`](/providers/vmware/vcd/latest/docs/resources/rights_bundle)
@@ -149,7 +149,7 @@ resource "vcd_solution_add_on" "dse14" {
 After deployment, the Solution Add-On must be instantiated with correct `input` parameters. More
 details about setting `input` and `delete_input` values below.
 
-EULA must be accepted with `accept_eula` field. If it is isn't - instantiating an add-on will fail
+EULA must be accepted with `accept_eula` field. If it isn't - instantiating an add-on will fail
 with an error message that contains EULA.
 
 ```hcl
@@ -193,7 +193,7 @@ resource requires providing all `input` and `delete_input` values. If one doesn'
 some of the non-mandatory fields, it is possible to disable validation for non required fields by
 setting `validate_only_required_inputs = true`.
 
-**Note.** The `delete_input` fields are validated during removal (`destroy` operation). It may occur
+-> The `delete_input` fields are validated during removal (`destroy` operation). It may occur
 that these values have to be adjusted during removal phase - for that reason it is safe to update
 `delete_input`, perform `apply` (update operation will be no-op) and then retry `destroy` operation.
 
@@ -233,7 +233,7 @@ resource "vcd_solution_add_on_instance_publish" "public" {
 }
 ```
 
-**Important!** Client must logout and login back to VCD so that newly published Solution Add-On can
+~> Client must logout and login back to VCD so that newly published Solution Add-On can
 be managed.
 
 ## Configuring Data Solution Extension (DSE) and publishing Data Solutions
