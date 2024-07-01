@@ -4,15 +4,17 @@ package vcd
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccVcdVAppVm_extraconfig(t *testing.T) {
 	preTestChecks(t)
+	skipIfNotSysAdmin(t)
 
 	initialValue := "value"
 	updatedValue := "another value"
