@@ -108,6 +108,26 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 				skipVersionConstraint: "< 37.0",
 				datasourceName:        "vcd_service_account",
 			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_solution_landing_zone",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_solution_add_on",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_solution_add_on_instance",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_solution_add_on_instance_publish",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_dse_registry_configuration",
+			},
 		}
 		// urn:vcloud:ipSpace:2ec12e23-6911-4950-a33f-5602ae72ced2
 
@@ -149,6 +169,11 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			"vcd_multisite_site_association",
 			"vcd_multisite_site_data",
 			"vcd_multisite_site",
+			"vcd_dse_registry_configuration",
+			"vcd_solution_landing_zone",
+			"vcd_solution_add_on",
+			"vcd_solution_add_on_instance",
+			"vcd_solution_add_on_instance_publish",
 		}
 		dataSourcesRequiringAlbConfig := []string{
 			"vcd_nsxt_alb_cloud",
