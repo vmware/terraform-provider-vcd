@@ -786,6 +786,7 @@ func TestAccVcdCseKubernetesClusterFailure(t *testing.T) {
 		"ServicesCidr":       "5.6.7.8/24", // This will make the cluster to fail
 		"AutoRepairOnErrors": false,        // This must be false
 		"NodeHealthCheck":    false,
+		"Autoscaler":         " ",
 		"Timeout":            150,
 	}
 	testParamsNotEmpty(t, params)
