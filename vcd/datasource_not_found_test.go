@@ -128,6 +128,10 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 				skipVersionConstraint: "< 37.1",
 				datasourceName:        "vcd_dse_registry_configuration",
 			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_ip_space_custom_quota",
+			},
 		}
 		// urn:vcloud:ipSpace:2ec12e23-6911-4950-a33f-5602ae72ced2
 
