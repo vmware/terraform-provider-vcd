@@ -50,7 +50,8 @@ func (a *albOrgUserPrerequisites) setupAlbPoolPrerequisites() {
 
 	albController, err := vcdClient.CreateNsxtAlbController(newControllerDef)
 	if err != nil {
-		t.Logf("error creating NSX-T ALB Controller: %s", err)
+		t.Errorf("error creating NSX-T ALB Controller: %s", err)
+		return
 	}
 	a.albController = albController // Store in struct for teardown
 	fmt.Println("Done.")
@@ -59,7 +60,8 @@ func (a *albOrgUserPrerequisites) setupAlbPoolPrerequisites() {
 	fmt.Printf("# Creating NSX-T ALB Cloud. ")
 	importableCloud, err := albController.GetAlbImportableCloudByName(testConfig.Nsxt.NsxtAlbImportableCloud)
 	if err != nil {
-		t.Logf("error retrieving NSX-T ALB Importable Cloud: %s", err)
+		t.Errorf("error retrieving NSX-T ALB Importable Cloud: %s", err)
+		return
 	}
 
 	albCloudConfig := &types.NsxtAlbCloud{
@@ -77,7 +79,8 @@ func (a *albOrgUserPrerequisites) setupAlbPoolPrerequisites() {
 
 	createdAlbCloud, err := vcdClient.CreateAlbCloud(albCloudConfig)
 	if err != nil {
-		t.Logf("error creating NSX-T ALB Cloud: %s", err)
+		t.Errorf("error creating NSX-T ALB Cloud: %s", err)
+		return
 	}
 	a.albCloud = createdAlbCloud // Store in struct for teardown
 	fmt.Println("Done.")
@@ -86,7 +89,8 @@ func (a *albOrgUserPrerequisites) setupAlbPoolPrerequisites() {
 	fmt.Printf("# Creating NSX-T ALB Service Engine Group. ")
 	importableSeGroups, err := vcdClient.GetAllAlbImportableServiceEngineGroups(createdAlbCloud.NsxtAlbCloud.ID, nil)
 	if err != nil || len(importableSeGroups) < 1 {
-		t.Logf("error retrieving NSX-T ALB Importable Service Engine Groups: %s", err)
+		t.Errorf("error retrieving NSX-T ALB Importable Service Engine Groups: %s", err)
+		return
 	}
 
 	albSeGroup := &types.NsxtAlbServiceEngineGroup{
@@ -106,7 +110,8 @@ func (a *albOrgUserPrerequisites) setupAlbPoolPrerequisites() {
 
 	createdSeGroup, err := vcdClient.CreateNsxtAlbServiceEngineGroup(albSeGroup)
 	if err != nil {
-		t.Logf("error creating NSX-T ALB Service Engine Group: %s", err)
+		t.Errorf("error creating NSX-T ALB Service Engine Group: %s", err)
+		return
 	}
 	a.albSeGroup = createdSeGroup // Store in struct for teardown
 	fmt.Println("Done.")
@@ -118,17 +123,20 @@ func (a *albOrgUserPrerequisites) setupAlbPoolPrerequisites() {
 	fmt.Printf("# Enabling ALB on Edge Gateway. ")
 	adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
 	if err != nil {
-		t.Logf("error getting AdminOrg '%s': %s", testConfig.VCD.Org, err)
+		t.Errorf("error getting AdminOrg '%s': %s", testConfig.VCD.Org, err)
+		return
 	}
 
 	vdc, err := adminOrg.GetVDCByName(testConfig.Nsxt.Vdc, false)
 	if err != nil {
-		t.Logf("error getting NSX-T VDC '%s': %s", testConfig.Nsxt.Vdc, err)
+		t.Errorf("error getting NSX-T VDC '%s': %s", testConfig.Nsxt.Vdc, err)
+		return
 	}
 
 	nsxtEdge, err := vdc.GetNsxtEdgeGatewayByName(testConfig.Nsxt.EdgeGateway)
 	if err != nil {
-		t.Logf("error retrieving NSX-T Edge Gateway '%s': %s", testConfig.Nsxt.Vdc, err)
+		t.Errorf("error retrieving NSX-T Edge Gateway '%s': %s", testConfig.Nsxt.Vdc, err)
+		return
 	}
 
 	// Update ALB General Settings
@@ -142,7 +150,8 @@ func (a *albOrgUserPrerequisites) setupAlbPoolPrerequisites() {
 
 	_, err = nsxtEdge.UpdateAlbSettings(albSettingsConfig)
 	if err != nil {
-		t.Logf("error enabling ALB on NSX-T Edge Gateway: %s", err)
+		t.Errorf("error enabling ALB on NSX-T Edge Gateway: %s", err)
+		return
 	}
 	a.nsxtGw = nsxtEdge // Store in struct for teardown
 	fmt.Println("Done.")
@@ -157,7 +166,8 @@ func (a *albOrgUserPrerequisites) setupAlbPoolPrerequisites() {
 	}
 	serviceEngineGroupAssignment, err := vcdClient.CreateAlbServiceEngineGroupAssignment(serviceEngineGroupAssignmentConfig)
 	if err != nil {
-		t.Logf("error assigning Service Engine Group '%s' to NSX-T Edge Gateway: %s", createdSeGroup.NsxtAlbServiceEngineGroup.Name, err)
+		t.Errorf("error assigning Service Engine Group '%s' to NSX-T Edge Gateway: %s", createdSeGroup.NsxtAlbServiceEngineGroup.Name, err)
+		return
 	}
 	a.nsxtGwSeGroupAssignment = serviceEngineGroupAssignment // Store in struct for teardown
 	fmt.Println("Done.")
