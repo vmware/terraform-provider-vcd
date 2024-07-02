@@ -1,6 +1,7 @@
 ## 3.13.0 (July 2, 2024)
 
 ### FEATURES
+* Add support for **VCD 10.6** ([#1279](https://github.com/vmware/terraform-provider-vcd/pull/1279))
 * **New Resource:** `vcd_solution_landing_zone` to manage Solution Add-On Landing Zone ([#1251](https://github.com/vmware/terraform-provider-vcd/pull/1251))
 * **New Data Source:** `vcd_solution_landing_zone` to read Solution Add-On Landing Zone ([#1251](https://github.com/vmware/terraform-provider-vcd/pull/1251))
 * **New Resource:** `vcd_solution_add_on` to manage Solution Add-Ons ([#1256](https://github.com/vmware/terraform-provider-vcd/pull/1256))
@@ -13,6 +14,7 @@
 * **New Data Source:** `vcd_multisite_org_association` to read the details of an organization association ([#1260](https://github.com/vmware/terraform-provider-vcd/pull/1260))
 * **New Resource:** `vcd_multisite_org_association` to associate a local organization with a remote one ([#1260](https://github.com/vmware/terraform-provider-vcd/pull/1260))
 * **New Guide** `Site and Org associations` to describe association operations for sites and organizations ([#1260](https://github.com/vmware/terraform-provider-vcd/pull/1260))
+* **New Guide** `Data Solution Extension and Solution Add-On management` ([#1286](https://github.com/vmware/terraform-provider-vcd/pull/1286))
 * **New Resource:** `vcd_org_oidc` to manage the Open ID Connect settings for an Organization ([#1263](https://github.com/vmware/terraform-provider-vcd/pull/1263))
 * **New Data Source:** `vcd_org_oidc` to read the Open ID Connect settings from an Organization ([#1263](https://github.com/vmware/terraform-provider-vcd/pull/1263))
 * **New Resource:** `vcd_solution_add_on_instance` to manage Solution Add-On Instances ([#1272](https://github.com/vmware/terraform-provider-vcd/pull/1272))
@@ -75,7 +77,6 @@ during creation when the chosen network belongs to a VDC Group ([#1266](https://
 * Bump `terraform-plugin-sdk` to v2.34.0 ([#1271](https://github.com/vmware/terraform-provider-vcd/pull/1271))
 * Amend the test `TestAccVcdRdeDuplicate` so it doesn't fail on VCD 10.6+. Since this version, whenever a RDE is created
   in a tenant by the System Administrator, the owner is not `"administrator"` anymore, but `"system"` ([#1278](https://github.com/vmware/terraform-provider-vcd/pull/1278))
-* Add support for VCD 10.6 ([#1279](https://github.com/vmware/terraform-provider-vcd/pull/1279))
 * Tests for FLEX Org VDC must set `memory_guaranteed` when `include_vm_memory_overhead=true`
   ([#1281](https://github.com/vmware/terraform-provider-vcd/pull/1281))
 * Amend `TestAccVcdOrgOidc` to check the `redirect_uri` in a case-insensitive way ([#1282](https://github.com/vmware/terraform-provider-vcd/pull/1282))
@@ -84,7 +85,6 @@ during creation when the chosen network belongs to a VDC Group ([#1266](https://
 * Amend test `TestAccVcdSubscribedCatalog` to be compatible with VCD 10.6.0 ([#1285](https://github.com/vmware/terraform-provider-vcd/pull/1285))
 * Update `vcd_subscribed_catalog` resource documentation to state that `metadata` attribute is not available in
 VCD 10.6.0 ([#1285](https://github.com/vmware/terraform-provider-vcd/pull/1285))
-* Add a guide for Data Solution Extension and Solution Add-On management ([#1286](https://github.com/vmware/terraform-provider-vcd/pull/1286))
 
 ## 3.12.1 (April 19, 2024)
 
