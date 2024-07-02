@@ -175,45 +175,46 @@ func TestAccVcdVAppVm_extraconfig(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "status_text", "POWERED_OFF"),
 					testAccCheckVcdVMPowerState(testConfig.VCD.Org, testConfig.Nsxt.Vdc, "", t.Name()+"-empty-standalone-vm", "POWERED_OFF"),
 
-					// Check initial extra configuration items
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_vapp_vm.template-vm", "extra_config.*", map[string]string{
-						"key":   "template-vapp-vm-1",
-						"value": initialValue + "1",
-					}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_vapp_vm.template-vm", "extra_config.*", map[string]string{
-						"key":   "template-vapp-vm-2",
-						"value": initialValue + "2",
-					}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_vm.template-vm", "extra_config.*", map[string]string{
-						"key":   "template-vm-1",
-						"value": initialValue + "1",
-					}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_vm.template-vm", "extra_config.*", map[string]string{
-						"key":   "template-vm-2",
-						"value": initialValue + "2",
-					}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_vapp_vm.empty-vm", "extra_config.*", map[string]string{
-						"key":   "empty-vapp-vm-1",
-						"value": initialValue + "1",
-					}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_vapp_vm.empty-vm", "extra_config.*", map[string]string{
-						"key":   "empty-vapp-vm-2",
-						"value": initialValue + "2",
-					}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_vm.empty-vm", "extra_config.*", map[string]string{
-						"key":   "empty-vm-1",
-						"value": initialValue + "1",
-					}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_vm.empty-vm", "extra_config.*", map[string]string{
-						"key":   "empty-vm-2",
-						"value": initialValue + "2",
-					}),
+					testConditionalCheck(checkVersion(testConfig.Provider.ApiVersion, "> 37.0"), resource.ComposeTestCheckFunc(
+						resource.TestCheckTypeSetElemNestedAttrs("vcd_vapp_vm.template-vm", "extra_config.*", map[string]string{
+							"key":   "template-vapp-vm-1",
+							"value": initialValue + "1",
+						}),
+						resource.TestCheckTypeSetElemNestedAttrs("vcd_vapp_vm.template-vm", "extra_config.*", map[string]string{
+							"key":   "template-vapp-vm-2",
+							"value": initialValue + "2",
+						}),
+						resource.TestCheckTypeSetElemNestedAttrs("vcd_vm.template-vm", "extra_config.*", map[string]string{
+							"key":   "template-vm-1",
+							"value": initialValue + "1",
+						}),
+						resource.TestCheckTypeSetElemNestedAttrs("vcd_vm.template-vm", "extra_config.*", map[string]string{
+							"key":   "template-vm-2",
+							"value": initialValue + "2",
+						}),
+						resource.TestCheckTypeSetElemNestedAttrs("vcd_vapp_vm.empty-vm", "extra_config.*", map[string]string{
+							"key":   "empty-vapp-vm-1",
+							"value": initialValue + "1",
+						}),
+						resource.TestCheckTypeSetElemNestedAttrs("vcd_vapp_vm.empty-vm", "extra_config.*", map[string]string{
+							"key":   "empty-vapp-vm-2",
+							"value": initialValue + "2",
+						}),
+						resource.TestCheckTypeSetElemNestedAttrs("vcd_vm.empty-vm", "extra_config.*", map[string]string{
+							"key":   "empty-vm-1",
+							"value": initialValue + "1",
+						}),
+						resource.TestCheckTypeSetElemNestedAttrs("vcd_vm.empty-vm", "extra_config.*", map[string]string{
+							"key":   "empty-vm-2",
+							"value": initialValue + "2",
+						}),
+					)),
 				),
 			},
 			// Update extra configuration items
 			{
 				Config: configTextStep2,
-				Check: resource.ComposeAggregateTestCheckFunc(
+				Check: testConditionalCheck(checkVersion(testConfig.Provider.ApiVersion, "> 37.0"), resource.ComposeTestCheckFunc(
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_vapp_vm.template-vm", "extra_config.*", map[string]string{
 						"key":   "template-vapp-vm-1",
 						"value": updatedValue + "1",
@@ -246,12 +247,12 @@ func TestAccVcdVAppVm_extraconfig(t *testing.T) {
 						"key":   "empty-vm-2",
 						"value": updatedValue + "2",
 					}),
-				),
+				)),
 			},
 			// Remove extra configuration items
 			{
 				Config: configTextStep3,
-				Check: resource.ComposeAggregateTestCheckFunc(
+				Check: testConditionalCheck(checkVersion(testConfig.Provider.ApiVersion, "> 37.0"), resource.ComposeTestCheckFunc(
 					checkExtraConfigExists(testConfig.Nsxt.Vdc, t.Name()+"-template-vapp-vm", map[string]string{"template-vapp-vm1": ""}, false),
 					checkExtraConfigExists(testConfig.Nsxt.Vdc, t.Name()+"-template-standalone-vm", map[string]string{"template-vm1": ""}, false),
 					checkExtraConfigExists(testConfig.Nsxt.Vdc, t.Name()+"-empty-vapp-vm", map[string]string{"empty-vapp-vm1": ""}, false),
@@ -260,7 +261,7 @@ func TestAccVcdVAppVm_extraconfig(t *testing.T) {
 					checkExtraConfigExists(testConfig.Nsxt.Vdc, t.Name()+"-template-standalone-vm", map[string]string{"template-vm2": ""}, false),
 					checkExtraConfigExists(testConfig.Nsxt.Vdc, t.Name()+"-empty-vapp-vm", map[string]string{"empty-vapp-vm2": ""}, false),
 					checkExtraConfigExists(testConfig.Nsxt.Vdc, t.Name()+"-empty-standalone-vm", map[string]string{"empty-vm2": ""}, false),
-				),
+				)),
 			},
 		},
 	})
