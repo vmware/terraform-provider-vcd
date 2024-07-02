@@ -1,4 +1,4 @@
-//go:build vdc || nsxt || ALL || functional
+//go:build vdc || nsxt || standaloneVm || vm || vapp || ALL || functional
 
 package vcd
 

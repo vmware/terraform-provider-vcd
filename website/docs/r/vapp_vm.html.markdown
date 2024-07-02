@@ -569,7 +569,7 @@ example for usage details.
 * `status_text` - (*v3.8+*) The vApp status as text.
 * `inherited_metadata` - (*v3.11+*; *VCD 10.5.1+*) A map that contains read-only metadata that is automatically added by VCD (10.5.1+) and provides
   details on the origin of the VM (e.g. `vm.origin.id`, `vm.origin.name`, `vm.origin.type`).
-* `extra_config` - (*v3.13.+*) The VM extra configuration. See [Extra Configuration](#extra-configuration) for more detail.
+* `extra_config` - (*v3.13.+*) The VM extra configuration. See [Extra Configuration](#extra-configuration) for more detail. *Not populated on VCD 10.4.0*.
 * `imported` - (*v3.13.+*) A true/false value telling whether the resource was imported.
 
 <a id="disk"></a>

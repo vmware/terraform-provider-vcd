@@ -380,12 +380,12 @@ resource "vcd_org_vdc" "sizing-policy" {
   compute_capacity {
     cpu {
       allocated = "0"
-      limit     = "24000"
+      limit     = "4000"
     }
 
     memory {
       allocated = "0"
-      limit     = "24000"
+      limit     = "2048"
     }
   }
 
