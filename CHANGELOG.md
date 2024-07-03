@@ -74,6 +74,7 @@ during creation when the chosen network belongs to a VDC Group ([#1266](https://
 * Fix resource `vcd_nsxt_alb_settings` so update operations don't fail in VCD 10.6+ ([#1283](https://github.com/vmware/terraform-provider-vcd/pull/1283))
 
 ### NOTES
+* Bump [`go-vcloud-director`](https://github.com/vmware/go-vcloud-director) to v2.25.0 (SDK this provider uses for low level access to the VCD) ([#1289](https://github.com/vmware/terraform-provider-vcd/pull/1289))
 * Bump `terraform-plugin-sdk` to v2.34.0 ([#1271](https://github.com/vmware/terraform-provider-vcd/pull/1271))
 * Amend the test `TestAccVcdRdeDuplicate` so it doesn't fail on VCD 10.6+. Since this version, whenever a RDE is created
   in a tenant by the System Administrator, the owner is not `"administrator"` anymore, but `"system"` ([#1278](https://github.com/vmware/terraform-provider-vcd/pull/1278))
