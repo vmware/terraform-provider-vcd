@@ -105,6 +105,7 @@ func TestAccVcdCatalogAccessControl2(t *testing.T) {
 	resourceAC2 := "vcd_catalog_access_control." + acCatalog2
 	resourceAC3 := "vcd_catalog_access_control." + acCatalog3
 	resourceAC4 := "vcd_catalog_access_control." + acCatalog4
+	resourceAC5 := "vcd_catalog_access_control." + acCatalog5
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: buildMultipleProviders(),
 		CheckDestroy: resource.ComposeTestCheckFunc(
@@ -184,6 +185,11 @@ func TestAccVcdCatalogAccessControl2(t *testing.T) {
 					resource.TestCheckTypeSetElemNestedAttrs(resourceAC4, "shared_with.*",
 						map[string]string{
 							"subject_name": fmt.Sprintf("%s-1", testConfig.VCD.Org),
+							"access_level": types.ControlAccessReadOnly,
+						}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceAC5, "shared_with.*",
+						map[string]string{
+							"subject_name": userName3,
 							"access_level": types.ControlAccessReadOnly,
 						}),
 				),
@@ -352,25 +358,25 @@ resource "vcd_catalog" "{{.CatalogName6}}" {
 }
 
 data "vcd_org" "other-org" {
-  provider         = {{.ProviderVcdSystem}}
-  name = "{{.Org2}}"
+  provider = {{.ProviderVcdSystem}}
+  name     = "{{.Org2}}"
 }
 `
 
 const testAccCatalogAccessControlAccess = ` 
 resource "vcd_catalog_access_control" "{{.AccessControlIdentifier0}}" {
-  provider    = {{.ProviderVcdOrg1}}
-  org         = "{{.Org1}}"
-  catalog_id  = vcd_catalog.{{.CatalogName0}}.id
+  provider   = {{.ProviderVcdOrg1}}
+  org        = "{{.Org1}}"
+  catalog_id = vcd_catalog.{{.CatalogName0}}.id
 
   shared_with_everyone    = {{.SharedToEveryone}}
   {{.EveryoneAccessLevel}}
 }
 
 resource "vcd_catalog_access_control" "{{.AccessControlIdentifier1}}" {
-  provider    = {{.ProviderVcdOrg1}}
-  org         = "{{.Org1}}"
-  catalog_id  = vcd_catalog.{{.CatalogName1}}.id
+  provider   = {{.ProviderVcdOrg1}}
+  org        = "{{.Org1}}"
+  catalog_id = vcd_catalog.{{.CatalogName1}}.id
 
   shared_with_everyone = false
 
@@ -381,11 +387,11 @@ resource "vcd_catalog_access_control" "{{.AccessControlIdentifier1}}" {
 }
 
 resource "vcd_catalog_access_control" "{{.AccessControlIdentifier2}}" {
-  provider    = {{.ProviderVcdOrg1}}
-  org         = "{{.Org1}}"
-  catalog_id  = vcd_catalog.{{.CatalogName2}}.id
+  provider   = {{.ProviderVcdOrg1}}
+  org        = "{{.Org1}}"
+  catalog_id = vcd_catalog.{{.CatalogName2}}.id
 
-  shared_with_everyone    = false
+  shared_with_everyone = false
 
   shared_with {
     user_id      = vcd_org_user.{{.UserName1}}.id
@@ -398,9 +404,9 @@ resource "vcd_catalog_access_control" "{{.AccessControlIdentifier2}}" {
 }
 
 resource "vcd_catalog_access_control" "{{.AccessControlIdentifier3}}" {
-  provider    = {{.ProviderVcdOrg1}}
-  org         = "{{.Org1}}"
-  catalog_id  = vcd_catalog.{{.CatalogName3}}.id
+  provider   = {{.ProviderVcdOrg1}}
+  org        = "{{.Org1}}"
+  catalog_id = vcd_catalog.{{.CatalogName3}}.id
 
   shared_with_everyone = false
 
@@ -419,9 +425,9 @@ resource "vcd_catalog_access_control" "{{.AccessControlIdentifier3}}" {
 }
 
 resource "vcd_catalog_access_control" "{{.AccessControlIdentifier4}}" {
-  provider    = {{.ProviderVcdSystem}}
-  org         = "{{.Org1}}"
-  catalog_id  = vcd_catalog.{{.CatalogName4}}.id
+  provider   = {{.ProviderVcdSystem}}
+  org        = "{{.Org1}}"
+  catalog_id = vcd_catalog.{{.CatalogName4}}.id
 
   shared_with_everyone = false
 
@@ -436,15 +442,15 @@ resource "vcd_catalog_access_control" "{{.AccessControlIdentifier4}}" {
 }
 
 resource "vcd_catalog_access_control" "{{.AccessControlIdentifier5}}" {
-  provider    = {{.ProviderVcdOrg1}}
-  org         = "{{.Org1}}"
-  catalog_id  = vcd_catalog.{{.CatalogName5}}.id
+  provider   = {{.ProviderVcdOrg1}}
+  org        = "{{.Org1}}"
+  catalog_id = vcd_catalog.{{.CatalogName5}}.id
 
-  shared_with_everyone             = false
+  shared_with_everyone           = false
   read_only_shared_with_all_orgs = true
 
   shared_with {
-    user_id       = vcd_org_user.{{.UserName3}}.id
+    user_id      = vcd_org_user.{{.UserName3}}.id
     access_level = "{{.AccessLevel3}}"
   }
   shared_with {
@@ -454,9 +460,9 @@ resource "vcd_catalog_access_control" "{{.AccessControlIdentifier5}}" {
 }
 
 resource "vcd_catalog_access_control" "{{.AccessControlIdentifier6}}" {
-  provider    = {{.ProviderVcdOrg1}}
-  org         = "{{.Org1}}"
-  catalog_id  = vcd_catalog.{{.CatalogName6}}.id
+  provider   = {{.ProviderVcdOrg1}}
+  org        = "{{.Org1}}"
+  catalog_id = vcd_catalog.{{.CatalogName6}}.id
 
   shared_with_everyone           = false
   read_only_shared_with_all_orgs = true
@@ -464,11 +470,6 @@ resource "vcd_catalog_access_control" "{{.AccessControlIdentifier6}}" {
 `
 
 const testAccCatalogAccessControlCheck = `
-#data "vcd_catalog" "{{.CatalogName1}}" {
-#  provider = {{.ProviderVcdOrg2}}
-#  org      = "{{.Org1}}"
-#  name     = "{{.CatalogName1}}"
-#}
 
 data "vcd_catalog" "{{.CatalogName5}}" {
   provider = {{.ProviderVcdOrg2}}
