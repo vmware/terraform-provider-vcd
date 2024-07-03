@@ -157,9 +157,11 @@ func resourceVcdCatalogAccessControlCreateUpdate(ctx context.Context, d *schema.
 			var err error
 			if readOnlySharedwithOtherOrgs {
 				err = catalog.SetReadOnlyAccessControl(true)
-			} else {
-				err = catalog.SetAccessControl(&accessControlParams, true)
+				if err != nil {
+					return nil, err
+				}
 			}
+			err = catalog.SetAccessControl(&accessControlParams, true)
 			return nil, err
 		})
 	if err != nil {
