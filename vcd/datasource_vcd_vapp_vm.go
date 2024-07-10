@@ -197,6 +197,16 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 						Computed:    true,
 						Description: "It defines if NIC is connected or not.",
 					},
+					"secondary_ip_allocation_mode": {
+						Computed:    true,
+						Type:        schema.TypeString,
+						Description: "Secondary (IPv6) IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+					},
+					"secondary_ip": {
+						Computed:    true,
+						Type:        schema.TypeString,
+						Description: "Secondary (IPv6) IP of the VM. Settings depend on `ip_allocation_mode`. Omitted or empty for DHCP, POOL, NONE. Required for MANUAL",
+					},
 				},
 			},
 		},
