@@ -877,7 +877,11 @@ func networksToConfig(d *schema.ResourceData, vapp *govcd.VApp) (types.NetworkCo
 
 		netConn.IsConnected = nic["connected"].(bool)
 		netConn.IPAddressAllocationMode = ipAllocationMode
+		netConn.IpType = "IPV4"
 		netConn.SecondaryIpAddressAllocationMode = secondaryIpAllocationMode
+		if netConn.SecondaryIpAddressAllocationMode != "" {
+			netConn.SecondaryIpType = "IPV6"
+		}
 		netConn.NetworkConnectionIndex = index
 		netConn.Network = networkName
 		if macIsSet {
@@ -1239,7 +1243,7 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp, vdc *gov
 
 	vmStatus, err := vm.GetStatus()
 	if err != nil {
-		return nil, fmt.Errorf("unablet to check if VM is powered on: %s", err)
+		return nil, fmt.Errorf("unable to check if VM is powered on: %s", err)
 	}
 
 	// If at least one`network_dhcp_wait_seconds` was defined

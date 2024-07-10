@@ -377,11 +377,11 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 						Description: "It defines if NIC is connected or not.",
 					},
 					"secondary_ip_allocation_mode": {
+						Computed:     true, //  Allocation mode is NONE by default
 						Optional:     true,
 						Type:         schema.TypeString,
 						ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
 						Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
-						// RequiredWith: []string{"secondary_ip"},
 					},
 					"secondary_ip": {
 						Computed:     true,

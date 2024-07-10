@@ -37,7 +37,7 @@ import (
 // * cpu_hot_add_enabled
 // * memory_hot_add_enabled
 // * description
-// * network
+// * network (also checks that 'ip_allocation_mode' and 'secondary_ip' are not set)
 // * power_on
 // * status
 // * status_text
@@ -107,6 +107,8 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.0.secondary_ip_allocation_mode", "NONE"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.0.secondary_ip", ""),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.1.type", "vapp"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.1.adapter_type", "E1000"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.1.ip_allocation_mode", "POOL"),
@@ -133,6 +135,8 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.0.secondary_ip_allocation_mode", "NONE"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.0.secondary_ip", ""),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.1.type", "vapp"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.1.adapter_type", "E1000"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.1.ip_allocation_mode", "POOL"),
@@ -154,6 +158,8 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.secondary_ip_allocation_mode", "NONE"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.secondary_ip", ""),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.adapter_type", "E1000E"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.ip_allocation_mode", "POOL"),
@@ -179,6 +185,8 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.secondary_ip_allocation_mode", "NONE"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.secondary_ip", ""),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.adapter_type", "E1000E"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.ip_allocation_mode", "POOL"),
@@ -216,7 +224,9 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.#", "2"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.0.adapter_type", "VMXNET3"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.0.secondary_ip_allocation_mode", "NONE"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.0.secondary_ip", ""),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.1.type", "vapp"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.1.adapter_type", "E1000"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.1.ip_allocation_mode", "POOL"),
@@ -243,6 +253,8 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.0.secondary_ip_allocation_mode", "NONE"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.0.secondary_ip", ""),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.1.type", "vapp"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.1.adapter_type", "E1000"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.1.ip_allocation_mode", "POOL"),
@@ -264,6 +276,8 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.0.secondary_ip_allocation_mode", "NONE"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.0.secondary_ip", ""),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.1.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.1.adapter_type", "E1000E"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.1.ip_allocation_mode", "POOL"),
@@ -289,6 +303,8 @@ func TestAccVcdVAppVm_4types(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.0.secondary_ip_allocation_mode", "NONE"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.0.secondary_ip", ""),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.1.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.1.adapter_type", "E1000E"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.1.ip_allocation_mode", "POOL"),
@@ -3555,6 +3571,7 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.0.secondary_ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.1.type", "vapp"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.1.adapter_type", "E1000"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "network.1.ip_allocation_mode", "POOL"),
@@ -3581,6 +3598,7 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.0.secondary_ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.1.type", "vapp"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.1.adapter_type", "E1000"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "network.1.ip_allocation_mode", "POOL"),
@@ -3602,6 +3620,7 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.secondary_ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.adapter_type", "E1000E"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.ip_allocation_mode", "POOL"),
@@ -3627,6 +3646,7 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.secondary_ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.adapter_type", "E1000E"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.ip_allocation_mode", "POOL"),
@@ -3664,7 +3684,8 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.#", "2"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.0.adapter_type", "VMXNET3"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.0.secondary_ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.1.type", "vapp"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.1.adapter_type", "E1000"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.1.ip_allocation_mode", "POOL"),
@@ -3690,7 +3711,8 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.#", "2"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.0.adapter_type", "VMXNET3"),
-					// resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.0.secondary_ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.1.type", "vapp"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.1.adapter_type", "E1000"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.1.ip_allocation_mode", "POOL"),
@@ -3711,7 +3733,8 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.#", "2"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.0.adapter_type", "VMXNET3"),
-					// resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.0.secondary_ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.1.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.1.adapter_type", "E1000E"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.1.ip_allocation_mode", "POOL"),
@@ -3736,7 +3759,8 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.#", "2"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.0.adapter_type", "VMXNET3"),
-					// resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.0.secondary_ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.1.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.1.adapter_type", "E1000E"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.1.ip_allocation_mode", "POOL"),
@@ -3830,7 +3854,7 @@ resource "vcd_network_routed_v2" "nsxt-backed" {
 
   secondary_static_ip_pool {
     start_address = "2002:0:0:1234:abcd:ffff:c0a6:122"
-    end_address   = "2002:0:0:1234:abcd:ffff:c0a6:128"
+    end_address   = "2002:0:0:1234:abcd:ffff:c0a6:12e"
   }
 }
 
