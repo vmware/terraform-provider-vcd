@@ -376,6 +376,20 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 						Default:     true,
 						Description: "It defines if NIC is connected or not.",
 					},
+					"secondary_ip_allocation_mode": {
+						Optional:     true,
+						Type:         schema.TypeString,
+						ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
+						Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
+						// RequiredWith: []string{"secondary_ip"},
+					},
+					"secondary_ip": {
+						Computed:     true,
+						Optional:     true,
+						Type:         schema.TypeString,
+						ValidateFunc: checkEmptyOrSingleIP(), // Must accept empty string to ease using HCL interpolation
+						Description:  "IP of the VM. Settings depend on `ip_allocation_mode`. Omitted or empty for DHCP, POOL, NONE. Required for MANUAL",
+					},
 				},
 			},
 		},
