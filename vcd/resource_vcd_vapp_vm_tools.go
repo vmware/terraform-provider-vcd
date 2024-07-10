@@ -879,7 +879,7 @@ func networksToConfig(d *schema.ResourceData, vapp *govcd.VApp) (types.NetworkCo
 		netConn.IPAddressAllocationMode = ipAllocationMode
 		netConn.IpType = "IPV4"
 		netConn.SecondaryIpAddressAllocationMode = secondaryIpAllocationMode
-		if netConn.SecondaryIpAddressAllocationMode != "" {
+		if netConn.SecondaryIpAddressAllocationMode != "" && netConn.SecondaryIpAddressAllocationMode != types.IPAllocationModeNone {
 			netConn.SecondaryIpType = "IPV6"
 		}
 		netConn.NetworkConnectionIndex = index
@@ -892,9 +892,9 @@ func networksToConfig(d *schema.ResourceData, vapp *govcd.VApp) (types.NetworkCo
 			netConn.Network = types.NoneNetwork
 		}
 
-		if secondaryIpAllocationMode == types.IPAllocationModeNone {
-			netConn.Network = types.NoneNetwork
-		}
+		// if secondaryIpAllocationMode == types.IPAllocationModeNone {
+		// 	netConn.Network = types.NoneNetwork
+		// }
 
 		if net.ParseIP(ip) != nil {
 			netConn.IPAddress = ip
