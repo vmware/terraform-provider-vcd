@@ -338,7 +338,7 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.secondary_ip_allocation_mode", "MANUAL"),
-					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.secondary_ip", "2002:0:0:1234:abcd:ffff:c0a6:13A"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.0.secondary_ip", "2002:0:0:1234:abcd:ffff:c0a6:13a"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.adapter_type", "E1000E"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.ip_allocation_mode", "POOL"),
@@ -350,7 +350,7 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.secondary_ip_allocation_mode", "MANUAL"),
-					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.secondary_ip", "2002:0:0:1234:abcd:ffff:c0a6:13B"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.secondary_ip", "2002:0:0:1234:abcd:ffff:c0a6:13b"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.adapter_type", "E1000E"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.1.ip_allocation_mode", "POOL"),
@@ -362,7 +362,7 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.0.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.0.secondary_ip_allocation_mode", "MANUAL"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.0.secondary_ip", "2002:0:0:1234:abcd:ffff:c0a6:13C"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.0.secondary_ip", "2002:0:0:1234:abcd:ffff:c0a6:13c"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.1.type", "vapp"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.1.adapter_type", "E1000"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "network.1.ip_allocation_mode", "POOL"),
@@ -374,7 +374,7 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.0.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.0.secondary_ip_allocation_mode", "MANUAL"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.0.secondary_ip", "2002:0:0:1234:abcd:ffff:c0a6:13D"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.0.secondary_ip", "2002:0:0:1234:abcd:ffff:c0a6:13d"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.1.type", "vapp"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.1.adapter_type", "E1000"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "network.1.ip_allocation_mode", "POOL"),
@@ -386,7 +386,7 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.0.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.0.secondary_ip_allocation_mode", "MANUAL"),
-					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.0.secondary_ip", "2002:0:0:1234:abcd:ffff:c0a6:13E"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.0.secondary_ip", "2002:0:0:1234:abcd:ffff:c0a6:13e"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.1.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.1.adapter_type", "E1000E"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "network.1.ip_allocation_mode", "POOL"),
@@ -398,7 +398,7 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.0.adapter_type", "VMXNET3"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.0.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.0.secondary_ip_allocation_mode", "MANUAL"),
-					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.0.secondary_ip", "2002:0:0:1234:abcd:ffff:c0a6:13F"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.0.secondary_ip", "2002:0:0:1234:abcd:ffff:c0a6:13f"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.1.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.1.adapter_type", "E1000E"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "network.1.ip_allocation_mode", "POOL"),
@@ -473,7 +473,7 @@ resource "vcd_network_routed_v2" "nsxt-backed" {
 
   secondary_static_ip_pool {
     start_address = "2002:0:0:1234:abcd:ffff:c0a6:122"
-    end_address   = "2002:0:0:1234:abcd:ffff:c0a6:13f"
+    end_address   = "2002:0:0:1234:abcd:ffff:c0a6:137"
   }
 }
 `
@@ -1043,7 +1043,7 @@ resource "vcd_vm" "template-vm" {
 	ip_allocation_mode = "POOL"
 
 	secondary_ip_allocation_mode = "MANUAL"
-	secondary_ip                 = "2002:0:0:1234:abcd:ffff:c0a6:13A"
+	secondary_ip                 = "2002:0:0:1234:abcd:ffff:c0a6:13a"
   }
 
   network {
@@ -1080,7 +1080,7 @@ resource "vcd_vm" "empty-vm" {
 	ip_allocation_mode = "POOL"
 
 	secondary_ip_allocation_mode = "MANUAL"
-	secondary_ip                 = "2002:0:0:1234:abcd:ffff:c0a6:13B"
+	secondary_ip                 = "2002:0:0:1234:abcd:ffff:c0a6:13b"
   }
 
   network {
@@ -1178,7 +1178,7 @@ resource "vcd_vapp_vm" "template-vm-copy" {
 	ip_allocation_mode = "POOL"
 
 	secondary_ip_allocation_mode = "MANUAL"
-	secondary_ip                 = "2002:0:0:1234:abcd:ffff:c0a6:13C"
+	secondary_ip                 = "2002:0:0:1234:abcd:ffff:c0a6:13c"
   }
 
   network {
@@ -1216,7 +1216,7 @@ resource "vcd_vapp_vm" "empty-vm-copy" {
 	ip_allocation_mode = "POOL"
 
 	secondary_ip_allocation_mode = "MANUAL"
-	secondary_ip                 = "2002:0:0:1234:abcd:ffff:c0a6:13D"
+	secondary_ip                 = "2002:0:0:1234:abcd:ffff:c0a6:13d"
   }
 
   network {
@@ -1248,7 +1248,7 @@ resource "vcd_vm" "template-vm-copy" {
 	ip_allocation_mode = "POOL"
 
 	secondary_ip_allocation_mode = "MANUAL"
-	secondary_ip                 = "2002:0:0:1234:abcd:ffff:c0a6:13E"
+	secondary_ip                 = "2002:0:0:1234:abcd:ffff:c0a6:13e"
   }
 
   network {
@@ -1283,7 +1283,7 @@ resource "vcd_vm" "empty-vm-copy" {
 	ip_allocation_mode = "POOL"
 
 	secondary_ip_allocation_mode = "MANUAL"
-	secondary_ip                 = "2002:0:0:1234:abcd:ffff:c0a6:13F"
+	secondary_ip                 = "2002:0:0:1234:abcd:ffff:c0a6:13f"
   }
 
   network {
