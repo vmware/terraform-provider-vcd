@@ -57,7 +57,6 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 			{
 				Config: configTextStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-
 					// vApp checks
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "name", t.Name()+"-template-vm"),
 					resource.TestCheckResourceAttr("vcd_vapp.template-vm", "description", "vApp for Template VM description"),
@@ -296,14 +295,14 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 			{
 				Config: configTextStep2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resourceFieldsEqual("vcd_vapp_vm.template-vm", "data.vcd_vapp_vm.template-vm", nil),
-					resourceFieldsEqual("vcd_vapp_vm.empty-vm", "data.vcd_vapp_vm.empty-vm", nil),
-					resourceFieldsEqual("vcd_vm.template-vm", "data.vcd_vm.template-vm", nil),
-					resourceFieldsEqual("vcd_vm.empty-vm", "data.vcd_vm.empty-vm", nil),
-					resourceFieldsEqual("vcd_vapp_vm.template-vm-copy", "data.vcd_vapp_vm.template-vm-copy", nil),
-					resourceFieldsEqual("vcd_vapp_vm.empty-vm-copy", "data.vcd_vapp_vm.empty-vm-copy", nil),
-					resourceFieldsEqual("vcd_vm.template-vm-copy", "data.vcd_vm.template-vm-copy", nil),
-					resourceFieldsEqual("vcd_vm.empty-vm-copy", "data.vcd_vm.empty-vm-copy", nil),
+					resourceFieldsEqual("data.vcd_vapp_vm.template-vm", "vcd_vapp_vm.template-vm", []string{"%"}),
+					resourceFieldsEqual("data.vcd_vapp_vm.empty-vm", "vcd_vapp_vm.empty-vm", []string{"%"}),
+					resourceFieldsEqual("data.vcd_vm.template-vm", "vcd_vm.template-vm", []string{"%"}),
+					resourceFieldsEqual("data.vcd_vm.empty-vm", "vcd_vm.empty-vm", []string{"%"}),
+					resourceFieldsEqual("data.vcd_vapp_vm.template-vm-copy", "vcd_vapp_vm.template-vm-copy", []string{"%"}),
+					resourceFieldsEqual("data.vcd_vapp_vm.empty-vm-copy", "vcd_vapp_vm.empty-vm-copy", []string{"%"}),
+					resourceFieldsEqual("data.vcd_vm.template-vm-copy", "vcd_vm.template-vm-copy", []string{"%"}),
+					resourceFieldsEqual("data.vcd_vm.empty-vm-copy", "vcd_vm.empty-vm-copy", []string{"%"}),
 				),
 			},
 			{
@@ -346,7 +345,6 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "network.1.mac", "00:00:00:11:22:33"),
 
 					// Standalone empty VM checks
-
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.#", "2"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "network.0.adapter_type", "VMXNET3"),
@@ -410,14 +408,14 @@ func TestAccVcdVAppVm_4types_Ipv6(t *testing.T) {
 			{
 				Config: configTextStep4,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resourceFieldsEqual("vcd_vapp_vm.template-vm", "data.vcd_vapp_vm.template-vm", nil),
-					resourceFieldsEqual("vcd_vapp_vm.empty-vm", "data.vcd_vapp_vm.empty-vm", nil),
-					resourceFieldsEqual("vcd_vm.template-vm", "data.vcd_vm.template-vm", nil),
-					resourceFieldsEqual("vcd_vm.empty-vm", "data.vcd_vm.empty-vm", nil),
-					resourceFieldsEqual("vcd_vapp_vm.template-vm-copy", "data.vcd_vapp_vm.template-vm-copy", nil),
-					resourceFieldsEqual("vcd_vapp_vm.empty-vm-copy", "data.vcd_vapp_vm.empty-vm-copy", nil),
-					resourceFieldsEqual("vcd_vm.template-vm-copy", "data.vcd_vm.template-vm-copy", nil),
-					resourceFieldsEqual("vcd_vm.empty-vm-copy", "data.vcd_vm.empty-vm-copy", nil),
+					resourceFieldsEqual("data.vcd_vapp_vm.template-vm", "vcd_vapp_vm.template-vm", []string{"%"}),
+					resourceFieldsEqual("data.vcd_vapp_vm.empty-vm", "vcd_vapp_vm.empty-vm", []string{"%"}),
+					resourceFieldsEqual("data.vcd_vm.template-vm", "vcd_vm.template-vm", []string{"%"}),
+					resourceFieldsEqual("data.vcd_vm.empty-vm", "vcd_vm.empty-vm", []string{"%"}),
+					resourceFieldsEqual("data.vcd_vapp_vm.template-vm-copy", "vcd_vapp_vm.template-vm-copy", []string{"%"}),
+					resourceFieldsEqual("data.vcd_vapp_vm.empty-vm-copy", "vcd_vapp_vm.empty-vm-copy", []string{"%"}),
+					resourceFieldsEqual("data.vcd_vm.template-vm-copy", "vcd_vm.template-vm-copy", []string{"%"}),
+					resourceFieldsEqual("data.vcd_vm.empty-vm-copy", "vcd_vm.empty-vm-copy", []string{"%"}),
 				),
 			},
 		},
@@ -1326,12 +1324,12 @@ data "vcd_vm" "empty-vm" {
 
 
 data "vcd_vapp_vm" "template-vm-copy" {
-  vapp_name = vcd_vapp.template-vm-copy.name
+  vapp_name = vcd_vapp.vm-copy-destination-template-vm.name
   name      = vcd_vapp_vm.template-vm-copy.name
 }
 
 data "vcd_vapp_vm" "empty-vm-copy" {
-  vapp_name = vcd_vapp.empty-vm-copy.name
+  vapp_name = vcd_vapp.vm-copy-destination-empty-vm.name
   name      = vcd_vapp_vm.empty-vm-copy.name
 }
 
