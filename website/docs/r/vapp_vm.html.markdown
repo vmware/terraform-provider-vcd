@@ -628,6 +628,12 @@ example for usage details.
   
   * `connected` - (Optional; *v3.0+*) It defines if NIC is connected or not. Network with `ip_allocation_mode=NONE` can't be connected by default, please use `connected=false` in such case.   
 
+* `secondary_ip_allocation_mode` (Optional; *v3.14+*) IPv6 allocation mode if enabled. Same values as for
+  `ip_allocation_mode` apply. Default `NONE`.
+* `secondary_ip` (Optional; *v3.14+*) IPv6 IP address. The same configuration methods as the ones
+  for `ip` field apply.
+
+
 <a id="override-template-disk"></a>
 ## Override template disk
 Allows to update internal disk in template before first VM boot. Disk is matched by `bus_type`, `bus_number` and `unit_number`.
