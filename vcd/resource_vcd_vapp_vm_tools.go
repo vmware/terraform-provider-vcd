@@ -892,10 +892,6 @@ func networksToConfig(d *schema.ResourceData, vapp *govcd.VApp) (types.NetworkCo
 			netConn.Network = types.NoneNetwork
 		}
 
-		// if secondaryIpAllocationMode == types.IPAllocationModeNone {
-		// 	netConn.Network = types.NoneNetwork
-		// }
-
 		if net.ParseIP(ip) != nil {
 			netConn.IPAddress = ip
 		}
