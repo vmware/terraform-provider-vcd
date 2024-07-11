@@ -1,7 +1,7 @@
 dario.cat/mergo v1.0.0 h1:AGCNq9Evsj31mOgNPcLyXc+4PNABt905YmuqPYYpBWk=
 dario.cat/mergo v1.0.0/go.mod h1:uNxQE+84aUszobStD9th8a29P2fMDhsBdgRYvZOxGmk=
-github.com/Didainius/go-vcloud-director/v2 v2.17.0-alpha.2.0.20240710105808-25d248064866 h1:+rf3/7sKj1gyWUxZN3IlavKoJ8pOsGCageLtw8dAJHQ=
-github.com/Didainius/go-vcloud-director/v2 v2.17.0-alpha.2.0.20240710105808-25d248064866/go.mod h1:7Of1qJja+LLNKVegjZG7uuhhy6xgGg3q7Fkw2CEP+Tw=
+github.com/Didainius/go-vcloud-director/v2 v2.17.0-alpha.2.0.20240711071035-4918e614d3d1 h1:0aEmxfFdxOVzhtOOi90vyUV1yDwS2yjmD8nZykixpas=
+github.com/Didainius/go-vcloud-director/v2 v2.17.0-alpha.2.0.20240711071035-4918e614d3d1/go.mod h1:7Of1qJja+LLNKVegjZG7uuhhy6xgGg3q7Fkw2CEP+Tw=
 github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migciow=
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
 github.com/ProtonMail/go-crypto v1.1.0-alpha.2 h1:bkyFVUP+ROOARdgCiJzNQo2V2kiB97LyUpzH9P6Hrlg=
