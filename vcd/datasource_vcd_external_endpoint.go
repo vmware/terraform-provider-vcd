@@ -26,6 +26,21 @@ func datasourceVcdExternalEndpoint() *schema.Resource {
 				Required:    true,
 				Description: "Version of the External Endpoint",
 			},
+			"enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether the External Endpoint is enabled or not",
+			},
+			"description": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Description of the External Endpoint",
+			},
+			"root_url": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The URL which requests are redirected to",
+			},
 		},
 	}
 }
