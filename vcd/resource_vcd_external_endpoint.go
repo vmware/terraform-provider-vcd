@@ -73,7 +73,7 @@ func resourceVcdExternalEndpointCreate(ctx context.Context, d *schema.ResourceDa
 	return resourceVcdExternalEndpointRead(ctx, d, meta)
 }
 
-func resourceVcdExternalEndpointRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdExternalEndpointRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	var ep *govcd.ExternalEndpoint

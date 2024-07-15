@@ -31,5 +31,5 @@ func datasourceVcdExternalEndpoint() *schema.Resource {
 }
 
 func datasourceVcdExternalEndpointRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return nil
+	return resourceVcdExternalEndpointRead(ctx, d, meta)
 }
