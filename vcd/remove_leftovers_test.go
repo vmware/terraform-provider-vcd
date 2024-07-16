@@ -498,6 +498,22 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			}
 		}
 	}
+	// --------------------------------------------------------------
+	// External Endpoints
+	// --------------------------------------------------------------
+	externalEndpoints, err := govcdClient.GetAllExternalEndpoints(nil)
+	if err != nil {
+		return fmt.Errorf("error retrieving RDE Types: %s", err)
+	}
+	for _, ep := range externalEndpoints {
+		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, ep.ExternalEndpoint.ID, "vcd_external_endpoint", 1, verbose)
+		if toBeDeleted {
+			err = deleteExternalEndpoint(ep)
+			if err != nil {
+				return fmt.Errorf("error deleting External Endpoint '%s': %s", ep.ExternalEndpoint.ID, err)
+			}
+		}
+	}
 
 	// --------------------------------------------------------------
 	// External Networks and Provider Gateways (only for SysAdmin)
@@ -1046,6 +1062,29 @@ func deleteRdeInterface(di *govcd.DefinedInterface) error {
 	err := di.Delete()
 	if err != nil {
 		return fmt.Errorf("error deleting RDE Interface '%s': %s", di.DefinedInterface.ID, err)
+	}
+	return nil
+}
+
+func deleteExternalEndpoint(ep *govcd.ExternalEndpoint) error {
+	fmt.Printf("\t\t REMOVING EXTERNAL ENDPOINT %s\n", ep.ExternalEndpoint.ID)
+
+	// Endpoint must be disabled first
+	err := ep.Update(types.ExternalEndpoint{
+		Name:        ep.ExternalEndpoint.Name,
+		ID:          ep.ExternalEndpoint.ID,
+		Version:     ep.ExternalEndpoint.Version,
+		Vendor:      ep.ExternalEndpoint.Vendor,
+		Enabled:     false,
+		Description: ep.ExternalEndpoint.Description,
+		RootUrl:     ep.ExternalEndpoint.RootUrl,
+	})
+	if err != nil {
+		return fmt.Errorf("error disabling External Endpoint '%s': %s", ep.ExternalEndpoint.ID, err)
+	}
+	err = ep.Delete()
+	if err != nil {
+		return fmt.Errorf("error deleting External Endpoint '%s': %s", ep.ExternalEndpoint.ID, err)
 	}
 	return nil
 }

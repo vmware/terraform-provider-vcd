@@ -132,6 +132,10 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 				skipVersionConstraint: "< 37.1",
 				datasourceName:        "vcd_ip_space_custom_quota",
 			},
+			{
+				skipVersionConstraint: "< 37.3",
+				datasourceName:        "vcd_external_endpoint",
+			},
 		}
 		// urn:vcloud:ipSpace:2ec12e23-6911-4950-a33f-5602ae72ced2
 
@@ -178,6 +182,7 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			"vcd_solution_add_on",
 			"vcd_solution_add_on_instance",
 			"vcd_solution_add_on_instance_publish",
+			"vcd_external_endpoint",
 		}
 		dataSourcesRequiringAlbConfig := []string{
 			"vcd_nsxt_alb_cloud",
