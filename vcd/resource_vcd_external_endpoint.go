@@ -135,7 +135,7 @@ func resourceVcdExternalEndpointDelete(_ context.Context, d *schema.ResourceData
 	vcdClient := meta.(*VCDClient)
 	ep, err := vcdClient.GetExternalEndpointById(d.Id())
 	if err != nil {
-		return diag.Errorf("could not retrieve the External Endpoint for update: %s", err)
+		return diag.Errorf("could not retrieve the External Endpoint for delete: %s", err)
 	}
 	err = ep.Delete()
 	if err != nil {
