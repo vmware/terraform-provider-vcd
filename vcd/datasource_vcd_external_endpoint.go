@@ -9,7 +9,6 @@ import (
 func datasourceVcdExternalEndpoint() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdExternalEndpointRead,
-
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
