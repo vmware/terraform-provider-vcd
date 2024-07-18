@@ -24,29 +24,19 @@ func resourceVcdApiFilter() *schema.Resource {
 			"external_endpoint_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true, // TODO: Check
 				Description: "ID of the External Endpoint where this API Filter will process the requests to",
 			},
 			"url_matcher_pattern": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Description:  "TODO",
-				RequiredWith: []string{"url_matcher_scope"},
-				ExactlyOneOf: []string{"url_matcher_pattern, response_content_type"},
+				Type:             schema.TypeString,
+				Required:         true,
+				Description:      "Request URL pattern, written as a regular expression pattern",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringLenBetween(1, 1024)),
 			},
 			"url_matcher_scope": {
 				Type:             schema.TypeString,
-				Optional:         true,
+				Required:         true,
 				Description:      "Allowed values are EXT_API, EXT_UI_PROVIDER, EXT_UI_TENANT corresponding to /ext-api, /ext-ui/provider, /ext-ui/tenant/<tenant-name>",
-				RequiredWith:     []string{"url_matcher_pattern"},
-				ExactlyOneOf:     []string{"url_matcher_scope, response_content_type"},
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"EXT_API", "EXT_UI_PROVIDER", "EXT_UI_TENANT"}, false)),
-			},
-			"response_content_type": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Description:  "TODO",
-				ExactlyOneOf: []string{"url_matcher_pattern, response_content_type"},
 			},
 		},
 	}
@@ -61,24 +51,16 @@ func resourceVcdApiFilterCreate(ctx context.Context, d *schema.ResourceData, met
 		return diag.Errorf("could not retrieve the External Endpoint '%s' to create an API Filter: %s", epId, err)
 	}
 
-	af := &types.ApiFilter{
+	createdAf, err := vcdClient.CreateApiFilter(&types.ApiFilter{
 		ExternalSystem: &types.OpenApiReference{
 			Name: ep.ExternalEndpoint.Name,
 			ID:   ep.ExternalEndpoint.ID,
 		},
-	}
-
-	if p, ok := d.GetOk("url_matcher_pattern"); ok {
-		af.UrlMatcher = &types.UrlMatcher{
-			UrlPattern: p.(string),
-			UrlScope:   d.Get("url_matcher_scope").(string), // Guaranteed by schema constraints
-		}
-	}
-	if r, ok := d.GetOk("response_content_type"); ok {
-		af.ResponseContentType = addrOf(r.(string))
-	}
-
-	createdAf, err := vcdClient.CreateApiFilter(af)
+		UrlMatcher: &types.UrlMatcher{
+			UrlPattern: d.Get("url_matcher_pattern").(string),
+			UrlScope:   d.Get("url_matcher_scope").(string),
+		},
+	})
 	if err != nil {
 		return diag.Errorf("could not create the API Filter: %s", err)
 	}
@@ -111,9 +93,6 @@ func genericVcdApiFilterRead(_ context.Context, d *schema.ResourceData, meta int
 		dSet(d, "url_matcher_pattern", af.ApiFilter.UrlMatcher.UrlPattern)
 		dSet(d, "url_matcher_scope", af.ApiFilter.UrlMatcher.UrlScope)
 	}
-	if af.ApiFilter.ResponseContentType != nil {
-		dSet(d, "response_content_type", af.ApiFilter.ResponseContentType)
-	}
 	d.SetId(af.ApiFilter.ID)
 	return nil
 }
@@ -121,7 +100,6 @@ func genericVcdApiFilterRead(_ context.Context, d *schema.ResourceData, meta int
 func resourceVcdApiFilterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// TODO: Can it be updated?
 	af, err := vcdClient.GetApiFilterById(d.Id())
 	if err != nil {
 		return diag.Errorf("could not retrieve the API Filter '%s' to update it: %s", d.Id(), err)
@@ -130,27 +108,19 @@ func resourceVcdApiFilterUpdate(ctx context.Context, d *schema.ResourceData, met
 	epId := d.Get("external_endpoint_id").(string)
 	ep, err := vcdClient.GetExternalEndpointById(epId)
 	if err != nil {
-		return diag.Errorf("could not retrieve the External Endpoint '%s' to create an API Filter: %s", epId, err)
+		return diag.Errorf("could not retrieve the External Endpoint '%s' to update the API Filter '%s': %s", epId, af.ApiFilter.ID, err)
 	}
 
-	updatePayload := types.ApiFilter{
+	err = af.Update(types.ApiFilter{
 		ExternalSystem: &types.OpenApiReference{
 			Name: ep.ExternalEndpoint.Name,
 			ID:   ep.ExternalEndpoint.ID,
 		},
-	}
-
-	if p, ok := d.GetOk("url_matcher_pattern"); ok {
-		updatePayload.UrlMatcher = &types.UrlMatcher{
-			UrlPattern: p.(string),
-			UrlScope:   d.Get("url_matcher_scope").(string), // Guaranteed by schema constraints
-		}
-	}
-	if r, ok := d.GetOk("response_content_type"); ok {
-		updatePayload.ResponseContentType = addrOf(r.(string))
-	}
-
-	err = af.Update(updatePayload)
+		UrlMatcher: &types.UrlMatcher{
+			UrlPattern: d.Get("url_matcher_pattern").(string),
+			UrlScope:   d.Get("url_matcher_scope").(string),
+		},
+	})
 	if err != nil {
 		return diag.Errorf("could not update the API Filter: %s", err)
 	}

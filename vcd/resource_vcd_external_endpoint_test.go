@@ -36,7 +36,7 @@ func TestAccVcdExternalEndpoint(t *testing.T) {
 	params["RootUrl"] = "https://www.vmware.com"
 	params["Enabled"] = false // Endpoint needs to be Disabled before destroying it
 	configText2 := templateFill(testAccCheckVcdExternalEndpoint, params)
-	debugPrintf("#[DEBUG] CONFIGURATION 2: %s", configText1)
+	debugPrintf("#[DEBUG] CONFIGURATION 2: %s", configText2)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return

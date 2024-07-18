@@ -1,0 +1,122 @@
+//go:build functional || openapi || ALL
+
+package vcd
+
+import (
+	"fmt"
+	"regexp"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+)
+
+func TestAccVcdApiFilter(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	var params = StringMap{
+		"Vendor":            "vmware",
+		"Name":              t.Name(),
+		"Version1":          "1.0.0",
+		"Version2":          "1.0.1",
+		"Enabled":           true,
+		"RootUrl":           "https://www.broadcom.com",
+		"ExternalEndpoint":  "vcd_external_endpoint.ep1.id",
+		"UrlMatcherPattern": "/custom/.*",
+		"UrlMatcherScope":   "EXT_API",
+		"FuncName":          t.Name() + "Step1",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText1 := templateFill(testAccCheckVcdApiFilter, params)
+	debugPrintf("#[DEBUG] CONFIGURATION 1: %s", configText1)
+
+	params["FuncName"] = t.Name() + "Step2"
+	params["ExternalEndpoint"] = "vcd_external_endpoint.ep2.id"
+	params["UrlMatcherPattern"] = "/custom/update/.*"
+	params["UrlMatcherScope"] = "EXT_UI_PROVIDER"
+	params["Enabled"] = false // Endpoint needs to be Disabled before destroying it
+	configText2 := templateFill(testAccCheckVcdApiFilter, params)
+	debugPrintf("#[DEBUG] CONFIGURATION 2: %s", configText2)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resourceName := "vcd_api_filter.af"
+	cachedId := testCachedFieldValue{}
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckApiFilterDestroy(cachedId.String()),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					cachedId.cacheTestResourceFieldValue(resourceName, "id"),
+					resource.TestMatchResourceAttr(resourceName, "id", regexp.MustCompile(`urn:vcloud:apiFilter:.+`)),
+					resource.TestCheckResourceAttrPair(resourceName, "external_endpoint_id", "vcd_external_endpoint.ep1", "id"),
+					resource.TestCheckResourceAttr(resourceName, "url_matcher_pattern", "/custom/.*"),
+					resource.TestCheckResourceAttr(resourceName, "url_matcher_scope", "EXT_API"),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					cachedId.testCheckCachedResourceFieldValue(resourceName, "id"),
+					resource.TestCheckResourceAttrPair(resourceName, "external_endpoint_id", "vcd_external_endpoint.ep2", "id"),
+					resource.TestCheckResourceAttr(resourceName, "url_matcher_pattern", "/custom/update/.*"),
+					resource.TestCheckResourceAttr(resourceName, "url_matcher_scope", "EXT_UI_PROVIDER"),
+				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdTopHierarchy(cachedId.String()),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+func testAccCheckApiFilterDestroy(id string) func(s *terraform.State) error {
+	return func(s *terraform.State) error {
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "vcd_api_filter" && rs.Primary.ID != id {
+				continue
+			}
+
+			conn := testAccProvider.Meta().(*VCDClient)
+			_, err := conn.GetApiFilterById(rs.Primary.ID)
+			if err == nil {
+				return fmt.Errorf("API Filter '%s' still exists", rs.Primary.ID)
+			}
+		}
+
+		return nil
+	}
+}
+
+const testAccCheckVcdApiFilter = `
+resource "vcd_external_endpoint" "ep1" {
+  vendor      = "{{.Vendor}}"
+  name        = "{{.Name}}"
+  version     = "{{.Version1}}"
+  enabled     = {{.Enabled}}
+  root_url    = "{{.RootUrl}}"
+}
+resource "vcd_external_endpoint" "ep2" {
+  vendor      = "{{.Vendor}}"
+  name        = "{{.Name}}"
+  version     = "{{.Version2}}"
+  enabled     = {{.Enabled}}
+  root_url    = "{{.RootUrl}}"
+}
+
+
+resource "vcd_api_filter" "af" {
+  external_endpoint_id = {{.ExternalEndpoint}}
+  url_matcher_pattern  = "{{.UrlMatcherPattern}}"
+  url_matcher_scope    = "{{.UrlMatcherScope}}"
+`
