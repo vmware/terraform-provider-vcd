@@ -73,7 +73,9 @@ func TestAccVcdApiFilter(t *testing.T) {
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdTopHierarchy(cachedId.String()),
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					return cachedId.fieldValue, nil
+				},
 			},
 		},
 	})
@@ -114,9 +116,9 @@ resource "vcd_external_endpoint" "ep2" {
   root_url    = "{{.RootUrl}}"
 }
 
-
 resource "vcd_api_filter" "af" {
   external_endpoint_id = {{.ExternalEndpoint}}
   url_matcher_pattern  = "{{.UrlMatcherPattern}}"
   url_matcher_scope    = "{{.UrlMatcherScope}}"
+}
 `
