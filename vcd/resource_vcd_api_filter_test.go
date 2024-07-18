@@ -77,6 +77,15 @@ func TestAccVcdApiFilter(t *testing.T) {
 					return cachedId.fieldValue, nil
 				},
 			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ExpectError:       regexp.MustCompile(`.*1.+urn:vcloud:apiFilter:.+EXT_UI_PROVIDER.+/custom/update/.*`),
+				ImportStateVerify: true,
+				ImportStateIdFunc: func(state *terraform.State) (string, error) {
+					return fmt.Sprintf("list@%s%s%s%s%s", params["Vendor"], ImportSeparator, params["Name"], ImportSeparator, params["Version2"]), nil
+				},
+			},
 		},
 	})
 	postTestChecks(t)

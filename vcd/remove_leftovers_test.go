@@ -503,7 +503,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	// --------------------------------------------------------------
 	externalEndpoints, err := govcdClient.GetAllExternalEndpoints(nil)
 	if err != nil {
-		return fmt.Errorf("error retrieving RDE Types: %s", err)
+		return fmt.Errorf("error retrieving External Endpoints: %s", err)
 	}
 	for _, ep := range externalEndpoints {
 		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, ep.ExternalEndpoint.ID, "vcd_external_endpoint", 1, verbose)
@@ -511,6 +511,22 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			err = deleteExternalEndpoint(ep)
 			if err != nil {
 				return fmt.Errorf("error deleting External Endpoint '%s': %s", ep.ExternalEndpoint.ID, err)
+			}
+		}
+	}
+	// --------------------------------------------------------------
+	// API Filters
+	// --------------------------------------------------------------
+	apiFilters, err := govcdClient.GetAllApiFilters(nil)
+	if err != nil {
+		return fmt.Errorf("error retrieving API Filters: %s", err)
+	}
+	for _, af := range apiFilters {
+		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, af.ApiFilter.ID, "vcd_api_filter", 1, verbose)
+		if toBeDeleted {
+			err = deleteApiFilter(af)
+			if err != nil {
+				return fmt.Errorf("error deleting API Filter '%s': %s", af.ApiFilter.ID, err)
 			}
 		}
 	}
@@ -1085,6 +1101,16 @@ func deleteExternalEndpoint(ep *govcd.ExternalEndpoint) error {
 	err = ep.Delete()
 	if err != nil {
 		return fmt.Errorf("error deleting External Endpoint '%s': %s", ep.ExternalEndpoint.ID, err)
+	}
+	return nil
+}
+
+func deleteApiFilter(af *govcd.ApiFilter) error {
+	fmt.Printf("\t\t REMOVING API FILTER %s\n", af.ApiFilter.ID)
+
+	err := af.Delete()
+	if err != nil {
+		return fmt.Errorf("error deleting API Filter '%s': %s", af.ApiFilter.ID, err)
 	}
 	return nil
 }

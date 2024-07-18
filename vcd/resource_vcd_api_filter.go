@@ -1,6 +1,7 @@
 package vcd
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -9,6 +10,9 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
+	"net/url"
+	"strings"
+	"text/tabwriter"
 )
 
 func resourceVcdApiFilter() *schema.Resource {
@@ -143,10 +147,73 @@ func resourceVcdApiFilterDelete(_ context.Context, d *schema.ResourceData, meta 
 // resourceVcdApiFilterImport is responsible for importing the resource.
 func resourceVcdApiFilterImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
-	af, err := vcdClient.GetApiFilterById(d.Id())
-	if err != nil {
-		return nil, fmt.Errorf("could not find the API Filter with ID '%s': %s", d.Id(), err)
+	helpError := fmt.Errorf(`resource id must be specified in one of these formats:
+'api-filter-id' to import by API Filter ID
+'list@vendor%sname%sversion' to get a list of API Filters related to the External Endpoint identified by vendor, name and version`, ImportSeparator, ImportSeparator)
+
+	id := strings.Split(d.Id(), "@")
+	switch len(id) {
+	case 1:
+		af, err := vcdClient.GetApiFilterById(d.Id())
+		if err != nil {
+			return nil, fmt.Errorf("could not find the API Filter with ID '%s': %s", d.Id(), err)
+		}
+		d.SetId(af.ApiFilter.ID)
+		return []*schema.ResourceData{d}, nil
+	case 2:
+		externalEndpointId := strings.Split(id[1], ImportSeparator)
+		var externalEndpoint *govcd.ExternalEndpoint
+		var err error
+		switch len(externalEndpointId) {
+		case 3: // ie: VCD_IMPORT_SEPARATOR="_" vendor_name_1.2.3
+			externalEndpoint, err = vcdClient.GetExternalEndpoint(externalEndpointId[0], externalEndpointId[1], externalEndpointId[2])
+			if err != nil {
+				return nil, err
+			}
+		case 5: // ie: VCD_IMPORT_SEPARATOR="."  vendor.name.1.2.3
+			externalEndpoint, err = vcdClient.GetExternalEndpoint(externalEndpointId[0], externalEndpointId[1], fmt.Sprintf("%s.%s.%s", externalEndpointId[2], externalEndpointId[3], externalEndpointId[4]))
+			if err != nil {
+				return nil, err
+			}
+		default:
+			return nil, fmt.Errorf("to list the API Filters, the External Endpoint ID must be 'vendor%sname%sversion', but it was '%s'", ImportSeparator, ImportSeparator, externalEndpointId)
+		}
+		queryParameters := url.Values{}
+		queryParameters.Add("filter", fmt.Sprintf("externalSystem.id==%s", externalEndpoint.ExternalEndpoint.ID))
+		apiFilters, err := vcdClient.GetAllApiFilters(queryParameters)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve all API Filters to list them: %s", err)
+		}
+		buf := new(bytes.Buffer)
+		_, err = fmt.Fprintln(buf, "Retrieving all API Filters that use "+externalEndpoint.ExternalEndpoint.ID+" as External Endpoint")
+		if err != nil {
+			return nil, fmt.Errorf("could not list API Filters: %s", err)
+		}
+		writer := tabwriter.NewWriter(buf, 0, 8, 1, '\t', tabwriter.AlignRight)
+		_, err = fmt.Fprintf(writer, "No\tID\tScope\tPattern\n")
+		if err != nil {
+			return nil, fmt.Errorf("could not list API Filters: %s", err)
+		}
+		_, err = fmt.Fprintf(writer, "--\t--\t-----\t-------\n")
+		if err != nil {
+			return nil, fmt.Errorf("could not list API Filters: %s", err)
+		}
+		for i, af := range apiFilters {
+			if af.ApiFilter.UrlMatcher == nil {
+				continue
+			}
+			_, err = fmt.Fprintf(writer, "%d\t%s\t%s\t%s\n", i+1, af.ApiFilter.ID, af.ApiFilter.UrlMatcher.UrlScope, af.ApiFilter.UrlMatcher.UrlPattern)
+			if err != nil {
+				return nil, fmt.Errorf("could not list API Filters: %s", err)
+			}
+		}
+		err = writer.Flush()
+		if err != nil {
+			return nil, fmt.Errorf("could not list API Filters: %s", err)
+		}
+		return nil, fmt.Errorf("resource was not imported! %s\n%s", helpError, buf.String())
+	default:
+		return nil, helpError
 	}
-	d.SetId(af.ApiFilter.ID)
-	return []*schema.ResourceData{d}, nil
+
 }
