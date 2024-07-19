@@ -20,9 +20,9 @@ HTTPS endpoint which requests will be proxied to when using a [`vcd_api_filter`]
 
 ```hcl
 data "vcd_external_endpoint" "external_endpoint1" {
-  vendor      = "vmware"
-  name        = "my-endpoint"
-  version     = "1.0.0"
+  vendor  = "vmware"
+  name    = "my-endpoint"
+  version = "1.0.0"
 }
 ```
 
