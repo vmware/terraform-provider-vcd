@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_external_endpoint"
 sidebar_current: "docs-vcd-data-source-external-endpoint"
 description: |-
-  Provides a data source to read External Endpoints in Cloud Director. An External Endpoint holds information for the
+  Provides a data source to read External Endpoints in VMware Cloud Director. An External Endpoint holds information for the
   HTTPS endpoint which requests will be proxied to when using an API Filter.
 ---
 
