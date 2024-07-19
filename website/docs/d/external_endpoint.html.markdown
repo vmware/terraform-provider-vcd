@@ -12,7 +12,7 @@ description: |-
 Supported in provider *v3.14+* and VCD 10.4.3+.
 
 Provides a data source to read External Endpoints in VMware Cloud Director. An External Endpoint holds information for the
-HTTPS endpoint which requests will be proxied to when using a [`vcd_api_filter`](/providers/vmware/vcd/latest/docs/data sources/api_filter).
+HTTPS endpoint which requests will be proxied to when using a [`vcd_api_filter`](/providers/vmware/vcd/latest/docs/resources/api_filter).
 
 ~> Only `System Administrator` can use this data source.
 
