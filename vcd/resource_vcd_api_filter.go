@@ -68,7 +68,7 @@ func resourceVcdApiFilterCreate(ctx context.Context, d *schema.ResourceData, met
 	if err != nil {
 		return diag.Errorf("could not create the API Filter: %s", err)
 	}
-	d.SetId(createdAf.ApiFilter.ID)
+	d.SetId(createdAf.ApiFilter.ID) // ID must be populated during Create, as API filters don't have any other identifier
 	return resourceVcdApiFilterRead(ctx, d, meta)
 }
 

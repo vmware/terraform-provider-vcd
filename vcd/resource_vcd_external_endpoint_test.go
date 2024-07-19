@@ -22,7 +22,7 @@ func TestAccVcdExternalEndpoint(t *testing.T) {
 		"Vendor":      vendor,
 		"Name":        name,
 		"Version":     version,
-		"Description": "Description of" + name,
+		"Description": "Description of " + name,
 		"Enabled":     true,
 		"RootUrl":     "https://www.broadcom.com",
 		"FuncName":    t.Name() + "Step1",
