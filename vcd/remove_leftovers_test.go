@@ -507,7 +507,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			return fmt.Errorf("error retrieving API Filters: %s", err)
 		}
 		for _, af := range apiFilters {
-			name = ""
+			name := ""
 			// As API Filters don't have names nor identifiers, we check the URL Pattern to have the test keyword. If that's the case
 			// we trick the "shouldDeleteEntity" function to always consider it for deletion by hardcoding the "Test" name
 			if af.ApiFilter.UrlMatcher != nil && strings.Contains(af.ApiFilter.UrlMatcher.UrlPattern, "test") {

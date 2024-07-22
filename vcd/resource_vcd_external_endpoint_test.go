@@ -120,6 +120,7 @@ func testAccCheckExternalEndpointDestroy(vendor, name, version string) func(s *t
 }
 
 const testAccCheckVcdExternalEndpoint = `
+{{.SkipBinary}}
 resource "vcd_external_endpoint" "ep" {
   vendor      = "{{.Vendor}}"
   name        = "{{.Name}}"
