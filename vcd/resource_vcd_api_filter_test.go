@@ -20,10 +20,10 @@ func TestAccVcdApiFilter(t *testing.T) {
 		"Name":              t.Name(),
 		"Version1":          "1.0.0",
 		"Version2":          "1.0.1",
-		"Enabled":           true,
+		"Enabled":           false, // This makes things easier as it can be destroyed at any time
 		"RootUrl":           "https://www.broadcom.com",
 		"ExternalEndpoint":  "vcd_external_endpoint.ep1.id",
-		"UrlMatcherPattern": "/custom/.*",
+		"UrlMatcherPattern": "/test/.*",
 		"UrlMatcherScope":   "EXT_API",
 		"FuncName":          t.Name() + "Step1",
 	}
@@ -34,11 +34,15 @@ func TestAccVcdApiFilter(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "Step2"
 	params["ExternalEndpoint"] = "vcd_external_endpoint.ep2.id"
-	params["UrlMatcherPattern"] = "/custom/update/.*"
+	params["UrlMatcherPattern"] = "/test/update/.*"
 	params["UrlMatcherScope"] = "EXT_UI_PROVIDER"
-	params["Enabled"] = false // Endpoint needs to be Disabled before destroying it
 	configText2 := templateFill(testAccCheckVcdApiFilter, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 2: %s", configText2)
+
+	params["FuncName"] = t.Name() + "Step3"
+	configText3 := templateFill(testAccCheckVcdApiFilterDS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION 3: %s", configText3)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -56,7 +60,7 @@ func TestAccVcdApiFilter(t *testing.T) {
 					cachedId.cacheTestResourceFieldValue(resourceName, "id"),
 					resource.TestMatchResourceAttr(resourceName, "id", regexp.MustCompile(`urn:vcloud:apiFilter:.+`)),
 					resource.TestCheckResourceAttrPair(resourceName, "external_endpoint_id", "vcd_external_endpoint.ep1", "id"),
-					resource.TestCheckResourceAttr(resourceName, "url_matcher_pattern", "/custom/.*"),
+					resource.TestCheckResourceAttr(resourceName, "url_matcher_pattern", "/test/.*"),
 					resource.TestCheckResourceAttr(resourceName, "url_matcher_scope", "EXT_API"),
 				),
 			},
@@ -65,8 +69,15 @@ func TestAccVcdApiFilter(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					cachedId.testCheckCachedResourceFieldValue(resourceName, "id"),
 					resource.TestCheckResourceAttrPair(resourceName, "external_endpoint_id", "vcd_external_endpoint.ep2", "id"),
-					resource.TestCheckResourceAttr(resourceName, "url_matcher_pattern", "/custom/update/.*"),
+					resource.TestCheckResourceAttr(resourceName, "url_matcher_pattern", "/test/update/.*"),
 					resource.TestCheckResourceAttr(resourceName, "url_matcher_scope", "EXT_UI_PROVIDER"),
+				),
+			},
+			{
+				Config: configText3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					cachedId.cacheTestResourceFieldValue(resourceName, "id"),
+					resourceFieldsEqual(resourceName, "data.vcd_api_filter.af-ds", []string{"api_filter_id", "%"}),
 				),
 			},
 			{
@@ -80,7 +91,7 @@ func TestAccVcdApiFilter(t *testing.T) {
 			{
 				ResourceName:      resourceName,
 				ImportState:       true,
-				ExpectError:       regexp.MustCompile(`.*1.+urn:vcloud:apiFilter:.+EXT_UI_PROVIDER.+/custom/update/.*`),
+				ExpectError:       regexp.MustCompile(`.*1.+urn:vcloud:apiFilter:.+EXT_UI_PROVIDER.+/test/update/.*`),
 				ImportStateVerify: true,
 				ImportStateIdFunc: func(state *terraform.State) (string, error) {
 					return fmt.Sprintf("list@%s%s%s%s%s", params["Vendor"], ImportSeparator, params["Name"], ImportSeparator, params["Version2"]), nil
@@ -129,5 +140,11 @@ resource "vcd_api_filter" "af" {
   external_endpoint_id = {{.ExternalEndpoint}}
   url_matcher_pattern  = "{{.UrlMatcherPattern}}"
   url_matcher_scope    = "{{.UrlMatcherScope}}"
+}
+`
+
+const testAccCheckVcdApiFilterDS = testAccCheckVcdApiFilter + `
+data "vcd_api_filter" "af-ds" {
+  api_filter_id = vcd_api_filter.af.id
 }
 `

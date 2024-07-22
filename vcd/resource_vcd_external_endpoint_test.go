@@ -26,6 +26,7 @@ func TestAccVcdExternalEndpoint(t *testing.T) {
 		"Enabled":     true,
 		"RootUrl":     "https://www.broadcom.com",
 		"FuncName":    t.Name() + "Step1",
+		"SkipBinary":  "# skip-binary-test: endpoint can't be deleted if enabled",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -34,9 +35,18 @@ func TestAccVcdExternalEndpoint(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "Step2"
 	params["RootUrl"] = "https://www.vmware.com"
-	params["Enabled"] = false // Endpoint needs to be Disabled before destroying it
+	params["Enabled"] = false  // Endpoint needs to be Disabled before destroying it
+	params["SkipBinary"] = " " // Binary tests can run now as the endpoint is disabled
 	configText2 := templateFill(testAccCheckVcdExternalEndpoint, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 2: %s", configText2)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	params["FuncName"] = t.Name() + "Step3"
+	configText3 := templateFill(testAccCheckVcdExternalEndpointDS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION 3: %s", configText3)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -69,6 +79,12 @@ func TestAccVcdExternalEndpoint(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
 					resource.TestCheckResourceAttr(resourceName, "description", params["Description"].(string)),
 					resource.TestCheckResourceAttr(resourceName, "root_url", "https://www.vmware.com"),
+				),
+			},
+			{
+				Config: configText3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resourceFieldsEqual(resourceName, "data.vcd_external_endpoint.ep-ds", nil),
 				),
 			},
 			{
@@ -111,5 +127,13 @@ resource "vcd_external_endpoint" "ep" {
   enabled     = {{.Enabled}}
   description = "{{.Description}}"
   root_url    = "{{.RootUrl}}"
+}
+`
+
+const testAccCheckVcdExternalEndpointDS = testAccCheckVcdExternalEndpoint + `
+data "vcd_external_endpoint" "ep-ds" {
+  vendor      = vcd_external_endpoint.ep.vendor
+  name        = vcd_external_endpoint.ep.name
+  version     = vcd_external_endpoint.ep.version
 }
 `
