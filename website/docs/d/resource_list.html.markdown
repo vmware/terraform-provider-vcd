@@ -308,7 +308,21 @@ import {
 }
 ```
 
-# Example 10 - List of roles with filter
+## Example 10 - List of ALB Service Engine Group assignments to an Edge Gateway 
+
+This example is similar to example n. 3, with the addition of a generated import file
+
+```hcl
+data "vcd_resource_list" "list_of_assigned_segs" {
+  name             = "list_of_nets"
+  resource_type    = "vcd_nsxt_alb_edgegateway_service_engine_group" # Finds all assigned SEGs
+  ## TODO
+}
+```
+
+TODO
+
+# Example 11 - List of roles with filter
 
 ```hcl
 data "vcd_resource_list" "role-filter1" {
@@ -391,6 +405,8 @@ The following arguments are supported:
     * `vcd_network_routed_v2`
     * `vcd_network_isolated_v2`
     * `vcd_nsxt_network_imported`
+    * `vcd_nsxt_alb_service_engine_group`
+    * `vcd_nsxt_alb_edgegateway_service_engine_group`
     * `vcd_library_certificate`
     * `vcd_provider_vdc`
     * `vcd_network_pool`
