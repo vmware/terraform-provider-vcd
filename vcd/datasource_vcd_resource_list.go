@@ -1121,7 +1121,7 @@ func nsxtAlbServiceEngineGroup(d *schema.ResourceData, meta interface{}) (list [
 		items[i] = resourceRef{
 			name:   seg.NsxtAlbServiceEngineGroup.Name,
 			id:     seg.NsxtAlbServiceEngineGroup.ID,
-			href:   seg.NsxtAlbServiceEngineGroup.ID, // TODO
+			href:   fmt.Sprintf("%s/cloudapi/%s%s%s", client.Client.VCDHREF.String(), types.OpenApiPathVersion1_0_0, types.OpenApiEndpointAlbServiceEngineGroups, seg.NsxtAlbServiceEngineGroup.ID),
 			parent: "System",
 		}
 	}

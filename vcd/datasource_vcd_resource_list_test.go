@@ -34,6 +34,7 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		{name: "global_role", resourceType: "vcd_global_role", knownItem: "vApp Author"},
 		{name: "rights_bundle", resourceType: "vcd_rights_bundle", knownItem: "Default Rights Bundle"},
 		{name: "right", resourceType: "vcd_right", knownItem: "Catalog: Change Owner"},
+		{name: "alb-service-engine-group", resourceType: "vcd_nsxt_alb_service_engine_group"},
 
 		// entities belonging to an Org don't require an explicit parent, as it is given from the Org passed in the provider
 		// For each resource, we test with and without and explicit parent
