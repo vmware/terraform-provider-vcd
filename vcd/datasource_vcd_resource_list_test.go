@@ -35,7 +35,6 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		{name: "rights_bundle", resourceType: "vcd_rights_bundle", knownItem: "Default Rights Bundle"},
 		{name: "right", resourceType: "vcd_right", knownItem: "Catalog: Change Owner"},
 		{name: "alb-service-engine-group", resourceType: "vcd_nsxt_alb_service_engine_group"},
-		{name: "alb-edge-gateway-service-engine-group", resourceType: "vcd_nsxt_alb_edgegateway_service_engine_group"},
 
 		// entities belonging to an Org don't require an explicit parent, as it is given from the Org passed in the provider
 		// For each resource, we test with and without and explicit parent
@@ -236,6 +235,14 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 			parent:       testConfig.Nsxt.Vdc,
 			knownItem:    testConfig.Nsxt.EdgeGateway,
 		})
+		if testConfig.Nsxt.EdgeGateway != "" {
+			lists = append(lists, listDef{
+				name:         "vdc-nsxt-alb-edgegateway-service-engine-group",
+				resourceType: "vcd_nsxt_alb_edgegateway_service_engine_group",
+				vdc:          testConfig.Nsxt.Vdc,
+				parent:       testConfig.Nsxt.EdgeGateway,
+			})
+		}
 	} else {
 		fmt.Print("`Nsxt.Vdc` value isn't configured, datasource test using this will be skipped\n")
 	}

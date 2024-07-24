@@ -1131,7 +1131,15 @@ func nsxtAlbServiceEngineGroup(d *schema.ResourceData, meta interface{}) (list [
 func nsxtAlbServiceEngineGroupAssignment(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
-	allSegs, err := client.GetAllAlbServiceEngineGroupAssignments(nil)
+	orgName, vdcName, _, _, egw, err := getEdgeGatewayDetails(d, meta)
+	if err != nil {
+		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", d.Get("parent").(string), err)
+	}
+
+	queryParams := url.Values{}
+	queryParams.Add("filter", fmt.Sprintf("gatewayRef.id==%s", egw.EdgeGateway.ID))
+
+	allSegs, err := client.GetAllAlbServiceEngineGroupAssignments(queryParams)
 	if err != nil {
 		return nil, err
 	}
@@ -1142,11 +1150,14 @@ func nsxtAlbServiceEngineGroupAssignment(d *schema.ResourceData, meta interface{
 			href: fmt.Sprintf("%s/cloudapi/%s%s%s", client.Client.VCDHREF.String(), types.OpenApiPathVersion1_0_0, types.OpenApiEndpointAlbServiceEngineGroupAssignments, seg.NsxtAlbServiceEngineGroupAssignment.ID),
 		}
 		if seg.NsxtAlbServiceEngineGroupAssignment.ServiceEngineGroupRef != nil {
-			items[i].parent = seg.NsxtAlbServiceEngineGroupAssignment.ServiceEngineGroupRef.ID
+			items[i].name = seg.NsxtAlbServiceEngineGroupAssignment.ServiceEngineGroupRef.Name
+		}
+		if seg.NsxtAlbServiceEngineGroupAssignment.GatewayRef != nil {
+			items[i].parent = seg.NsxtAlbServiceEngineGroupAssignment.GatewayRef.Name
 		}
 	}
 
-	return genericResourceList(d, "vcd_nsxt_alb_edgegateway_service_engine_group", nil, items)
+	return genericResourceList(d, "vcd_nsxt_alb_edgegateway_service_engine_group", []string{orgName, vdcName, egw.EdgeGateway.Name}, items)
 }
 
 func genericResourceList(d *schema.ResourceData, resType string, ancestors []string, refs []resourceRef) (list []string, err error) {
