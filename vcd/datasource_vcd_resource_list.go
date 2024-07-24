@@ -1131,26 +1131,21 @@ func nsxtAlbServiceEngineGroup(d *schema.ResourceData, meta interface{}) (list [
 func nsxtAlbServiceEngineGroupAssignment(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
-	queryParams := url.Values{}
-
-	parent := d.Get("parent").(string)
-	if parent != "" {
-		// Parent can reference an Edge Gateway where the SEG is assigned, or the SEG itself. ',' in the filter means 'OR'
-		queryParams.Add("filter", fmt.Sprintf("gatewayRef.id==%s,serviceEngineGroupRef.id==%s", "TODO", "TODO")) // TODO
-	}
-
-	allSegs, err := client.GetAllAlbServiceEngineGroupAssignments(queryParams)
+	allSegs, err := client.GetAllAlbServiceEngineGroupAssignments(nil)
 	if err != nil {
 		return nil, err
 	}
 	items := make([]resourceRef, len(allSegs))
 	for i, seg := range allSegs {
 		items[i] = resourceRef{
-			id:     seg.NsxtAlbServiceEngineGroupAssignment.ID,
-			href:   seg.NsxtAlbServiceEngineGroupAssignment.ID, // TODO
-			parent: parent,
+			id:   seg.NsxtAlbServiceEngineGroupAssignment.ID,
+			href: fmt.Sprintf("%s/cloudapi/%s%s%s", client.Client.VCDHREF.String(), types.OpenApiPathVersion1_0_0, types.OpenApiEndpointAlbServiceEngineGroupAssignments, seg.NsxtAlbServiceEngineGroupAssignment.ID),
+		}
+		if seg.NsxtAlbServiceEngineGroupAssignment.ServiceEngineGroupRef != nil {
+			items[i].parent = seg.NsxtAlbServiceEngineGroupAssignment.ServiceEngineGroupRef.ID
 		}
 	}
+
 	return genericResourceList(d, "vcd_nsxt_alb_edgegateway_service_engine_group", nil, items)
 }
 
