@@ -1110,6 +1110,50 @@ func vdcTemplateList(d *schema.ResourceData, meta interface{}) (list []string, e
 	return genericResourceList(d, "vcd_org_vdc_template", ancestors, items)
 }
 
+func nsxtAlbServiceEngineGroup(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+	allSegs, err := client.GetAllAlbServiceEngineGroups("", nil)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]resourceRef, len(allSegs))
+	for i, seg := range allSegs {
+		items[i] = resourceRef{
+			name:   seg.NsxtAlbServiceEngineGroup.Name,
+			id:     seg.NsxtAlbServiceEngineGroup.ID,
+			href:   seg.NsxtAlbServiceEngineGroup.ID, // TODO
+			parent: "System",
+		}
+	}
+	return genericResourceList(d, "vcd_nsxt_alb_service_engine_group", nil, items)
+}
+
+func nsxtAlbServiceEngineGroupAssignment(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	queryParams := url.Values{}
+
+	parent := d.Get("parent").(string)
+	if parent != "" {
+		// Parent can reference an Edge Gateway where the SEG is assigned, or the SEG itself. ',' in the filter means 'OR'
+		queryParams.Add("filter", fmt.Sprintf("gatewayRef.id==%s,serviceEngineGroupRef.id==%s", "TODO", "TODO")) // TODO
+	}
+
+	allSegs, err := client.GetAllAlbServiceEngineGroupAssignments(queryParams)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]resourceRef, len(allSegs))
+	for i, seg := range allSegs {
+		items[i] = resourceRef{
+			id:     seg.NsxtAlbServiceEngineGroupAssignment.ID,
+			href:   seg.NsxtAlbServiceEngineGroupAssignment.ID, // TODO
+			parent: parent,
+		}
+	}
+	return genericResourceList(d, "vcd_nsxt_alb_edgegateway_service_engine_group", nil, items)
+}
+
 func genericResourceList(d *schema.ResourceData, resType string, ancestors []string, refs []resourceRef) (list []string, err error) {
 	listMode := d.Get("list_mode").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
@@ -1525,6 +1569,10 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 		list, err = libraryCertificateList(d, meta)
 	case "vcd_org_vdc_template":
 		list, err = vdcTemplateList(d, meta)
+	case "vcd_nsxt_alb_service_engine_group":
+		list, err = nsxtAlbServiceEngineGroup(d, meta)
+	case "vcd_nsxt_alb_edgegateway_service_engine_group":
+		list, err = nsxtAlbServiceEngineGroupAssignment(d, meta)
 
 		//// place holder to remind of what needs to be implemented
 		//	case "edgegateway_vpn",
