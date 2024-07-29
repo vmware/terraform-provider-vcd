@@ -33,10 +33,11 @@ func resourceVcdExternalEndpoint() *schema.Resource {
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringDoesNotContainAny(".")),
 			},
 			"vendor": {
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				Description:      "Vendor of the External Endpoint",
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Vendor of the External Endpoint",
+				// Same as above
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringDoesNotContainAny(".")),
 			},
 			"version": {
@@ -49,6 +50,12 @@ func resourceVcdExternalEndpoint() *schema.Resource {
 				Type:        schema.TypeBool,
 				Required:    true,
 				Description: "Whether the External Endpoint is enabled or not",
+			},
+			"disable_on_removal": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "If 'true', the External Endpoint is disabled before deleting the resource",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -117,6 +124,11 @@ func genericVcdExternalEndpointRead(_ context.Context, d *schema.ResourceData, m
 }
 
 func resourceVcdExternalEndpointUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if !d.HasChangesExcept("disable_on_removal") {
+		// This is a utility toggle that does not interact with VCD
+		return nil
+	}
+
 	vcdClient := meta.(*VCDClient)
 	ep, err := vcdClient.GetExternalEndpointById(d.Id())
 	if err != nil {
@@ -140,11 +152,28 @@ func resourceVcdExternalEndpointDelete(_ context.Context, d *schema.ResourceData
 	vcdClient := meta.(*VCDClient)
 	ep, err := vcdClient.GetExternalEndpointById(d.Id())
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			return nil // Already deleted
+		}
 		return diag.Errorf("could not retrieve the External Endpoint for delete: %s", err)
+	}
+	if d.Get("disable_on_removal").(bool) {
+		err = ep.Update(types.ExternalEndpoint{
+			Name:        ep.ExternalEndpoint.Name,
+			ID:          ep.ExternalEndpoint.ID,
+			Version:     ep.ExternalEndpoint.Version,
+			Vendor:      ep.ExternalEndpoint.Vendor,
+			Enabled:     false,
+			Description: ep.ExternalEndpoint.Description,
+			RootUrl:     ep.ExternalEndpoint.RootUrl,
+		})
+		if err != nil {
+			return diag.Errorf("could not disable the External Endpoint '%s' for deletion: %s", d.Id(), err)
+		}
 	}
 	err = ep.Delete()
 	if err != nil {
-		return diag.Errorf("could not delete the External Endpoint: %s", err)
+		return diag.Errorf("could not delete the External Endpoint '%s': %s", d.Id(), err)
 	}
 	return nil
 }

@@ -26,6 +26,8 @@ resource "vcd_external_endpoint" "external_endpoint1" {
   enabled     = true
   description = "A simple external endpoint example"
   root_url    = "https://www.vmware.com"
+
+  disable_on_removal = true # Will disable the endpoint and then remove it when this resource is destroyed
 }
 ```
 
@@ -36,7 +38,10 @@ The following arguments are supported:
 * `vendor` - (Required) The vendor name of the External Endpoint. The combination of `vendor` + `name` + `version` must be unique. Can't be modified after creation
 * `name` - (Required) The name of the External Endpoint. The combination of `vendor` + `name` + `version` must be unique. Can't be modified after creation
 * `version` - (Required) The version of the External Endpoint. The combination of `vendor` + `name` + `version` must be unique. Can't be modified after creation
-* `enabled` - (Required) Whether the External Endpoint is enabled or not. **Must be `false` before removing this resource**, otherwise deletion will fail
+* `enabled` - (Required) Whether the External Endpoint is enabled or not. **Must be `false` before removing this resource**, otherwise deletion will fail.
+  To disable it automatically on removal, set `disable_on_removal=true` (see below)
+* `disable_on_removal` - (Optional) Whether the External Endpoint should be disabled before a delete operation, to flawlessly remove it even if it is enabled.
+  It is `false` by default
 * `description` - (Optional) Description of the External Endpoint
 * `root_url` - (Required) The endpoint which requests will be redirected to. Must use HTTPS protocol
 

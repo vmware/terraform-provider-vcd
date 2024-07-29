@@ -26,7 +26,6 @@ func TestAccVcdExternalEndpoint(t *testing.T) {
 		"Enabled":     true,
 		"RootUrl":     "https://www.broadcom.com",
 		"FuncName":    t.Name() + "Step1",
-		"SkipBinary":  "# skip-binary-test: endpoint can't be deleted if enabled",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -35,8 +34,7 @@ func TestAccVcdExternalEndpoint(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "Step2"
 	params["RootUrl"] = "https://www.vmware.com"
-	params["Enabled"] = false  // Endpoint needs to be Disabled before destroying it
-	params["SkipBinary"] = " " // Binary tests can run now as the endpoint is disabled
+	params["Enabled"] = false
 	configText2 := templateFill(testAccCheckVcdExternalEndpoint, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 2: %s", configText2)
 	if vcdShortTest {
@@ -84,14 +82,15 @@ func TestAccVcdExternalEndpoint(t *testing.T) {
 			{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resourceFieldsEqual(resourceName, "data.vcd_external_endpoint.ep-ds", nil),
+					resourceFieldsEqual(resourceName, "data.vcd_external_endpoint.ep-ds", []string{"%", "disable_on_removal"}), // disable_on_removal cannot be read
 				),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdTopHierarchy(fmt.Sprintf("%s%s%s%s%s", vendor, ImportSeparator, name, ImportSeparator, version)),
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdTopHierarchy(fmt.Sprintf("%s%s%s%s%s", vendor, ImportSeparator, name, ImportSeparator, version)),
+				ImportStateVerifyIgnore: []string{"disable_on_removal"}, // Cannot be imported
 			},
 		},
 	})
@@ -120,7 +119,6 @@ func testAccCheckExternalEndpointDestroy(vendor, name, version string) func(s *t
 }
 
 const testAccCheckVcdExternalEndpoint = `
-{{.SkipBinary}}
 resource "vcd_external_endpoint" "ep" {
   vendor      = "{{.Vendor}}"
   name        = "{{.Name}}"
@@ -128,6 +126,8 @@ resource "vcd_external_endpoint" "ep" {
   enabled     = {{.Enabled}}
   description = "{{.Description}}"
   root_url    = "{{.RootUrl}}"
+
+  disable_on_removal = true
 }
 `
 
