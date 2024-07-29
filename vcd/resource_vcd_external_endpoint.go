@@ -33,10 +33,11 @@ func resourceVcdExternalEndpoint() *schema.Resource {
 				ValidateDiagFunc: validation.ToDiagFunc(validation.StringDoesNotContainAny(".")),
 			},
 			"vendor": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Vendor of the External Endpoint",
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				Description:      "Vendor of the External Endpoint",
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringDoesNotContainAny(".")),
 			},
 			"version": {
 				Type:        schema.TypeString,
