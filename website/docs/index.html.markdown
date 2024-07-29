@@ -176,7 +176,7 @@ provider "vcd" {
   user                 = "none"
   password             = "none"
   auth_type            = "api_token_file"
-  api_token            = "token.json"
+  api_token_file       = "token.json"
   sysorg               = "System"
   org                  = var.vcd_org # Default for resources
   vdc                  = var.vcd_vdc # Default for resources
