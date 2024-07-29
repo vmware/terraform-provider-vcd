@@ -1,3 +1,4 @@
+version: 2
 before:
     hooks:
       - go mod tidy
@@ -55,4 +56,3 @@ changelog:
       - Merge pull request
       - Merge branch
       - go mod tidy
-  
