@@ -27,6 +27,10 @@ func resourceVcdExternalEndpoint() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "Name of the External Endpoint",
+				// This should not be needed once VCD validates correctly that "." are not present in the name
+				// during creation. Otherwise, this is critical to avoid having incorrect external endpoints that
+				// cannot be read, updated nor deleted.
+				ValidateDiagFunc: validation.ToDiagFunc(validation.StringDoesNotContainAny(".")),
 			},
 			"vendor": {
 				Type:        schema.TypeString,
