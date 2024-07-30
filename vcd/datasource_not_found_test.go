@@ -132,6 +132,14 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 				skipVersionConstraint: "< 37.1",
 				datasourceName:        "vcd_ip_space_custom_quota",
 			},
+			{
+				skipVersionConstraint: "< 37.3",
+				datasourceName:        "vcd_external_endpoint",
+			},
+			{
+				skipVersionConstraint: "< 37.3",
+				datasourceName:        "vcd_api_filter",
+			},
 		}
 		// urn:vcloud:ipSpace:2ec12e23-6911-4950-a33f-5602ae72ced2
 
@@ -178,6 +186,8 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			"vcd_solution_add_on",
 			"vcd_solution_add_on_instance",
 			"vcd_solution_add_on_instance_publish",
+			"vcd_external_endpoint",
+			"vcd_api_filter",
 		}
 		dataSourcesRequiringAlbConfig := []string{
 			"vcd_nsxt_alb_cloud",
@@ -484,6 +494,8 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `ip_space_id = "urn:vcloud:ipSpace:90337fee-f332-40f2-a124-96e890eb1522"` + "\n"
 		case "external_network_id":
 			templateFields = templateFields + `external_network_id = "urn:vcloud:network:74804d82-a58f-4714-be84-75c178751ab0"` + "\n"
+		case "api_filter_id":
+			templateFields = templateFields + `api_filter_id = "urn:vcloud:apiFilter:74804d82-a58f-4714-be84-75c178751ab0"` + "\n"
 		}
 	}
 
