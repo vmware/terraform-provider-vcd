@@ -42,6 +42,7 @@ Data Solution Extension configuration resources with their respective data sourc
 * [`vcd_solution_landing_zone`](/providers/vmware/vcd/latest/docs/resources/solution_landing_zone)
 * [`vcd_solution_add_on`](/providers/vmware/vcd/latest/docs/resources/solution_add_on)
 * [`vcd_solution_add_on_instance`](/providers/vmware/vcd/latest/docs/resources/solution_add_on_instance)
+* [`vcd_solution_add_on_instance_publish`](/providers/vmware/vcd/latest/docs/resources/solution_add_on_instance_publish)
 
 ### Data Solution Extension resources
 

@@ -6,7 +6,7 @@ description: |-
   The VMware Cloud Director provider is used to interact with the resources supported by VMware Cloud Director. The provider needs to be configured with the proper credentials before it can be used.
 ---
 
-# VMware Cloud Director Provider 3.13
+# VMware Cloud Director Provider 3.14
 
 The VMware Cloud Director provider is used to interact with the resources supported by VMware Cloud Director. The provider needs to be configured with the proper credentials before it can be used.
 
@@ -176,7 +176,7 @@ provider "vcd" {
   user                 = "none"
   password             = "none"
   auth_type            = "api_token_file"
-  api_token            = "token.json"
+  api_token_file       = "token.json"
   sysorg               = "System"
   org                  = var.vcd_org # Default for resources
   vdc                  = var.vcd_vdc # Default for resources
