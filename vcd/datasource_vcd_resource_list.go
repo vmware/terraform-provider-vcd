@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"net/url"
 	"os"
 	"regexp"
 	"sort"
@@ -23,6 +24,14 @@ type resourceRef struct {
 	parent       string
 	importId     bool
 }
+
+type vappNetworkType int
+
+const (
+	vntVappNetwork vappNetworkType = iota
+	vntVappOrgNetwork
+	vntVappAllNetworks
+)
 
 func datasourceVcdResourceList() *schema.Resource {
 	return &schema.Resource{
@@ -43,6 +52,7 @@ func datasourceVcdResourceList() *schema.Resource {
 			// * vapp_vm (parent: vApp)
 			// * catalogItem (catalog)
 			// * mediaItem (catalog)
+			// * NSX-T edge gateway (when belonging to a VDC group)
 			// * all edge gateway objects (NAT, firewall, lb)
 			// When the parent is org or vdc, they are taken from the regular fields above
 			"parent": {
@@ -103,6 +113,52 @@ func datasourceVcdResourceList() *schema.Resource {
 	}
 }
 
+func getSiteAssociationList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	siteAssociationList, err := client.VCDClient.Client.QueryAllSiteAssociations(nil, nil)
+	if err != nil {
+		return list, err
+	}
+	var items []resourceRef
+	for _, site := range siteAssociationList {
+		if site.Status == string(types.StatusError) {
+			continue
+		}
+		items = append(items, resourceRef{
+			name:     site.AssociatedSiteName,
+			id:       site.AssociatedSiteId,
+			href:     site.Href,
+			parent:   "",
+			importId: false,
+		})
+	}
+	return genericResourceList(d, resType, nil, items)
+}
+
+func getOrgAssociationList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	orgAssociationList, err := client.VCDClient.Client.QueryAllOrgAssociations(nil, nil)
+	if err != nil {
+		return list, err
+	}
+	var items []resourceRef
+	for _, org := range orgAssociationList {
+		if org.Status == string(types.StatusError) {
+			continue
+		}
+		items = append(items, resourceRef{
+			name:     org.OrgName,
+			id:       org.OrgId,
+			href:     org.Href,
+			parent:   "",
+			importId: false,
+		})
+	}
+	return genericResourceList(d, resType, nil, items)
+}
+
 func getOrgList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
 
@@ -147,7 +203,7 @@ func getPvdcList(d *schema.ResourceData, meta interface{}) (list []string, err e
 func getVdcGroups(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
-	org, err := client.GetAdminOrgByName(d.Get("org").(string))
+	org, err := client.GetAdminOrg(firstNonEmpty(d.Get("org").(string), d.Get("parent").(string)))
 	if err != nil {
 		return list, err
 	}
@@ -202,7 +258,8 @@ func externalNetworkList(d *schema.ResourceData, meta interface{}) (list []strin
 
 func rightsList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
-	org, err := client.GetAdminOrg(d.Get("org").(string))
+
+	org, err := client.GetAdminOrg(firstNonEmpty(d.Get("org").(string), d.Get("parent").(string)))
 	if err != nil {
 		return list, err
 	}
@@ -228,7 +285,7 @@ func rightsList(d *schema.ResourceData, meta interface{}) (list []string, err er
 func rolesList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
-	org, err := client.GetAdminOrg(d.Get("org").(string))
+	org, err := client.GetAdminOrg(firstNonEmpty(d.Get("org").(string), d.Get("parent").(string)))
 	if err != nil {
 		return list, err
 	}
@@ -275,7 +332,7 @@ func globalRolesList(d *schema.ResourceData, meta interface{}) (list []string, e
 func libraryCertificateList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
-	adminOrg, err := client.GetAdminOrg(d.Get("org").(string))
+	adminOrg, err := client.GetAdminOrg(firstNonEmpty(d.Get("org").(string), d.Get("parent").(string)))
 	if err != nil {
 		return list, err
 	}
@@ -331,8 +388,7 @@ func rightsBundlesList(d *schema.ResourceData, meta interface{}) (list []string,
 
 func catalogList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
-
-	org, err := client.GetAdminOrg(d.Get("org").(string))
+	org, err := client.GetAdminOrg(firstNonEmpty(d.Get("org").(string), d.Get("parent").(string)))
 	if err != nil {
 		return list, err
 	}
@@ -448,7 +504,7 @@ func vappTemplateList(d *schema.ResourceData, meta interface{}) (list []string, 
 func vdcList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
 
-	org, err := client.GetAdminOrg(d.Get("org").(string))
+	org, err := client.GetAdminOrg(firstNonEmpty(d.Get("org").(string), d.Get("parent").(string)))
 	if err != nil {
 		return list, err
 	}
@@ -468,7 +524,7 @@ func vdcList(d *schema.ResourceData, meta interface{}, resType string) (list []s
 func orgUserList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
-	org, err := client.GetAdminOrg(d.Get("org").(string))
+	org, err := client.GetAdminOrg(firstNonEmpty(d.Get("org").(string), d.Get("parent").(string)))
 	if err != nil {
 		return list, err
 	}
@@ -488,8 +544,12 @@ func orgUserList(d *schema.ResourceData, meta interface{}) (list []string, err e
 func networkList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
+	vdcName, err := getVdcName(client, d)
+	if err != nil {
+		return list, err
+	}
 	wantedType := d.Get("resource_type").(string)
-	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), vdcName)
 	if err != nil {
 		return list, err
 	}
@@ -528,7 +588,7 @@ func networkList(d *schema.ResourceData, meta interface{}) (list []string, err e
 			name:         network.OrgVDCNetwork.Name,
 			id:           network.OrgVDCNetwork.ID,
 			href:         network.OrgVDCNetwork.HREF,
-			parent:       vdc.Vdc.Name,
+			parent:       vdcName,
 			resourceType: trueResourceType,
 			importId:     false,
 		})
@@ -540,9 +600,12 @@ func networkList(d *schema.ResourceData, meta interface{}) (list []string, err e
 // orgNetworkListV2 uses OpenAPI endpoint to query Org VDC networks and return their list
 func orgNetworkListV2(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
-
+	vdcName, err := getVdcName(client, d)
+	if err != nil {
+		return list, err
+	}
 	wantedType := d.Get("resource_type").(string)
-	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), vdcName)
 	if err != nil {
 		return list, err
 	}
@@ -578,7 +641,7 @@ func orgNetworkListV2(d *schema.ResourceData, meta interface{}) (list []string, 
 			name:         net.OpenApiOrgVdcNetwork.Name,
 			id:           net.OpenApiOrgVdcNetwork.ID,
 			href:         href.Path,
-			parent:       vdc.Vdc.Name,
+			parent:       vdcName,
 			importId:     false,
 			resourceType: trueResourceType,
 		})
@@ -587,10 +650,28 @@ func orgNetworkListV2(d *schema.ResourceData, meta interface{}) (list []string, 
 	return genericResourceList(d, resourceType, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
+func getVdcName(client *VCDClient, d *schema.ResourceData) (string, error) {
+	vdcName := d.Get("parent").(string)
+	if vdcName == "" {
+		vdcName = d.Get("vdc").(string)
+	}
+	if vdcName == "" {
+		vdcName = client.Vdc
+	}
+	if vdcName == "" {
+		return "", fmt.Errorf("VDC name not given either as 'vdc' or 'parent' field")
+	}
+	return vdcName, nil
+}
+
 func getEdgeGatewayList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
 
-	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
+	vdcName, err := getVdcName(client, d)
+	if err != nil {
+		return nil, fmt.Errorf("VDC name not given either as 'vdc' or 'parent' field")
+	}
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), vdcName)
 	if err != nil {
 		return list, err
 	}
@@ -616,16 +697,222 @@ func getEdgeGatewayList(d *schema.ResourceData, meta interface{}, resType string
 	return genericResourceList(d, resType, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
-func nsxtEdgeGatewayList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+func distributedSwitchList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
-	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
+	vCenterName := d.Get("parent").(string)
+	if vCenterName == "" {
+		return nil, fmt.Errorf("the 'parent' field must contain the vCenter name to retrieve the distributed switches")
+	}
+
+	vCenter, err := client.GetVCenterByName(vCenterName)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving vCenter '%s': %s", vCenterName, err)
+	}
+
+	dSwitches, err := client.GetAllVcenterDistributedSwitches(vCenter.VSphereVCenter.VcId, nil)
+
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving distributed switchs for vCenter '%s': %s", vCenterName, err)
+	}
+
+	var items []resourceRef
+	for _, dsw := range dSwitches {
+		items = append(items, resourceRef{
+			name: dsw.BackingRef.Name,
+			id:   dsw.BackingRef.ID,
+		})
+	}
+	return genericResourceList(d, "vcd_distributed_switch", []string{vCenter.VSphereVCenter.Name}, items)
+}
+
+func transportZoneList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	nsxtManagerName := d.Get("parent").(string)
+	if nsxtManagerName == "" {
+		return nil, fmt.Errorf("the 'parent' field must contain the NSX-T manager name to retrieve the transport zones")
+	}
+
+	managers, err := client.QueryNsxtManagerByName(nsxtManagerName)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving NSX-T manager '%s': %s", nsxtManagerName, err)
+	}
+	if len(managers) == 0 {
+		return nil, fmt.Errorf("no NSX-T manager '%s' found", nsxtManagerName)
+	}
+	if len(managers) > 1 {
+		return nil, fmt.Errorf("more than one NSX-T manager found with name '%s'", nsxtManagerName)
+	}
+
+	manager := managers[0]
+	managerId := "urn:vcloud:nsxtmanager:" + extractUuid(manager.HREF)
+	transportZones, err := client.GetAllNsxtTransportZones(managerId, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving transport zones for NSX-T manager '%s': %s", nsxtManagerName, err)
+	}
+
+	var items []resourceRef
+	for _, tz := range transportZones {
+		if tz.AlreadyImported {
+			continue
+		}
+		items = append(items, resourceRef{
+			name: tz.Name,
+			id:   tz.Id,
+		})
+	}
+	return genericResourceList(d, "vcd_nsxt_transport_zone", []string{manager.Name}, items)
+}
+
+func importablePortGroupList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	vCenterName := d.Get("parent").(string)
+	if vCenterName == "" {
+		return nil, fmt.Errorf("the 'parent' field must contain the vCenter name to retrieve the distributed switches")
+	}
+
+	vCenter, err := client.GetVCenterByName(vCenterName)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving vCenter '%s': %s", vCenterName, err)
+	}
+	var params = make(url.Values)
+	params.Set("filter", fmt.Sprintf("virtualCenter.id==%s", vCenter.VSphereVCenter.VcId))
+	pgroups, err := client.GetAllVcenterImportableDvpgs(params)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving importable port groups for vCenter '%s': %s", vCenterName, err)
+	}
+
+	var items []resourceRef
+	for _, pg := range pgroups {
+		items = append(items, resourceRef{
+			name: pg.VcenterImportableDvpg.BackingRef.Name,
+			id:   pg.VcenterImportableDvpg.BackingRef.ID,
+		})
+	}
+	return genericResourceList(d, "vcd_importable_port_group", []string{vCenter.VSphereVCenter.Name}, items)
+}
+
+func networkPoolList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	networkPools, err := client.QueryNetworkPools()
 	if err != nil {
 		return list, err
 	}
 
 	var items []resourceRef
-	nsxtEdgeGatewayList, err := vdc.GetAllNsxtEdgeGateways(nil)
+	for _, np := range networkPools {
+
+		items = append(items, resourceRef{
+			name: np.Name,
+			id:   extractUuid(np.HREF),
+			href: np.HREF,
+		})
+	}
+	return genericResourceList(d, "vcd_network_pool", nil, items)
+}
+
+func nsxtManagerList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	managers, err := client.QueryNsxtManagers()
+	if err != nil {
+		return list, err
+	}
+
+	var items []resourceRef
+	for _, mgr := range managers {
+
+		items = append(items, resourceRef{
+			name: mgr.Name,
+			id:   extractUuid(mgr.HREF),
+			href: mgr.HREF,
+		})
+
+	}
+	return genericResourceList(d, "vcd_nsxt_manager", nil, items)
+}
+
+func vcenterList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	vcenters, err := client.GetAllVCenters(nil)
+	if err != nil {
+		return list, err
+	}
+
+	var items []resourceRef
+	for _, vc := range vcenters {
+
+		href, err := vc.GetVimServerUrl()
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, resourceRef{
+			name: vc.VSphereVCenter.Name,
+			id:   vc.VSphereVCenter.VcId,
+			href: href,
+		})
+
+	}
+	return genericResourceList(d, "vcd_vcenter", nil, items)
+}
+
+func getNsxtEdgeGatewayList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	// A NSX-T edge gateway could belong to either a VDC or a VDC group
+	// The "parent" field could refer to either of them
+	parentName := d.Get("parent").(string)
+	vdcName := d.Get("vdc").(string)
+	var nsxtEdgeGatewayList []*govcd.NsxtEdgeGateway
+	var vdcGroup *govcd.VdcGroup
+	var vdc *govcd.Vdc
+	var items []resourceRef
+
+	adminOrg, err := client.GetAdminOrgFromResource(d)
+	if err != nil {
+		return list, err
+	}
+
+	var ancestors = []string{adminOrg.AdminOrg.Name}
+	if parentName != "" {
+		// we first try to get a group VDC using the parent name
+		vdcGroup, err = adminOrg.GetVdcGroupByName(parentName)
+		if err != nil {
+			if govcd.ContainsNotFound(err) {
+				// if we haven't found a group VDC, we try a VDC using the parent name
+				vdc, err = adminOrg.GetVDCByName(parentName, false)
+				if err != nil {
+					return nil, fmt.Errorf("neither a VDC or a VDC group found with name '%s'", parentName)
+				}
+			} else {
+				return nil, fmt.Errorf("error retrieving VDC group '%s': %s", parentName, err)
+			}
+		}
+	}
+	if vdcGroup != nil {
+		ancestors = append(ancestors, parentName)
+		nsxtEdgeGatewayList, err = vdcGroup.GetAllNsxtEdgeGateways(nil)
+	} else {
+		if vdc == nil {
+			if vdcName == "" {
+				vdcName = client.Vdc
+			}
+			if vdcName == "" {
+				return nil, fmt.Errorf("no VDC name provided")
+			}
+			vdc, err = adminOrg.GetVDCByName(vdcName, false)
+			if err != nil {
+				return list, fmt.Errorf("error retrieving VDC")
+			}
+		}
+		parentName = vdcName
+		ancestors = append(ancestors, vdcName)
+		nsxtEdgeGatewayList, err = vdc.GetAllNsxtEdgeGateways(nil)
+	}
 	if err != nil {
 		return list, err
 	}
@@ -635,16 +922,47 @@ func nsxtEdgeGatewayList(d *schema.ResourceData, meta interface{}) (list []strin
 			name:   nsxtEdgeGateway.EdgeGateway.Name,
 			id:     nsxtEdgeGateway.EdgeGateway.ID,
 			href:   "",
+			parent: parentName,
+		})
+	}
+	return genericResourceList(d, "vcd_nsxt_edgegateway", ancestors, items)
+}
+
+func diskList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+	vdcName, err := getVdcName(client, d)
+	if err != nil {
+		return list, err
+	}
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), vdcName)
+	if err != nil {
+		return list, err
+	}
+
+	var items []resourceRef
+
+	disks, err := vdc.QueryDisks("*")
+	if err != nil {
+		return list, err
+	}
+	for _, diskRef := range *disks {
+		items = append(items, resourceRef{
+			name:   diskRef.Name,
+			id:     extractUuid(diskRef.HREF),
+			href:   diskRef.HREF,
 			parent: vdc.Vdc.Name,
 		})
 	}
-	return genericResourceList(d, "vcd_nsxt_edgegateway", []string{org.Org.Name, vdc.Vdc.Name}, items)
+	return genericResourceList(d, "vcd_independent_disk", []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
 func vappList(d *schema.ResourceData, meta interface{}, resType string) (list []string, err error) {
 	client := meta.(*VCDClient)
-
-	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
+	vdcName, err := getVdcName(client, d)
+	if err != nil {
+		return list, err
+	}
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), vdcName)
 	if err != nil {
 		return list, err
 	}
@@ -702,6 +1020,94 @@ func vmList(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (list []s
 		return genericResourceList(d, "vcd_vapp_vm", []string{org.Org.Name, vdc.Vdc.Name, vappName}, items)
 	}
 	return genericResourceList(d, "vcd_vm", []string{org.Org.Name, vdc.Vdc.Name}, items)
+}
+
+func vappNetworkList(d *schema.ResourceData, vnt vappNetworkType, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
+	if err != nil {
+		return list, err
+	}
+
+	vappName := d.Get("parent").(string)
+
+	vapp, err := vdc.GetVAppByName(vappName, false)
+	if err != nil {
+		return nil, err
+	}
+	var networks []*types.QueryResultVappNetworkRecordType
+
+	switch vnt {
+	case vntVappNetwork:
+		networks, err = vapp.QueryVappNetworks(nil)
+	case vntVappOrgNetwork:
+		networks, err = vapp.QueryVappOrgNetworks(nil)
+	case vntVappAllNetworks:
+		networks, err = vapp.QueryAllVappNetworks(nil)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	var items []resourceRef
+	for _, net := range networks {
+		items = append(items, resourceRef{
+			name:     net.Name,
+			id:       extractUuid(net.HREF),
+			href:     net.HREF,
+			parent:   vappName,
+			importId: true,
+		})
+	}
+	return genericResourceList(d, "vcd_vapp_network", []string{org.Org.Name, vdc.Vdc.Name, vappName}, items)
+}
+
+func vdcTemplateList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	parentOrg := d.Get("parent").(string)
+	isSystemOrg := parentOrg == "" || strings.ToLower(parentOrg) == "system"
+	if isSystemOrg && !client.Client.IsSysAdmin {
+		return nil, fmt.Errorf("'parent' is not set or is 'System': Only an administrator can list all VDC Templates from System")
+	}
+
+	var items []resourceRef
+	var ancestors []string
+	if isSystemOrg {
+		adminVdcTemplates, err := client.QueryAdminVdcTemplates()
+		if err != nil {
+			return nil, err
+		}
+		for _, adminVdcTemplate := range adminVdcTemplates {
+			items = append(items, resourceRef{
+				name:   adminVdcTemplate.Name,
+				id:     extractUuid(adminVdcTemplate.HREF),
+				href:   adminVdcTemplate.HREF,
+				parent: "System",
+			})
+		}
+	} else {
+		org, err := client.GetOrg(parentOrg)
+		if err != nil {
+			return nil, err
+		}
+		vdcTemplates, err := org.QueryVdcTemplates()
+		if err != nil {
+			return nil, err
+		}
+		for _, vdcTemplate := range vdcTemplates {
+			items = append(items, resourceRef{
+				name:   vdcTemplate.Name,
+				id:     extractUuid(vdcTemplate.HREF),
+				href:   vdcTemplate.HREF,
+				parent: org.Org.Name,
+			})
+		}
+		ancestors = []string{org.Org.Name}
+	}
+	return genericResourceList(d, "vcd_org_vdc_template", ancestors, items)
 }
 
 func genericResourceList(d *schema.ResourceData, resType string, ancestors []string, refs []resourceRef) (list []string, err error) {
@@ -1018,12 +1424,28 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 	// Note: do not try to get the data sources list, as it would result in a circular reference
 	case "resource", "resources":
 		list, err = getResourcesList()
+	case "vcd_multisite_site_association":
+		list, err = getSiteAssociationList(d, meta, "vcd_multisite_site_association")
+	case "vcd_multisite_org_association":
+		list, err = getOrgAssociationList(d, meta, "vcd_multisite_org_association")
 	case "vcd_org", "org", "orgs":
 		list, err = getOrgList(d, meta, "vcd_org")
 	case "vcd_org_ldap", "vcd_org_saml":
 		list, err = getOrgList(d, meta, requested)
 	case "vcd_provider_vdc", "provider_vdc":
 		list, err = getPvdcList(d, meta)
+	case "vcd_distributed_switch":
+		list, err = distributedSwitchList(d, meta)
+	case "vcd_nsxt_transport_zone":
+		list, err = transportZoneList(d, meta)
+	case "vcd_importable_port_group":
+		list, err = importablePortGroupList(d, meta)
+	case "vcd_network_pool":
+		list, err = networkPoolList(d, meta)
+	case "vcd_vcenter":
+		list, err = vcenterList(d, meta)
+	case "vcd_nsxt_manager":
+		list, err = nsxtManagerList(d, meta)
 	case "vcd_external_network", "external_network", "external_networks":
 		list, err = externalNetworkList(d, meta)
 	case "vcd_org_vdc", "vdc", "vdcs":
@@ -1042,12 +1464,20 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 		list, err = vappTemplateList(d, meta)
 	case "vcd_catalog_media", "catalog_media", "media_items", "mediaitems", "mediaitem":
 		list, err = catalogItemList(d, meta, "vcd_catalog_media")
+	case "vcd_independent_disk", "disk", "disks":
+		list, err = diskList(d, meta)
 	case "vcd_vapp", "vapp", "vapps", "vcd_cloned_vapp":
 		list, err = vappList(d, meta, "vcd_vapp")
 	case "vcd_vapp_access_control":
 		list, err = vappList(d, meta, "vcd_vapp_access_control")
 	case "vcd_vapp_vm", "vapp_vm", "vapp_vms":
 		list, err = vmList(d, meta, vappVmType)
+	case "vcd_vapp_network", "vapp_network", "vapp_networks":
+		list, err = vappNetworkList(d, vntVappNetwork, meta)
+	case "vcd_vapp_org_network", "vapp_org_network", "vapp_org_networks":
+		list, err = vappNetworkList(d, vntVappOrgNetwork, meta)
+	case "vcd_vapp_all_network", "vapp_all_network", "vapp_all_networks":
+		list, err = vappNetworkList(d, vntVappAllNetworks, meta)
 	case "vcd_vm", "standalone_vm":
 		list, err = vmList(d, meta, standaloneVmType)
 	case "vcd_all_vm", "vm", "vms":
@@ -1059,7 +1489,7 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 	case "vcd_edgegateway_settings":
 		list, err = getEdgeGatewayList(d, meta, "vcd_edgegateway_settings")
 	case "vcd_nsxt_edgegateway", "nsxt_edge_gateway", "nsxt_edge", "nsxt_edgegateway":
-		list, err = nsxtEdgeGatewayList(d, meta)
+		list, err = getNsxtEdgeGatewayList(d, meta)
 	case "vcd_lb_server_pool", "lb_server_pool":
 		list, err = lbServerPoolList(d, meta)
 	case "vcd_lb_service_monitor", "lb_service_monitor":
@@ -1093,10 +1523,11 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 		list, err = globalRolesList(d, meta)
 	case "vcd_library_certificate":
 		list, err = libraryCertificateList(d, meta)
+	case "vcd_org_vdc_template":
+		list, err = vdcTemplateList(d, meta)
 
 		//// place holder to remind of what needs to be implemented
 		//	case "edgegateway_vpn",
-		//		"vapp_network",
 		//		"independent_disk",
 		//		"inserted_media":
 		//		list, err = []string{"not implemented yet"}, nil

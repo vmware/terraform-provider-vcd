@@ -186,7 +186,7 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": metadataEntryResourceSchema("Network"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("Network"),
 		},
 	}
 }
@@ -307,6 +307,7 @@ func resourceVcdNetworkRoutedRead(ctx context.Context, d *schema.ResourceData, m
 }
 
 func genericVcdNetworkRoutedRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+	var diags diag.Diagnostics
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -395,10 +396,15 @@ func genericVcdNetworkRoutedRead(_ context.Context, d *schema.ResourceData, meta
 	dSet(d, "description", network.OrgVDCNetwork.Description)
 	d.SetId(network.OrgVDCNetwork.ID)
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_network_routed", network)
-	if diagErr != nil {
-		log.Printf("[DEBUG] Unable to set routed network metadata: %s", err)
-		return diagErr
+	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_network_routed", network)...)
+	if diags != nil && diags.HasError() {
+		log.Printf("[DEBUG] Unable to set routed network metadata: %v", diags)
+		return diags
+	}
+
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
 	}
 	return nil
 }

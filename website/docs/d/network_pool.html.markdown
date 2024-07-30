@@ -28,5 +28,4 @@ The following arguments are supported:
 
 ## Attribute reference
 
-* `description` -  description of this network pool
-* `type` -  Type of this network pool
+All the attributes and arguments of the corresponding resource [vcd_network_pool](/providers/vmware/vcd/latest/docs/resources/network_pool) are supported

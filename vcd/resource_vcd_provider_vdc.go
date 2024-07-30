@@ -128,7 +128,7 @@ func resourceVcdProviderVdc() *schema.Resource {
 			},
 			"nsxt_manager_id": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "ID of the registered NSX-T Manager that backs networking operations for this Provider VDC",
 			},
@@ -200,14 +200,7 @@ func resourceVcdProviderVdc() *schema.Resource {
 				ForceNew:    true,
 				Description: "ID of the vCenter server that provides the resource pools and datastores",
 			},
-			// TODO: metadata handling to be added after refactoring of conflicting fields "metadata" and "metadata_entry"
-			//"metadata": {
-			//	Type:        schema.TypeMap,
-			//	Computed:    true,
-			//	Description: "Key and value pairs for Provider VDC metadata",
-			//	Deprecated:  "Use metadata_entry instead",
-			//},
-			//"metadata_entry": getMetadataEntrySchema("Provider VDC", false),
+			"metadata_entry": metadataEntryResourceSchema("Provider VDC"),
 		},
 	}
 }
@@ -221,10 +214,6 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 	hwVersion := d.Get("highest_supported_hardware_version").(string)
 	rawNetworkPoolIds := d.Get("network_pool_ids").(*schema.Set)
 	rawResourcePoolIds := d.Get("resource_pool_ids").(*schema.Set)
-	managerHref, err := url.JoinPath(vcdClient.Client.VCDHREF.String(), "admin", "extension", "nsxtManagers", managerid)
-	if err != nil {
-		return diag.FromErr(err)
-	}
 
 	vcenter, err := vcdClient.GetVCenterById(vcenterId)
 	if err != nil {
@@ -234,9 +223,7 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if rawNetworkPoolIds.Len() == 0 {
-		return diag.Errorf("no network pool was provided")
-	}
+	// The provider VDC can be created without network pools. We don't test for rawNetworkPoolIds.Len() == 0
 	if rawNetworkPoolIds.Len() > 1 {
 		return diag.Errorf("only one network pool can be used to create a Provider VDC")
 	}
@@ -246,8 +233,11 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 	if rawResourcePoolIds.Len() > 1 {
 		return diag.Errorf("only one resource pool can be used to create a Provider VDC")
 	}
+	var networkPoolId string
 	resourcePoolId := rawResourcePoolIds.List()[0].(string)
-	networkPoolId := rawNetworkPoolIds.List()[0].(string)
+	if len(rawNetworkPoolIds.List()) > 0 {
+		networkPoolId = rawNetworkPoolIds.List()[0].(string)
+	}
 
 	resourcePool, err := vcenter.GetResourcePoolById(resourcePoolId)
 	if err != nil {
@@ -269,23 +259,45 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.Errorf("no storage profiles were indicated")
 	}
 
-	nsxtManagers, err := vcdClient.QueryNsxtManagerByHref(managerHref)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if len(nsxtManagers) == 0 {
-		return diag.Errorf("no NSX-T managers found with ID %s", managerid)
-	}
-	if len(nsxtManagers) > 1 {
-		return diag.Errorf("more than one NSX-T manager found with ID %s", managerid)
-	}
-	networkPool, err := vcdClient.GetNetworkPoolById(networkPoolId)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	networkPoolHref, err := networkPool.GetOpenApiUrl()
-	if err != nil {
-		return diag.FromErr(err)
+	var managerHref string
+	var networkPoolHref string
+	var managerReference *types.Reference
+	var networkPoolReference *types.Reference
+	if managerid != "" {
+		managerHref, err = url.JoinPath(vcdClient.Client.VCDHREF.String(), "admin", "extension", "nsxtManagers", managerid)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		nsxtManagers, err := vcdClient.QueryNsxtManagerByHref(managerHref)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if len(nsxtManagers) == 0 {
+			return diag.Errorf("no NSX-T managers found with ID %s", managerid)
+		}
+		if len(nsxtManagers) > 1 {
+			return diag.Errorf("more than one NSX-T manager found with ID %s", managerid)
+		}
+
+		networkPool, err := vcdClient.GetNetworkPoolById(networkPoolId)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		networkPoolHref, err = networkPool.GetOpenApiUrl()
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		networkPoolReference = &types.Reference{
+			HREF: networkPoolHref,
+			Name: networkPool.NetworkPool.Name,
+			ID:   extractUuid(networkPool.NetworkPool.Id),
+			Type: networkPool.NetworkPool.PoolType,
+		}
+		managerReference = &types.Reference{
+			HREF: nsxtManagers[0].HREF,
+			ID:   extractUuid(nsxtManagers[0].HREF),
+			Name: nsxtManagers[0].Name,
+		}
 	}
 
 	providerVdcCreation := types.ProviderVdcCreation{
@@ -313,24 +325,25 @@ func resourceVcdProviderVdcCreate(ctx context.Context, d *schema.ResourceData, m
 				},
 			},
 		},
-		StorageProfile: wantedStorageProfiles,
-		NsxTManagerReference: &types.Reference{
-			HREF: nsxtManagers[0].HREF,
-			ID:   extractUuid(nsxtManagers[0].HREF),
-			Name: nsxtManagers[0].Name,
-		},
-		NetworkPool: &types.Reference{
-			HREF: networkPoolHref,
-			Name: networkPool.NetworkPool.Name,
-			ID:   extractUuid(networkPool.NetworkPool.Id),
-			Type: networkPool.NetworkPool.PoolType,
-		},
+		StorageProfile:        wantedStorageProfiles,
+		NsxTManagerReference:  managerReference,
+		NetworkPool:           networkPoolReference,
 		AutoCreateNetworkPool: false,
 	}
 	providerVdc, err := vcdClient.CreateProviderVdc(&providerVdcCreation)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	metadataCompatiblePvdc, err := providerVdc.ToProviderVdc()
+	if err != nil {
+		return diag.Errorf("could not create metadata for Provider VDC '%s': %s", providerVdc.VMWProviderVdc.ID, err)
+	}
+	err = createOrUpdateMetadataEntryInVcd(d, metadataCompatiblePvdc)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	d.SetId(providerVdc.VMWProviderVdc.ID)
 	return resourceVcdProviderVdcRead(ctx, d, meta)
 }
@@ -340,6 +353,7 @@ func resourceVcdProviderVdcRead(ctx context.Context, d *schema.ResourceData, met
 }
 
 func genericResourceVcdProviderVdcRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+	var diags diag.Diagnostics
 	vcdClient := meta.(*VCDClient)
 
 	providerVdcName := d.Get("name").(string)
@@ -473,19 +487,17 @@ func genericResourceVcdProviderVdcRead(ctx context.Context, d *schema.ResourceDa
 		dSet(d, "vcenter_id", extendedProviderVdc.VMWProviderVdc.VimServer[0].ID)
 	}
 
-	// TODO: metadata handling to be added after refactoring of conflicting fields "metadata" and "metadata_entry"
-	//metadata, err := providerVdc.GetMetadata()
-	//if err != nil {
-	//	log.Printf("[DEBUG] Error retrieving metadata for Provider VDC: %s", err)
-	//	return diag.Errorf("error retrieving metadata for Provider VDC %s: %s", providerVdcName, err)
-	//}
-	//if len(metadata.MetadataEntry) > 0 {
-	//	if err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
-	//		return diag.Errorf("There was an issue when setting metadata into the schema - %s", err)
-	//	}
-	//}
+	diags = append(diags, updateMetadataInState(d, vcdClient, "vcd_provider_vdc", providerVdc)...)
+	if diags != nil && diags.HasError() {
+		return diags
+	}
 
 	d.SetId(providerVdc.ProviderVdc.ID)
+
+	// This must be checked at the end as updateMetadataInState can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
+	}
 	return nil
 }
 
@@ -537,6 +549,16 @@ func resourceVcdProviderVdcUpdate(ctx context.Context, d *schema.ResourceData, m
 			return diag.Errorf("error changing highest supported hardware version: %s", err)
 		}
 	}
+
+	metadataCompatiblePvdc, err := pvdc.ToProviderVdc()
+	if err != nil {
+		return diag.Errorf("could not create metadata for Provider VDC '%s': %s", pvdc.VMWProviderVdc.ID, err)
+	}
+	err = createOrUpdateMetadataEntryInVcd(d, metadataCompatiblePvdc)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	return resourceVcdProviderVdcRead(ctx, d, meta)
 }
 

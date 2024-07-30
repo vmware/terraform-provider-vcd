@@ -82,8 +82,8 @@ The following arguments are supported:
  
 ## Attribute Reference
 
-* `description` -  Description of catalog. This is inherited from the publishing catalog and updated on sync.
-* `metadata` -  Optional metadata of the catalog. This is inherited from the publishing catalog and updated on sync.
+* `description` - Description of catalog. This is inherited from the publishing catalog and updated on sync.
+* `metadata` - (*Available until VCD 10.5*) Optional metadata of the catalog. This is inherited from the publishing catalog and updated on sync.
 * `catalog_version` - Version number from this catalog. This is inherited from the publishing catalog and updated on sync.
 * `owner_name` - Owner of the catalog.
 * `number_of_vapp_templates` - Number of vApp templates available in this catalog.

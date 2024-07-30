@@ -162,7 +162,7 @@ func datasourceVcdOrgVdc() *schema.Resource {
 			"enable_fast_provisioning": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Request for fast provisioning. Request will be honored only if the underlying datas tore supports it. Fast provisioning can reduce the time it takes to create virtual machines by using vSphere linked clones. If you disable fast provisioning, all provisioning operations will result in full clones.",
+				Description: "Request for fast provisioning. Request will be honored only if the underlying datastore supports it. Fast provisioning can reduce the time it takes to create virtual machines by using vSphere linked clones. If you disable fast provisioning, all provisioning operations will result in full clones.",
 			},
 			//  Always null in the response to a GET request. On update, set to false to disallow the update if the AllocationModel is AllocationPool or ReservationPool
 			//  and the ComputeCapacity you specified is greater than what the backing Provider VDC can supply. Defaults to true if empty or missing.
@@ -209,6 +209,14 @@ func datasourceVcdOrgVdc() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"vm_vgpu_policy_ids": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Set of VM vGPU policy IDs",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"default_vm_sizing_policy_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -251,9 +259,9 @@ func datasourceVcdOrgVdcRead(_ context.Context, d *schema.ResourceData, meta int
 
 	d.SetId(adminVdc.AdminVdc.ID)
 
-	diagErr := setOrgVdcData(d, vcdClient, adminVdc)
-	if diagErr != nil {
-		return diagErr
+	diags := setOrgVdcData(d, vcdClient, adminVdc)
+	if diags != nil && diags.HasError() {
+		return diags
 	}
 
 	err = setEdgeClusterData(d, adminVdc, "data.vcd_org_vdc")
@@ -266,9 +274,14 @@ func datasourceVcdOrgVdcRead(_ context.Context, d *schema.ResourceData, meta int
 		dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, adminVdc.AdminVdc.ID)
 		enabled, err := dfw.IsEnabled()
 		if err != nil {
-			return diag.Errorf("error retrieving NSX-V distributed firewall state for VDC '%s': %s", vdcName, err)
+			return append(diags, diag.Errorf("error retrieving NSX-V distributed firewall state for VDC '%s': %s", vdcName, err)...)
 		}
 		dSet(d, "enable_nsxv_distributed_firewall", enabled)
+	}
+
+	// This must be checked at the end as setOrgVdcData can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
 	}
 	return nil
 }

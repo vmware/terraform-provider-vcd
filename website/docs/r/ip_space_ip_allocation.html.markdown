@@ -93,6 +93,27 @@ resource "vcd_ip_space_ip_allocation" "public-ip-prefix-manual" {
 }
 ```
 
+## Example Usage (Specifying explicit value on VCD 10.4.2+)
+
+```hcl
+resource "vcd_ip_space_ip_allocation" "public-floating-ip-2" {
+  org_id      = data.vcd_org.org1.id
+  ip_space_id = vcd_ip_space.space1.id
+  type        = "FLOATING_IP"
+  value       = "11.11.11.102"
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
+}
+
+resource "vcd_ip_space_ip_allocation" "public-ip-prefix" {
+  org_id      = data.vcd_org.org1.id
+  ip_space_id = vcd_ip_space.space1.id
+  type        = "IP_PREFIX"
+  value       = "10.10.10.96/29"
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
+}
+```
 
 ## Argument Reference
 
@@ -105,9 +126,11 @@ The following arguments are supported:
   * `IP_PREFIX` - allocates subnets. **Note** field `prefix_length` is required to allocate IP
     Prefix
 * `prefix_length` (Optional) Required when `type=IP_PREFIX`
-* `value` - (Optional; VCD *10.4.2+*) An option to request a specific IP or subnet from IP Space
-* `usage_state` - (Optiona) Not required unless manual IP reservation is required which can be
-  enabled `USED_MANUAL`. Value `UNUSED` must be set to release manual allocation of IP.
+* `value` - (Optional; VCD *10.4.2+*) An option to request a specific IP or subnet from IP Space.
+  **Note:** This field does not support IP ranges because it would cause multiple allocations
+  created in one resource. Please use multiple resource instances to allocate IP ranges.
+* `usage_state` - (Optional) (Optional) Only used with manual reservations. Value `USED_MANUAL`
+  enables manual IP reservation. Value `UNUSED` is set to release manual allocation of IP.
 * `description` - (Optional) Can only be set when `usage_state=USED_MANUAL`
 
 ~> IP Allocation resources can be created only if there is a NSX-T Edge Gateway
@@ -122,7 +145,7 @@ Edge Gateway withing VDC will return errors of type `This operation is denied`.
   function [cidrhost](https://developer.hashicorp.com/terraform/language/functions/cidrhost) is a
   convenient method to getting IPs within returned CIDR
 * `allocation_date` - allocation date in formated as `2023-06-07T09:57:58.721Z` (ISO 8601)
-* `usage_state` - `USED` or `UNUSED` is populated by system unless set to `USED_MANUAL`
+* `usage_state` - `USED` or `UNUSED` is populated by system unless set to `USED_MANUAL` or `UNUSED`
 * `used_by_id` - contains entity ID that is using the IP if `usage_state=USED`
 * `ip` - convenience field. For `type=IP_PREFIX` it will contain only the IP from CIDR returned
 

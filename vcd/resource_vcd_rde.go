@@ -40,7 +40,6 @@ func resourceVcdRde() *schema.Resource {
 			"rde_type_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "The Runtime Defined Entity Type ID",
 			},
 			"external_id": {
@@ -103,6 +102,7 @@ func resourceVcdRde() *schema.Resource {
 				Description: "If true, `computed_entity` is equal to either `input_entity` or the contents of `input_entity_url`",
 				Computed:    true,
 			},
+			"metadata_entry": openApiMetadataEntryResourceSchema("Runtime Defined Entity"),
 		},
 	}
 }
@@ -121,7 +121,7 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	tenantContext := govcd.TenantContext{}
 	org, err := vcdClient.GetOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf("could not create RDE with name '%s', error retrieving Org '%s': %s", name, d.Get("org").(string), err)
+		return diag.Errorf("could not create RDE with name '%s', error retrieving Org: %s", name, err)
 	}
 	tenantContext.OrgId = org.Org.ID
 	tenantContext.OrgName = org.Org.Name
@@ -148,6 +148,11 @@ func resourceVcdRdeCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		if err != nil {
 			return diag.Errorf("could not resolve the Runtime Defined Entity '%s' of type '%s' in Organization '%s': %s", name, rdeTypeId, org.Org.Name, err)
 		}
+	}
+
+	err = createOrUpdateOpenApiMetadataEntryInVcd(d, rde)
+	if err != nil {
+		return diag.Errorf("could not create metadata for the Runtime Defined Entity: %s", err)
 	}
 
 	return resourceVcdRdeRead(ctx, d, meta)
@@ -229,7 +234,16 @@ func resourceVcdRdeRead(_ context.Context, d *schema.ResourceData, meta interfac
 		dSet(d, "entity_in_sync", areJsonEqual)
 	}
 
+	diags := updateOpenApiMetadataInState(d, vcdClient, "vcd_rde", rde)
+	if diags != nil && diags.HasError() {
+		return diags
+	}
+
 	d.SetId(rde.DefinedEntity.ID)
+
+	if len(diags) > 0 {
+		return diags
+	}
 
 	return nil
 }
@@ -256,18 +270,21 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd
 	// As RDEs can have many instances with same name and RDE Type, we can't guarantee that we will read the one we want,
 	// but at least we try to filter a bit with things we know, like Organization.
 	var filteredRdes []*govcd.DefinedEntity
-	org, err := vcdClient.GetOrgFromResource(d)
-	if err != nil {
-		return nil, fmt.Errorf("could not retrieve the Organization of the RDE '%s': %s", name, err)
-	}
-	for _, rde := range rdes {
-		if rde.DefinedEntity.Org != nil && org.Org.ID == rde.DefinedEntity.Org.ID {
-			filteredRdes = append(filteredRdes, rde)
+	orgName, hasOrg := d.GetOk("org")
+	if hasOrg {
+		for _, rde := range rdes {
+			// If there's no Organization informed in the RDE, we cannot filter, hence we add it to the result anyway.
+			// If there's an Org in the RDE, it should match the information that the attribute has.
+			if rde.DefinedEntity.Org == nil || orgName == rde.DefinedEntity.Org.Name {
+				filteredRdes = append(filteredRdes, rde)
+			}
 		}
+	} else {
+		filteredRdes = rdes
 	}
 
 	if len(filteredRdes) == 0 {
-		return nil, fmt.Errorf("no RDEs found with name '%s' and RDE Type ID '%s' in Org '%s': %s", name, rdeTypeId, org.Org.Name, govcd.ErrorEntityNotFound)
+		return nil, fmt.Errorf("no RDEs found with name '%s' and RDE Type ID '%s' in Org '%s': %s", name, rdeTypeId, orgName, govcd.ErrorEntityNotFound)
 	}
 
 	// If there is more than one RDE, we retrieve the IDs to give the user some feedback.
@@ -278,7 +295,7 @@ func getRde(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd
 		}
 	}
 
-	err = fmt.Errorf("there are %d RDEs with name '%s' and RDE Type ID '%s' in Org '%s': %v", len(filteredRdes), name, rdeTypeId, org.Org.Name, filteredRdesIds)
+	err = fmt.Errorf("there are %d RDEs with name '%s' and RDE Type ID '%s' in Org '%s': %v", len(filteredRdes), name, rdeTypeId, orgName, filteredRdesIds)
 	// We end early with the data source if there is more than one RDE found.
 	if origin == "datasource" && len(filteredRdes) > 1 {
 		return nil, err
@@ -306,6 +323,7 @@ func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	err = rde.Update(types.DefinedEntity{
 		Name:       d.Get("name").(string),
+		EntityType: d.Get("rde_type_id").(string),
 		ExternalId: d.Get("external_id").(string),
 		Entity:     jsonEntity,
 	})
@@ -318,6 +336,11 @@ func resourceVcdRdeUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		if err != nil {
 			return diag.Errorf("could not resolve the Runtime Defined Entity '%s' with ID '%s': %s", rde.DefinedEntity.Name, rde.DefinedEntity.ID, err)
 		}
+	}
+
+	err = createOrUpdateOpenApiMetadataEntryInVcd(d, rde)
+	if err != nil {
+		return diag.Errorf("could not create metadata for the Runtime Defined Entity: %s", err)
 	}
 
 	return resourceVcdRdeRead(ctx, d, meta)
@@ -429,6 +452,9 @@ func resourceVcdRdeImport(_ context.Context, d *schema.ResourceData, meta interf
 	}
 
 	d.SetId(rde.DefinedEntity.ID)
+	if rde.DefinedEntity.Org != nil {
+		dSet(d, "org", rde.DefinedEntity.Org.Name)
+	}
 	dSet(d, "rde_type_id", rde.DefinedEntity.EntityType)
 
 	return []*schema.ResourceData{d}, nil

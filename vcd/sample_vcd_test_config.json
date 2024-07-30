@@ -53,8 +53,10 @@
       "vmName2InMultiVmItem": "thirdVM",
       "//": "'nsxtBackedCatalogName' is configured to use NSX-T VDC backed storage profile",
       "nsxtBackedCatalogName": "catalog-in-nsxt-vdc-storage",
-      "//": "The same OS image as 'catalogItem', but put in NSX-T Catalog",
-      "nsxtCatalogItem": "nsxt-backed-catalog-item"
+      "//": "vSphere subscribed catalog available for testing",
+      "vSphereSubscribedCatalog": "empty-vsphere-subscriber",
+      "//": "An existing Solution Add-On name within 'nsxtBackedCatalogName catalog",
+      "nsxtCatalogAddonDse": "vmware-vcd-ds-1.4.0-23376809.iso"
     },
     "providerVdc": {
       "//": "Provider VDC details are needed for creating organization VDC",
@@ -101,7 +103,11 @@
     "externalNetworkPortGroupType": "DV_PORTGROUP",
     "//": "This should be a LDAP server",
     "//": "configured according to docker testing image https://github.com/rroemhild/docker-test-openldap",
-    "ldapServer": "IP-of-test-LDAP-server"
+    "ldapServer": "IP-of-test-LDAP-server",
+    "oidcServer": {
+      "url": "URL-of-test-OIDC-server",
+      "wellKnownEndpoint": "/.well-known/openid-configuration"
+    }
   },
   "nsxt": {
     "//": "NSX-T manager name to be used as defined in VCD",
@@ -225,5 +231,17 @@
     "VCD_SKIP_TEMPLATE_WRITING": "",
     "VCD_ADD_PROVIDER": "",
     "REMOVE_ORG_VDC_FROM_TEMPLATE": ""
+  },
+  "cse" :{
+    "//" : "Only needed to test Container Service Extension specific resources",
+    "version": "4.2.0",
+    "solutionsOrg" : "solutions_org",
+    "storageProfile": "*",
+    "tenantOrg" : "tenant_org",
+    "tenantVdc": "tenant_vdc",
+    "routedNetwork": "tenant_net_routed",
+    "edgeGateway": "tenant_edgegateway",
+    "ovaCatalog": "tkgm_catalog",
+    "ovaName": ""
   }
 }

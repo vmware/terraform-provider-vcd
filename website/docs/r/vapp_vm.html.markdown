@@ -197,6 +197,10 @@ resource "vcd_vapp_vm" "internalDiskOverride" {
   cpus             = 2
   cpu_cores        = 1
 
+  # Fast provisioned VDCs require disks to be consolidated
+  # if their size is to be changed
+  # consolidate_disks_on_create = true 
+
   override_template_disk {
     bus_type        = "paravirtual"
     size_in_mb      = "22384"
@@ -438,7 +442,40 @@ resource "vcd_vapp_vm" "advancedVM" {
   cpu_reservation = "200"
   cpu_limit       = "1000"
 }
+```
 
+## Example Usage (VM copy)
+This example shows how to create a copy of an existing VM
+
+```hcl
+data "vcd_vapp_vm" "existing" {
+  vapp_name = data.vcd_vapp.web.name
+  name      = "web1"
+}
+
+data "vcd_vapp_org_network" "net1" {
+  vapp_name        = web1
+  org_network_name = "my-vapp-org-network"
+}
+
+resource "vcd_vapp_vm" "vm-copy" {
+  org = "org"
+  vdc = "vdc"
+
+  copy_from_vm_id = data.vcd_vapp_vm.existing.id # source VM ID
+  vapp_name       = data.vcd_vapp_vm.existing.vapp_name
+  name            = "VM Copy"
+  power_on        = false
+
+  network {
+    type               = "org"
+    name               = data.vcd_vapp_org_network.net1.org_network_name
+    adapter_type       = "VMXNET3"
+    ip_allocation_mode = "POOL"
+  }
+
+  prevent_update_power_off = true
+}
 ```
 
 ## Argument Reference
@@ -452,6 +489,10 @@ The following arguments are supported:
 * `computer_name` - (Optional; *v2.5+*) Computer name to assign to this virtual machine.
 * `vapp_template_id` - (Optional; *v3.8+*) The URN of the vApp Template to use. You can fetch it using a [`vcd_catalog_vapp_template`](/providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template) data source.
 * `vm_name_in_template` - (Optional; *v2.9+*) The name of the VM in vApp Template to use. For cases when vApp template has more than one VM.
+* `copy_from_vm_id` - (Optional; *v3.12+*) The ID of *an existing VM* to make a copy of it (it
+  cannot be a vApp template). The source VM *must be in the same Org* (but can be in different VDC).
+  *Note:* `sizing_policy_id` must be specified when creating a standalone VM (using `vcd_vm`
+  resource) and using different source/destination VDCs.
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM. If `memory_hot_add_enabled` is true, then memory will be increased without VM power off
 * `memory_reservation` - The amount of RAM (in MB) reservation on the underlying virtualization infrastructure
 * `memory_priority` - Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload
@@ -479,6 +520,11 @@ example for usage details.
 * `description`  - (Optional; *v2.9+*) The VM description. Note: for VM from Template `description` is read only. Currently, this field has
   the description of the OVA used to create the VM.
 * `override_template_disk` - (Optional; *v2.7+*) Allows to update internal disk in template before first VM boot. Disk is matched by `bus_type`, `bus_number` and `unit_number`. See [Override template Disk](#override-template-disk) below for details.
+* `consolidate_disks_on_create` - (Optional; *3.12+*) Performs disk consolidation during creation.
+  The main use case is when one wants to grow template disk size using `override_template_disk` in
+  fast provisioned VDCs. **Note:** Consolidating disks requires right `vApp: VM Migrate, Force
+  Undeploy, Relocate, Consolidate`. This operation _may take long time_ depending on disk size and
+  storage performance.
 * `network_dhcp_wait_seconds` - (Optional; *v2.7+*) Optional number of seconds to try and wait for DHCP IP (only valid
   for adapters in `network` block with `ip_allocation_mode=DHCP`). It constantly checks if IP is present so the time given
   is a maximum. VM must be powered on and _at least one_ of the following _must be true_:
@@ -501,13 +547,13 @@ example for usage details.
   using `vcd_org_vdc.vm_sizing_policy_ids` (and `vcd_org_vdc.default_compute_policy_id` to make it default).
   In this case, if the sizing policy is not set, it will pick the VDC default on creation. It must be set explicitly
   if one wants to update it to another policy (the VM requires at least one Compute Policy), and needs to be set to `""` to be removed.
-* `placement_policy_id` (Optional; *v3.8+*) VM placement policy ID. To be used, it needs to be assigned to [Org VDC](/providers/vmware/vcd/latest/docs/resources/org_vdc)
-  using `vcd_org_vdc.vm_placement_policy_ids` (and optionally `vcd_org_vdc.default_compute_policy_id` to make it default).
+* `placement_policy_id` (Optional; *v3.8+*) VM placement policy or [vGPU policy][vgpu-policy] (*3.11+*) ID. To be used, it needs to be assigned to [Org VDC](/providers/vmware/vcd/latest/docs/resources/org_vdc)
   In this case, if the placement policy is not set, it will pick the VDC default on creation. It must be set explicitly
   if one wants to update it to another policy (the VM requires at least one Compute Policy), and needs to be set to `""` to be removed.
 * `security_tags` - (Optional; *v3.9+*) Set of security tags to be managed by the `vcd_vapp_vm` resource.
   To remove `security_tags` you must set `security_tags = []` and do not remove the attribute. Removing the attribute will cause the tags to remain unchanged and just stop being managed by this resource.
   This is to be consistent with existing security tags that were created by the `vcd_security_tags` resource.
+* `set_extra_config` - (Optional; *v3.13+*) Set of extra configuration key/values to be added or modified. See [Extra Configuration](#extra-configuration)
 
 ~> **Note:** Only one of `security_tags` attribute or [`vcd_security_tag`](/providers/vmware/vcd/latest/docs/resources/security_tag) resource
   should be used. Using both would cause a behavioral conflict.
@@ -518,9 +564,13 @@ example for usage details.
 
 ## Attribute reference
 
-* `vm_type` (*3.2+*) - type of the VM (either `vcd_vapp_vm` or `vcd_vm`).
+* `vm_type` - (*3.2+*) Type of the VM (either `vcd_vapp_vm` or `vcd_vm`).
 * `status` - (*v3.8+*) The vApp status as a numeric code.
 * `status_text` - (*v3.8+*) The vApp status as text.
+* `inherited_metadata` - (*v3.11+*; *VCD 10.5.1+*) A map that contains read-only metadata that is automatically added by VCD (10.5.1+) and provides
+  details on the origin of the VM (e.g. `vm.origin.id`, `vm.origin.name`, `vm.origin.type`).
+* `extra_config` - (*v3.13.+*) The VM extra configuration. See [Extra Configuration](#extra-configuration) for more detail. *Not populated on VCD 10.4.0*.
+* `imported` - (*v3.13.+*) A true/false value telling whether the resource was imported.
 
 <a id="disk"></a>
 ## Disk
@@ -583,7 +633,8 @@ example for usage details.
 Allows to update internal disk in template before first VM boot. Disk is matched by `bus_type`, `bus_number` and `unit_number`.
 Changes are ignored on update. This part isn't reread on refresh. To manage internal disk later please use [`vcd_vm_internal_disk`](/providers/vmware/vcd/latest/docs/resources/vm_internal_disk) resource.
  
-~> **Note:** Managing disks in VM is possible only when VDC fast provisioned is disabled.
+~> **Note:** Managing disks in VM with fast provisioned VDC require
+[`consolidate_disks_on_create`](#consolidate_disks_on_create) option.
 
 * `bus_type` - (Required) The type of disk controller. Possible values: `ide`, `parallel`( LSI Logic Parallel SCSI),
   `sas`(LSI Logic SAS (SCSI)), `paravirtual`(Paravirtual (SCSI)), `sata`, `nvme`. **Note** `nvme` requires *v3.5.0+* and
@@ -907,6 +958,7 @@ The following additional attributes are exported:
 * `thin_provisioned` - (*v2.7+*) Specifies whether the disk storage is pre-allocated or allocated on demand.
 * `iops` - (*v2.7+*) Specifies the IOPS for the disk. Default is 0.
 * `storage_profile` - (*v2.7+*) Storage profile which overrides the VM default one.
+* `vapp_id` - (*v3.12+*) Parent vApp ID.
 
 ## Hot and Cold update
 
@@ -923,6 +975,51 @@ Notes about **removing** `network`:
 
 * Guest OS must support hot NIC removal for NICs to be removed using network definition. If Guest OS doesn't support it - `power_on=false` can be used to power off the VM before removing NICs.
 * VCD 10.1 has a bug and all NIC removals will be performed in cold manner.
+
+## Extra Configuration
+
+We can add, modify, and remove VM extra configuration items using the property `set_extra_config`, which consists on one or
+more blocks with the following fields:
+
+* `key` - (Required) Is the unique identifier of this item. It must not contain any spaces.
+* `value` - (Optional) A value for this item. You can use it to insert new items or modify existing ones. Setting
+  the value to an empty string will remove the item.
+
+~> We should only insert or modify the fields we want to handle, without touching the ones already present in the VM.
+   VCD uses the extra-config items for its own purposes, and modifying them could lead to destabilising side effects.
+
+Notes:
+
+1. To remove an item, we need to use the same `key` with which it was inserted, and set its `value` to `""`.
+1. The property `set_extra_config` is only used as input. The state of the existing or modified configuration is reported
+   in the read-only property `extra_config`, which has the following fields:
+   * `key` - The key that identifies this entry
+   * `value` - The value for this entry
+   * `required` - Whether the entry is required
+
+## Example of extra configuration
+
+```hcl
+resource "vcd_vapp_vm" "web2" {
+  # ...
+
+  network {
+    type               = "org"
+    name               = "net"
+    ip_allocation_mode = "DHCP"
+  }
+
+  set_extra_config {
+    key   = "some-new-key"
+    value = "some-new-value"
+  }
+
+  set_extra_config {
+    key   = "some-other-new--key"
+    value = "some-other-new-value"
+  }
+}
+```
 
 <a id="metadata"></a>
 ## Metadata
@@ -1001,8 +1098,9 @@ terraform import vcd_vapp_vm.tf-vm my-org.my-vdc.my-vapp.my-vm
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 
-[docs-import]:https://www.terraform.io/docs/import/
-
 After importing, the data for this VM will be in the state file (`terraform.tfstate`). If you want to use this
 resource for further operations, you will need to integrate it with data from the state file, and with some data that
 is used to create the VM, such as `catalog_name`, `template_name`.
+
+[docs-import]:https://www.terraform.io/docs/import/
+[vgpu-policy]:/providers/vmware/vcd/latest/docs/resources/vm_vgpu_policy

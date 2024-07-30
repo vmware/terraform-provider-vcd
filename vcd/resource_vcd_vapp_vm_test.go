@@ -86,7 +86,8 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 				ImportStateIdFunc: importStateIdVappObject(vappName2, vmName, testConfig.VCD.Vdc),
 				// These fields can't be retrieved from user data
 				ImportStateVerifyIgnore: []string{"template_name", "catalog_name",
-					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off"},
+					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off",
+					"consolidate_disks_on_create", "imported", "vapp_template_id"},
 			},
 		},
 	})
@@ -473,7 +474,7 @@ func TestAccVcdVAppVmMetadata(t *testing.T) {
 		StringMap{
 			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"Media":   testConfig.Media.NsxtBackedMediaName,
-		})
+		}, true)
 }
 
 const testAccCheckVcdVAppVmMetadata = `
@@ -549,7 +550,7 @@ func TestAccVcdVmMetadata(t *testing.T) {
 		StringMap{
 			"Catalog": testConfig.VCD.Catalog.NsxtBackedCatalogName,
 			"Media":   testConfig.Media.NsxtBackedMediaName,
-		})
+		}, true)
 }
 
 const testAccCheckVcdVmMetadata = `

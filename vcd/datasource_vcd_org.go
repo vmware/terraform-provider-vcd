@@ -54,6 +54,28 @@ func datasourceVcdOrg() *schema.Resource {
 				Computed:    true,
 				Description: "True if this organization is allowed to subscribe to external catalogs.",
 			},
+			"number_of_catalogs": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of catalogs, owned or shared, available to this organization",
+			},
+			"list_of_catalogs": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of catalogs, owned or shared, available to this organization",
+			},
+			"number_of_vdcs": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of VDCs, owned or shared, available to this organization",
+			},
+			"list_of_vdcs": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of VDCs, owned or shared, available to this organization",
+			},
 			"vapp_lease": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -120,8 +142,6 @@ func datasourceVcdOrg() *schema.Resource {
 }
 
 func datasourceVcdOrgRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
 	vcdClient := meta.(*VCDClient)
 
 	identifier := d.Get("name").(string)
@@ -136,9 +156,14 @@ func datasourceVcdOrgRead(_ context.Context, d *schema.ResourceData, meta interf
 	log.Printf("Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
 
-	diagErr := setOrgData(d, vcdClient, adminOrg)
-	if diagErr != nil {
-		return diagErr
+	diags := setOrgData(d, vcdClient, adminOrg)
+	if diags != nil && diags.HasError() {
+		return diags
+	}
+
+	// This must be checked at the end as setOrgData can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
 	}
 	return diags
 }

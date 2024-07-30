@@ -59,6 +59,24 @@ func datasourceVcdVApp() *schema.Resource {
 				Computed:    true,
 				Description: "Shows the status of the vApp",
 			},
+			"vm_names": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of VMs in this vApp",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"vapp_network_names": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of vApp networks connected to this vApp",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"vapp_org_network_names": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of vApp Org networks connected to this vApp",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"lease": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -77,6 +95,11 @@ func datasourceVcdVApp() *schema.Resource {
 						},
 					},
 				},
+			},
+			"inherited_metadata": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "A map that contains metadata that is automatically added by VCD (10.5.1+) and provides details on the origin of the vApp",
 			},
 		},
 	}

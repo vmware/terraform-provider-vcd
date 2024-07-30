@@ -228,12 +228,13 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 								resource.TestCheckResourceAttr(resourceSubscriber, "metadata.identity", "published catalog")),
 
 							// Subscribed catalog items also get their metadata from the corresponding published items
+							// Note: Skipping when API version is 39.0 (VCD 10.6.0) due to a bug.
 							checkWithTimeout(checkTimeout, checkDelay,
-								resource.TestCheckResourceAttr("data.vcd_catalog_vapp_template.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog))),
+								testCheckResourceAttrWhenVersionMatches("data.vcd_catalog_vapp_template.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog), "< 39.0")),
 							checkWithTimeout(checkTimeout, checkDelay,
-								resource.TestCheckResourceAttr("data.vcd_catalog_media.test-media-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog))),
+								testCheckResourceAttrWhenVersionMatches("data.vcd_catalog_media.test-media-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog), "< 39.0")),
 							checkWithTimeout(checkTimeout, checkDelay,
-								resource.TestCheckResourceAttr("data.vcd_catalog_item.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog))),
+								testCheckResourceAttrWhenVersionMatches("data.vcd_catalog_item.test-vt-1", "metadata.ancestors", fmt.Sprintf("%s.%s", publisherOrg, publisherCatalog), "< 39.0")),
 
 							// If these VM exist, it means that the corresponding vApp template and Media items are fully functional
 							resource.TestCheckResourceAttr("vcd_vm."+testVm, "name", testVm),
@@ -251,7 +252,7 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 							"sync_catalog", "sync_all", "sync_on_refresh", "subscription_password",
 							"cancel_failed_tasks", "store_tasks", "sync_all_vapp_templates",
 							"sync_vapp_templates", "sync_all_media_items", "tasks_file_name",
-							"sync_media_items",
+							"sync_media_items", "catalog_version",
 						},
 					},
 				},
@@ -259,70 +260,6 @@ func TestAccVcdSubscribedCatalog(t *testing.T) {
 		})
 	}
 	postTestChecks(t)
-}
-
-// testCheckCatalogAndItemsExist checks that a catalog exists, and optionally that it has as many items as expected
-// * checkItems defines whether we count the items or not
-// * expectedItems is the total number of catalog items (includes both vApp templates and media items)
-// * expectedTemplates is the number of vApp templates
-// expectedMedia is the number of Media
-func testCheckCatalogAndItemsExist(orgName, catalogName string, checkItems, minimalCheck bool, expectedItems, expectedTemplates, expectedMedia int) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		if testAccProvider == nil || testAccProvider.Meta() == nil {
-			return fmt.Errorf("testAccProvider is not initialized")
-		}
-		conn := testAccProvider.Meta().(*VCDClient)
-		catalog, err := conn.Client.GetAdminCatalogByName(orgName, catalogName)
-		if err != nil {
-			return fmt.Errorf("error retrieving catalog %s/%s: %s", orgName, catalogName, err)
-		}
-		if !checkItems {
-			return nil
-		}
-
-		if catalog.AdminCatalog.Tasks != nil {
-			err = catalog.WaitForTasks()
-			if err != nil {
-				return err
-			}
-		}
-
-		items, err := catalog.QueryCatalogItemList()
-		if err != nil {
-			return fmt.Errorf("error retrieving catalog item list: %s", err)
-		}
-		vappTemplates, err := catalog.QueryVappTemplateList()
-		if err != nil {
-			return fmt.Errorf("error retrieving vApp templates list: %s", err)
-		}
-		mediaItems, err := catalog.QueryMediaList()
-		if err != nil {
-			return fmt.Errorf("error retrieving media items list: %s", err)
-		}
-		if minimalCheck {
-			// With minimal check, we only test that at least one item has been downloaded, rather than all ones
-			if len(items) == 0 && expectedItems > 0 {
-				return fmt.Errorf("catalog '%s' -expected at least 1 item - found 0", catalogName)
-			}
-			if len(vappTemplates) == 0 && expectedTemplates > 0 {
-				return fmt.Errorf("catalog '%s' -expected at lest 1 vApp template - found 0", catalogName)
-			}
-			if len(mediaItems) == 0 && expectedMedia > 0 {
-				return fmt.Errorf("catalog '%s' -expected at least 1 media item - found 0", catalogName)
-			}
-		} else {
-			if len(items) != expectedItems {
-				return fmt.Errorf("catalog '%s' -expected %d items - found %d", catalogName, expectedItems, len(items))
-			}
-			if len(vappTemplates) != expectedTemplates {
-				return fmt.Errorf("catalog '%s' -expected %d vApp templates - found %d", catalogName, expectedTemplates, len(vappTemplates))
-			}
-			if len(mediaItems) != expectedMedia {
-				return fmt.Errorf("catalog '%s' -expected %d media items - found %d", catalogName, expectedMedia, len(mediaItems))
-			}
-		}
-		return nil
-	}
 }
 
 func testCheckCatalogDestroy(orgName, catalogName string) resource.TestCheckFunc {
@@ -460,6 +397,8 @@ resource "vcd_subscribed_catalog" "{{.SubscriberCatalog}}" {
 
   sync_on_refresh = true
   {{.SyncWhat}}
+
+  depends_on = [ vcd_catalog.test-publisher, vcd_catalog_media.test-media, vcd_catalog_vapp_template.test-vt ]
 }
 `
 

@@ -27,6 +27,11 @@ func datasourceVcdResourcePool() *schema.Resource {
 				Computed:    true,
 				Description: "Default hardware version for this resource pool",
 			},
+			"cluster_moref": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The managed object reference of the Cluster in which the resource pool exists.",
+			},
 		},
 	}
 }
@@ -58,6 +63,7 @@ func datasourceResourcePoolRead(_ context.Context, d *schema.ResourceData, meta 
 	}
 	dSet(d, "name", resourcePool.ResourcePool.Name)
 	dSet(d, "hardware_version", hardwareVersion)
+	dSet(d, "cluster_moref", resourcePool.ResourcePool.ClusterMoref)
 	d.SetId(resourcePool.ResourcePool.Moref)
 
 	return nil

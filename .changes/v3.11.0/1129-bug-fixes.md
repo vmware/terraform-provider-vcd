@@ -1,0 +1,1 @@
+* Fix Issue [#1127](https://github.com/vmware/terraform-provider-vcd/issues/1127) (Incorrect behavior of vcd_resource_list, which can retrieve Edge Gateways belonging to a VDC, but not belonging to a VDC Group) [GH-1129]

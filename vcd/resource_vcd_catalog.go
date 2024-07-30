@@ -3,14 +3,13 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"github.com/kr/pretty"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
 	"sort"
 	"strings"
 	"time"
-
-	"github.com/kr/pretty"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"github.com/vmware/go-vcloud-director/v2/util"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
@@ -100,7 +99,7 @@ func resourceVcdCatalog() *schema.Resource {
 				ConflictsWith: []string{"metadata_entry"},
 				Description:   "Key and value pairs for catalog metadata.",
 			},
-			"metadata_entry": metadataEntryResourceSchema("Catalog"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("Catalog"),
 			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -176,7 +175,7 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 	// (only administrator, organization administrator and Catalog author are allowed)
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf("[catalog create] "+errorRetrievingOrg, err)
 	}
 
 	var storageProfiles *types.CatalogStorageProfiles
@@ -208,11 +207,6 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 		}
 	}
 
-	err = waitForMetadataReadiness(catalog)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	log.Printf("[TRACE] adding metadata for catalog")
 	err = createOrUpdateMetadata(d, catalog, "metadata")
 	if err != nil {
@@ -221,29 +215,6 @@ func resourceVcdCatalogCreate(ctx context.Context, d *schema.ResourceData, meta 
 
 	log.Printf("[TRACE] Catalog created: %#v", catalog)
 	return resourceVcdCatalogRead(ctx, d, meta)
-}
-
-// waitForMetadataReadiness waits for the Catalog to have links to add metadata, so it can be added without errors.
-// It will wait for 30 seconds maximum, or less if the links are ready.
-func waitForMetadataReadiness(catalog *govcd.AdminCatalog) error {
-	timeout := time.Second * 30
-	startTime := time.Now()
-	for {
-		if time.Since(startTime) > timeout {
-			return fmt.Errorf("error waiting for the Catalog '%s' to be ready", catalog.AdminCatalog.ID)
-		}
-		link := catalog.AdminCatalog.Link.ForType("application/vnd.vmware.vcloud.metadata+xml", "add")
-		if link != nil {
-			util.Logger.Printf("catalog '%s' - metadata link found after %s\n", catalog.AdminCatalog.Name, time.Since(startTime))
-			break
-		}
-		err := catalog.Refresh()
-		if err != nil {
-			return err
-		}
-		time.Sleep(500 * time.Millisecond)
-	}
-	return nil
 }
 
 func updatePublishToExternalOrgSettings(d *schema.ResourceData, adminCatalog *govcd.AdminCatalog) error {
@@ -260,13 +231,14 @@ func updatePublishToExternalOrgSettings(d *schema.ResourceData, adminCatalog *go
 }
 
 func resourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
 	log.Printf("[TRACE] Catalog read initiated")
 
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf("[catalog read] "+errorRetrievingOrg, err)
 	}
 
 	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
@@ -317,12 +289,17 @@ func resourceVcdCatalogRead(_ context.Context, d *schema.ResourceData, meta inte
 	dSet(d, "href", adminCatalog.AdminCatalog.HREF)
 	d.SetId(adminCatalog.AdminCatalog.ID)
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog", adminCatalog)
-	if diagErr != nil {
-		log.Printf("[DEBUG] Unable to update catalog metadata: %s", err)
-		return diagErr
+	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_catalog", adminCatalog)...)
+	if diags != nil && diags.HasError() {
+		log.Printf("[DEBUG] Unable to update catalog metadata: %v", diags)
+		return diags
 	}
 	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
+
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
+	}
 	return nil
 }
 
@@ -340,7 +317,7 @@ func genericResourceVcdCatalogUpdate(ctx context.Context, d *schema.ResourceData
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf("[catalog update] "+errorRetrievingOrg, err)
 	}
 
 	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
@@ -428,10 +405,26 @@ func resourceVcdCatalogDelete(_ context.Context, d *schema.ResourceData, meta in
 
 	vcdClient := meta.(*VCDClient)
 
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	sessionInfo, err := vcdClient.Client.GetSessionInfo()
 	if err != nil {
-		return diag.Errorf(errorRetrievingOrg, err)
+		return diag.Errorf("[catalog delete] error retrieving session info :%s", err)
 	}
+
+	sessionText := fmt.Sprintf("[catalog delete - org: %s - user: %s]", sessionInfo.Org.Name, sessionInfo.User.Name)
+
+	result, err := runWithRetry(sessionText,
+		fmt.Sprintf("%s error fetching org '%s'", sessionText, d.Get("org").(string)),
+		time.Second*30,
+		nil,
+		func() (any, error) {
+			return vcdClient.GetAdminOrgFromResource(d)
+		},
+	)
+
+	if err != nil {
+		return diag.Errorf("%s "+errorRetrievingOrg, sessionText, err)
+	}
+	adminOrg := result.(*govcd.AdminOrg)
 
 	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
 	if err != nil {
@@ -466,7 +459,7 @@ func resourceVcdCatalogImport(ctx context.Context, d *schema.ResourceData, meta 
 	vcdClient := meta.(*VCDClient)
 	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
 	if err != nil {
-		return nil, fmt.Errorf(errorRetrievingOrg, orgName)
+		return nil, fmt.Errorf("[catalog import] "+errorRetrievingOrg, orgName)
 	}
 
 	catalog, err := adminOrg.GetCatalogByName(catalogName, false)

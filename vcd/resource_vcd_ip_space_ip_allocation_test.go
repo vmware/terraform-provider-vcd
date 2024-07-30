@@ -175,10 +175,10 @@ func TestAccVcdIpSpaceIpAllocation(t *testing.T) {
 					ipSpaceUplinkId.testCheckCachedResourceFieldValue("vcd_ip_space_uplink.u1", "id"),
 					resourceFieldsEqual("data.vcd_ip_space_uplink.u1", "vcd_ip_space_uplink.u1", nil),
 					resourceFieldsEqual("data.vcd_nsxt_edgegateway.ip-space", "vcd_nsxt_edgegateway.ip-space", []string{"%"}),
-					resourceFieldsEqual("data.vcd_ip_space_ip_allocation.public-floating-ip", "vcd_ip_space_ip_allocation.public-floating-ip", nil),
-					resourceFieldsEqual("data.vcd_ip_space_ip_allocation.public-floating-ip-manual", "vcd_ip_space_ip_allocation.public-floating-ip-manual", nil),
-					resourceFieldsEqual("data.vcd_ip_space_ip_allocation.public-ip-prefix", "vcd_ip_space_ip_allocation.public-ip-prefix", nil),
-					resourceFieldsEqual("data.vcd_ip_space_ip_allocation.public-ip-prefix-manual", "vcd_ip_space_ip_allocation.public-ip-prefix-manual", nil),
+					resourceFieldsEqual("data.vcd_ip_space_ip_allocation.public-floating-ip", "vcd_ip_space_ip_allocation.public-floating-ip", []string{"%"}),
+					resourceFieldsEqual("data.vcd_ip_space_ip_allocation.public-floating-ip-manual", "vcd_ip_space_ip_allocation.public-floating-ip-manual", []string{"%"}),
+					resourceFieldsEqual("data.vcd_ip_space_ip_allocation.public-ip-prefix", "vcd_ip_space_ip_allocation.public-ip-prefix", []string{"%"}),
+					resourceFieldsEqual("data.vcd_ip_space_ip_allocation.public-ip-prefix-manual", "vcd_ip_space_ip_allocation.public-ip-prefix-manual", []string{"%"}),
 					resourceFieldsEqual("data.vcd_network_routed_v2.using-public-prefix", "vcd_network_routed_v2.using-public-prefix", []string{"%"}),
 				),
 			},
@@ -835,7 +835,7 @@ resource "vcd_ip_space" "space1" {
 `
 
 // importCustomIpAllocationFunc has specific that it accepts cachedField address so that late
-// evaluation of this field can be done. It is needed so that VCD Allocation IP address can be
+// evaluation of this field can be done. It is needed so that VCD Allocated IP address can be
 // captured and then used in the import. It cannot be known in advance as it is up to VCD to
 // allocate IP address from IP Space
 func importCustomIpAllocationFunc(path []string, cachedField *testCachedFieldValue) resource.ImportStateIdFunc {
@@ -847,3 +847,190 @@ func importCustomIpAllocationFunc(path []string, cachedField *testCachedFieldVal
 		return completePath, nil
 	}
 }
+
+// TestAccVcdIpSpaceIpAllocationCustomValue checks VCD 10.4.2+ capability to explicitly specify
+// which IP or Prefix should be allocated
+func TestAccVcdIpSpaceIpAllocationCustomValue(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.2") {
+		t.Skipf("This test tests VCD 10.4.2+ (API V37.2+) features. Skipping.")
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"TestName":            t.Name(),
+		"NsxtManager":         testConfig.Nsxt.Manager,
+		"NsxtTier0Router":     testConfig.Nsxt.Tier0router,
+		"ExternalNetworkName": t.Name(),
+		"Org":                 testConfig.VCD.Org,
+		"VDC":                 testConfig.Nsxt.Vdc,
+
+		"Tags": "network nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "step1"
+	configText1 := templateFill(testAccVcdIpSpaceIpAllocationCustomValueStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	// define structures for capturing IPs that are going to be used for import test
+	// floatingIpForImport := &testCachedFieldValue{}
+	// ipPrefixForImport := &testCachedFieldValue{}
+	// capture IP Space ID field to ensure that it is not being recreated for the duration of this test
+	ipSpaceId := &testCachedFieldValue{}
+	ipSpaceUplinkId := &testCachedFieldValue{}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
+					ipSpaceId.cacheTestResourceFieldValue("vcd_ip_space.space1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_external_network_v2.provider-gateway", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.ip-space", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.ip-space", "use_ip_spaces", "true"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "id"),
+					ipSpaceUplinkId.cacheTestResourceFieldValue("vcd_ip_space_uplink.u1", "id"),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "description", ""),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "external_network_id"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "ip_space_id"),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "ip_space_type", "PUBLIC"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "status"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_ip_allocation.public-floating-ip", "id"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_ip_allocation.public-floating-ip", "allocation_date"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-floating-ip", "type", "FLOATING_IP"),
+					// usage_state is UNUSED because the state is updated during creation of this
+					// resource and it is consumed in next dependent resource
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-floating-ip", "usage_state", "UNUSED"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-floating-ip", "ip_address", "11.11.11.101"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-floating-ip", "ip", "11.11.11.101"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-floating-ip-2", "ip_address", "11.11.11.102"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-floating-ip-2", "ip", "11.11.11.102"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_ip_allocation.public-floating-ip-manual", "id"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-floating-ip-manual", "usage_state", "USED_MANUAL"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-floating-ip-manual", "type", "FLOATING_IP"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-floating-ip-manual", "description", "manually used floating IP"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-floating-ip-manual", "ip_address", "11.11.11.103"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_ip_allocation.public-ip-prefix", "id"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-ip-prefix", "usage_state", "UNUSED"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-ip-prefix", "type", "IP_PREFIX"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-ip-prefix", "ip_address", "10.10.10.96/29"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-ip-prefix", "ip", "10.10.10.96"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_ip_allocation.public-ip-prefix-manual", "id"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-ip-prefix-manual", "usage_state", "USED_MANUAL"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-ip-prefix-manual", "type", "IP_PREFIX"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-ip-prefix-manual", "description", "manually used IP Prefix"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-ip-prefix-manual", "ip_address", "192.168.1.200/30"),
+					resource.TestCheckResourceAttr("vcd_ip_space_ip_allocation.public-ip-prefix-manual", "ip", "192.168.1.200"),
+					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.using-public-prefix", "id"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdIpSpaceIpAllocationCustomValueStep1 = testAccVcdIpSpaceIpAllocationPrereqs + `
+resource "vcd_ip_space_uplink" "u1" {
+  name                = "{{.TestName}}"
+  external_network_id = vcd_external_network_v2.provider-gateway.id
+  ip_space_id         = vcd_ip_space.space1.id
+}
+
+resource "vcd_nsxt_edgegateway" "ip-space" {
+  org                 = "{{.Org}}"
+  name                = "{{.TestName}}"
+  owner_id            = data.vcd_org_vdc.vdc1.id
+  external_network_id = vcd_external_network_v2.provider-gateway.id
+
+  depends_on = [vcd_ip_space_uplink.u1]
+}
+
+resource "vcd_ip_space_ip_allocation" "public-floating-ip" {
+  org_id      = data.vcd_org.org1.id
+  ip_space_id = vcd_ip_space.space1.id
+  type        = "FLOATING_IP"
+
+  value = "11.11.11.101"
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
+}
+
+resource "vcd_ip_space_ip_allocation" "public-floating-ip-2" {
+  org_id      = data.vcd_org.org1.id
+  ip_space_id = vcd_ip_space.space1.id
+  type        = "FLOATING_IP"
+
+  value = "11.11.11.102"
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
+}
+
+resource "vcd_ip_space_ip_allocation" "public-floating-ip-manual" {
+  org_id      = data.vcd_org.org1.id
+  ip_space_id = vcd_ip_space.space1.id
+  type        = "FLOATING_IP"
+  usage_state = "USED_MANUAL"
+  description = "manually used floating IP"
+
+  value = "11.11.11.103"
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
+}
+
+resource "vcd_nsxt_nat_rule" "dnat-floating-ip" {
+  org             = "{{.Org}}"
+  edge_gateway_id = vcd_nsxt_edgegateway.ip-space.id
+
+  name      = "{{.TestName}}"
+  rule_type = "DNAT"
+
+  # Using Floating IP From IP Space
+  external_address = vcd_ip_space_ip_allocation.public-floating-ip.ip_address
+  internal_address = "77.77.77.1"
+  logging          = true
+}
+
+resource "vcd_ip_space_ip_allocation" "public-ip-prefix" {
+  org_id        = data.vcd_org.org1.id
+  ip_space_id   = vcd_ip_space.space1.id
+  type          = "IP_PREFIX"
+  value         = "10.10.10.96/29"
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
+}
+
+resource "vcd_network_routed_v2" "using-public-prefix" {
+  org             = "{{.Org}}"
+  name            = "{{.TestName}}"
+  edge_gateway_id = vcd_nsxt_edgegateway.ip-space.id
+  gateway         = cidrhost(vcd_ip_space_ip_allocation.public-ip-prefix.ip_address, 1)
+  prefix_length   = split("/", vcd_ip_space_ip_allocation.public-ip-prefix.ip_address)[1]
+
+  static_ip_pool {
+    start_address = cidrhost(vcd_ip_space_ip_allocation.public-ip-prefix.ip_address, 2)
+    end_address   = cidrhost(vcd_ip_space_ip_allocation.public-ip-prefix.ip_address, 4)
+  }
+}
+
+resource "vcd_ip_space_ip_allocation" "public-ip-prefix-manual" {
+  org_id        = data.vcd_org.org1.id
+  ip_space_id   = vcd_ip_space.space1.id
+  type          = "IP_PREFIX"
+  value         = "192.168.1.200/30"
+  usage_state   = "USED_MANUAL"
+  description   = "manually used IP Prefix"
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
+}
+`

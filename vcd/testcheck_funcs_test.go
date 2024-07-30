@@ -1,4 +1,4 @@
-//go:build api || vapp || vm || user || nsxt || extnetwork || network || gateway || catalog || standaloneVm || alb || vdcGroup || ldap || vdc || access_control || rde || uiPlugin || org || disk || ALL || functional
+//go:build api || vapp || vm || user || nsxt || extnetwork || network || gateway || catalog || standaloneVm || alb || vdcGroup || ldap || vdc || access_control || rde || uiPlugin || org || disk || providerVdc || cse || ALL || slz || functional
 
 package vcd
 
@@ -116,6 +116,9 @@ func testCheckOutputNonEmpty(name string) resource.TestCheckFunc {
 // firstObject except `[]excludeFields`. This is very useful to check if data sources have all
 // the same values as resources
 func resourceFieldsEqual(firstObject, secondObject string, excludeFields []string) resource.TestCheckFunc {
+	return resourceFieldsEqualCustom(firstObject, secondObject, excludeFields, stringInSlice)
+}
+func resourceFieldsEqualCustom(firstObject, secondObject string, excludeFields []string, exclusionChecker func(str string, list []string) bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resource1, ok := s.RootModule().Resources[firstObject]
 		if !ok {
@@ -129,7 +132,7 @@ func resourceFieldsEqual(firstObject, secondObject string, excludeFields []strin
 
 		for fieldName := range resource1.Primary.Attributes {
 			// Do not validate the fields marked for exclusion
-			if excludeFields != nil && stringInSlice(fieldName, excludeFields) {
+			if excludeFields != nil && exclusionChecker(fieldName, excludeFields) {
 				continue
 			}
 
@@ -169,4 +172,35 @@ func resourceFieldIntNotEqual(object, field string, notEqualTo int) resource.Tes
 
 		return nil
 	}
+}
+
+// testMatchResourceAttrWhenVersionMatches is equivalent to resource.TestMatchResourceAttr but only runs this function
+// if the VCD version matches the one from the input. Otherwise, this will be a no-op.
+func testMatchResourceAttrWhenVersionMatches(name, key string, r *regexp.Regexp, versionConstraint string) resource.TestCheckFunc {
+	return testCheckResourceGenericWhenVersionMatches(resource.TestMatchResourceAttr(name, key, r), versionConstraint)
+}
+
+// testCheckResourceAttrWhenVersionMatches is equivalent to resource.TestCheckResourceAttr but only runs this function
+// if the VCD version matches the one from the input. Otherwise, this will be a no-op.
+func testCheckResourceAttrWhenVersionMatches(name, key, value string, versionConstraint string) resource.TestCheckFunc {
+	return testCheckResourceGenericWhenVersionMatches(resource.TestCheckResourceAttr(name, key, value), versionConstraint)
+}
+
+// testCheckResourceAttrSetWhenVersionMatches is equivalent to resource.TestCheckResourceAttrSet but only runs this function
+// if the VCD version matches the one from the input. Otherwise, this will be a no-op.
+func testCheckResourceAttrSetWhenVersionMatches(name, key, versionConstraint string) resource.TestCheckFunc {
+	return testCheckResourceGenericWhenVersionMatches(resource.TestCheckResourceAttrSet(name, key), versionConstraint)
+}
+
+// testCheckResourceGenericWhenVersionMatches runs the given test checking function if the VCD version matches
+// the one from the input. Otherwise, this will be a no-op.
+func testCheckResourceGenericWhenVersionMatches(checker resource.TestCheckFunc, versionConstraint string) resource.TestCheckFunc {
+	if !checkVersion(testConfig.Provider.ApiVersion, versionConstraint) {
+		debugPrintf("This test check requires VCD version to be '%s'. Skipping", versionConstraint)
+		// Returns a dummy checker that does nothing
+		return func(state *terraform.State) error {
+			return nil
+		}
+	}
+	return checker
 }

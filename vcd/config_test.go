@@ -1,4 +1,4 @@
-//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || uiPlugin || ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || uiPlugin || providerVdc || cse || slz || multisite || ALL
 
 package vcd
 
@@ -31,6 +31,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/util"
+)
+
+// #nosec G101 -- These credentials are fake for testing purposes
+const (
+	envSecondVcdUrl      = "VCD_URL2"
+	envSecondVcdUser     = "VCD_USER2"
+	envSecondVcdPassword = "VCD_PASSWORD2"
+	envSecondVcdSysOrg   = "VCD_SYSORG2"
 )
 
 func init() {
@@ -123,6 +131,7 @@ type TestConfig struct {
 			VmName1InMultiVmItem      string `json:"vmName1InMultiVmItem,omitempty"`
 			VmName2InMultiVmItem      string `json:"VmName2InMultiVmItem,omitempty"`
 			NsxtBackedCatalogName     string `json:"nsxtBackedCatalogName,omitempty"`
+			NsxtCatalogAddonDse       string `json:"nsxtCatalogAddonDse,omitempty"`
 			NsxtCatalogItem           string `json:"nsxtCatalogItem,omitempty"`
 			VSphereSubscribedCatalog  string `json:"vSphereSubscribedCatalog,omitempty"`
 		} `json:"catalog"`
@@ -137,7 +146,11 @@ type TestConfig struct {
 		ExternalNetworkPortGroup     string `json:"externalNetworkPortGroup,omitempty"`
 		ExternalNetworkPortGroupType string `json:"externalNetworkPortGroupType,omitempty"`
 		LdapServer                   string `json:"ldapServer,omitempty"`
-		Local                        struct {
+		OidcServer                   struct {
+			Url               string `json:"url,omitempty"`
+			WellKnownEndpoint string `json:"wellKnownEndpoint,omitempty"`
+		} `json:"oidcServer"`
+		Local struct {
 			LocalIp            string `json:"localIp"`
 			LocalSubnetGateway string `json:"localSubnetGw"`
 		} `json:"local"`
@@ -168,6 +181,11 @@ type TestConfig struct {
 		RoutedNetwork             string `json:"routedNetwork"`
 		IsolatedNetwork           string `json:"isolatedNetwork"`
 		DirectNetwork             string `json:"directNetwork"`
+		IpDiscoveryProfile        string `json:"ipDiscoveryProfile"`
+		MacDiscoveryProfile       string `json:"macDiscoveryProfile"`
+		SpoofGuardProfile         string `json:"spoofGuardProfile"`
+		QosProfile                string `json:"qosProfile"`
+		SegmentSecurityProfile    string `json:"segmentSecurityProfile"`
 	} `json:"nsxt"`
 	VSphere struct {
 		ResourcePoolForVcd1 string `json:"resourcePoolForVcd1,omitempty"`
@@ -226,6 +244,28 @@ type TestConfig struct {
 		OrgUserPassword              string `json:"orgUserPassword"`              // Password for the Org User to be created within the organization
 	} `json:"testEnvBuild"`
 	EnvVariables map[string]string `json:"envVariables,omitempty"`
+	Cse          struct {
+		Version        string `json:"version,omitempty"`
+		StorageProfile string `json:"storageProfile,omitempty"`
+		SolutionsOrg   string `json:"solutionsOrg,omitempty"`
+		TenantOrg      string `json:"tenantOrg,omitempty"`
+		TenantVdc      string `json:"tenantVdc,omitempty"`
+		OvaCatalog     string `json:"ovaCatalog,omitempty"`
+		OvaName        string `json:"ovaName,omitempty"`
+		RoutedNetwork  string `json:"routedNetwork,omitempty"`
+		EdgeGateway    string `json:"edgeGateway,omitempty"`
+	} `json:"cse,omitempty"`
+	SolutionAddOn struct {
+		Org           string `json:"org,omitempty"`
+		Vdc           string `json:"vdc,omitempty"`
+		RoutedNetwork string `json:"routedNetwork,omitempty"`
+		ComputePolicy string `json:"computePolicy,omitempty"`
+		StoragePolicy string `json:"storagePolicy,omitempty"`
+
+		Catalog       string                       `json:"catalog,omitempty"`
+		AddOnImageDse string                       `json:"addonImageDse,omitempty"`
+		DseSolutions  map[string]map[string]string `json:"dseSolutions,omitempty"`
+	} `json:"solutionAddOn,omitempty"`
 }
 
 // names for created resources for all the tests
@@ -297,11 +337,16 @@ var (
 )
 
 const (
-	providerVcdSystem              = "vcd"
-	providerVcdOrg1                = "vcdorg1"
-	providerVcdOrg1Alias           = "vcd.org1"
-	providerVcdOrg2                = "vcdorg2"
-	providerVcdOrg2Alias           = "vcd.org2"
+	providerVcdSystem    = "vcd"
+	providerVcdOrg1      = "vcdorg1"
+	providerVcdOrg1Alias = "vcd.org1"
+	providerVcdOrg2      = "vcdorg2"
+	providerVcdOrg2Alias = "vcd.org2"
+	providerVcdSystem1   = "vcdsys1"
+	providerVcdSys1Alias = "vcd.sys1"
+	providerVcdSystem2   = "vcdsys2"
+	providerVcdSys2Alias = "vcd.sys2"
+
 	customTemplatesDirectory       = "test-templates"
 	testArtifactsDirectory         = "test-artifacts"
 	envVcdAddProvider              = "VCD_ADD_PROVIDER"
@@ -539,15 +584,17 @@ func templateFill(tmpl string, inputData StringMap) string {
 		}
 		reProvider1 := regexp.MustCompile(`\bprovider\s*=\s*` + providerVcdOrg1)
 		reProvider2 := regexp.MustCompile(`\bprovider\s*=\s*` + providerVcdOrg2)
+		reSystemProvider2 := regexp.MustCompile(`\bprovider\s*=\s*` + providerVcdSystem2)
 
 		templateText := string(populatedStr)
 
 		usingProvider1 := reProvider1.MatchString(templateText)
 		usingProvider2 := reProvider2.MatchString(templateText)
+		usingSysProvider2 := reSystemProvider2.MatchString(templateText)
 		// Since the integrated test framework does not support aliases, but the Terraform tool
 		// requires them, we change the explicit provider names used in the framework
 		// with properly aliased ones (for use in the binary tests)
-		if vcdAddProvider && (usingProvider1 || usingProvider2) {
+		if vcdAddProvider && (usingProvider1 || usingProvider2 || usingSysProvider2) {
 			if usingProvider1 {
 				templateText = fmt.Sprintf("%s\n%s", templateText, getOrgProviderText("org1", testConfig.VCD.Org))
 				templateText = strings.Replace(templateText, providerVcdOrg1, providerVcdOrg1Alias, -1)
@@ -555,6 +602,10 @@ func templateFill(tmpl string, inputData StringMap) string {
 			if usingProvider2 {
 				templateText = fmt.Sprintf("%s\n%s", templateText, getOrgProviderText("org2", testConfig.VCD.Org+"-1"))
 				templateText = strings.Replace(templateText, providerVcdOrg2, providerVcdOrg2Alias, -1)
+			}
+			if usingSysProvider2 {
+				templateText = fmt.Sprintf("%s\n%s", templateText, getSysProviderText("sys2"))
+				templateText = strings.Replace(templateText, providerVcdSystem2, providerVcdSys2Alias, -1)
 			}
 		}
 		resourceFile := path.Join(testArtifactsDirectory, caller) + ".tf"
@@ -1222,15 +1273,15 @@ func importStateIdViaResource(resource string) resource.ImportStateIdFunc {
 	}
 }
 
-func importStateCatalogIdViaResource(resource string) resource.ImportStateIdFunc {
+func importStateCatalogIdViaResource(resourceDef string) resource.ImportStateIdFunc {
 	return func(s *terraform.State) (string, error) {
-		rs, ok := s.RootModule().Resources[resource]
+		rs, ok := s.RootModule().Resources[resourceDef]
 		if !ok {
-			return "", fmt.Errorf("resource not found: %s", resource)
+			return "", fmt.Errorf("resource not found: %s", resourceDef)
 		}
 
 		if rs.Primary.ID == "" {
-			return "", fmt.Errorf("no ID is set for %s resource", resource)
+			return "", fmt.Errorf("no ID is set for %s resource", resourceDef)
 		}
 
 		importId := testConfig.VCD.Org + "." + rs.Primary.ID
@@ -1238,6 +1289,22 @@ func importStateCatalogIdViaResource(resource string) resource.ImportStateIdFunc
 			return "", fmt.Errorf("missing information to generate import path: %s", importId)
 		}
 		return importId, nil
+	}
+}
+
+// importStateCatalogId returns a catalog ID from a pair of org+catalog names
+func importStateCatalogId(orgName, catalogName string) resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		conn := testAccProvider.Meta().(*VCDClient)
+		org, err := conn.GetOrgByName(orgName)
+		if err != nil {
+			return "", err
+		}
+		catalog, err := org.GetCatalogByName(catalogName, false)
+		if err != nil {
+			return "", err
+		}
+		return orgName + "." + catalog.Catalog.ID, nil
 	}
 }
 
@@ -1655,6 +1722,41 @@ provider "vcd" {
 	return buf.String()
 }
 
+func getSysProviderText(providerName string) string {
+	providerSysTemplate := `
+provider "vcd" {
+  alias                = "{{.ProviderName}}"
+  user                 = "{{.User}}"
+  password             = "{{.UserPassword}}"
+  auth_type            = "integrated"
+  url                  = "{{.VcdUrl}}"
+  sysorg               = "{{.Org}}"
+  org                  = "{{.Org}}"
+  allow_unverified_ssl = "true"
+  max_retry_timeout    = 600
+  logging              = true
+  logging_file         = "go-vcloud-director-{{.Org}}.log"
+}`
+
+	data := StringMap{
+		"User":         os.Getenv(envSecondVcdUser),
+		"UserPassword": os.Getenv(envSecondVcdPassword),
+		"VcdUrl":       os.Getenv(envSecondVcdUrl),
+		"SysOrg":       os.Getenv(envSecondVcdSysOrg),
+		"Org":          os.Getenv(envSecondVcdSysOrg),
+		"ProviderName": providerName,
+		"Alias":        "",
+	}
+	unfilledTemplate := template.Must(template.New("getSysProvider").Parse(providerSysTemplate))
+	buf := &bytes.Buffer{}
+
+	// If an error occurs, returns an empty string
+	if err := unfilledTemplate.Execute(buf, data); err != nil {
+		return ""
+	}
+	return buf.String()
+}
+
 // logState will save the current Terraform state in the log
 func logState(label string) resource.TestCheckFunc {
 	line := fmt.Sprintf("# %s", strings.Repeat("-", 80))
@@ -1707,4 +1809,68 @@ func checkVersion(version, versionConstraint string) bool {
 
 	util.Logger.Printf("[TRACE-%s] version '%s' does not satisfy constraints '%s'\n", caller, checkVer, constraints)
 	return false
+}
+
+// testCheckCatalogAndItemsExist checks that a catalog exists, and optionally that it has as many items as expected
+// * checkItems defines whether we count the items or not
+// * expectedItems is the total number of catalog items (includes both vApp templates and media items)
+// * expectedTemplates is the number of vApp templates
+// expectedMedia is the number of Media
+func testCheckCatalogAndItemsExist(orgName, catalogName string, checkItems, minimalCheck bool, expectedItems, expectedTemplates, expectedMedia int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if testAccProvider == nil || testAccProvider.Meta() == nil {
+			return fmt.Errorf("testAccProvider is not initialized")
+		}
+		conn := testAccProvider.Meta().(*VCDClient)
+		catalog, err := conn.Client.GetAdminCatalogByName(orgName, catalogName)
+		if err != nil {
+			return fmt.Errorf("error retrieving catalog %s/%s: %s", orgName, catalogName, err)
+		}
+		if !checkItems {
+			return nil
+		}
+
+		if catalog.AdminCatalog.Tasks != nil {
+			err = catalog.WaitForTasks()
+			if err != nil {
+				return err
+			}
+		}
+
+		items, err := catalog.QueryCatalogItemList()
+		if err != nil {
+			return fmt.Errorf("error retrieving catalog item list: %s", err)
+		}
+		vappTemplates, err := catalog.QueryVappTemplateList()
+		if err != nil {
+			return fmt.Errorf("error retrieving vApp templates list: %s", err)
+		}
+		mediaItems, err := catalog.QueryMediaList()
+		if err != nil {
+			return fmt.Errorf("error retrieving media items list: %s", err)
+		}
+		if minimalCheck {
+			// With minimal check, we only test that at least one item has been downloaded, rather than all ones
+			if len(items) == 0 && expectedItems > 0 {
+				return fmt.Errorf("catalog '%s' -expected at least 1 item - found 0", catalogName)
+			}
+			if len(vappTemplates) == 0 && expectedTemplates > 0 {
+				return fmt.Errorf("catalog '%s' -expected at lest 1 vApp template - found 0", catalogName)
+			}
+			if len(mediaItems) == 0 && expectedMedia > 0 {
+				return fmt.Errorf("catalog '%s' -expected at least 1 media item - found 0", catalogName)
+			}
+		} else {
+			if len(items) != expectedItems {
+				return fmt.Errorf("catalog '%s' -expected %d items - found %d", catalogName, expectedItems, len(items))
+			}
+			if len(vappTemplates) != expectedTemplates {
+				return fmt.Errorf("catalog '%s' -expected %d vApp templates - found %d", catalogName, expectedTemplates, len(vappTemplates))
+			}
+			if len(mediaItems) != expectedMedia {
+				return fmt.Errorf("catalog '%s' -expected %d media items - found %d", catalogName, expectedMedia, len(mediaItems))
+			}
+		}
+		return nil
+	}
 }

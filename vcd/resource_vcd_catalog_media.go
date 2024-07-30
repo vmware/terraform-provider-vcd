@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -66,6 +68,12 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				ForceNew:    true,
 				Description: "absolute or relative path to Media file",
 			},
+			"upload_any_file": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "If true, will allow uploading any file type, not only .ISO",
+			},
 			"upload_piece_size": {
 				Type:        schema.TypeInt,
 				Optional:    true,
@@ -87,7 +95,7 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": metadataEntryResourceSchema("Catalog Media"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("Catalog Media"),
 			"is_iso": {
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -123,6 +131,11 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				Computed:    true,
 				Description: "Storage profile name",
 			},
+			"catalog_item_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Catalog Item ID of this media item",
+			},
 		},
 	}
 }
@@ -157,7 +170,14 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 
 	uploadPieceSize := d.Get("upload_piece_size").(int)
 	mediaName := d.Get("name").(string)
-	task, err := catalog.UploadMediaImage(mediaName, d.Get("description").(string), mediaPath, int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes)
+	var task govcd.UploadTask
+	uploadAnyFile := d.Get("upload_any_file").(bool)
+
+	if uploadAnyFile {
+		task, err = catalog.UploadMediaFile(mediaName, d.Get("description").(string), mediaPath, int64(uploadPieceSize)*1024*1024, false) // Convert from megabytes to bytes)
+	} else {
+		task, err = catalog.UploadMediaImage(mediaName, d.Get("description").(string), mediaPath, int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes)
+	}
 	if err != nil {
 		log.Printf("Error uploading new catalog media: %s", err)
 		return diag.Errorf("error uploading new catalog media: %s", err)
@@ -181,11 +201,15 @@ func resourceVcdMediaCreate(ctx context.Context, d *schema.ResourceData, meta in
 		for {
 			progress, err := task.GetTaskProgress()
 			if err != nil {
-				log.Printf("vCD Error importing new catalog item: %s", err)
-				return diag.Errorf("vCD Error importing new catalog item: %s", err)
+				log.Printf("VCD Error importing new catalog item: %s", err)
+				return diag.Errorf("VCD Error importing new catalog item: %s", err)
 			}
-			logForScreen("vcd_catalog_media", fmt.Sprintf("vcd_catalog_media."+mediaName+": vCD import catalog item progress "+progress+"%%\n"))
-			if progress == "100" {
+			logForScreen("vcd_catalog_media", fmt.Sprintf("vcd_catalog_media.%s: VCD import catalog item progress %s%%\n", mediaName, progress))
+			if task.Task != nil && task.Task.Task != nil && task.Task.Task.Status == "aborted" {
+				return diag.Errorf("VCD Error importing new catalog item: the task %s was aborted", task.Task.Task.ID)
+			}
+			if progress == "100" || (task.Task != nil && task.Task.Task != nil && task.Task.Task.Status == "success") {
+				logForScreen("vcd_catalog_media", fmt.Sprintf("vcd_catalog_media.%s: VCD import catalog item finished with status '%s'\n", mediaName, task.Task.Task.Status))
 				break
 			}
 			time.Sleep(10 * time.Second)
@@ -212,6 +236,7 @@ func resourceVcdMediaRead(_ context.Context, d *schema.ResourceData, meta interf
 }
 
 func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+	var diags diag.Diagnostics
 	vcdClient := meta.(*VCDClient)
 
 	var catalog *govcd.Catalog
@@ -290,10 +315,33 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	dSet(d, "status", mediaRecord.MediaRecord.Status)
 	dSet(d, "storage_profile_name", mediaRecord.MediaRecord.StorageProfileName)
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_catalog_media", media)
-	if diagErr != nil {
-		log.Printf("[DEBUG] Unable to update media item metadata: %s", err)
-		return diagErr
+	// Creating URN from HREF for Catalog Item urn:vcloud:catalogitem:
+	catalogItemId := fmt.Sprintf("urn:vcloud:catalogitem:%s", extractUuid(mediaRecord.MediaRecord.CatalogItem))
+	dSet(d, "catalog_item_id", catalogItemId)
+
+	if origin == "datasource" {
+		downloadToFile := d.Get("download_to_file").(string)
+		if downloadToFile != "" {
+			contents, err := media.Download()
+			if err != nil {
+				return diag.Errorf("error downloading media contents")
+			}
+			downloadToFile = path.Clean(downloadToFile)
+			err = os.WriteFile(downloadToFile, contents, 0600)
+			if err != nil {
+				return diag.Errorf("error writing media contents to file '%s'", downloadToFile)
+			}
+		}
+	}
+	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_catalog_media", media)...)
+	if diags != nil && diags.HasError() {
+		log.Printf("[DEBUG] Unable to update media item metadata: %v", diags)
+		return diags
+	}
+
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
 	}
 	return nil
 }

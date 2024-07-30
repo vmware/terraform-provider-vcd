@@ -88,12 +88,39 @@ resource "vcd_rde" "my-rde" {
 }
 ```
 
+## Example of Upgrade of the RDE Type Version
+
+```hcl
+data "vcd_rde_type" "my_type" {
+  vendor    = "bigcorp"
+  namespace = "tech1"
+  version   = "1.0.0"
+}
+
+data "vcd_rde_type" "my_updated_type" {
+  vendor    = "bigcorp"
+  namespace = "tech1"
+  version   = "1.1.0"
+}
+
+resource "vcd_rde" "my-rde" {
+  org = "my-org"
+  # Update from 'data.vcd_rde_type.my_type.id' to 'data.vcd_rde_type.my_updated_type.id' to upgrade the RDE Type version
+  rde_type_id = data.vcd_rde_type.my_updated_type.id
+  name        = "My custom RDE"
+  resolve     = true # This will attempt to resolve after the version is updated
+  entity_url  = "https://just.an-example.com/entities/custom-rde.json"
+}
+
+```
+
 ## Argument Reference
 
 The following arguments are supported:
 
 * `org` - (Optional) Name of the [Organization](/providers/vmware/vcd/latest/docs/resources/org) that will own the RDE, optional if defined at provider level.
-* `rde_type_id` - (Required) The ID of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to instantiate.
+* `rde_type_id` - (Required) The ID of the [RDE Type](/providers/vmware/vcd/latest/docs/data-sources/rde_type) to instantiate. It only supports
+  updating to a **newer/lower** `version` of the **same** RDE Type.
 * `name` - (Required) The name of the Runtime Defined Entity. It can be non-unique.
 * `resolve` - (Required) If `true`, the Runtime Defined Entity will be resolved by this provider. If `false`, it won't be
   resolved and must be done either by an external component action or by an update. The Runtime Defined Entity can't be
@@ -104,6 +131,7 @@ The following arguments are supported:
   The referenced JSON will be downloaded on every read operation, and it will break Terraform operations if these contents are no longer present on the remote site.
   If you can't guarantee this, it is safer to use `input_entity`.
 * `external_id` - (Optional) An external input_entity's ID that this Runtime Defined Entity may have a relation to.
+* `metadata_entry` - (Optional; *v3.11+*) A set of metadata entries to assign. See [Metadata](#metadata) section for details.
 
 ## Attribute Reference
 
@@ -158,6 +186,55 @@ should have `resolve=false` to avoid being resolved).
 In this last scenario, it is advisable to mark `resolve_on_removal=true` so Terraform can delete the RDE even if it was not
 resolved by anyone.
 
+<a id="metadata"></a>
+## Metadata
+
+-> Due to Terraform limitations, when performing a change in any of the metadata entries, a `terraform plan` shows that
+all of them will be deleted and re-created. However, the succeeding `terraform apply` will respect the non-changed metadata entries 
+by not modifying them.
+
+The `metadata_entry` is a set of metadata entries that have the following structure:
+
+* `key` - (Required) Key of this metadata entry.
+* `namespace` - (Optional) Namespace of the metadata entry. Allows having multiple entries with same key in different namespaces.
+* `value` - (Required) Value of this metadata entry. It can be updated.
+* `type` - (Optional) Type of this metadata entry. One of: `StringEntry`, `NumberEntry`, `BoolEntry`. Defaults to `StringEntry`.
+  Updating this value forces a re-creation of the metadata entry.
+* `domain` - (Optional) Only meaningful for providers. Allows them to share entries with their tenants. Currently, accepted values are: `TENANT`, `PROVIDER`. Defaults to `TENANT`.
+  Updating this value forces a re-creation of the metadata entry.
+* `readonly` - (Optional) `true` if the metadata entry is read only. Defaults to `false`.  Updating this value forces a re-creation of the metadata entry.
+* `persistent` - (Optional) `true` if the metadata is persistent. Persistent entries can be copied over on some entity operation.
+  Right now it doesn't have any effect.
+* `id` - (Computed) Read-only identifier for this metadata entry.
+
+The only attributes that support updates-in-place for a given metadata entry is `value` and `persistent`.
+Updating any other value will re-create the metadata entry.
+
+Example:
+
+```hcl
+resource "vcd_rde" "my-rde" {
+  org         = "my-org"
+  rde_type_id = data.vcd_rde_type.my-type.id
+  name        = "My custom RDE"
+  resolve     = true
+  entity_url  = "https://just.an-example.com/entities/custom-rde.json"
+  metadata_entry {
+    key      = "foo"
+    type     = "StringEntry"
+    value    = "bar"
+    domain   = "TENANT" # will be also visible to an organization user
+    readonly = true
+  }
+  metadata_entry {
+    key        = "bar"
+    type       = "NumberEntry"
+    value      = "42"
+    domain     = "PROVIDER" # will be only visible to the provider 
+    persistent = true
+  }
+}
+```
 
 ## Importing
 

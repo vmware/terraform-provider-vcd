@@ -130,7 +130,7 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": metadataEntryResourceSchema("Disk"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("Disk"),
 		},
 	}
 }
@@ -496,6 +496,8 @@ func resourceVcdIndependentDiskRead(_ context.Context, d *schema.ResourceData, m
 }
 
 func setMainData(d *schema.ResourceData, vcdClient *VCDClient, disk *govcd.Disk, diskRecord *types.DiskRecordType) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	d.SetId(disk.Disk.Id)
 	dSet(d, "name", disk.Disk.Name)
 	dSet(d, "description", disk.Disk.Description)
@@ -528,11 +530,16 @@ func setMainData(d *schema.ResourceData, vcdClient *VCDClient, disk *govcd.Disk,
 		return diag.Errorf("[Independent disk read] error setting the list of attached VM IDs: %s ", err)
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_independent_disk", disk)
-	if diagErr != nil {
+	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_independent_disk", disk)...)
+	if diags != nil && diags.HasError() {
 		log.Printf("[DEBUG] Unable to set Independent disk metadata")
-		return diagErr
+		return diags
 	}
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
+	}
+
 	return nil
 }
 

@@ -2,6 +2,9 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
+
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -9,8 +12,6 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
-	"regexp"
-	"strings"
 )
 
 var (
@@ -133,6 +134,7 @@ var resourceMetadataApiRelation = map[string]string{
 	"vcd_vapp":                  "vApp",
 	"vcd_vapp_vm":               "vApp",
 	"vcd_vm":                    "vApp",
+	"vcd_rde":                   "entity",
 }
 
 // metadataEntryDatasourceSchema returns the schema associated to metadata_entry for a given data source.
@@ -167,7 +169,7 @@ func metadataEntryDatasourceSchema(resourceType string) *schema.Schema {
 				"is_system": {
 					Type:        schema.TypeBool,
 					Computed:    true,
-					Description: "Domain for this metadata entry. true if it belongs to SYSTEM, false if it belongs to GENERAL",
+					Description: "Domain for this metadata entry. true, if it belongs to SYSTEM. false, if it belongs to GENERAL",
 				},
 			},
 		},
@@ -175,8 +177,56 @@ func metadataEntryDatasourceSchema(resourceType string) *schema.Schema {
 }
 
 // metadataEntryResourceSchema returns the schema associated to metadata_entry for a given resource.
+// The schema is for those resources which do NOT have old "metadata" attribute.
 // The description will refer to the resource type given as input.
 func metadataEntryResourceSchema(resourceType string) *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeSet,
+		Optional:    true,
+		Description: fmt.Sprintf("Metadata entries for the given %s", resourceType),
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"key": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "Key of this metadata entry",
+				},
+				"value": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "Value of this metadata entry",
+				},
+				"type": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Default:      types.MetadataStringValue,
+					Description:  fmt.Sprintf("Type of this metadata entry. One of: '%s', '%s', '%s', '%s'. Defaults to '%s'", types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue, types.MetadataStringValue),
+					ValidateFunc: validation.StringInSlice([]string{types.MetadataStringValue, types.MetadataNumberValue, types.MetadataBooleanValue, types.MetadataDateTimeValue}, false),
+				},
+				"user_access": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Default:      types.MetadataReadWriteVisibility,
+					Description:  fmt.Sprintf("User access level for this metadata entry. One of: '%s', '%s', '%s'. Defaults to '%s'", types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility, types.MetadataReadWriteVisibility),
+					ValidateFunc: validation.StringInSlice([]string{types.MetadataReadWriteVisibility, types.MetadataReadOnlyVisibility, types.MetadataHiddenVisibility}, false),
+				},
+				"is_system": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Default:     false,
+					Description: "Domain for this metadata entry. true, if it belongs to SYSTEM. false, if it belongs to GENERAL. Defaults to false",
+				},
+			},
+		},
+	}
+}
+
+// metadataEntryResourceSchemaDeprecated returns the schema associated to metadata_entry for a given resource.
+// The schema is for those resources which have deprecated "metadata" attribute, as it contains several constraints and optional-compute
+// combinations for that matter.
+// The description will refer to the resource type given as input.
+// TODO: Remove this function once "metadata" attribute is deleted in a future major release.
+func metadataEntryResourceSchemaDeprecated(resourceType string) *schema.Schema {
 	return &schema.Schema{
 		Type:          schema.TypeSet,
 		Optional:      true,
@@ -213,7 +263,7 @@ func metadataEntryResourceSchema(resourceType string) *schema.Schema {
 					Type:     schema.TypeBool,
 					Optional: true,
 					// Default:     false,  // Can't be set like this as we must allow empty `metadata_entry`, to be able to delete metadata (see above comment)
-					Description: "Domain for this metadata entry. true if it belongs to SYSTEM, false if it belongs to GENERAL",
+					Description: "Domain for this metadata entry. true, if it belongs to SYSTEM. false, if it belongs to GENERAL",
 				},
 			},
 		},
@@ -310,7 +360,7 @@ func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient,
 					Severity: severity,
 					Summary:  "Found a conflict between 'ignore_metadata_changes' and 'metadata_entry'",
 					Detail: fmt.Sprintf("There is an 'ignored_metadata' block: %s\n"+
-						"and there is a 'metadata_entry' with key '%s' and value '%s' in your Terraform configuration that matches the criteria, hence it will be ignored.\n"+
+						"and there is a 'metadata_entry' with key '%s' and value '%s' in your Terraform configuration or state that matches such criteria, hence it will be ignored.\n"+
 						"This will cause the entry to be present in Terraform state but it won't have any effect in VCD, causing an inconsistency.\n"+
 						"Please use a more fine-grained 'ignore_metadata_changes' configuration or change your metadata entry.", ignoredMetadata, newEntry["key"].(string), newEntry["value"].(string)),
 					AttributePath: cty.Path{},
@@ -321,9 +371,11 @@ func checkIgnoredMetadataConflicts(d *schema.ResourceData, vcdClient *VCDClient,
 	return nil
 }
 
-// updateMetadataInState updates metadata and metadata_entry in the Terraform state for the given receiver object.
+// updateMetadataInStateDeprecated updates deprecated metadata and the new metadata_entry in the Terraform state for the given receiver object.
 // This can be done as both are Computed, for compatibility reasons.
-func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject metadataCompatible) diag.Diagnostics {
+// TODO: Remove this function once "metadata" attribute is deleted in a future major release.
+func updateMetadataInStateDeprecated(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject metadataCompatible) diag.Diagnostics {
+	var diags diag.Diagnostics
 
 	// We temporarily remove the ignored metadata filter to retrieve the deprecated metadata contents,
 	// which should not be affected by it.
@@ -344,6 +396,11 @@ func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourc
 		return diag.FromErr(err)
 	}
 
+	// VMs can have special metadata automatically set by VCD that require to be filtered out
+	if resourceType == "vcd_vapp" || resourceType == "vcd_vapp_vm" || resourceType == "vcd_vm" || resourceType == "vcd_catalog_vapp_template" {
+		_ = filterAndGetVcdInheritedMetadata(deprecatedMetadata)
+	}
+
 	// Set deprecated metadata attribute, just for compatibility reasons
 	err = d.Set("metadata", getMetadataStruct(deprecatedMetadata.MetadataEntry))
 	if err != nil {
@@ -351,25 +408,80 @@ func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourc
 	}
 
 	// We get metadata again with the original metadata ignore filtering
-	diagErr := checkIgnoredMetadataConflicts(d, vcdClient, resourceType)
-	if diagErr != nil {
-		return diagErr
+	diags = append(diags, updateMetadataInState(d, vcdClient, resourceType, receiverObject)...)
+	if diags != nil && diags.HasError() {
+		return diags
 	}
 
-	metadata, err := receiverObject.GetMetadata()
-	if err != nil {
-		return diag.Errorf("error getting metadata to save in state: %s", err)
-	}
-
-	err = setMetadataEntryInState(d, metadata.MetadataEntry)
-	if err != nil {
-		return diag.Errorf("error setting metadata entry in state: %s", err)
+	// This must be checked at the end as updateMetadataInState can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
 	}
 
 	return nil
 }
 
+// updateMetadataInState updates ONLY metadata_entry in the Terraform state for the given receiver object.
+func updateMetadataInState(d *schema.ResourceData, vcdClient *VCDClient, resourceType string, receiverObject metadataCompatible) diag.Diagnostics {
+	diags := checkIgnoredMetadataConflicts(d, vcdClient, resourceType)
+	if diags != nil && diags.HasError() {
+		return diags
+	}
+
+	metadata, err := receiverObject.GetMetadata()
+	if err != nil {
+		return append(diags, diag.Errorf("error getting metadata to save in state: %s", err)...)
+	}
+
+	// VMs can have special metadata automatically set by VCD that require to be filtered out and
+	// set into a different attribute.
+	if resourceType == "vcd_vapp" || resourceType == "vcd_vapp_vm" || resourceType == "vcd_vm" || resourceType == "vcd_catalog_vapp_template" {
+		inheritedMetadataBlock := filterAndGetVcdInheritedMetadata(metadata)
+		err = d.Set("inherited_metadata", inheritedMetadataBlock)
+		if err != nil {
+			return append(diags, diag.Errorf("could not set 'inherited_metadata' attribute: %s", err)...)
+		}
+	}
+
+	err = setMetadataEntryInState(d, metadata.MetadataEntry)
+	if err != nil {
+		return append(diags, diag.Errorf("error setting metadata entry in state: %s", err)...)
+	}
+	if len(diags) > 0 {
+		return diags
+	}
+	return nil
+}
+
+// filterAndGetVcdInheritedMetadata filters out the metadata entries that were created automatically by VCD (inherited metadata)
+// from the input metadata parameter, then returns these entries as a structure that is ready to be set in the
+// Terraform schema.
+// Note: the filtered out entries are removed from the original metadata input parameter.
+func filterAndGetVcdInheritedMetadata(metadata *types.Metadata) StringMap {
+	if len(metadata.MetadataEntry) == 0 {
+		return nil
+	}
+
+	autogeneratedMetadataKeys := map[string]bool{
+		"vm.origin.id": true, "vm.origin.name": true, "vm.origin.type": true,
+		"vapp.origin.id": true, "vapp.origin.name": true, "vapp.origin.type": true,
+	}
+
+	var filteredMetadata []*types.MetadataEntry
+	var inheritedMetadataBlock = StringMap{}
+	for _, metadataEntry := range metadata.MetadataEntry {
+		if val, ok := autogeneratedMetadataKeys[metadataEntry.Key]; ok && val {
+			inheritedMetadataBlock[metadataEntry.Key] = metadataEntry.TypedValue.Value
+		} else {
+			filteredMetadata = append(filteredMetadata, metadataEntry)
+		}
+	}
+	metadata.MetadataEntry = filteredMetadata
+	return inheritedMetadataBlock
+}
+
 // setMetadataEntryInState sets the given metadata entries retrieved from VCD in the Terraform state.
+// TODO: Refactor this function once "metadata" attribute is deleted in a future major release.
 func setMetadataEntryInState(d *schema.ResourceData, metadataFromVcd []*types.MetadataEntry) error {
 	// A consequence of having metadata_entry computed is that to remove the entries one needs to write `metadata_entry {}`.
 	// This snippet guarantees that if we try to delete metadata with `metadata_entry {}`, we don't
@@ -402,6 +514,7 @@ func setMetadataEntryInState(d *schema.ResourceData, metadataFromVcd []*types.Me
 
 // convertFromStateToMetadataValues converts the structure retrieved from Terraform state to a structure compatible
 // with the Go SDK.
+// TODO: Refactor this function once "metadata" attribute is deleted in a future major release.
 func convertFromStateToMetadataValues(metadataAttribute []interface{}) (map[string]types.MetadataValue, error) {
 	metadataValues := map[string]types.MetadataValue{}
 	for _, rawItem := range metadataAttribute {
@@ -446,6 +559,7 @@ func convertFromStateToMetadataValues(metadataAttribute []interface{}) (map[stri
 
 // getMetadataKeyWithDomainMap converts the input metadata attribute from Terraform state to a map that associates keys
 // with their domain (true if is from SYSTEM domain, false if GENERAL).
+// TODO: Refactor this function once "metadata" attribute is deleted in a future major release.
 func getMetadataKeyWithDomainMap(metadataAttribute []interface{}) map[string]bool {
 	metadataKeys := map[string]bool{}
 	for _, rawItem := range metadataAttribute {

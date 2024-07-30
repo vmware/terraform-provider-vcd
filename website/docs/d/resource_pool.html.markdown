@@ -63,4 +63,5 @@ The following arguments are supported:
 
 ## Attribute reference
 
-* `hardware_version` -  default hardware version available to this resource pool.
+* `hardware_version` - default hardware version available to this resource pool.
+* `cluster_moref` - managed object reference of the vCenter cluster that this resource pool is hosted on.

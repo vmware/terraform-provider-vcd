@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -58,7 +59,7 @@ func resourceVcdVApp() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": metadataEntryResourceSchema("vApp"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("vApp"),
 			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -85,6 +86,24 @@ func resourceVcdVApp() *schema.Resource {
 				Computed:    true,
 				Description: "Shows the status of the vApp",
 			},
+			"vm_names": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of VMs in this vApp",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"vapp_network_names": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of vApp networks connected to this vApp",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+			"vapp_org_network_names": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of vApp Org networks connected to this vApp",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
 			"lease": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -107,6 +126,11 @@ func resourceVcdVApp() *schema.Resource {
 						},
 					},
 				},
+			},
+			"inherited_metadata": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "A map that contains metadata that is automatically added by VCD (10.5.1+) and provides details on the origin of the vApp",
 			},
 		},
 	}
@@ -256,6 +280,7 @@ func resourceVcdVAppRead(_ context.Context, d *schema.ResourceData, meta interfa
 }
 
 func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+	var diags diag.Diagnostics
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -305,7 +330,47 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	if err != nil {
 		return diag.Errorf("unable to set lease information in state: %s", err)
 	}
-
+	var vmNames []string
+	if vapp.VApp.Children != nil {
+		for _, vm := range vapp.VApp.Children.VM {
+			vmNames = append(vmNames, vm.Name)
+		}
+		sort.Strings(vmNames)
+	}
+	err = d.Set("vm_names", vmNames)
+	if err != nil {
+		return diag.Errorf("error setting VM names for vApp %s: %s", vapp.VApp.Name, err)
+	}
+	var vappNetworkNames []string
+	var vappOrgNetworkNames []string
+	vappNetworks, err := vapp.QueryVappNetworks(nil)
+	if err != nil {
+		return diag.Errorf("error querying vApp networks for vApp %s: %s", vapp.VApp.Name, err)
+	}
+	if len(vappNetworks) > 0 {
+		for _, net := range vappNetworks {
+			vappNetworkNames = append(vappNetworkNames, net.Name)
+		}
+		sort.Strings(vappNetworkNames)
+	}
+	err = d.Set("vapp_network_names", vappNetworkNames)
+	if err != nil {
+		return diag.Errorf("error setting vApp network names for vApp %s: %s", vapp.VApp.Name, err)
+	}
+	vappOrgNetworks, err := vapp.QueryVappOrgNetworks(nil)
+	if err != nil {
+		return diag.Errorf("error querying vApp Org networks for vApp %s: %s", vapp.VApp.Name, err)
+	}
+	if len(vappOrgNetworks) > 0 {
+		for _, net := range vappOrgNetworks {
+			vappOrgNetworkNames = append(vappOrgNetworkNames, net.Name)
+		}
+		sort.Strings(vappOrgNetworkNames)
+	}
+	err = d.Set("vapp_org_network_names", vappOrgNetworkNames)
+	if err != nil {
+		return diag.Errorf("error setting vApp Org network names for vApp %s: %s", vapp.VApp.Name, err)
+	}
 	statusText, err := vapp.GetStatus()
 	if err != nil {
 		statusText = vAppUnknownStatus
@@ -316,11 +381,15 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	dSet(d, "description", vapp.VApp.Description)
 	d.SetId(vapp.VApp.ID)
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_vapp", vapp)
-	if diagErr != nil {
-		return diagErr
+	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_vapp", vapp)...)
+	if diags != nil && diags.HasError() {
+		return diags
 	}
 
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
+	}
 	return nil
 }
 

@@ -35,6 +35,40 @@ func TestAccDataSourceNotFound(t *testing.T) {
 
 func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient) func(*testing.T) {
 	return func(t *testing.T) {
+
+		type skipAlways struct {
+			dataSourceName string
+			reason         string
+		}
+
+		skipAlwaysSlice := []skipAlways{
+			{
+				dataSourceName: "vcd_nsxt_global_default_segment_profile_template",
+				reason:         "Global Default Segment Profile Template configuration is always available",
+			},
+			{
+				dataSourceName: "vcd_cse_kubernetes_cluster",
+				reason:         "CSE Kubernetes cluster requires its own particular VCD setup",
+			},
+			{
+				dataSourceName: "vcd_version",
+				reason:         "The VCD version is always available",
+			},
+			{
+				dataSourceName: "vcd_multisite_site",
+				reason:         "The VCD site is always available",
+			},
+			{
+				dataSourceName: "vcd_multisite_site_data",
+				reason:         "The VCD site data is always available",
+			},
+		}
+		for _, skip := range skipAlwaysSlice {
+			if dataSourceName == skip.dataSourceName {
+				t.Skipf("Skipping: %s", skip.reason)
+			}
+		}
+
 		// Skip subtest based on versions
 		type skipOnVersion struct {
 			skipVersionConstraint string
@@ -52,7 +86,11 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			},
 			{
 				skipVersionConstraint: "< 37.1",
-				datasourceName:        "vcd_ip_space_custom_quota",
+				datasourceName:        "vcd_ip_space",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_solution_landing_zone",
 			},
 			{
 				skipVersionConstraint: "< 37.1",
@@ -69,6 +107,38 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			{
 				skipVersionConstraint: "< 37.0",
 				datasourceName:        "vcd_service_account",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_solution_landing_zone",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_solution_add_on",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_solution_add_on_instance",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_solution_add_on_instance_publish",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_dse_registry_configuration",
+			},
+			{
+				skipVersionConstraint: "< 37.1",
+				datasourceName:        "vcd_ip_space_custom_quota",
+			},
+			{
+				skipVersionConstraint: "< 37.3",
+				datasourceName:        "vcd_external_endpoint",
+			},
+			{
+				skipVersionConstraint: "< 37.3",
+				datasourceName:        "vcd_api_filter",
 			},
 		}
 		// urn:vcloud:ipSpace:2ec12e23-6911-4950-a33f-5602ae72ced2
@@ -96,6 +166,28 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			"vcd_resource_pool",
 			"vcd_network_pool",
 			"vcd_nsxt_edgegateway_qos_profile",
+			"vcd_nsxt_segment_ip_discovery_profile",
+			"vcd_nsxt_segment_mac_discovery_profile",
+			"vcd_nsxt_segment_spoof_guard_profile",
+			"vcd_nsxt_segment_qos_profile",
+			"vcd_nsxt_segment_security_profile",
+			"vcd_org_vdc_nsxt_network_profile",
+			"vcd_nsxt_global_default_segment_profile_template",
+			"vcd_nsxt_network_segment_profile",
+			"vcd_nsxt_segment_profile_template",
+			"vcd_nsxt_network_context_profile",
+			"vcd_nsxt_edgegateway_l2_vpn_tunnel",
+			"vcd_vgpu_profile",
+			"vcd_multisite_site_association",
+			"vcd_multisite_site_data",
+			"vcd_multisite_site",
+			"vcd_dse_registry_configuration",
+			"vcd_solution_landing_zone",
+			"vcd_solution_add_on",
+			"vcd_solution_add_on_instance",
+			"vcd_solution_add_on_instance_publish",
+			"vcd_external_endpoint",
+			"vcd_api_filter",
 		}
 		dataSourcesRequiringAlbConfig := []string{
 			"vcd_nsxt_alb_cloud",
@@ -142,8 +234,22 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			"DataSourceName":  dataSourceName,
 			"MandatoryFields": addedParams,
 		}
+
+		if dataSourceName == "vcd_multisite_site_association" {
+			params["MandatoryFields"] = ` associated_site_id = "urn:vcloud:site:deadbeef-87e4-4905-202a-bfe9faa5476f"` + "\n"
+		}
+		if dataSourceName == "vcd_multisite_org_association" {
+			params["MandatoryFields"] = params["MandatoryFields"].(string) +
+				` associated_org_id = "urn:vcloud:org:deadbeef-87e4-4905-202a-bfe9faa5476f"` + "\n"
+		}
 		if dataSourceName == "vcd_nsxv_distributed_firewall" {
 			params["MandatoryFields"] = `vdc_id = "deadbeef-dead-beef-dead-beefdeadbeef"`
+		}
+
+		if dataSourceName == "vcd_org_vdc_nsxt_network_profile" {
+			config := `org = "` + testConfig.VCD.Org + `"` + "\n"
+			config += `vdc = "non-existing"` + "\n"
+			params["MandatoryFields"] = config
 		}
 
 		params["FuncName"] = "NotFoundDataSource-" + dataSourceName
@@ -212,11 +318,11 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			return templateFields
 		}
 
+		// #nosec G101 -- not a credential
 		if (dataSourceName == "vcd_nsxt_edgegateway_bgp_configuration" || dataSourceName == "vcd_nsxt_alb_settings" ||
 			dataSourceName == "vcd_nsxt_edgegateway_rate_limiting" || dataSourceName == "vcd_nsxt_edgegateway_dhcp_forwarding" ||
 			dataSourceName == "vcd_nsxt_firewall" || dataSourceName == "vcd_nsxt_route_advertisement" ||
-			dataSourceName == "vcd_nsxt_edgegateway_dhcpv6") &&
-			mandatoryFields[fieldIndex] == "edge_gateway_id" {
+			dataSourceName == "vcd_nsxt_edgegateway_dhcpv6" || dataSourceName == "vcd_nsxt_edgegateway_dns") && mandatoryFields[fieldIndex] == "edge_gateway_id" {
 			// injecting fake Edge Gateway ID
 			templateFields = templateFields + `edge_gateway_id = "urn:vcloud:gateway:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
 			return templateFields
@@ -225,12 +331,24 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		if (dataSourceName == "vcd_org_saml" ||
 			dataSourceName == "vcd_org_saml_metadata" ||
 			dataSourceName == "vcd_org_ldap" ||
+			dataSourceName == "vcd_org_oidc" ||
 			dataSourceName == "vcd_ip_space_custom_quota" ||
-			dataSourceName == "vcd_ip_space_ip_allocation") &&
+			dataSourceName == "vcd_ip_space_ip_allocation" ||
+			dataSourceName == "vcd_multisite_org_association" ||
+			dataSourceName == "vcd_multisite_org_data" ||
+			dataSourceName == "vcd_dse_solution_publish") &&
 			mandatoryFields[fieldIndex] == "org_id" {
 			// injecting fake Org ID
 			templateFields = templateFields + `org_id = "urn:vcloud:org:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
 			// return templateFields
+		}
+
+		if dataSourceName == "vcd_solution_add_on_instance_publish" && mandatoryFields[fieldIndex] == "add_on_instance_name" {
+			templateFields = templateFields + `add_on_instance_name = "non-existing-add-on-instance"` + "\n"
+		}
+
+		if dataSourceName == "vcd_dse_solution_publish" && mandatoryFields[fieldIndex] == "data_solution_id" {
+			templateFields = templateFields + `data_solution_id = "urn:vcloud:entity:vmware:dsConfig:00000000-f256-4d9b-b04b-12582ce918ec"` + "\n"
 		}
 
 		if dataSourceName == "vcd_ip_space_ip_allocation" && mandatoryFields[fieldIndex] == "type" {
@@ -368,12 +486,16 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `rde_type_id = "urn:vcloud:type:donotexist:donotexist:9.9.9"` + "\n"
 		case "rde_interface_id":
 			templateFields = templateFields + `rde_interface_id = "urn:vcloud:interface:notexist:notexist:9.9.9"` + "\n"
+		case "rde_id":
+			templateFields = templateFields + `rde_id = "urn:vcloud:entity:notexist:notexist:90337fee-f332-40f2-a124-96e890eb1522"` + "\n"
 		case "behavior_id":
 			templateFields = templateFields + `behavior_id = "urn:vcloud:behavior-interface:NotExist:notexist:notexist:9.9.9"` + "\n"
 		case "ip_space_id":
 			templateFields = templateFields + `ip_space_id = "urn:vcloud:ipSpace:90337fee-f332-40f2-a124-96e890eb1522"` + "\n"
 		case "external_network_id":
 			templateFields = templateFields + `external_network_id = "urn:vcloud:network:74804d82-a58f-4714-be84-75c178751ab0"` + "\n"
+		case "api_filter_id":
+			templateFields = templateFields + `api_filter_id = "urn:vcloud:apiFilter:74804d82-a58f-4714-be84-75c178751ab0"` + "\n"
 		}
 	}
 

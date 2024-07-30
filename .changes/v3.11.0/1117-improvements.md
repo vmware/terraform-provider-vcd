@@ -1,0 +1,1 @@
+* Field `rde_type_id` from resource `vcd_rde` does not force a deletion when updated, to allow easier RDE Type version upgrades [GH-1117]

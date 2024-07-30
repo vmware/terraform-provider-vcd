@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -83,6 +84,11 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 				Computed:    true,
 				Description: "Storage profile name",
 			},
+			"download_to_file": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Will download the contents of the media item into the given file",
+			},
 			"filter": {
 				Type:        schema.TypeList,
 				MaxItems:    1,
@@ -98,6 +104,11 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 						"metadata":   elementMetadata,
 					},
 				},
+			},
+			"catalog_item_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Catalog Item ID of this media item",
 			},
 		},
 	}

@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -117,5 +118,83 @@ output "status" {
 
 output "status_text" {
   value = data.vcd_vapp.{{.VappName}}.status_text
+}
+`
+
+func TestAccVcdVAppInheritedMetadata(t *testing.T) {
+	preTestChecks(t)
+
+	if checkVersion(testConfig.Provider.ApiVersion, "< 38.1") {
+		t.Skipf("This test tests VCD 10.5.1+ (API V38.1+) features. Skipping.")
+	}
+
+	var params = StringMap{
+		"Org":              testConfig.VCD.Org,
+		"Vdc":              testConfig.Nsxt.Vdc,
+		"Catalog":          testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"VappTemplateName": testConfig.VCD.Catalog.NsxtCatalogItem,
+		"OvaPath":          testConfig.Ova.OvaPath,
+		"FuncName":         t.Name(),
+		"Tags":             "vapp",
+	}
+	testParamsNotEmpty(t, params)
+
+	config := templateFill(testAccCheckVcdVAppInheritedMetadata, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", config)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"data.vcd_vapp.fetched_vapp", "metadata.#", "0"),
+					resource.TestCheckResourceAttr(
+						"data.vcd_vapp.fetched_vapp", "metadata.%", "0"),
+					resource.TestMatchResourceAttr(
+						"data.vcd_vapp.fetched_vapp", "inherited_metadata.vapp.origin.id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestCheckResourceAttrSet(
+						"data.vcd_vapp.fetched_vapp", "inherited_metadata.vapp.origin.name"),
+					resource.TestMatchResourceAttr(
+						"data.vcd_vapp.fetched_vapp", "inherited_metadata.vapp.origin.type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`)),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccCheckVcdVAppInheritedMetadata = `
+data "vcd_catalog" "cat" {
+ org  = "{{.Org}}"
+ name = "{{.Catalog}}"
+}
+
+data "vcd_catalog_vapp_template" "vapp_template" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.cat.id
+  name       = "{{.VappTemplateName}}"
+}
+
+resource "vcd_cloned_vapp" "vapp_from_template" {
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  name          = "{{.VappTemplateName}}"
+  power_on      = true
+  source_id     = data.vcd_catalog_vapp_template.vapp_template.id
+  source_type   = "template"
+  delete_source = false
+}
+
+data "vcd_vapp" "fetched_vapp" {
+  name = vcd_cloned_vapp.vapp_from_template.name
+  org  = vcd_cloned_vapp.vapp_from_template.org
+  vdc  = vcd_cloned_vapp.vapp_from_template.vdc
 }
 `

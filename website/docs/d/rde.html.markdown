@@ -16,7 +16,7 @@ can only retrieve **unique RDEs**.
 
 Supported in provider *v3.9+*
 
-## Example Usage with a JSON file
+## Example Usage
 
 ```hcl
 data "vcd_rde_type" "my_type" {
@@ -52,3 +52,5 @@ The following attributes are supported:
 * `owner_user_id` - The ID of the [Organization user](/providers/vmware/vcd/latest/docs/resources/org_user) that owns this Runtime Defined Entity.
 * `org_id` - The ID of the [Organization](/providers/vmware/vcd/latest/docs/resources/org) to which the Runtime Defined Entity belongs.
 * `state` - It can be `RESOLVED`, `RESOLUTION_ERROR` or `PRE_CREATED`.
+* `metadata_entry` - A set of metadata entries that belong to the RDE.
+  Read the [resource](/providers/vmware/vcd/latest/docs/resources/rde#metadata) documentation for the details of the sub-attributes.

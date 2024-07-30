@@ -3,7 +3,6 @@
 package vcd
 
 import (
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -39,8 +38,8 @@ func TestAccVcdDatasourceVmGroup(t *testing.T) {
 					resource.TestCheckResourceAttrSet("data.vcd_vm_group.vm-group", "name"),
 					resource.TestCheckResourceAttrSet("data.vcd_vm_group.vm-group", "cluster_moref"),
 					resource.TestCheckResourceAttrSet("data.vcd_vm_group.vm-group", "cluster_name"),
-					resource.TestMatchResourceAttr("data.vcd_vm_group.vm-group", "vcenter_id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestMatchResourceAttr("data.vcd_vm_group.vm-group", "named_vm_group_id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr("data.vcd_vm_group.vm-group", "vcenter_id", getUuidRegex("^", "$")),
+					resource.TestMatchResourceAttr("data.vcd_vm_group.vm-group", "named_vm_group_id", getUuidRegex("^", "$")),
 				),
 			},
 		},

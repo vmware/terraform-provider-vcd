@@ -234,16 +234,18 @@ The following arguments are supported:
 * `allow_over_commit` - (Optional) Set to false to disallow creation of the VDC if the `allocation_model` is AllocationPool or ReservationPool and the ComputeCapacity you specified is greater than what the backing Provider VDC can supply. Default is true.
 * `enable_vm_discovery` - (Optional) If true, discovery of vCenter VMs is enabled for resource pools backing this VDC. If false, discovery is disabled. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.
 * `elasticity` - (Optional, *v2.7+*, *VCD 9.7+*) Indicates if the Flex VDC should be elastic. Required with the Flex allocation model.
-* `include_vm_memory_overhead` - (Optional, *v2.7+*, *VCD 9.7+*) Indicates if the Flex VDC should include memory overhead into its accounting for admission control. Required with the Flex allocation model.
+* `include_vm_memory_overhead` - (Optional, *v2.7+*, *VCD 9.7+*) Indicates if the Flex VDC should include memory overhead into its accounting for admission control. Required with the Flex allocation model. `memory_guaranteed` must also be specified together with this parameter.
 * `delete_force` - (Optional, but recommended) When destroying use `delete_force=true` to remove a VDC and any objects it contains, regardless of their state. Default is `false`
 * `delete_recursive` - (Optional, but recommended) When destroying use `delete_recursive=true` to remove the VDC and any objects it contains that are in a state that normally allows removal. Default is `false`
 * `default_compute_policy_id` - (Optional, *v3.8+*, *VCD 10.2+*) ID of the default Compute Policy for this VDC. It can be a VM Sizing Policy, a VM Placement Policy or a vGPU Policy.
 * `default_vm_sizing_policy_id` - (Deprecated; Optional, *v3.0+*, *VCD 10.2+*) ID of the default Compute Policy for this VDC. It can be a VM Sizing Policy, a VM Placement Policy or a vGPU Policy. Deprecated in favor of `default_compute_policy_id`.
 * `vm_sizing_policy_ids` - (Optional, *v3.0+*, *VCD 10.2+*) Set of IDs of VM Sizing policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
 * `vm_placement_policy_ids` - (Optional, *v3.8+*, *VCD 10.2+*) Set of IDs of VM Placement policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
-* `edge_cluster_id` - (Optional, *v3.8+*, *VCD 10.3+*) An ID of NSX-T Edge Cluster which should
-  provide vApp Networking Services or DHCP for isolated networks. Can be looked up using
-  `vcd_nsxt_edge_cluster` data source.
+* `vm_vgpu_policy_ids` - (Optional, *v3.11+*, *VCD 10.4+*) Set of IDs of VM vGPU policies that are assigned to this VDC. This field requires `default_compute_policy_id` to be configured together.
+* `edge_cluster_id` - (Deprecated; Optional, *v3.8+*, *VCD 10.3+*) An ID of NSX-T Edge Cluster which
+  should provide vApp Networking Services or DHCP for isolated networks. Can be looked up using
+  `vcd_nsxt_edge_cluster` data source. This field is **deprecated** in favor of
+  [`vcd_org_vdc_nsxt_network_profile`](/providers/vmware/vcd/latest/docs/resources/org_vdc_nsxt_network_profile).
 * `enable_nsxv_distributed_firewall` - (Optional, *v3.9+*, *VCD 10.3+*) Enables or disables the NSX-V distributed firewall.
 
 <a id="storageprofile"></a>

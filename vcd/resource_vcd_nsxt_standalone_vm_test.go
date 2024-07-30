@@ -110,6 +110,9 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_vm."+standaloneVmName, "disk.*", map[string]string{
 						"size_in_mb": "5",
 					}),
+					testMatchResourceAttrWhenVersionMatches("vcd_vm."+standaloneVmName, "inherited_metadata.vm.origin.id", regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`), ">= 38.1"),
+					testCheckResourceAttrSetWhenVersionMatches("vcd_vm."+standaloneVmName, "inherited_metadata.vm.origin.name", ">= 38.1"),
+					testMatchResourceAttrWhenVersionMatches("vcd_vm."+standaloneVmName, "inherited_metadata.vm.origin.type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
 				),
 			},
 			{
@@ -122,7 +125,8 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 				// it is reported during import
 				// "network_dhcp_wait_seconds" is a user setting and cannot be imported
 				ImportStateVerifyIgnore: []string{"template_name", "catalog_name",
-					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off", "network.1.ip", "network_dhcp_wait_seconds"},
+					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off", "network.1.ip",
+					"network_dhcp_wait_seconds", "consolidate_disks_on_create", "imported", "vapp_template_id"},
 			},
 			// This step ensures that VM and disk are removed, but networks are left
 			{

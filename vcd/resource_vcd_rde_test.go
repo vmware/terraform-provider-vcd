@@ -21,6 +21,7 @@ func TestAccVcdRde(t *testing.T) {
 
 	var params = StringMap{
 		"FuncName":       t.Name() + "-Step1-and-2",
+		"Org":            testConfig.VCD.Org,
 		"ProviderSystem": providerVcdSystem,
 		"ProviderOrg1":   providerVcdOrg1,
 		"Nss":            "nss",
@@ -102,7 +103,7 @@ func TestAccVcdRde(t *testing.T) {
 					// This function needs to be called with fresh clients (no cached ones), as it modifies
 					// rights of the tenant user.
 					addRightsToTenantUser(t, vcdClient, params["Vendor"].(string), params["Nss"].(string))
-					// We need to invalidate existing client cache and start a new one as the rights for the tenant user have changed, hece
+					// We need to invalidate existing client cache and start a new one as the rights for the tenant user have changed, hence
 					// we can't reuse existing sessions
 					cachedVCDClients.reset()
 				},
@@ -116,8 +117,8 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeFromFile, "rde_type_id", rdeType, "id"),
 					resource.TestMatchResourceAttr(rdeFromFile, "computed_entity", regexp.MustCompile("{.*\"stringValue\".*}")),
 					resource.TestCheckResourceAttr(rdeFromFile, "state", "PRE_CREATED"),
-					resource.TestMatchResourceAttr(rdeFromFile, "org_id", regexp.MustCompile(`urn:vcloud:org:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
-					resource.TestMatchResourceAttr(rdeFromFile, "owner_user_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(rdeFromFile, "org_id", getUuidRegex("urn:vcloud:org:", "$")),
+					resource.TestMatchResourceAttr(rdeFromFile, "owner_user_id", getUuidRegex("urn:vcloud:user:", "$")),
 					resource.TestCheckResourceAttr(rdeFromFile, "entity_in_sync", "true"),
 
 					resource.TestMatchResourceAttr(rdeFromUrl, "id", regexp.MustCompile(rdeUrnRegexp)),
@@ -144,7 +145,7 @@ func TestAccVcdRde(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeTenant, "computed_entity", rdeFromFile, "computed_entity"),
 					resource.TestCheckResourceAttr(rdeTenant, "state", "PRE_CREATED"),
 					resource.TestCheckResourceAttrPair(rdeTenant, "org_id", rdeFromFile, "org_id"),
-					resource.TestMatchResourceAttr(rdeTenant, "owner_user_id", regexp.MustCompile(`urn:vcloud:user:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)), // Owner is different in this case
+					resource.TestMatchResourceAttr(rdeTenant, "owner_user_id", getUuidRegex("urn:vcloud:user:", "$")), // Owner is different in this case
 					resource.TestCheckResourceAttr(rdeTenant, "entity_in_sync", "true"),
 				),
 			},
@@ -291,6 +292,7 @@ const testAccVcdRde1 = testAccVcdRdePrerequisites + `
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 
+  org          = "{{.Org}}"
   rde_type_id  = vcd_rde_type.rde_type.id
   name         = "{{.Name}}file"
   resolve      = {{.Resolve}}
@@ -302,6 +304,7 @@ resource "vcd_rde" "rde_file" {
 resource "vcd_rde" "rde_url" {
   provider = {{.ProviderSystem}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}url"
   resolve            = {{.Resolve}}
@@ -313,6 +316,7 @@ resource "vcd_rde" "rde_url" {
 resource "vcd_rde" "rde_naughty" {
   provider = {{.ProviderSystem}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}naughty"
   resolve      		 = {{.Resolve}}
@@ -325,6 +329,7 @@ resource "vcd_rde" "rde_naughty" {
 resource "vcd_rde" "rde_tenant" {
   provider = {{.ProviderOrg1}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}tenant"
   resolve            = {{.Resolve}}
@@ -340,6 +345,7 @@ const testAccVcdRde2 = testAccVcdRdePrerequisites + `
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}file-updated" # Updated name
   resolve            = {{.Resolve}}
@@ -352,6 +358,7 @@ resource "vcd_rde" "rde_file" {
 resource "vcd_rde" "rde_url" {
   provider = {{.ProviderSystem}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}url-updated" # Updated name
   resolve            = {{.Resolve}}
@@ -367,6 +374,7 @@ const testAccVcdRde3 = testAccVcdRdePrerequisites + `
 resource "vcd_rde" "rde_file" {
   provider = {{.ProviderSystem}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}file-updated" # Updated name
   resolve            = {{.Resolve}}
@@ -379,6 +387,7 @@ resource "vcd_rde" "rde_file" {
 resource "vcd_rde" "rde_url" {
   provider = {{.ProviderSystem}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}url-updated" # Updated name
   resolve            = {{.Resolve}}
@@ -391,6 +400,7 @@ resource "vcd_rde" "rde_url" {
 resource "vcd_rde" "rde_naughty" {
   provider = {{.ProviderSystem}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}naughty"
   resolve            = {{.Resolve}}
@@ -403,6 +413,7 @@ resource "vcd_rde" "rde_naughty" {
 resource "vcd_rde" "rde_tenant" {
   provider = {{.ProviderOrg1}}
 
+  org                = "{{.Org}}"
   rde_type_id        = vcd_rde_type.rde_type.id
   name               = "{{.Name}}tenant-updated" # Updated name
   resolve            = {{.Resolve}}
@@ -480,21 +491,21 @@ func importStateIdRde(vendor, nss, version, name, position string, list bool) re
 func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, nss string) {
 	role, err := vcdClient.VCDClient.Client.GetGlobalRoleByName("Organization Administrator")
 	if err != nil {
-		t.Errorf("could not get Organization Administrator global role: %s", err)
+		t.Fatalf("could not get Organization Administrator global role: %s", err)
 	}
 	rightsBundleName := fmt.Sprintf("%s:%s Entitlement", vendor, nss)
 	rightsBundle, err := vcdClient.VCDClient.Client.GetRightsBundleByName(rightsBundleName)
 	if err != nil {
-		t.Errorf("could not get '%s' rights bundle: %s", rightsBundleName, err)
+		t.Fatalf("could not get '%s' rights bundle: %s", rightsBundleName, err)
 	}
 	err = rightsBundle.PublishAllTenants()
 	if err != nil {
-		t.Errorf("could not publish '%s' rights bundle to all tenants: %s", rightsBundleName, err)
+		t.Fatalf("could not publish '%s' rights bundle to all tenants: %s", rightsBundleName, err)
 	}
 
 	rights, err := rightsBundle.GetRights(nil)
 	if err != nil {
-		t.Errorf("could not get rights from '%s' rights bundle: %s", rightsBundleName, err)
+		t.Fatalf("could not get rights from '%s' rights bundle: %s", rightsBundleName, err)
 	}
 	var rightsToAdd []types.OpenApiReference
 	for _, right := range rights {
@@ -507,7 +518,7 @@ func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, nss strin
 	}
 	err = role.AddRights(rightsToAdd)
 	if err != nil {
-		t.Errorf("could not add rights '%v' to role '%s'", rightsToAdd, role.GlobalRole.Name)
+		t.Fatalf("could not add rights '%v' to role '%s'", rightsToAdd, role.GlobalRole.Name)
 	}
 }
 
@@ -515,13 +526,182 @@ func addRightsToTenantUser(t *testing.T, vcdClient *VCDClient, vendor, nss strin
 func manipulateRde(t *testing.T, vcdClient *VCDClient, rdeId string) {
 	rde, err := vcdClient.GetRdeById(rdeId)
 	if err != nil {
-		t.Errorf("could not get RDE with ID '%s': %s", rdeId, err)
+		t.Fatalf("could not get RDE with ID '%s': %s", rdeId, err)
 	}
 
 	rde.DefinedEntity.Entity["bar"] = "stringValueChanged"
 
 	err = rde.Update(*rde.DefinedEntity)
 	if err != nil {
-		t.Errorf("could not update RDE with ID '%s': %s", rdeId, err)
+		t.Fatalf("could not update RDE with ID '%s': %s", rdeId, err)
 	}
 }
+
+// TestAccVcdRdeMetadata tests metadata CRUD on Runtime Defined Entities.
+func TestAccVcdRdeMetadata(t *testing.T) {
+	skipIfNotSysAdmin(t)
+	testOpenApiMetadataEntryCRUD(t,
+		testAccCheckVcdRdeMetadata, "vcd_rde.test_rde",
+		testAccCheckVcdRdeMetadataDatasource, "data.vcd_rde.test_rde_ds",
+		StringMap{})
+}
+
+const testAccCheckVcdRdeMetadata = `
+data "vcd_rde_type" "rde_type" {
+  vendor  = "vmware"
+  nss     = "tkgcluster"
+  version = "1.0.0"
+}
+resource "vcd_rde" "test_rde" {
+  org          = "System"
+  rde_type_id  = data.vcd_rde_type.rde_type.id
+  name         = "{{.Name}}"
+  input_entity = "{\"foo\":\"bar\"}" # We are just testing metadata so we don't care about entity state
+  resolve      = true
+  {{.Metadata}}
+}
+`
+
+const testAccCheckVcdRdeMetadataDatasource = `
+data "vcd_rde" "test_rde_ds" {
+  org         = "System"
+  rde_type_id = vcd_rde.test_rde.rde_type_id
+  name        = vcd_rde.test_rde.name
+}
+`
+
+func TestAccVcdRdeMetadataIgnore(t *testing.T) {
+	skipIfNotSysAdmin(t)
+
+	getObjectById := func(vcdClient *VCDClient, id string) (openApiMetadataCompatible, error) {
+		rde, err := vcdClient.GetRdeById(id)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve RDE '%s': %s", id, err)
+		}
+		return rde, nil
+	}
+
+	testOpenApiMetadataEntryIgnore(t,
+		testAccCheckVcdRdeMetadata, "vcd_rde.test_rde",
+		testAccCheckVcdRdeMetadataDatasource, "data.vcd_rde.test_rde_ds",
+		getObjectById, StringMap{})
+}
+
+// TestAccVcdRdeTenantMetadata tests that a tenant user cannot read metadata that was created in the RDE with domain = "PROVIDER".
+// It will only be able to read those entries with domain = "TENANT".
+func TestAccVcdRdeTenantMetadata(t *testing.T) {
+	skipIfNotSysAdmin(t)
+	preTestChecks(t)
+	var params = StringMap{
+		"FuncName":        t.Name() + "-Step1",
+		"ProviderVcdOrg1": providerVcdOrg1,
+		"Org":             testConfig.VCD.Org,
+		"Name":            t.Name(),
+		"Metadata":        getOpenApiMetadataTestingHcl(1, 0, 0, 0, 0, 3, 0),
+		"SchemaPath":      getCurrentDir() + "/../test-resources/rde_type.json",
+	}
+	testParamsNotEmpty(t, params)
+
+	step1 := templateFill(testAccCheckVcdRdeTenantMetadata, params)
+	debugPrintf("#[DEBUG] CONFIGURATION Step 1: %s", step1)
+
+	params["FuncName"] = t.Name() + "-Step2"
+	step2 := templateFill(testAccCheckVcdRdeTenantMetadata+testAccCheckVcdRdeMetadataTenantDatasource, params)
+	debugPrintf("#[DEBUG] CONFIGURATION Step 2: %s", step2)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	resourceName := "vcd_rde.test_rde"
+	datasourceName := "data.vcd_rde.test_rde_ds"
+
+	// Required to manipulate rights
+	vcdClient := createTemporaryVCDConnection(true)
+	if vcdClient == nil || vcdClient.VCDClient == nil {
+		t.Errorf("could not get a VCD connection to add rights to tenant user")
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: buildMultipleProviders(),
+		Steps: []resource.TestStep{
+			{
+				Config: step1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
+					resource.TestCheckResourceAttr(resourceName, "metadata_entry.#", "4"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "stringKey1", "stringValue1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "provider1", "provider1", types.OpenApiMetadataStringEntry, "PROVIDER", "", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "provider2", "provider2", types.OpenApiMetadataStringEntry, "PROVIDER", "", "false", "false"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "provider3", "provider3", types.OpenApiMetadataStringEntry, "PROVIDER", "", "false", "false"),
+				),
+			},
+			{
+				Config: step2,
+				PreConfig: func() {
+					// Rights will be deleted with the destruction of the RDE Type.
+					addRightsToTenantUser(t, vcdClient, "vmware", params["Name"].(string))
+					// We need to invalidate existing client cache and start a new one as the rights for the tenant user have changed, hence
+					// we can't reuse existing sessions
+					cachedVCDClients.reset()
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(datasourceName, "name", t.Name()),
+					resource.TestCheckResourceAttr(datasourceName, "metadata_entry.#", "1"),
+					testCheckOpenApiMetadataEntrySetElemNestedAttrs(resourceName, "stringKey1", "stringValue1", types.OpenApiMetadataStringEntry, "TENANT", "", "false", "false"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccCheckVcdRdeTenantMetadata = `
+# skip-binary: This is already tested by TestAccVcdRdeMetadata
+resource "vcd_rde_type" "rde_type" {
+  name    = "{{.Name}}"
+  vendor  = "vmware"
+  nss     = "{{.Name}}"
+  version = "1.0.0"
+  schema  = file("{{.SchemaPath}}")
+}
+
+# This is required because the organization where the RDE is created
+# is lacking of the rights created by the type above.
+# This bundle will be automatically removed by VCD with the destruction of the type.
+resource "vcd_rights_bundle" "rde_type_bundle" {
+  name                   = "{{.Name}} bundle"
+  description            = "{{.Name}} bundle"
+  publish_to_all_tenants = true
+  rights = [
+    "vmware:{{.Name}}: Administrator Full access",
+    "vmware:{{.Name}}: Full Access",
+    "vmware:{{.Name}}: Modify",
+    "vmware:{{.Name}}: View",
+    "vmware:{{.Name}}: Administrator View",
+  ]
+  depends_on = [vcd_rde_type.rde_type]
+}
+
+resource "vcd_rde" "test_rde" {
+  org          = "{{.Org}}"
+  rde_type_id  = vcd_rde_type.rde_type.id
+  name         = "{{.Name}}"
+  input_entity = "{\"foo\":\"bar\"}" # We are just testing metadata so we don't care about entity state
+  resolve      = true
+  {{.Metadata}}
+
+  depends_on = [vcd_rights_bundle.rde_type_bundle] # We need to wait for the rights to be published, otherwise creation will fail
+}
+`
+
+const testAccCheckVcdRdeMetadataTenantDatasource = `
+# skip-binary-test: This requires manual publishing of rights
+data "vcd_rde" "test_rde_ds" {
+  provider = {{.ProviderVcdOrg1}}
+
+  org         = vcd_rde.test_rde.org
+  rde_type_id = vcd_rde.test_rde.rde_type_id
+  name        = vcd_rde.test_rde.name
+}
+`

@@ -15,9 +15,10 @@ import (
 // entityDef is the definition of an entity (to be either deleted or kept)
 // with an optional comment
 type entityDef struct {
-	Type    string `json:"type"`
-	Name    string `json:"name"`
-	Comment string `json:"comment,omitempty"`
+	Type       string `json:"type"`
+	Name       string `json:"name"`
+	Comment    string `json:"comment,omitempty"`
+	NameRegexp *regexp.Regexp
 }
 
 // entityList is a collection of entityDef
@@ -42,6 +43,8 @@ var doNotDelete = entityList{
 	{Type: "vcd_vapp", Name: "Test_EmptyVmVapp1", Comment: "created by test, but to be preserved"},
 	{Type: "vcd_vapp", Name: "Test_EmptyVmVapp2", Comment: "created by test, but to be preserved"},
 	{Type: "vcd_vapp", Name: "Test_EmptyVmVapp3", Comment: "created by test, but to be preserved"},
+	{Type: "vcd_solution_add_on", NameRegexp: regexp.MustCompile(`^vmware.solution-addon-landing-zone`), Comment: "Built-in Solution Add-On"},
+	{Type: "vcd_solution_add_on", NameRegexp: regexp.MustCompile(`^vmware.autoscale`), Comment: "Built-in Solution Add-On"},
 }
 
 // alsoDelete contains a list of entities that should be removed , in addition to the ones
@@ -84,13 +87,24 @@ var alsoDelete = entityList{
 	{Type: "vcd_vapp", Name: "Vapp-AC-2", Comment: "from vcd.TestAccVcdVappAccessControl-update.tf: Vapp-AC-2"},
 	{Type: "vcd_vapp", Name: "Vapp-AC-3", Comment: "from vcd.TestAccVcdVappAccessControl-update.tf: Vapp-AC-3"},
 	{Type: "vcd_org_vdc", Name: "ForInternalDiskTest", Comment: "from vcd.TestAccVcdVmInternalDisk-CreateALl.tf: ForInternalDiskTest"},
+	{Type: "vcd_solution_landing_zone", Name: "urn:vcloud:type:vmware:solutions_organization:1.0.0", Comment: "Solution Landing Zone"},
+	{Type: "vcd_solution_add_on", Name: "urn:vcloud:type:vmware:solutions_add_on:1.0.0", Comment: "Solution Add-On"},
+	{Type: "vcd_solution_add_on_instance", NameRegexp: regexp.MustCompile(`^vmware.ds`), Comment: "Solution Add-On Instance"},
 }
 
 // isTest is a regular expression that tells if an entity needs to be deleted
 var isTest = regexp.MustCompile(`^[Tt]est`)
 
 // alwaysShow lists the resources that will always be shown
-var alwaysShow = []string{"vcd_provider_vdc", "vcd_org", "vcd_catalog", "vcd_org_vdc", "vcd_nsxt_alb_controller"}
+var alwaysShow = []string{
+	"vcd_provider_vdc",
+	"vcd_network_pool",
+	"vcd_org",
+	"vcd_catalog",
+	"vcd_org_vdc",
+	"vcd_nsxt_alb_controller",
+	"vcd_nsxt_segment_profile_template",
+}
 
 func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	if verbose {
@@ -104,6 +118,14 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		err := removeLeftoversNsxtAlb(govcdClient, verbose)
 		if err != nil {
 			return fmt.Errorf("error removing NSX-T ALB leftovers: %s", err)
+		}
+	}
+
+	// Cleanup Solution Landing Zones and Solution Add-Ons
+	if govcdClient.Client.IsSysAdmin {
+		err := removeLeftoversSolutionAddOns(govcdClient, verbose)
+		if err != nil {
+			return fmt.Errorf("error removing Solution Add-On leftovers: %s", err)
 		}
 	}
 
@@ -138,6 +160,29 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			}
 		}
 	}
+	// --------------------------------------------------------------
+	// Network Pool
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		networkPools, err := govcdClient.QueryNetworkPools()
+		if err != nil {
+			return fmt.Errorf("error retrieving network pools: %s", err)
+		}
+		for _, np := range networkPools {
+			networkPool, err := govcdClient.GetNetworkPoolByName(np.Name)
+			if err != nil {
+				return fmt.Errorf("error retrieving network pool '%s': %s", np.Name, err)
+			}
+			tobeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, np.Name, "vcd_network_pool", 0, verbose)
+			if tobeDeleted {
+				fmt.Printf("\t REMOVING network pool %s\n", np.Name)
+				err := networkPool.Delete()
+				if err != nil {
+					return fmt.Errorf("error deleting network pool '%s': %s", np.Name, err)
+				}
+			}
+		}
+	}
 	// traverses the VCD hierarchy, starting at the Org level
 	orgs, err := govcdClient.GetOrgList()
 	if err != nil {
@@ -151,19 +196,40 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		if err != nil {
 			return fmt.Errorf("error retrieving org %s: %s", orgRef.Name, err)
 		}
+		adminOrg, err := govcdClient.GetAdminOrgById("urn:vcloud:org:" + extractUuid(orgRef.HREF))
+		if err != nil {
+			return fmt.Errorf("error retrieving AdminOrg %s: %s", orgRef.Name, err)
+		}
 		toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, orgRef.Name, "vcd_org", 0, verbose)
 		if toBeDeleted {
 			fmt.Printf("\t REMOVING org %s\n", org.Org.Name)
-			adminOrg, err := govcdClient.GetAdminOrgById("urn:vcloud:org:" + extractUuid(orgRef.HREF))
-			if err != nil {
-				return fmt.Errorf("error retrieving org %s: %s", orgRef.Name, err)
-			}
+
 			err = adminOrg.Delete(true, true)
 			if err != nil {
 				return fmt.Errorf("error removing org %s: %s", orgRef.Name, err)
 			}
 			continue
 		}
+
+		// --------------------------------------------------------------
+		// users
+		// --------------------------------------------------------------
+		if adminOrg.AdminOrg.Users != nil {
+			for _, userRef := range adminOrg.AdminOrg.Users.User {
+				toBeDeleted = shouldDeleteEntity(alsoDelete, doNotDelete, userRef.Name, "vcd_org_user", 1, verbose)
+				if toBeDeleted {
+					user, err := adminOrg.GetUserByHref(userRef.HREF)
+					if err != nil {
+						return fmt.Errorf("error retrieving user %s: %s", userRef.Name, err)
+					}
+					err = user.Delete(false)
+					if err != nil {
+						return fmt.Errorf("error deleting user %s: %s", userRef.Name, err)
+					}
+				}
+			}
+		}
+
 		// --------------------------------------------------------------
 		// catalogs
 		// --------------------------------------------------------------
@@ -173,7 +239,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			return fmt.Errorf("error retrieving catalog list: %s", err)
 		}
 		for _, catRec := range catalogs {
-			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, catRec.Name, "catalog", 1, verbose)
+			toBeDeleted = shouldDeleteEntity(alsoDelete, doNotDelete, catRec.Name, "catalog", 1, verbose)
 			catalog, err := org.GetCatalogByHref(catRec.HREF)
 			if err != nil {
 				return fmt.Errorf("error retrieving catalog '%s': %s", catRec.Name, err)
@@ -227,7 +293,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		// --------------------------------------------------------------
 		// VDC Groups
 		// --------------------------------------------------------------
-		adminOrg, err := govcdClient.GetAdminOrgById("urn:vcloud:org:" + extractUuid(orgRef.HREF))
+		adminOrg, err = govcdClient.GetAdminOrgById("urn:vcloud:org:" + extractUuid(orgRef.HREF))
 		if err != nil {
 			return fmt.Errorf("error retrieving org %s: %s", orgRef.Name, err)
 		}
@@ -316,7 +382,33 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 				if toBeDeleted {
 					err = netRef.Delete()
 					if err != nil {
-						return fmt.Errorf("error deleting Org VDC '%s': %s", netRef.OpenApiOrgVdcNetwork.Name, err)
+						return fmt.Errorf("error deleting Org VDC network '%s': %s", netRef.OpenApiOrgVdcNetwork.Name, err)
+					}
+				}
+			}
+
+			// --------------------------------------------------------------
+			// Disks
+			// --------------------------------------------------------------
+			disks, err := vdc.QueryDisks("*")
+			if err != nil {
+				return fmt.Errorf("error retrieving Org VDC disk list: %s", err)
+			}
+			for _, diskRef := range *disks {
+				toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, diskRef.Name, "vcd_independent_disk", 2, verbose)
+				if toBeDeleted {
+
+					disk, err := vdc.GetDiskByHref(diskRef.HREF)
+					if err != nil {
+						return fmt.Errorf("error retrieving Org VDC disk '%s': %s", diskRef.Name, err)
+					}
+					task, err := disk.Delete()
+					if err != nil {
+						return fmt.Errorf("error deleting Org VDC disk '%s': %s", diskRef.Name, err)
+					}
+					err = task.WaitTaskCompletion()
+					if err != nil {
+						return fmt.Errorf("error finishing deletion of Org VDC disk '%s': %s", diskRef.Name, err)
 					}
 				}
 			}
@@ -334,6 +426,25 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 					err = edgeGw.Delete()
 					if err != nil {
 						return fmt.Errorf("error deleting NSX-T Edge Gateway '%s': %s", edgeGw.EdgeGateway.Name, err)
+					}
+					continue
+				}
+				// --------------------------------------------------------------
+				// L2 VPN Tunnels (Only for SysAdmins)
+				// --------------------------------------------------------------
+				if govcdClient.Client.IsSysAdmin {
+					l2VpnTunnels, err := edgeGw.GetAllL2VpnTunnels(nil)
+					if err != nil {
+						return fmt.Errorf("error retrieving L2 VPN Tunnel list: %s", err)
+					}
+					for _, tunnel := range l2VpnTunnels {
+						toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, tunnel.NsxtL2VpnTunnel.Name, "vcd_nsxt_edgegateway_l2_vpn_tunnel", 3, verbose)
+						if toBeDeleted {
+							err := tunnel.Delete()
+							if err != nil {
+								return fmt.Errorf("error deleting L2 VPN Tunnel '%s': %s", tunnel.NsxtL2VpnTunnel.Name, err)
+							}
+						}
 					}
 				}
 			}
@@ -387,7 +498,48 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			}
 		}
 	}
-
+	// --------------------------------------------------------------
+	// API Filters
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		apiFilters, err := govcdClient.GetAllApiFilters(nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving API Filters: %s", err)
+		}
+		for _, af := range apiFilters {
+			name := ""
+			// As API Filters don't have names nor identifiers, we check the URL Pattern to have the test keyword. If that's the case
+			// we trick the "shouldDeleteEntity" function to always consider it for deletion by hardcoding the "Test" name
+			if af.ApiFilter.UrlMatcher != nil && strings.Contains(af.ApiFilter.UrlMatcher.UrlPattern, "test") {
+				name = "Test"
+			}
+			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, name, "vcd_api_filter", 1, verbose)
+			if toBeDeleted {
+				err = deleteApiFilter(af)
+				if err != nil {
+					return fmt.Errorf("error deleting API Filter '%s': %s", af.ApiFilter.ID, err)
+				}
+			}
+		}
+	}
+	// --------------------------------------------------------------
+	// External Endpoints
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		externalEndpoints, err := govcdClient.GetAllExternalEndpoints(nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving External Endpoints: %s", err)
+		}
+		for _, ep := range externalEndpoints {
+			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, ep.ExternalEndpoint.Name, "vcd_external_endpoint", 1, verbose)
+			if toBeDeleted {
+				err = deleteExternalEndpoint(ep)
+				if err != nil {
+					return fmt.Errorf("error deleting External Endpoint '%s': %s", ep.ExternalEndpoint.ID, err)
+				}
+			}
+		}
+	}
 	// --------------------------------------------------------------
 	// External Networks and Provider Gateways (only for SysAdmin)
 	// --------------------------------------------------------------
@@ -431,6 +583,31 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 			err = deleteUIPlugin(uiPlugin)
 			if err != nil {
 				return err
+			}
+		}
+	}
+
+	// --------------------------------------------------------------
+	// Segment Profile Templates can be used in:
+	// * Global Default Segment Profiles (Infrastructure resources -> Segment Profile Templates -> Global Defaults)
+	// * VDC defaults (Cloud Resources -> Organization VDCs -> _any NSX-T vdc_ -> Segment Profile Templates)
+	// * Org VDC Networks (Org VDC networks do not show )
+	// It is best to attempt cleanup at the end, when all the other artifacts that can consume them
+	// are already removed
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		allSpts, err := govcdClient.GetAllSegmentProfileTemplates(nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving all Segment Profile Templates: %s", err)
+		}
+		for _, spt := range allSpts {
+			// This will delete all Segment Profile Templates that match the `isTest` regex.
+			toBeDeleted := shouldDeleteEntity(alsoDelete, doNotDelete, spt.NsxtSegmentProfileTemplate.Name, "vcd_nsxt_segment_profile_template", 0, verbose)
+			if toBeDeleted {
+				err = spt.Delete()
+				if err != nil {
+					return fmt.Errorf("error deleting Segment Profile Template '%s': %s", spt.NsxtSegmentProfileTemplate.Name, err)
+				}
 			}
 		}
 	}
@@ -517,6 +694,89 @@ func removeLeftoversNsxtAlb(govcdClient *govcd.VCDClient, verbose bool) error {
 			err = albController.Delete()
 			if err != nil {
 				return fmt.Errorf("error deleting NSX-T ALB Controller '%s': %s", albController.NsxtAlbController.Name, err)
+			}
+		}
+	}
+	return nil
+}
+
+func removeLeftoversSolutionAddOns(govcdClient *govcd.VCDClient, verbose bool) error {
+	// --------------------------------------------------------------
+	// Solution Add-On Instances
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		allEntries, err := govcdClient.GetAllSolutionAddonInstances(nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving all Solution Add-On Instances: %s", err)
+		}
+
+		for _, addOnInstance := range allEntries {
+			shouldDeleteAddOn := shouldDeleteEntity(alsoDelete, doNotDelete, addOnInstance.DefinedEntity.DefinedEntity.Name, "vcd_solution_add_on_instance", 0, verbose)
+			if shouldDeleteAddOn {
+
+				// Check if Solution Add-On Instance is published and unpublish if it is so
+				if addOnInstance.SolutionAddOnInstance.Scope.AllTenants || len(addOnInstance.SolutionAddOnInstance.Scope.Tenants) > 0 {
+					_, err = addOnInstance.Publishing(nil, false)
+					if err != nil {
+						return fmt.Errorf("error unpublishing Solution Add-On Instance: %s", err)
+					}
+				}
+
+				if addOnInstance != nil && addOnInstance.DefinedEntity.State() != "READY" {
+					err := addOnInstance.DefinedEntity.Resolve()
+					if err != nil {
+						return fmt.Errorf("error resolving Solution Add-On Instance: %s", err)
+					}
+				}
+
+				_, err = addOnInstance.Delete(nil)
+				if err != nil {
+					return fmt.Errorf("error removing Solution Add-On Instance: %s", err)
+				}
+			}
+		}
+	}
+
+	// --------------------------------------------------------------
+	// Solution Add-ons
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		allEntries, err := govcdClient.GetAllSolutionAddons(nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving all Solution Add-Ons: %s", err)
+		}
+
+		for _, addOn := range allEntries {
+			shouldDeleteAddOn := shouldDeleteEntity(alsoDelete, doNotDelete, addOn.DefinedEntity.DefinedEntity.Name, "vcd_solution_add_on", 0, verbose)
+			if shouldDeleteAddOn {
+				if addOn.DefinedEntity.State() != "READY" {
+					err := addOn.DefinedEntity.Resolve()
+					if err != nil {
+						return fmt.Errorf("error resolving Solution Add-on: %s", err)
+					}
+				}
+
+				err = addOn.Delete()
+				if err != nil {
+					return fmt.Errorf("error removing Solution Add-on: %s", err)
+				}
+			}
+		}
+	}
+
+	// --------------------------------------------------------------
+	// Solution Landing Zone (SLZ)
+	// --------------------------------------------------------------
+	if govcdClient.Client.IsSysAdmin {
+		allSlzs, err := govcdClient.GetAllSolutionLandingZones(nil)
+		if err != nil {
+			return fmt.Errorf("error retrieving all SLZs: %s", err)
+		}
+		for _, slz := range allSlzs {
+			_ = shouldDeleteEntity(alsoDelete, doNotDelete, slz.DefinedEntity.DefinedEntity.EntityType, "vcd_solution_landing_zone", 0, verbose)
+			err := slz.Delete()
+			if err != nil {
+				return fmt.Errorf("error removing SLZ: %s", err)
 			}
 		}
 	}
@@ -719,7 +979,12 @@ func shouldDeleteEntity(alsoDelete, doNotDelete entityList, name, entityType str
 // inList shows whether a given entity is included in an entityList
 func inList(list entityList, name, entityType string) bool {
 	for _, element := range list {
+		// Compare by names
 		if element.Name == name && element.Type == entityType {
+			return true
+		}
+		// Compare by possible regexp values
+		if element.NameRegexp != nil && element.NameRegexp.MatchString(name) {
 			return true
 		}
 	}
@@ -822,6 +1087,46 @@ func deleteRdeInterface(di *govcd.DefinedInterface) error {
 	err := di.Delete()
 	if err != nil {
 		return fmt.Errorf("error deleting RDE Interface '%s': %s", di.DefinedInterface.ID, err)
+	}
+	return nil
+}
+
+func deleteExternalEndpoint(ep *govcd.ExternalEndpoint) error {
+	// This prevents an early error if attempting to remove an External Endpoint that contains an illegal
+	// character in the name, which will fail and interrupt the removal process.
+	if strings.Contains(ep.ExternalEndpoint.Name, ".") {
+		fmt.Printf("\t\t CANNOT REMOVE EXTERNAL ENDPOINT %s, contains illegal characters\n", ep.ExternalEndpoint.ID)
+		return nil
+	}
+
+	fmt.Printf("\t\t REMOVING EXTERNAL ENDPOINT %s\n", ep.ExternalEndpoint.ID)
+
+	// Endpoint must be disabled first
+	err := ep.Update(types.ExternalEndpoint{
+		Name:        ep.ExternalEndpoint.Name,
+		ID:          ep.ExternalEndpoint.ID,
+		Version:     ep.ExternalEndpoint.Version,
+		Vendor:      ep.ExternalEndpoint.Vendor,
+		Enabled:     false,
+		Description: ep.ExternalEndpoint.Description,
+		RootUrl:     ep.ExternalEndpoint.RootUrl,
+	})
+	if err != nil {
+		return fmt.Errorf("error disabling External Endpoint '%s': %s", ep.ExternalEndpoint.ID, err)
+	}
+	err = ep.Delete()
+	if err != nil {
+		return fmt.Errorf("error deleting External Endpoint '%s': %s", ep.ExternalEndpoint.ID, err)
+	}
+	return nil
+}
+
+func deleteApiFilter(af *govcd.ApiFilter) error {
+	fmt.Printf("\t\t REMOVING API FILTER %s\n", af.ApiFilter.ID)
+
+	err := af.Delete()
+	if err != nil {
+		return fmt.Errorf("error deleting API Filter '%s': %s", af.ApiFilter.ID, err)
 	}
 	return nil
 }

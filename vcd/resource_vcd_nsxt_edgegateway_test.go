@@ -119,7 +119,7 @@ func ifPossibleAddClusterId(t *testing.T, vcdClient *VCDClient, params StringMap
 	if err != nil {
 		t.Logf("\nWARNING: cluster id fetch failed, test will continue withouth cluster id. Error: %s", err)
 		// adding regular expr param to map to use in Assertion
-		params["EdgeClusterForAssert"] = regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)
+		params["EdgeClusterForAssert"] = getUuidRegex("", "$")
 		params["EdgeClusterId"] = ""
 		params["EdgeClusterKey"] = ""
 		params["equalsChar"] = ""
@@ -682,8 +682,9 @@ resource "vcd_org_vdc" "newVdc" {
 	enable_fast_provisioning   = true
 	delete_force               = true
 	delete_recursive           = true
-	elasticity      		   = true
+	elasticity                 = true
 	include_vm_memory_overhead = true
+	memory_guaranteed          = 1.0
 }
 `
 
@@ -1254,7 +1255,7 @@ resource "vcd_external_network_v2" "ext-net-nsxt-t0" {
 }
 
 resource "vcd_external_network_v2" "segment-backed" {
-  name = "{{.ExternalNetworkName}}"
+  name = "{{.TestName}}-2"
 
   nsxt_network {
     nsxt_manager_id   = data.vcd_nsxt_manager.main.id
@@ -1278,7 +1279,7 @@ resource "vcd_external_network_v2" "segment-backed" {
 }
 
 resource "vcd_external_network_v2" "segment-backed2" {
-  name = "{{.ExternalNetworkName}}-2"
+  name = "{{.TestName}}-3"
 
   nsxt_network {
     nsxt_manager_id   = data.vcd_nsxt_manager.main.id

@@ -26,9 +26,9 @@ resource "vcd_rde_interface" "my_interface" {
 }
 
 resource "vcd_rde_interface_behavior" "my_behavior" {
-  interface_id = vcd_rde_interface.my_interface.id
-  name         = "MyBehavior"
-  description  = "Adds a node to the cluster.\nParameters:\n  clusterId: the ID of the cluster\n  node: The node address\n"
+  rde_interface_id = vcd_rde_interface.my_interface.id
+  name             = "MyBehavior"
+  description      = "Adds a node to the cluster.\nParameters:\n  clusterId: the ID of the cluster\n  node: The node address\n"
   execution = {
     "id" : "MyExecution"
     "type" : "Activity"
@@ -36,8 +36,8 @@ resource "vcd_rde_interface_behavior" "my_behavior" {
 }
 
 resource "vcd_rde_interface_behavior" "my_behavior2" {
-  interface_id = vcd_rde_interface.my_interface.id
-  name         = "MyBehavior2"
+  rde_interface_id = vcd_rde_interface.my_interface.id
+  name             = "MyBehavior2"
   execution = {
     "id" : "MyExecution2"
     "type" : "noop"
@@ -45,8 +45,8 @@ resource "vcd_rde_interface_behavior" "my_behavior2" {
 }
 
 resource "vcd_rde_interface_behavior" "my_behavior3" {
-  interface_id = vcd_rde_interface.my_interface.id
-  name         = "MyBehavior3"
+  rde_interface_id = vcd_rde_interface.my_interface.id
+  name             = "MyBehavior3"
   
   # 'execution_json' allows to use complex structures that are not possible with a regular
   # 'execution' map, like a nested "execution_properties" in a webhook behavior:
@@ -70,7 +70,7 @@ resource "vcd_rde_interface_behavior" "my_behavior3" {
 
 The following arguments are supported:
 
-* `interface_id` - (Required) The ID of the RDE Interface that owns the Behavior
+* `rde_interface_id` - (Required) The ID of the RDE Interface that owns the Behavior
 * `name` - (Required) Name of the Behavior
 * `description` - (Optional) A description specifying the contract of the Behavior
 * `execution_json` - (Optional; *v3.11*) A string representing a valid JSON that specifies the Behavior execution mechanism.

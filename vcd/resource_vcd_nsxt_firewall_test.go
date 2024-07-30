@@ -120,7 +120,7 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.direction", "IN_OUT"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.ip_protocol", "IPV4_IPV6"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.logging", "false"),
-					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.action", "ALLOW"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.action", "REJECT"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.source_ids.#", "1"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.destination_ids.#", "3"),
@@ -167,7 +167,7 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.direction", "IN_OUT"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.ip_protocol", "IPV4_IPV6"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.logging", "false"),
-					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.action", "ALLOW"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.action", "REJECT"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.source_ids.#", "1"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.destination_ids.#", "3"),
@@ -295,7 +295,7 @@ resource "vcd_nsxt_firewall" "testing" {
   }
 
   rule {
-    action               = "ALLOW"
+    action               = "REJECT"
     name                 = "test_rule-3"
     direction            = "IN_OUT"
     ip_protocol          = "IPV4_IPV6"

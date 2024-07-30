@@ -483,3 +483,124 @@ resource "vcd_nsxt_distributed_firewall_rule" "r2" {
   destination_groups_excluded = true
 }
 `
+
+func TestAccVcdDistributedFirewallRuleAboveDefault(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                       testConfig.VCD.Org,
+		"Name":                      t.Name(),
+		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
+		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		"Dfw":                       "true",
+		"DefaultPolicy":             "true",
+		"RemoveDefaultFirewallRule": "false", // will not remove default firewall rule in VDC Group
+		"TestName":                  t.Name(),
+
+		"NsxtManager":     testConfig.Nsxt.Manager,
+		"ExternalNetwork": testConfig.Nsxt.ExternalNetwork,
+
+		"Tags": "vdcGroup gateway nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "-newVdc"
+	configTextPre := templateFill(testAccVcdVdcGroupNew, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configTextPre)
+
+	params["FuncName"] = t.Name() + "-step2"
+	configText2 := templateFill(dfwRuleStep2AboveDefault, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				// Setup prerequisites
+				Config: configTextPre,
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_nsxt_distributed_firewall_rule.r1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_distributed_firewall_rule.r2", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_distributed_firewall_rule.r3", "id"),
+
+					// Check that 'vcd_nsxt_distributed_firewall_rule' resources returns rules orderect correctly
+					resource.TestCheckResourceAttrPair("vcd_nsxt_distributed_firewall_rule.r3", "id", "data.vcd_nsxt_distributed_firewall.allrules", "rule.0.id"),
+					resource.TestCheckResourceAttrPair("data.vcd_nsxt_distributed_firewall_rule.defaultdroprule", "id", "data.vcd_nsxt_distributed_firewall.allrules", "rule.1.id"),
+					resource.TestCheckResourceAttrPair("vcd_nsxt_distributed_firewall_rule.r2", "id", "data.vcd_nsxt_distributed_firewall.allrules", "rule.2.id"),
+					resource.TestCheckResourceAttrPair("vcd_nsxt_distributed_firewall_rule.r1", "id", "data.vcd_nsxt_distributed_firewall.allrules", "rule.3.id"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const dfwRuleStep2AboveDefault = constDfwPrereqs + `
+data "vcd_nsxt_distributed_firewall_rule" "defaultdroprule" {
+  org          = "{{.Org}}"
+  vdc_group_id = vcd_vdc_group.test1.id
+
+  name = "Default_VdcGroup_{{.TestName}}"
+}
+
+resource "vcd_nsxt_distributed_firewall_rule" "r1" {
+  org          = "{{.Org}}"
+  vdc_group_id = vcd_vdc_group.test1.id
+
+  name        = "rule1"
+  action      = "ALLOW"
+  description = "description"
+
+  source_ids           = [vcd_nsxt_ip_set.set1.id, vcd_nsxt_ip_set.set2.id]
+  destination_ids      = [vcd_nsxt_security_group.g1-empty.id, vcd_nsxt_security_group.g2.id]
+  app_port_profile_ids = [vcd_nsxt_app_port_profile.p1.id, data.vcd_nsxt_app_port_profile.WINS.id, data.vcd_nsxt_app_port_profile.FTP.id]
+}
+
+resource "vcd_nsxt_distributed_firewall_rule" "r2" {
+  org          = "{{.Org}}"
+  vdc_group_id = vcd_vdc_group.test1.id
+
+  above_rule_id = vcd_nsxt_distributed_firewall_rule.r1.id # Order management element
+  name        = "rule2"
+  action      = "DROP"
+  ip_protocol = "IPV4"
+}
+
+resource "vcd_nsxt_distributed_firewall_rule" "r3" {
+  org          = "{{.Org}}"
+  vdc_group_id = vcd_vdc_group.test1.id
+
+  above_rule_id = data.vcd_nsxt_distributed_firewall_rule.defaultdroprule.id
+
+  name      = "rule3"
+  action    = "DROP"
+  enabled   = false
+  logging   = true
+  direction = "IN_OUT"
+
+  source_ids                  = [vcd_nsxt_ip_set.set1.id, vcd_nsxt_ip_set.set2.id]
+  network_context_profile_ids = [
+    data.vcd_nsxt_network_context_profile.cp1.id,
+    data.vcd_nsxt_network_context_profile.cp2.id,
+    data.vcd_nsxt_network_context_profile.cp3.id
+  ]
+}
+
+data "vcd_nsxt_distributed_firewall" "allrules" {
+  org          = "{{.Org}}"
+  vdc_group_id = vcd_vdc_group.test1.id
+
+  depends_on = [vcd_nsxt_distributed_firewall_rule.r1, vcd_nsxt_distributed_firewall_rule.r2, vcd_nsxt_distributed_firewall_rule.r3]
+}
+`

@@ -1,0 +1,71 @@
+# Change configuration to your needs and rename to 'terraform.tfvars'
+
+# ------------------------------------------------
+# Provider config
+# ------------------------------------------------
+vcd_url                 = "https://vcd.my-awesome-corp.com"
+insecure_login          = "true"
+
+# This user should have the "Kubernetes Cluster Author" role.
+cluster_author_user     = "cluster_author"
+cluster_author_password = "change-me"
+
+# ------------------------------------------------
+# Cluster author config
+# ------------------------------------------------
+cluster_author_token_file = "cse_cluster_author_api_token.json"
+
+# ------------------------------------------------
+# Kubernetes cluster configuration
+# ------------------------------------------------
+# Name must contain only lowercase alphanumeric characters or '-', start with an alphabetic character, end with an alphanumeric,
+# and contain at most 31 characters.
+k8s_cluster_name = "example1"
+
+# These specify the place where the cluster will be created. They were created
+# during the CSE installation phase, so they should exist already.
+cluster_organization   = "tenant_org"        # An existing Organization, created during CSE installation
+cluster_vdc            = "tenant_vdc"        # An existing VDC, created during CSE installation
+cluster_routed_network = "tenant_net_routed" # An existing routed network, created during CSE installation
+ssh_public_key         = ""                  # This SSH public Key allows to login into the control plane nodes, for troubleshooting purposes.
+
+# Specifies the number of VMs that the TKGm cluster will have.
+control_plane_machine_count = "3" # MUST be an odd number and higher than 0
+worker_machine_count        = "1" # MUST higher than 0
+
+# Control plane dimensioning
+control_plane_sizing_policy    = "TKG small" # An existing VM Sizing Policy, created during CSE installation, for control plane nodes
+control_plane_placement_policy = "\"\""      # An existing VM Placement Policy for control plane nodes
+control_plane_storage_profile  = "*"         # An existing Storage Profile for control plane nodes
+
+# Worker dimensioning
+worker_sizing_policy    = "TKG small" # An existing VM Sizing Policy, created during CSE installation, for worker nodes
+worker_placement_policy = "\"\""      # An existing VM Placement Policy for worker nodes
+worker_storage_profile  = "*"         # An existing Storage Profile for worker nodes
+
+# Storage and TKGm OVA
+disk_size     = "20Gi"                                                                     # Specifies the disk size for every node in the cluster
+tkgm_catalog  = "tkgm_catalog"                                                             # An existing catalog where TKGm OVAs are
+tkgm_ova_name = "ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc" # An existing TKGm OVA
+
+# Internal networking
+pod_cidr     = "100.96.0.0/11" # Specifies the IPs that the Kubernetes Pods will use
+service_cidr = "100.64.0.0/13" # Specifies the IPs that the Kubernetes Services will use
+
+# Extra required information. Please read the guide at
+# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_cluster_management
+# to know how to obtain these required parameters.
+tkr_version = "v1.25.7---vmware.2-tkg.1"
+tkg_version = "v2.2.0"
+
+# Configures a default Storage class for the TKGm cluster. If you don't want this,
+# you can remove the variables below. Don't forget to delete them from 3.9-cluster-creation.tf as well,
+# and the 'defaultStorageClassOptions' block from ../entities/tkgmcluster-template.json
+default_storage_class_filesystem            = "ext4"
+default_storage_class_name                  = "default-storage-class-1"
+default_storage_class_storage_profile       = "*"
+default_storage_class_delete_reclaim_policy = "true"
+
+# If auto_repair_on_errors = true, CSE attempts to recreate the clusters in error state.
+# If false, it leaves the cluster in an error state for manual troubleshooting.
+auto_repair_on_errors = true

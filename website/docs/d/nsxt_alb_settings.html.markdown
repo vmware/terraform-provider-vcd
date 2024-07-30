@@ -3,14 +3,14 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_alb_settings"
 sidebar_current: "docs-vcd-datasource-nsxt-alb-settings"
 description: |-
-  Provides a data source to read NSX-T ALB General Settings for particular NSX-T Edge Gateway.
+  Provides a data source to read ALB General Settings for particular NSX-T Edge Gateway.
 ---
 
 # vcd\_nsxt\_alb\_settings
 
 Supported in provider *v3.5+* and VCD 10.2+ with NSX-T and ALB.
 
-Provides a data source to read NSX-T ALB General Settings for particular NSX-T Edge Gateway.
+Provides a data source to read ALB General Settings for particular NSX-T Edge Gateway.
 
 ## Example Usage
 

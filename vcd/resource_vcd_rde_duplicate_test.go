@@ -19,6 +19,7 @@ func TestAccVcdRdeDuplicate(t *testing.T) {
 		"Version":    "1.0.0",
 		"Vendor":     "vendor",
 		"Name":       t.Name(),
+		"Org":        testConfig.VCD.Org,
 		"SchemaPath": getCurrentDir() + "/../test-resources/rde_type.json",
 		"EntityPath": getCurrentDir() + "/../test-resources/rde_instance.json",
 	}
@@ -42,6 +43,14 @@ func TestAccVcdRdeDuplicate(t *testing.T) {
 	rde3Tenant := "vcd_rde.rde3_tenant"
 	fetchedSystem := "data.vcd_rde.fetch_rde_system"
 
+	fieldsNotEqual := []string{"id", "org", "org_id"}
+	vcdClient := createSystemTemporaryVCDConnection()
+	if vcdClient.VCDClient.Client.APIVCDMaxVersionIs(">= 39.0") {
+		// Since API >= 39.0, whenever a RDE is created in a tenant by the System Administrator,
+		// the owner is not "administrator" anymore, but "system".
+		fieldsNotEqual = []string{"id", "org", "org_id", "owner_name", "owner_user_id"}
+	}
+
 	// We will cache some RDE identifiers, so we can use them later
 	cachedIds := make([]testCachedFieldValue, 2)
 
@@ -55,7 +64,7 @@ func TestAccVcdRdeDuplicate(t *testing.T) {
 				Config: step1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resourceFieldsEqual(rde2Tenant, rde3Tenant, []string{"id"}),
-					resourceFieldsEqual(rde1System, rde3Tenant, []string{"id", "org", "org_id"}),
+					resourceFieldsEqual(rde1System, rde3Tenant, fieldsNotEqual),
 					// We cache some IDs to use it on later steps
 					cachedIds[0].cacheTestResourceFieldValue(rde2Tenant, "id"),
 					cachedIds[1].cacheTestResourceFieldValue(rde3Tenant, "id"),
@@ -133,6 +142,7 @@ resource "vcd_rde" "rde1_system" {
 # This one depends on the rights bundle as it will be
 # created in the tenant that is configured in the provider block
 resource "vcd_rde" "rde2_tenant" {
+  org          = "{{.Org}}"
   rde_type_id  = vcd_rde_type.rde_type.id
   name         = "{{.Name}}"
   resolve      = true
@@ -142,6 +152,7 @@ resource "vcd_rde" "rde2_tenant" {
 }
 
 resource "vcd_rde" "rde3_tenant" {
+  org          = "{{.Org}}"
   rde_type_id  = vcd_rde.rde2_tenant.rde_type_id
   name         = vcd_rde.rde2_tenant.name
   resolve      = vcd_rde.rde2_tenant.resolve
@@ -161,6 +172,7 @@ data "vcd_rde" "fetch_rde_system" {
 const testAccVcdRdeDuplicateStep3 = testAccVcdRdeDuplicateStep2 + `
 # skip-binary-test: Using a data source that references a resource created in same config
 data "vcd_rde" "fetch_rde_tenant" {
+  org         = "{{.Org}}"
   rde_type_id = vcd_rde.rde2_tenant.rde_type_id
   name        = vcd_rde.rde2_tenant.name
 }

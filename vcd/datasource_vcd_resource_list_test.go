@@ -18,7 +18,7 @@ type listDef struct {
 	resourceType string
 	parent       string
 	nameRegex    string
-	knownItem    string
+	knownItem    string // Name of the item we know exists. If we want any item, we use '*'
 	unwantedItem string
 	vdc          string
 	listMode     string
@@ -40,6 +40,26 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		{name: "user", resourceType: "vcd_org_user"},
 	}
 
+	if usingSysAdmin() {
+		lists = append(lists, listDef{name: "admin-vdc-template", resourceType: "vcd_org_vdc_template"})
+	}
+
+	knownNetworkPool1 := testConfig.VCD.ProviderVdc.NetworkPool
+	if knownNetworkPool1 != "" && usingSysAdmin() {
+		lists = append(lists, listDef{name: "network_pool", resourceType: "vcd_network_pool", knownItem: knownNetworkPool1})
+	}
+	knownNetworkPool2 := testConfig.VCD.NsxtProviderVdc.NetworkPool
+	if knownNetworkPool2 != "" && usingSysAdmin() {
+		lists = append(lists, listDef{name: "nsxt_network_pool", resourceType: "vcd_network_pool", knownItem: knownNetworkPool2})
+	}
+	knownVcenter := testConfig.Networking.Vcenter
+	if knownVcenter != "" && usingSysAdmin() {
+		lists = append(lists, listDef{name: "port_groups", resourceType: "vcd_importable_port_group", parent: knownVcenter, knownItem: "*"})
+		lists = append(lists, listDef{name: "distributed_switchs", resourceType: "vcd_distributed_switch", parent: knownVcenter, knownItem: "*"})
+	}
+	if testConfig.Nsxt.Manager != "" && usingSysAdmin() {
+		lists = append(lists, listDef{name: "transport_zones", resourceType: "vcd_nsxt_transport_zone", parent: testConfig.Nsxt.Manager})
+	}
 	if testConfig.VCD.Org != "" {
 		lists = append(lists, listDef{name: "orgs", resourceType: "vcd_org", knownItem: testConfig.VCD.Org})
 
@@ -66,6 +86,7 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		} else {
 			fmt.Print("`Nsxt.Vdc` value isn't configured, datasource test using this will be skipped\n")
 		}
+		lists = append(lists, listDef{name: "vdc-template", resourceType: "vcd_org_vdc_template", parent: testConfig.VCD.Org})
 	} else {
 		fmt.Print("`VCD.Org` value isn't configured, datasource test will be skipped\n")
 	}
@@ -77,12 +98,12 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 	} else {
 		fmt.Print("`Networking.ExternalNetwork` value isn't configured, datasource test using this will be skipped\n")
 	}
-	if testConfig.VCD.ProviderVdc.Name != "" {
+	if testConfig.VCD.ProviderVdc.Name != "" && usingSysAdmin() {
 		lists = append(lists, listDef{name: "provider-vdc", resourceType: "vcd_provider_vdc", knownItem: testConfig.VCD.ProviderVdc.Name})
 	} else {
 		fmt.Print("`VCD.ProviderVdc` value isn't configured, datasource test using this will be skipped\n")
 	}
-	if testConfig.VCD.NsxtProviderVdc.Name != "" {
+	if testConfig.VCD.NsxtProviderVdc.Name != "" && usingSysAdmin() {
 		lists = append(lists, listDef{name: "nsxt-provider-vdc", resourceType: "vcd_provider_vdc", knownItem: testConfig.VCD.NsxtProviderVdc.Name})
 	} else {
 		fmt.Print("`VCD.NsxtProviderVdc` value isn't configured, datasource test using this will be skipped\n")
@@ -127,13 +148,58 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		if testConfig.Networking.EdgeGateway != "" {
 			// entities belonging to a VDC don't require an explicit parent, as it is given from the VDC passed in the provider
 			// For each resource, we test with and without and explicit parent
-			lists = append(lists, listDef{name: "edge_gateway-parent", resourceType: "vcd_edgegateway", parent: testConfig.VCD.Vdc, knownItem: testConfig.Networking.EdgeGateway, vdc: testConfig.VCD.Vdc})
+			lists = append(lists, listDef{
+				name:         "edge_gateway-parent-vdc",
+				resourceType: "vcd_edgegateway",
+				parent:       testConfig.VCD.Vdc,
+				knownItem:    testConfig.Networking.EdgeGateway,
+				vdc:          testConfig.VCD.Vdc,
+			})
+			lists = append(lists, listDef{
+				name:         "edge_gateway-parent",
+				resourceType: "vcd_edgegateway",
+				parent:       testConfig.VCD.Vdc,
+				knownItem:    testConfig.Networking.EdgeGateway,
+			})
+			lists = append(lists, listDef{
+				name:         "edge_gateway-vdc",
+				resourceType: "vcd_edgegateway",
+				knownItem:    testConfig.Networking.EdgeGateway,
+				vdc:          testConfig.VCD.Vdc,
+			})
 		} else {
 			fmt.Print("`Networking.EdgeGateway` value isn't configured, datasource test using this will be skipped\n")
 		}
 	} else {
 		fmt.Print("`" +
 			"VCD.Vdc` value isn't configured, datasource test using this will be skipped\n")
+	}
+
+	if testConfig.Nsxt.VdcGroup != "" {
+		// Retrieves the list of VDC groups, filling the "parent" field
+		lists = append(lists, listDef{
+			name:         "VdcGroupAsParent",
+			resourceType: "vcd_vdc_group",
+			parent:       testConfig.VCD.Org,
+			knownItem:    testConfig.Nsxt.VdcGroup,
+		})
+
+		// Retrieves the list of VDC groups, filling only the "org" field through the provider
+		lists = append(lists, listDef{
+			name:         "VdcGroupAsOrg",
+			resourceType: "vcd_vdc_group",
+			knownItem:    testConfig.Nsxt.VdcGroup,
+		})
+
+		// Retrieves the list of NSX-T edge gateway belonging to a VDC group
+		if testConfig.Nsxt.VdcGroupEdgeGateway != "" {
+			lists = append(lists, listDef{
+				name:         "VdcGroupEdge",
+				resourceType: "vcd_nsxt_edgegateway",
+				parent:       testConfig.Nsxt.VdcGroup,
+				knownItem:    testConfig.Nsxt.VdcGroupEdgeGateway,
+			})
+		}
 	}
 
 	if testConfig.Nsxt.Vdc != "" {
@@ -148,6 +214,26 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		lists = append(lists, listDef{name: "vapp-parent", resourceType: "vcd_vapp", parent: testConfig.Nsxt.Vdc})
 
 		lists = append(lists, listDef{name: "vapp", resourceType: "vcd_vapp"})
+
+		lists = append(lists, listDef{
+			name:         "vdc-nsxt-edge-parent",
+			resourceType: "vcd_nsxt_edgegateway",
+			parent:       testConfig.Nsxt.Vdc, // no explicit VDC given
+			knownItem:    testConfig.Nsxt.EdgeGateway,
+		})
+		lists = append(lists, listDef{
+			name:         "vdc-nsxt-edge-vdc",
+			resourceType: "vcd_nsxt_edgegateway",
+			vdc:          testConfig.Nsxt.Vdc, // explicit VDC. No parent given
+			knownItem:    testConfig.Nsxt.EdgeGateway,
+		})
+		lists = append(lists, listDef{
+			name:         "vdc-nsxt-edge-parent-vdc",
+			resourceType: "vcd_nsxt_edgegateway",
+			vdc:          testConfig.VCD.Vdc, // this is the wrong VDC. Parent field gets precedence
+			parent:       testConfig.Nsxt.Vdc,
+			knownItem:    testConfig.Nsxt.EdgeGateway,
+		})
 	} else {
 		fmt.Print("`Nsxt.Vdc` value isn't configured, datasource test using this will be skipped\n")
 	}
@@ -174,29 +260,6 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 	lists = append(lists, listDef{name: "library_certificate", resourceType: "vcd_library_certificate"})
 
 	lists = append(lists,
-		// List with import
-		// Looking for TestVm inside TestVapp
-		// Expect to create an import file
-		listDef{
-			name:         "testVm",
-			resourceType: "vcd_vapp_vm",
-			parent:       "TestVapp",
-			knownItem:    "TestVm",
-			vdc:          testConfig.VCD.Vdc,
-			listMode:     "import",
-			importFile:   true,
-		},
-		// List with import
-		// Looking for standalone VM ldap-server
-		// Expect to create an import file
-		listDef{
-			name:         "ldap-server",
-			resourceType: "vcd_vm",
-			knownItem:    "ldap-server",
-			vdc:          testConfig.Nsxt.Vdc,
-			listMode:     "import",
-			importFile:   true,
-		},
 		// Filtering for regexp: "vApp"
 		// looking for "Catalog Author"
 		// Expect NOT to find it
@@ -228,6 +291,35 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 			excludeItem:  false,
 		},
 	)
+
+	if !vcdShortTest { // Do not build files for binary tests
+		lists = append(lists,
+			// List with import
+			// Looking for TestVm inside TestVapp
+			// Expect to create an import file
+			listDef{
+				name:         "testVm",
+				resourceType: "vcd_vapp_vm",
+				parent:       "TestVapp",
+				knownItem:    "TestVm",
+				vdc:          testConfig.VCD.Vdc,
+				listMode:     "import",
+				importFile:   true,
+			},
+			// List with import
+			// Looking for standalone VM ldap-server
+			// Expect to create an import file
+			listDef{
+				name:         "ldap-server",
+				resourceType: "vcd_vm",
+				knownItem:    "ldap-server",
+				vdc:          testConfig.Nsxt.Vdc,
+				listMode:     "import",
+				importFile:   true,
+			},
+		)
+	}
+
 	for _, def := range lists {
 		t.Run(def.name+"-"+def.resourceType, func(t *testing.T) { runResourceInfoTest(def, t) })
 	}
@@ -323,51 +415,6 @@ func checkImportFile(fileName string, importing bool) resource.TestCheckFunc {
 			return nil
 		}
 		return fmt.Errorf("file %s not found", fileName)
-	}
-}
-
-func checkListForKnownItem(resName, target, unwanted string, isWanted, importing bool) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		if target == "" {
-			return nil
-		}
-
-		resourcePath := "data.vcd_resource_list." + resName
-
-		res, ok := s.RootModule().Resources[resourcePath]
-		if !ok {
-			return fmt.Errorf("resource %s not found", resName)
-		}
-
-		var list = make([]string, 0)
-
-		for key, value := range res.Primary.Attributes {
-			if strings.HasPrefix(key, "list.") {
-				list = append(list, value)
-			}
-		}
-
-		for _, item := range list {
-			if unwanted != "" && item == unwanted {
-				return fmt.Errorf("found unwanted item '%s'", unwanted)
-			}
-			found := item == target
-			if importing {
-				found = strings.Contains(item, target)
-			}
-			if found {
-				if isWanted {
-					return nil
-				} else {
-					return fmt.Errorf("item '%s' found in '%s'", target, resName)
-				}
-			}
-		}
-		if isWanted {
-			return fmt.Errorf("item '%s' not found in list %s", target, resourcePath)
-		} else {
-			return nil
-		}
 	}
 }
 

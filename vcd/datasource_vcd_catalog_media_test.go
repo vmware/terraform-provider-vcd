@@ -4,7 +4,9 @@ package vcd
 
 import (
 	"fmt"
+	"os"
 	"regexp"
+	"runtime"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -21,6 +23,11 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 	var TestAccVcdDataSourceMedia = "TestAccVcdCatalogMediaBasic"
 	var TestAccVcdDataSourceMediaDescription = "TestAccVcdCatalogMediaBasicDescription"
 
+	_, sourceFile, _, _ := runtime.Caller(0)
+	if !fileExists(sourceFile) {
+		t.Skip("source file for this test was not found")
+	}
+	tempFile := "source_file.txt"
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
 		"Catalog":          testConfig.VCD.Catalog.Name,
@@ -30,8 +37,12 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 		"UploadProgress":   testConfig.Ova.UploadProgress,
 		"Tags":             "catalog",
 		"CatalogMediaName": TestAccVcdDataSourceMedia,
+		"MediaFileName":    "TestMediaFile",
+		"MediaFilePath":    sourceFile,
+		"DownloadToFile":   tempFile,
 		"Description":      TestAccVcdDataSourceMediaDescription,
 		"MediaPath":        testConfig.Media.MediaPath,
+		"FuncName":         t.Name(),
 	}
 	testParamsNotEmpty(t, params)
 
@@ -43,6 +54,14 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
+	defer func() {
+		if fileExists(tempFile) {
+			err := os.Remove(tempFile)
+			if err != nil {
+				fmt.Printf("error deleting file '%s': %s", tempFile, err)
+			}
+		}
+	}()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { preRunChecks(t) },
 		ProviderFactories: testAccProviders,
@@ -56,12 +75,35 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 					resource.TestMatchOutput("creation_date", regexp.MustCompile(`^\d{4}-\d{2}-\d{2}.*`)),
 					resource.TestCheckOutput("status", "RESOLVED"),
 					resource.TestMatchOutput("storage_profile_name", regexp.MustCompile(`^\S+`)),
+					resource.TestCheckResourceAttr("vcd_catalog_media.media_file", "name", "TestMediaFile"),
 					testCheckMediaNonStringOutputs(),
 				),
+			},
+			{
+				Config: configText,
+				Check:  checkFileContentsAreEqual(sourceFile, tempFile),
 			},
 		},
 	})
 	postTestChecks(t)
+}
+
+func checkFileContentsAreEqual(fileName1, fileName2 string) resource.TestCheckFunc {
+
+	return func(s *terraform.State) error {
+		contents1, err := os.ReadFile(fileName1) // #nosec G304 -- file name under control used for testing
+		if err != nil {
+			return err
+		}
+		contents2, err := os.ReadFile(fileName2) // #nosec G304 -- file name under control used for testing
+		if err != nil {
+			return err
+		}
+		if string(contents1) == string(contents2) {
+			return nil
+		}
+		return fmt.Errorf("file %s and %s have different content", fileName1, fileName2)
+	}
 }
 
 func catalogMediaDestroyed(catalog, mediaName string) resource.TestCheckFunc {
@@ -84,15 +126,21 @@ func catalogMediaDestroyed(catalog, mediaName string) resource.TestCheckFunc {
 }
 
 const testAccCheckVcdCatalogMediaDS = `
+
+data "vcd_catalog" "mycat" {
+  org  = "{{.Org}}"
+  name = "{{.Catalog}}"
+}
+
 resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
-  org     = "{{.Org}}"
-  catalog = "{{.Catalog}}"
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.mycat.id
 
   name                 = "{{.CatalogMediaName}}"
   description          = "{{.Description}}"
   media_path           = "{{.MediaPath}}"
   upload_piece_size    = {{.UploadPieceSize}}
-  show_upload_progress = "{{.UploadProgress}}"
+  show_upload_progress = {{.UploadProgress}}
 
   metadata = {
     catalogMedia_metadata = "catalogMedia Metadata"
@@ -100,11 +148,33 @@ resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
   }
 }
 
+# this resource uploads the source file for the current test as a media item
+resource "vcd_catalog_media"  "media_file" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.mycat.id
+
+  name                 = "{{.MediaFileName}}"
+  description          = "{{.Description}}"
+  media_path           = "{{.MediaFilePath}}"
+  upload_piece_size    = {{.UploadPieceSize}}
+  show_upload_progress = {{.UploadProgress}}
+  upload_any_file      = true
+}
+
 data "vcd_catalog_media" "{{.NewCatalogMedia}}" {
   org        = "{{.Org}}"
-  catalog    = "{{.Catalog}}"
+  catalog_id = data.vcd_catalog.mycat.id
   name       = vcd_catalog_media.{{.CatalogMediaName}}.name
   depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
+}
+
+# This data source downloads the contents of the media item to a local file
+data "vcd_catalog_media" "media_file_ds" {
+  org        = "{{.Org}}"
+  catalog_id = data.vcd_catalog.mycat.id
+  name       = vcd_catalog_media.media_file.name
+
+  download_to_file = "{{.DownloadToFile}}"
 }
 
 output "size" {

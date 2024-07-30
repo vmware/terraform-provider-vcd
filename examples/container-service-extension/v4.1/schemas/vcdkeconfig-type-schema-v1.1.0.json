@@ -1,0 +1,323 @@
+{
+    "type": "object",
+    "properties": {
+        "profiles": {
+            "type": "array",
+            "items": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string"
+                        },
+                        "active": {
+                            "type": "boolean"
+                        },
+                        "vcdKeInstances": {
+                            "type": "array",
+                            "items": [
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "version": {
+                                            "type": "string",
+                                            "default": "4.1.0"
+                                        },
+                                        "vcdKeInstanceId": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        },
+                        "serverConfig": {
+                            "type": "object",
+                            "properties": {
+                                "rdePollIntervalInMin": {
+                                    "type": "integer",
+                                    "description": "Server polls and processes the RDEs for every #rdePollIntervalInMin minutes."
+                                },
+                                "heartbeatWatcherTimeoutInMin": {
+                                    "type": "integer",
+                                    "description": "The watcher thread kills itself if it does not receive heartbeat with in #heartbeatWatcherTimeoutInMin from the associated worker thread. Eventually worker also dies off as it can no longer post to the already closed heartbeat channel."
+                                },
+                                "staleHeartbeatIntervalInMin": {
+                                    "type": "integer",
+                                    "description": "New worker waits for about #staleHeartbeatIntervalinMin before it calls the current heartbeat stale and picks up the RDE. The value must always be greater than #heartbeatWatcherTimeoutInmin"
+                                }
+                            }
+                        },
+                        "vcdConfig": {
+                            "type": "object",
+                            "properties": {
+                                "sysLogger": {
+                                    "type": "object",
+                                    "properties": {
+                                        "host": {
+                                            "type": "string"
+                                        },
+                                        "port": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "host",
+                                        "port"
+                                    ]
+                                }
+                            }
+                        },
+                        "githubConfig": {
+                            "type": "object",
+                            "properties": {
+                                "githubPersonalAccessToken": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "bootstrapClusterConfig": {
+                            "type": "object",
+                            "properties": {
+                                "sizingPolicy": {
+                                    "type": "string"
+                                },
+                                "dockerVersion": {
+                                    "type": "string"
+                                },
+                                "kindVersion": {
+                                    "type": "string",
+                                    "default": "v0.19.0"
+                                },
+                                "kindestNodeVersion": {
+                                    "type": "string",
+                                    "default": "v1.27.1",
+                                    "description": "Image tag of kindest/node container, used by KinD to deploy a cluster"
+                                },
+                                "kubectlVersion": {
+                                    "type": "string"
+                                },
+                                "clusterctl": {
+                                    "type": "object",
+                                    "properties": {
+                                        "version": {
+                                            "type": "string",
+                                            "default": "v1.4.0"
+                                        },
+                                        "clusterctlyaml": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "capiEcosystem": {
+                                    "type": "object",
+                                    "properties": {
+                                        "coreCapiVersion": {
+                                            "type": "string",
+                                            "default": "v1.4.0"
+                                        },
+                                        "controlPlaneProvider": {
+                                            "type": "object",
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "string",
+                                                    "default": "v1.4.0"
+                                                }
+                                            }
+                                        },
+                                        "bootstrapProvider": {
+                                            "type": "object",
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "string",
+                                                    "default": "v1.4.0"
+                                                }
+                                            }
+                                        },
+                                        "infraProvider": {
+                                            "type": "object",
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "string",
+                                                    "default": "v1.1.0"
+                                                },
+                                                "capvcdRde": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "vendor": {
+                                                            "type": "string"
+                                                        },
+                                                        "nss": {
+                                                            "type": "string"
+                                                        },
+                                                        "version": {
+                                                            "type": "string"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        "certManagerVersion": {
+                                            "type": "string",
+                                            "default": "v1.11.1"
+                                        }
+                                    }
+                                },
+                                "proxyConfig": {
+                                    "type": "object",
+                                    "properties": {
+                                        "httpProxy": {
+                                            "type": "string"
+                                        },
+                                        "httpsProxy": {
+                                            "type": "string"
+                                        },
+                                        "noProxy": {
+                                            "type": "string"
+                                        }
+                                    }
+                                },
+                                "certificateAuthorities": {
+                                    "type": "array",
+                                    "description": "Certificates to be used as the certificate authority in the bootstrap (ephemeral) VM",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "K8Config": {
+                            "type": "object",
+                            "properties": {
+                                "csi": {
+                                    "type": "array",
+                                    "items": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "string",
+                                                    "default": "1.4.0"
+                                                }
+                                            },
+                                            "required": [
+                                                "name",
+                                                "version"
+                                            ]
+                                        }
+                                    ]
+                                },
+                                "cpi": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "version": {
+                                            "type": "string",
+                                            "default": "1.4.0"
+                                        }
+                                    },
+                                    "required": [
+                                        "name",
+                                        "version"
+                                    ]
+                                },
+                                "cni": {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "version": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "name",
+                                        "version"
+                                    ]
+                                },
+                                "rdeProjectorVersion": {
+                                    "type": "string",
+                                    "default": "0.6.0"
+                                },
+                                "mhc": {
+                                    "type": "object",
+                                    "description": "Parameters to configure MachineHealthCheck",
+                                    "properties": {
+                                        "maxUnhealthyNodes": {
+                                            "type": "number",
+                                            "default": 100,
+                                            "minimum": 1,
+                                            "maximum": 100,
+                                            "description": "Dictates whether MHC should remediate the machine if the given percentage of nodes in the cluster are down"
+                                        },
+                                        "nodeStartupTimeout": {
+                                            "type": "string",
+                                            "default": "900s",
+                                            "description": "Determines how long a MachineHealthCheck should wait for a Node to join the cluster, before considering a Machine unhealthy."
+                                        },
+                                        "nodeNotReadyTimeout": {
+                                            "type": "string",
+                                            "default": "300s",
+                                            "description": "Determines how long MachineHealthCheck should wait for before remediating Machines if the Node Ready condition is False"
+                                        },
+                                        "nodeUnknownTimeout": {
+                                            "type": "string",
+                                            "default": "300s",
+                                            "description": "Determines how long MachineHealthCheck should wait for before remediating machines if the Node Ready condition is Unknown"
+                                        }
+                                    },
+                                    "required": [
+                                        "maxUnhealthyNodes",
+                                        "nodeStartupTimeout",
+                                        "nodeNotReadyTimeout",
+                                        "nodeUnknownTimeout"
+                                    ]
+                                },
+                                "certificateAuthorities": {
+                                    "type": "array",
+                                    "description": "Certificates to be used as the certificate authority",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "csi",
+                                "cpi",
+                                "cni"
+                            ]
+                        },
+                        "containerRegistryUrl": {
+                            "type": "string",
+                            "default": "projects.registry.vmware.com"
+                        }
+                    },
+                    "required": [
+                        "name",
+                        "active"
+                    ]
+                }
+            ]
+        }
+    },
+    "required": [
+        "profiles"
+    ]
+}

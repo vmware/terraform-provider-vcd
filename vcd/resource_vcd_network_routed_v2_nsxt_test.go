@@ -65,6 +65,7 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 						"start_address": "1.1.1.10",
 						"end_address":   "1.1.1.20",
 					}),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "guest_vlan_allowed", "true"),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "metadata."+params["MetadataKey"].(string), params["MetadataValue"].(string)),
 					resource.TestCheckResourceAttrPair("data.vcd_nsxt_edgegateway.existing", "owner_id", "vcd_network_routed_v2.net1", "owner_id"),
 				),
@@ -94,6 +95,7 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 						"start_address": "1.1.1.60",
 						"end_address":   "1.1.1.70",
 					}),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "guest_vlan_allowed", "false"),
 					resource.TestCheckNoResourceAttr("vcd_network_routed_v2.net1", "metadata."+params["MetadataKey"].(string)),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "metadata."+params["MetadataKeyUpdated"].(string), params["MetadataValueUpdated"].(string)),
 
@@ -120,6 +122,7 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "gateway", "1.1.1.1"),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "prefix_length", "24"),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "static_ip_pool.#", "0"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "guest_vlan_allowed", "false"),
 					resource.TestCheckResourceAttrPair("data.vcd_nsxt_edgegateway.existing", "owner_id", "vcd_network_routed_v2.net1", "owner_id"),
 				),
 			},
@@ -141,8 +144,9 @@ resource "vcd_network_routed_v2" "net1" {
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
-  gateway = "1.1.1.1"
-  prefix_length = 24
+  gateway            = "1.1.1.1"
+  prefix_length      = 24
+  guest_vlan_allowed = true
 
   static_ip_pool {
 	start_address = "1.1.1.10"
@@ -170,6 +174,7 @@ resource "vcd_network_routed_v2" "net1" {
 
   gateway = "1.1.1.1"
   prefix_length = 24
+  guest_vlan_allowed = false
 
   static_ip_pool {
 	start_address = "1.1.1.10"
@@ -207,6 +212,154 @@ resource "vcd_network_routed_v2" "net1" {
 
   gateway = "1.1.1.1"
   prefix_length = 24
+}
+`
+
+func TestAccVcdNetworkRoutedV2NsxtRouteAdvertisement(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.1") {
+		t.Skipf("This test tests VCD 10.4.1+ (API V37.1+) features. Skipping.")
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"TestName":            t.Name(),
+		"NsxtManager":         testConfig.Nsxt.Manager,
+		"NsxtTier0Router":     testConfig.Nsxt.Tier0router,
+		"ExternalNetworkName": t.Name(),
+		"Org":                 testConfig.VCD.Org,
+		"VDC":                 testConfig.Nsxt.Vdc,
+
+		"Tags": "network nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testVcdNetworkRoutedV2NsxtRouteAdvertisement, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "name", params["TestName"].(string)),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "interface_type", "INTERNAL"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "route_advertisement_enabled", "true"),
+					resourceFieldsEqual("vcd_network_routed_v2.net1", "data.vcd_network_routed_v2.net1", []string{"%"}),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testVcdNetworkRoutedV2NsxtRouteAdvertisement = `
+data "vcd_nsxt_manager" "main" {
+  name = "{{.NsxtManager}}"
+}
+
+data "vcd_nsxt_tier0_router" "router" {
+  name            = "{{.NsxtTier0Router}}"
+  nsxt_manager_id = data.vcd_nsxt_manager.main.id
+}
+
+data "vcd_org" "org1" {
+  name = "{{.Org}}"
+}
+
+data "vcd_org_vdc" "vdc1" {
+  org  = "{{.Org}}"
+  name = "{{.VDC}}"
+}
+
+resource "vcd_ip_space" "space1" {
+  name = "{{.TestName}}"
+  type = "PUBLIC"
+
+  internal_scope = ["192.168.1.0/24", "10.10.10.0/24", "11.11.11.0/24"]
+  external_scope = "0.0.0.0/24"
+
+  route_advertisement_enabled = true
+
+  ip_prefix {
+    default_quota = -1
+
+    prefix {
+      first_ip      = "10.10.10.96"
+      prefix_length = 29
+      prefix_count  = 4
+    }
+  }
+
+  ip_range {
+    start_address = "11.11.11.100"
+    end_address   = "11.11.11.110"
+  }
+}
+
+resource "vcd_external_network_v2" "provider-gateway" {
+  name = "{{.ExternalNetworkName}}"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  use_ip_spaces = true
+}
+
+resource "vcd_ip_space_uplink" "u1" {
+  name                = "{{.TestName}}"
+  external_network_id = vcd_external_network_v2.provider-gateway.id
+  ip_space_id         = vcd_ip_space.space1.id
+}
+
+resource "vcd_nsxt_edgegateway" "ip-space" {
+  org                 = "{{.Org}}"
+  name                = "{{.TestName}}"
+  owner_id            = data.vcd_org_vdc.vdc1.id
+  external_network_id = vcd_external_network_v2.provider-gateway.id
+
+  depends_on = [vcd_ip_space_uplink.u1]
+}
+
+resource "vcd_ip_space_ip_allocation" "public-ip-prefix" {
+  org_id        = data.vcd_org.org1.id
+  ip_space_id   = vcd_ip_space.space1.id
+  type          = "IP_PREFIX"
+  prefix_length = 29
+
+  depends_on = [vcd_nsxt_edgegateway.ip-space]
+}
+
+resource "vcd_network_routed_v2" "net1" {
+  org                         = "{{.Org}}"
+  name                        = "{{.TestName}}"
+  edge_gateway_id             = vcd_nsxt_edgegateway.ip-space.id
+  gateway                     = cidrhost(vcd_ip_space_ip_allocation.public-ip-prefix.ip_address, 1)
+  prefix_length               = split("/", vcd_ip_space_ip_allocation.public-ip-prefix.ip_address)[1]
+  route_advertisement_enabled = true
+
+  static_ip_pool {
+    start_address = cidrhost(vcd_ip_space_ip_allocation.public-ip-prefix.ip_address, 2)
+    end_address   = cidrhost(vcd_ip_space_ip_allocation.public-ip-prefix.ip_address, 4)
+  }
+}
+
+data "vcd_network_routed_v2" "net1" {
+  org             = "{{.Org}}"
+  edge_gateway_id = vcd_nsxt_edgegateway.ip-space.id
+  name            = vcd_network_routed_v2.net1.name
 }
 `
 
@@ -923,7 +1076,7 @@ func TestAccVcdRoutedNetworkV2Metadata(t *testing.T) {
 		testAccCheckVcdRoutedNetworkV2MetadataDatasource, "data.vcd_network_routed_v2.test-network-routed-v2-ds",
 		StringMap{
 			"EdgeGateway": testConfig.Nsxt.EdgeGateway,
-		})
+		}, true)
 }
 
 const testAccCheckVcdRoutedNetworkV2Metadata = `

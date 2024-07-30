@@ -4,7 +4,6 @@ package vcd
 
 import (
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -49,7 +48,7 @@ func TestAccVcdCatalogAndVappTemplateDatasource(t *testing.T) {
 			{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr(datasourceCatalogVappTemplate1, "id", regexp.MustCompile(`urn:vcloud:vapptemplate:[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)),
+					resource.TestMatchResourceAttr(datasourceCatalogVappTemplate1, "id", getUuidRegex("urn:vcloud:vapptemplate:", "$")),
 					// Check that the attributes from the retrieved vApp Template match the related elements
 					resource.TestCheckResourceAttrPair(datasourceCatalog, "id", datasourceCatalogVappTemplate1, "catalog_id"),
 					resource.TestCheckResourceAttrPair(datasourceVdc, "id", datasourceCatalogVappTemplate1, "vdc_id"),

@@ -35,6 +35,7 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 		"EdgeGateway":      testConfig.Networking.EdgeGateway,
 		"AppRuleName":      t.Name(),
 		"SingleLineScript": "acl vmware_page url_beg / vmware redirect location https://www.vmware.com/ ifvmware_page",
+		// #nosec G203 -- template.HTML - We can't escape HCL heredoc. Also the code is safe as it's hardcoded from this test.
 		"MultilineScript": template.HTML(`<<-EOT
 ` + MultiLineScript + `EOT`),
 		"MultilineFailScript": template.HTML(`<<-EOT

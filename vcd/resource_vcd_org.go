@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 	"time"
 
@@ -88,6 +89,28 @@ func resourceOrg() *schema.Resource {
 				Optional:    true,
 				Default:     false,
 				Description: "True if this organization is allowed to subscribe to external catalogs.",
+			},
+			"number_of_catalogs": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of catalogs, owned or shared, available to this organization",
+			},
+			"list_of_catalogs": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of catalogs, owned or shared, available to this organization",
+			},
+			"number_of_vdcs": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Number of VDCs, owned or shared, available to this organization",
+			},
+			"list_of_vdcs": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "List of VDCs, owned or shared, available to this organization",
 			},
 			"vapp_lease": {
 				Type:        schema.TypeList,
@@ -172,7 +195,7 @@ func resourceOrg() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": metadataEntryResourceSchema("Organization"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("Organization"),
 		},
 	}
 }
@@ -422,6 +445,8 @@ func resourceOrgUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 
 // setOrgData sets the data into the resource, taking it from the provided adminOrg
 func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.AdminOrg) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	dSet(d, "name", adminOrg.AdminOrg.Name)
 	dSet(d, "full_name", adminOrg.AdminOrg.FullName)
 	dSet(d, "description", adminOrg.AdminOrg.Description)
@@ -432,11 +457,50 @@ func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.Ad
 	dSet(d, "can_publish_external_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishExternally)
 	dSet(d, "can_subscribe_external_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanSubscribe)
 	dSet(d, "delay_after_power_on_seconds", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DelayAfterPowerOnSeconds)
-	var err error
+	numberOfCatalogs := 0
+	numberOfVdcs := 0
+	if adminOrg.AdminOrg.Catalogs != nil {
+		numberOfCatalogs = len(adminOrg.AdminOrg.Catalogs.Catalog)
+	}
+	if adminOrg.AdminOrg.Vdcs != nil {
+		numberOfVdcs = len(adminOrg.AdminOrg.Vdcs.Vdcs)
+	}
+	dSet(d, "number_of_catalogs", numberOfCatalogs)
+	dSet(d, "number_of_vdcs", numberOfVdcs)
+	var rawAvailableCatalogs []interface{}
+	var availableCatalogs []string
+	for _, c := range adminOrg.AdminOrg.Catalogs.Catalog {
+		availableCatalogs = append(availableCatalogs, c.Name)
+	}
+	if len(availableCatalogs) > 0 {
+		sort.Strings(availableCatalogs)
+		for _, c := range availableCatalogs {
+			rawAvailableCatalogs = append(rawAvailableCatalogs, c)
+		}
+	}
+	err := d.Set("list_of_catalogs", rawAvailableCatalogs)
+	if err != nil {
+		return diag.Errorf("error setting list of catalogs: %s", err)
+	}
+	var rawAvailableVdcs []interface{}
+	var availableVdcs []string
+	for _, v := range adminOrg.AdminOrg.Vdcs.Vdcs {
+		availableVdcs = append(availableVdcs, v.Name)
+	}
+	if len(availableVdcs) > 0 {
+		sort.Strings(availableVdcs)
+		for _, v := range availableVdcs {
+			rawAvailableVdcs = append(rawAvailableVdcs, v)
+		}
+	}
+	err = d.Set("list_of_vdcs", rawAvailableVdcs)
+	if err != nil {
+		return diag.Errorf("error setting list of VDCs: %s", err)
+	}
 
 	vappLeaseSettings := adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings
 	// OrgVAppLeaseSettings should always be filled, as the API silently uses defaults when we don't provide lease values,
-	// but let's try to make it future proof and check for initialization
+	// but let's try to make it future-proof and check for initialization
 	if vappLeaseSettings != nil {
 		var vappLease = make(map[string]interface{})
 
@@ -481,17 +545,22 @@ func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.Ad
 		}
 	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_org", adminOrg)
-	if diagErr != nil {
+	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_org", adminOrg)...)
+	if diags != nil && diags.HasError() {
 		log.Printf("[DEBUG] Unable to set Org metadata")
-		return diagErr
+		return diags
 	}
 
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
+	}
 	return nil
 }
 
 // Retrieves an Org resource from VCD
 func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
 	vcdClient := m.(*VCDClient)
 
 	orgName, _, err := getOrgNames(d)
@@ -525,9 +594,14 @@ func resourceOrgRead(_ context.Context, d *schema.ResourceData, m interface{}) d
 	log.Printf("[TRACE] Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
 
-	diagErr := setOrgData(d, vcdClient, adminOrg)
-	if diagErr != nil {
-		return diagErr
+	diags = append(diags, setOrgData(d, vcdClient, adminOrg)...)
+	if diags != nil && diags.HasError() {
+		return diags
+	}
+
+	// This must be checked at the end as setOrgData can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
 	}
 	return nil
 }
@@ -548,9 +622,9 @@ func resourceVcdOrgImport(ctx context.Context, d *schema.ResourceData, meta inte
 		return nil, fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	diagErr := setOrgData(d, vcdClient, adminOrg)
-	if diagErr != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("error setting Org data: %v", diagErr)
+	diags := setOrgData(d, vcdClient, adminOrg)
+	if diags != nil && diags.HasError() {
+		return []*schema.ResourceData{}, fmt.Errorf("error setting Org data: %v", diags)
 	}
 
 	d.SetId(adminOrg.AdminOrg.ID)

@@ -238,7 +238,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": metadataEntryResourceSchema("VDC"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("VDC"),
 			"vm_sizing_policy_ids": {
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -253,6 +253,15 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				Description: "Set of VM Placement Policy IDs",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"vm_vgpu_policy_ids": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Description: "Set of VM vGPU Policy IDs",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -275,7 +284,9 @@ func resourceVcdOrgVdc() *schema.Resource {
 			"edge_cluster_id": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				Description: "ID of NSX-T Edge Cluster (provider vApp networking services and DHCP capability for Isolated networks)",
+				Deprecated:  "Please use 'vcd_org_vdc_nsxt_network_profile' resource to manage Edge Cluster and Segment Profile Templates",
 			},
 			"enable_nsxv_distributed_firewall": {
 				Type:        schema.TypeBool,
@@ -367,6 +378,7 @@ func resourceVcdVdcCreate(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
 	vdcName := d.Get("name").(string)
 	log.Printf("[TRACE] VDC read initiated: %s", vdcName)
 
@@ -387,30 +399,35 @@ func resourceVcdVdcRead(_ context.Context, d *schema.ResourceData, meta interfac
 		return diag.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
-	diagErr := setOrgVdcData(d, vcdClient, adminVdc)
-	if diagErr != nil {
-		return diagErr
+	diags = append(diags, setOrgVdcData(d, vcdClient, adminVdc)...)
+	if diags != nil && diags.HasError() {
+		return diags
 	}
 
 	err = setEdgeClusterData(d, adminVdc, "vdc_org_vdc")
 	if err != nil {
-		return diag.FromErr(err)
+		return append(diags, diag.FromErr(err)...)
 	}
 	dSet(d, "enable_nsxv_distributed_firewall", false)
 	if adminVdc.IsNsxv() {
 		dfw := govcd.NewNsxvDistributedFirewall(&vcdClient.Client, adminVdc.AdminVdc.ID)
 		enabled, err := dfw.IsEnabled()
 		if err != nil {
-			return diag.Errorf("error retrieving NSX-V distributed firewall state for VDC '%s': %s", vdcName, err)
+			return append(diags, diag.Errorf("error retrieving NSX-V distributed firewall state for VDC '%s': %s", vdcName, err)...)
 		}
 		dSet(d, "enable_nsxv_distributed_firewall", enabled)
+	}
+
+	// This must be checked at the end as setOrgVdcData can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
 	}
 	return nil
 }
 
 // setOrgVdcData sets object state from *govcd.AdminVdc
 func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd.AdminVdc) diag.Diagnostics {
-
+	var diags diag.Diagnostics
 	dSet(d, "allocation_model", adminVdc.AdminVdc.AllocationModel)
 	if adminVdc.AdminVdc.ResourceGuaranteedCpu != nil {
 		dSet(d, "cpu_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedCpu)
@@ -474,18 +491,19 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 	dSet(d, "default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID) // Deprecated, populating for compatibility
 	dSet(d, "default_compute_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID)
 
-	assignedVmComputePolicies, err := adminVdc.GetAllAssignedVdcComputePoliciesV2(url.Values{
-		"filter": []string{fmt.Sprintf("%spolicyType==VdcVmPolicy", getVgpuFilterToPrepend(vcdClient, false))}, // Filtering out vGPU Policies as there's no attribute support yet.
-	})
+	assignedVmComputePolicies, err := adminVdc.GetAllAssignedVdcComputePoliciesV2(nil)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to get assigned VM Compute policies")
 		return diag.Errorf("unable to get assigned VM Compute policies %s", err)
 	}
 	var sizingPolicyIds []string
 	var placementPolicyIds []string
+	var vgpuPolicyIds []string
 	for _, policy := range assignedVmComputePolicies {
 		if policy.VdcComputePolicyV2.IsSizingOnly {
 			sizingPolicyIds = append(sizingPolicyIds, policy.VdcComputePolicyV2.ID)
+		} else if policy.VdcComputePolicyV2.IsVgpuPolicy {
+			vgpuPolicyIds = append(vgpuPolicyIds, policy.VdcComputePolicyV2.ID)
 		} else {
 			placementPolicyIds = append(placementPolicyIds, policy.VdcComputePolicyV2.ID)
 		}
@@ -493,6 +511,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 
 	vmSizingPoliciesSet := convertStringsToTypeSet(sizingPolicyIds)
 	vmPlacementPoliciesSet := convertStringsToTypeSet(placementPolicyIds)
+	vmVgpuPoliciesSet := convertStringsToTypeSet(vgpuPolicyIds)
 
 	err = d.Set("vm_sizing_policy_ids", vmSizingPoliciesSet)
 	if err != nil {
@@ -502,14 +521,23 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminVdc *govcd
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	err = d.Set("vm_vgpu_policy_ids", vmVgpuPoliciesSet)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
-	diagErr := updateMetadataInState(d, vcdClient, "vcd_org_vdc", adminVdc)
-	if diagErr != nil {
+	diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_org_vdc", adminVdc)...)
+	if diags != nil && diags.HasError() {
 		log.Printf("[DEBUG] Unable to set VDC metadata")
-		return diagErr
+		return diags
 	}
 
 	log.Printf("[TRACE] vdc read completed: %#v", adminVdc.AdminVdc)
+
+	// This must be checked at the end as updateMetadataInStateDeprecated can throw Warning diagnostics
+	if len(diags) > 0 {
+		return diags
+	}
 	return nil
 }
 
@@ -877,7 +905,7 @@ func updateAssignedVmComputePolicies(d *schema.ResourceData, meta interface{}, v
 		return nil
 	}
 
-	arePoliciesChanged := d.HasChange("vm_sizing_policy_ids") || d.HasChange("vm_placement_policy_ids")
+	arePoliciesChanged := d.HasChange("vm_sizing_policy_ids") || d.HasChange("vm_placement_policy_ids") || d.HasChange("vm_vgpu_policy_ids")
 	isDefaultPolicyChanged := d.HasChange("default_compute_policy_id") || d.HasChange("default_vm_sizing_policy_id")
 
 	// Compatibility patch: Remove deprecated `default_vm_sizing_policy_id` from this conditional when the attribute is removed.
@@ -893,7 +921,7 @@ func updateAssignedVmComputePolicies(d *schema.ResourceData, meta interface{}, v
 
 	if !isDefaultPolicyChanged && arePoliciesChanged {
 		var vmComputePolicyIds []string
-		computePolicyAttributes := []string{"vm_sizing_policy_ids", "vm_placement_policy_ids"}
+		computePolicyAttributes := []string{"vm_sizing_policy_ids", "vm_placement_policy_ids", "vm_vgpu_policy_ids"}
 		for _, attribute := range computePolicyAttributes {
 			vmComputePolicyIds = append(vmComputePolicyIds, convertSchemaSetToSliceOfStrings(d.Get(attribute).(*schema.Set))...)
 		}
@@ -926,7 +954,7 @@ func updateAssignedVmComputePolicies(d *schema.ResourceData, meta interface{}, v
 // Assigning and setting default Compute policies requires different API calls. Default policy can't be removed, as result
 // we approach this with adding new policies, set new default, remove all old policies.
 func changeComputePoliciesAndDefaultId(d *schema.ResourceData, vcdClient *VCDClient, vcdComputePolicyHref string, vdc *govcd.AdminVdc) error {
-	arePoliciesChanged := d.HasChange("vm_sizing_policy_ids") || d.HasChange("vm_placement_policy_ids")
+	arePoliciesChanged := d.HasChange("vm_sizing_policy_ids") || d.HasChange("vm_placement_policy_ids") || d.HasChange("vm_vgpu_policy_ids")
 	isDefaultPolicyChanged := d.HasChange("default_compute_policy_id") || d.HasChange("default_vm_sizing_policy_id")
 	if !arePoliciesChanged && !isDefaultPolicyChanged {
 		return nil
@@ -940,7 +968,7 @@ func changeComputePoliciesAndDefaultId(d *schema.ResourceData, vcdClient *VCDCli
 	}
 
 	var vmComputePolicyIds []string
-	computePolicyAttributes := []string{"vm_sizing_policy_ids", "vm_placement_policy_ids"}
+	computePolicyAttributes := []string{"vm_sizing_policy_ids", "vm_placement_policy_ids", "vm_vgpu_policy_ids"}
 	for _, attribute := range computePolicyAttributes {
 		vmComputePolicyIds = append(vmComputePolicyIds, convertSchemaSetToSliceOfStrings(d.Get(attribute).(*schema.Set))...)
 	}
@@ -1002,12 +1030,13 @@ func getDefaultPolicyIdAndComputePolicyHref(d *schema.ResourceData, vcdClient *V
 
 	_, sizingOk := d.GetOk("vm_sizing_policy_ids")
 	_, placementOk := d.GetOk("vm_placement_policy_ids")
+	_, vgpuOk := d.GetOk("vm_vgpu_policy_ids")
 
-	if defaultPolicyIsSet && !sizingOk && !placementOk {
-		return "", nil, fmt.Errorf("when `default_compute_policy_id` is used, it requires also `vm_sizing_policy_ids` or `vm_placement_policy_ids`")
+	if defaultPolicyIsSet && !sizingOk && !placementOk && !vgpuOk {
+		return "", nil, fmt.Errorf("when `default_compute_policy_id` is used, it requires also `vm_sizing_policy_ids`, `vm_placement_policy_ids` or `vm_vgpu_policy_ids`")
 	}
 
-	arePoliciesChanged := d.HasChange("vm_sizing_policy_ids") || d.HasChange("vm_placement_policy_ids")
+	arePoliciesChanged := d.HasChange("vm_sizing_policy_ids") || d.HasChange("vm_placement_policy_ids") || d.HasChange("vm_vgpu_policy_ids")
 	isDefaultPolicyChanged := d.HasChange("default_compute_policy_id") || d.HasChange("default_vm_sizing_policy_id")
 
 	// Early return

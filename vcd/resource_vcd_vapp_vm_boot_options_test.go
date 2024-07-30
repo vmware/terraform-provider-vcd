@@ -281,6 +281,7 @@ data "vcd_catalog_vapp_template" "{{.VappTemplateName}}" {
 `
 
 const testAccCheckVcdVAppVmBootOptions = testSharedBootOptions + `
+# skip-binary-test: enter_bios_setup_on_next_boot automatically resets to 'false' after boot and causes inconsistent plan
 resource "vcd_vapp_vm" "{{.VappVMWithTemplateName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -377,6 +378,7 @@ resource "vcd_vm" "{{.VMWithTemplateName}}" {
 `
 
 const testAccCheckVcdVAppVmBootOptionsStep1 = testSharedBootOptions + `
+# skip-binary-test - Can't set boot_options and firmware when creating a VM instantiated from a vApp template
 resource "vcd_vapp_vm" "{{.VappVMWithTemplateName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -469,6 +471,7 @@ resource "vcd_vm" "{{.VMWithTemplateName}}" {
 `
 
 const testAccCheckVcdVAppVmBootOptionsStep2 = testSharedBootOptions + `
+# skip-binary-test - Can't set boot_options and firmware when creating a VM instantiated from a vApp template
 resource "vcd_vapp_vm" "{{.VappVMWithTemplateName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"

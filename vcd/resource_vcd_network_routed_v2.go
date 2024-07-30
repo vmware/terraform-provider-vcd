@@ -3,7 +3,6 @@ package vcd
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -124,6 +123,11 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 				Optional:    true,
 				Description: "DNS suffix",
 			},
+			"guest_vlan_allowed": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "True if network allows guest VLAN tagging",
+			},
 			"metadata": {
 				Type:          schema.TypeMap,
 				Optional:      true,
@@ -132,7 +136,13 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 				Deprecated:    "Use metadata_entry instead",
 				ConflictsWith: []string{"metadata_entry"},
 			},
-			"metadata_entry": metadataEntryResourceSchema("Network"),
+			"metadata_entry": metadataEntryResourceSchemaDeprecated("Network"),
+			"route_advertisement_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Whether this network is advertised so that it can be routed out to the external networks.",
+			},
 		},
 	}
 }
@@ -257,20 +267,23 @@ func resourceVcdNetworkRoutedV2Read(_ context.Context, d *schema.ResourceData, m
 
 	// Metadata is not supported when the network is in a VDC Group, although it is still present in the entity.
 	// Hence, we skip the read to preserve its value in state.
-	var diagErr diag.Diagnostics
+	var diags diag.Diagnostics
 	if !govcd.OwnerIsVdcGroup(orgNetwork.OpenApiOrgVdcNetwork.OwnerRef.ID) {
-		diagErr = updateMetadataInState(d, vcdClient, "vcd_network_routed_v2", orgNetwork)
+		diags = append(diags, updateMetadataInStateDeprecated(d, vcdClient, "vcd_network_routed_v2", orgNetwork)...)
 	} else if _, ok := d.GetOk("metadata"); !ok {
 		// If it's a VDC Group and metadata is not set, we explicitly compute it to empty. Otherwise, its value should
 		// be preserved as it is still present in the entity.
 		err = d.Set("metadata", StringMap{})
 		if err != nil {
-			diagErr = diag.FromErr(err)
+			diags = append(diags, diag.FromErr(err)...)
 		}
 	}
-	if diagErr != nil {
-		log.Printf("[DEBUG] Unable to set routed network v2 metadata: %s", err)
-		return diagErr
+	if diags != nil && diags.HasError() {
+		return diags
+	}
+
+	if len(diags) > 0 {
+		return diags
 	}
 
 	return nil
@@ -344,6 +357,17 @@ func setOpenApiOrgVdcRoutedNetworkData(d *schema.ResourceData, orgVdcNetwork *ty
 	dSet(d, "description", orgVdcNetwork.Description)
 	dSet(d, "owner_id", orgVdcNetwork.OwnerRef.ID)
 	dSet(d, "vdc", orgVdcNetwork.OwnerRef.Name)
+	if orgVdcNetwork.GuestVlanTaggingAllowed != nil {
+		dSet(d, "guest_vlan_allowed", *orgVdcNetwork.GuestVlanTaggingAllowed)
+	} else {
+		dSet(d, "guest_vlan_allowed", false)
+	}
+
+	if orgVdcNetwork.RouteAdvertised != nil {
+		dSet(d, "route_advertisement_enabled", *orgVdcNetwork.RouteAdvertised)
+	} else {
+		dSet(d, "route_advertisement_enabled", false)
+	}
 
 	if orgVdcNetwork.Connection != nil {
 		dSet(d, "edge_gateway_id", orgVdcNetwork.Connection.RouterRef.ID)
@@ -392,9 +416,12 @@ func getOpenApiOrgVdcRoutedNetworkType(d *schema.ResourceData, vcdClient *VCDCli
 	}
 
 	orgVdcNetworkConfig := &types.OpenApiOrgVdcNetwork{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		OwnerRef:    &types.OpenApiReference{ID: anyEdgeGateway.EdgeGateway.OwnerRef.ID},
+		Name:                    d.Get("name").(string),
+		Description:             d.Get("description").(string),
+		OwnerRef:                &types.OpenApiReference{ID: anyEdgeGateway.EdgeGateway.OwnerRef.ID},
+		GuestVlanTaggingAllowed: addrOf(d.Get("guest_vlan_allowed").(bool)),
+		RouteAdvertised:         addrOf(d.Get("route_advertisement_enabled").(bool)),
+
 		NetworkType: types.OrgVdcNetworkTypeRouted,
 
 		// Connection is used for "routed" network

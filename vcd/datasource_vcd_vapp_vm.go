@@ -20,6 +20,11 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 			Computed:    vmType == standaloneVmType,
 			Description: "The vApp this VM belongs to - Required, unless it is a standalone VM",
 		},
+		"vapp_id": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "ID of parent vApp",
+		},
 		"vm_type": {
 			Type:        schema.TypeString,
 			Computed:    true,
@@ -399,6 +404,30 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 				},
 			},
 		},
+		"extra_config": {
+			Type:        schema.TypeList,
+			Computed:    true,
+			Description: "A block to retrieve extra configuration key-value pairs",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"key": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The key of the extra configuration item",
+					},
+					"value": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The value of the extra configuration item",
+					},
+					"required": {
+						Type:        schema.TypeBool,
+						Computed:    true,
+						Description: "Whether the extra configuration item is required",
+					},
+				},
+			},
+		},
 		"cpu_hot_add_enabled": {
 			Type:        schema.TypeBool,
 			Computed:    true,
@@ -436,6 +465,11 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Shows the status of the VM",
+		},
+		"inherited_metadata": {
+			Type:        schema.TypeMap,
+			Computed:    true,
+			Description: "A map that contains metadata that is automatically added by VCD (10.5.1+) and provides details on the origin of the VM",
 		},
 	}
 }

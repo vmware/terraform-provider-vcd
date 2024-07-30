@@ -87,7 +87,8 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 				ImportStateIdFunc: importStateIdOrgVdcObject(standaloneVmName),
 				// These fields can't be retrieved from user data
 				ImportStateVerifyIgnore: []string{"template_name", "catalog_name",
-					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off"},
+					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off",
+					"consolidate_disks_on_create", "imported", "vapp_template_id"},
 			},
 		},
 	})
