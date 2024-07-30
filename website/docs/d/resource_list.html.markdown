@@ -308,19 +308,40 @@ import {
 }
 ```
 
-## Example 10 - List of ALB Service Engine Group assignments to an Edge Gateway 
+## Example 10 - List of ALB Service Engine Group assignments to an Edge Gateway
 
-This example is similar to example n. 3, with the addition of a generated import file
+This data source allows to list all the Service Engine Group assignments of an Edge Gateway, by specifying its
+name in the `parent` argument:
 
 ```hcl
-data "vcd_resource_list" "list_of_assigned_segs" {
-  name             = "list_of_nets"
-  resource_type    = "vcd_nsxt_alb_edgegateway_service_engine_group" # Finds all assigned SEGs
-  ## TODO
+data "vcd_resource_list" "my_edge_gateway_assignments" {
+  name          = "my_edge_gateway_assignments"
+  resource_type = "vcd_nsxt_alb_edgegateway_service_engine_group"
+  parent        = "my-edge-gateway"
+  list_mode     = "import"
+}
+
+# Shows the list of all Service Engine Groups assigned to the "my-edge-gateway" Edge Gateway,
+# with the corresponding import command
+output "assignments_list" {
+  value = data.vcd_resource_list.my_edge_gateway_assignments.list
 }
 ```
 
-TODO
+One can also list all Service Engine Groups by using `resource_type=vcd_nsxt_alb_service_engine_group`:
+
+```hcl
+data "vcd_resource_list" "all_segs" {
+  name          = "all_segs"
+  resource_type = "vcd_nsxt_alb_service_engine_group"
+  list_mode     = "name_id"
+}
+
+# Shows the list of all Service Engine Groups with name and ID:
+output "seg_list" {
+  value = data.vcd_resource_list.all_segs.list
+}
+```
 
 # Example 11 - List of roles with filter
 
