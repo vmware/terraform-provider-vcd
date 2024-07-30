@@ -343,7 +343,7 @@ output "seg_list" {
 }
 ```
 
-# Example 11 - List of roles with filter
+## Example 11 - List of roles with filter
 
 ```hcl
 data "vcd_resource_list" "role-filter1" {
