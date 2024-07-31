@@ -1130,14 +1130,25 @@ func nsxtAlbServiceEngineGroup(d *schema.ResourceData, meta interface{}) (list [
 
 func nsxtAlbServiceEngineGroupAssignment(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
-
-	orgName, vdcName, _, _, egw, err := getEdgeGatewayDetails(d, meta)
+	edgeGatewayName := d.Get("parent").(string)
+	if edgeGatewayName == "" {
+		return nil, fmt.Errorf(`edge gateway name (as "parent") is required for this task`)
+	}
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
 	if err != nil {
-		return list, fmt.Errorf("error retrieving edge gateway '%s': %s ", d.Get("parent").(string), err)
+		return nil, fmt.Errorf("could not retrieve Org '%s' and VDC '%s'", d.Get("org"), d.Get("vdc"))
+	}
+	if vdc.IsNsxv() {
+		return nil, fmt.Errorf("can't list ALB Service Engine Groups from a NSX-V VDC")
+	}
+
+	nsxtEdgeGateway, err := vdc.GetNsxtEdgeGatewayByName(edgeGatewayName)
+	if err != nil {
+		return nil, err
 	}
 
 	queryParams := url.Values{}
-	queryParams.Add("filter", fmt.Sprintf("gatewayRef.id==%s", egw.EdgeGateway.ID))
+	queryParams.Add("filter", fmt.Sprintf("gatewayRef.id==%s", nsxtEdgeGateway.EdgeGateway.ID))
 
 	allSegs, err := client.GetAllAlbServiceEngineGroupAssignments(queryParams)
 	if err != nil {
@@ -1157,7 +1168,7 @@ func nsxtAlbServiceEngineGroupAssignment(d *schema.ResourceData, meta interface{
 		}
 	}
 
-	return genericResourceList(d, "vcd_nsxt_alb_edgegateway_service_engine_group", []string{orgName, vdcName, egw.EdgeGateway.Name}, items)
+	return genericResourceList(d, "vcd_nsxt_alb_edgegateway_service_engine_group", []string{org.Org.Name, vdc.Vdc.Name, nsxtEdgeGateway.EdgeGateway.Name}, items)
 }
 
 func genericResourceList(d *schema.ResourceData, resType string, ancestors []string, refs []resourceRef) (list []string, err error) {
