@@ -238,6 +238,12 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Total number of IPs allocated for this Gateway from NSX-T Segment backed External Network uplinks",
 			},
+			"non_distributed_routing_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "A flag indicating whether non-distributed routing is enabled or not (`false` by default)",
+			},
 		},
 	}
 }
@@ -464,9 +470,10 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	}
 
 	edgeGatewayType := types.OpenAPIEdgeGateway{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		OwnerRef:    &types.OpenApiReference{ID: ownerId},
+		Name:                         d.Get("name").(string),
+		Description:                  d.Get("description").(string),
+		OwnerRef:                     &types.OpenApiReference{ID: ownerId},
+		NonDistributedRoutingEnabled: addrOf(d.Get("non_distributed_routing_enabled").(bool)),
 	}
 
 	// Optional edge_cluster_id
@@ -933,6 +940,12 @@ func setNsxtEdgeGatewayData(vcdClient *VCDClient, edgeGateway *govcd.NsxtEdgeGat
 	dSet(d, "name", edgeGw.Name)
 	dSet(d, "description", edgeGw.Description)
 	dSet(d, "edge_cluster_id", edgeGw.EdgeClusterConfig.PrimaryEdgeCluster.BackingID)
+	if edgeGw.NonDistributedRoutingEnabled != nil {
+		dSet(d, "non_distributed_routing_enabled", edgeGw.NonDistributedRoutingEnabled)
+	} else {
+		dSet(d, "non_distributed_routing_enabled", false)
+	}
+
 	if len(edgeGw.EdgeGatewayUplinks) < 1 {
 		return fmt.Errorf("no edge gateway uplinks detected during read")
 	}

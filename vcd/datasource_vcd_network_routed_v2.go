@@ -68,7 +68,7 @@ func datasourceVcdNetworkRoutedV2() *schema.Resource {
 			"interface_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Interface type (only for NSX-V networks). One of 'INTERNAL' (default), 'DISTRIBUTED', 'SUBINTERFACE'",
+				Description: "Interface type. One of 'INTERNAL', 'DISTRIBUTED', 'SUBINTERFACE', 'NON_DISTRIBUTED'",
 			},
 			"gateway": {
 				Type:        schema.TypeString,

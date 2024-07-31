@@ -61,7 +61,7 @@ func TestAccVcdNsxtEdgeGateway(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "dedicate_external_network", "false"),
-
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "non_distributed_routing_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "primary_ip", nsxtExtNet.ExternalNetwork.Subnets.Values[0].IPRanges.Values[0].EndAddress),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "subnet.*", map[string]string{
 						"gateway":       nsxtExtNet.ExternalNetwork.Subnets.Values[0].Gateway,
