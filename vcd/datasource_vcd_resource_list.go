@@ -1136,7 +1136,7 @@ func nsxtAlbServiceEngineGroupAssignment(d *schema.ResourceData, meta interface{
 	}
 	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
 	if err != nil {
-		return nil, fmt.Errorf("could not retrieve Org '%s' and VDC '%s'", d.Get("org"), d.Get("vdc"))
+		return nil, fmt.Errorf("could not retrieve Org '%s' and VDC '%s': %s", d.Get("org"), d.Get("vdc"), err)
 	}
 	if vdc.IsNsxv() {
 		return nil, fmt.Errorf("can't list ALB Service Engine Groups from a NSX-V VDC")
