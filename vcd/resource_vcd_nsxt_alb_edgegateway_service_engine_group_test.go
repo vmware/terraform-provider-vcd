@@ -43,6 +43,10 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupDedicated(t *testing.T) {
 	configText2 := templateFill(testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupDedicatedDS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
+	params["FuncName"] = t.Name() + "step3"
+	configText3 := templateFill(testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupDedicatedDSResourceList, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -72,6 +76,12 @@ func TestAccVcdNsxtEdgeGatewayServiceEngineGroupDedicated(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "id", regexp.MustCompile(`\d*`)),
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_edgegateway_service_engine_group.test", "deployed_virtual_services", regexp.MustCompile(`\d*`)),
 					resourceFieldsEqual("data.vcd_nsxt_alb_edgegateway_service_engine_group.test", "vcd_nsxt_alb_edgegateway_service_engine_group.test", nil),
+				),
+			},
+			{
+				Config: configText3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair("vcd_nsxt_alb_edgegateway_service_engine_group.test", "id", "data.vcd_resource_list.list", "list.0"),
 				),
 			},
 			{
@@ -105,6 +115,17 @@ data "vcd_nsxt_alb_edgegateway_service_engine_group" "test" {
 
   edge_gateway_id         = vcd_nsxt_alb_settings.test.edge_gateway_id
   service_engine_group_id = vcd_nsxt_alb_service_engine_group.first.id
+}
+`
+
+const testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupDedicatedDSResourceList = testAccVcdNsxtAlbEdgeGatewayServiceEngineGroupDedicatedDS + `
+data "vcd_resource_list" "list" {
+  name          = "{{.ControllerName}}"
+  resource_type = "vcd_nsxt_alb_edgegateway_service_engine_group"
+  parent        = data.vcd_nsxt_edgegateway.existing.name
+  list_mode     = "id"
+
+  depends_on = [ vcd_nsxt_alb_edgegateway_service_engine_group.test]
 }
 `
 
