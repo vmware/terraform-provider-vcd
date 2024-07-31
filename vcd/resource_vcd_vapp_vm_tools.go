@@ -844,7 +844,9 @@ func networksToConfig(d *schema.ResourceData, vapp *govcd.VApp) (types.NetworkCo
 			networkName = "none"
 		}
 		ipAllocationMode := nic["ip_allocation_mode"].(string)
+		secondaryIpAllocationMode := nic["secondary_ip_allocation_mode"].(string)
 		ip := nic["ip"].(string)
+		secondaryIp := nic["secondary_ip"].(string)
 		macAddress, macIsSet := nic["mac"].(string)
 
 		isPrimary := nic["is_primary"].(bool)
@@ -875,6 +877,11 @@ func networksToConfig(d *schema.ResourceData, vapp *govcd.VApp) (types.NetworkCo
 
 		netConn.IsConnected = nic["connected"].(bool)
 		netConn.IPAddressAllocationMode = ipAllocationMode
+		netConn.IpType = "IPV4"
+		netConn.SecondaryIpAddressAllocationMode = secondaryIpAllocationMode
+		if netConn.SecondaryIpAddressAllocationMode != "" && netConn.SecondaryIpAddressAllocationMode != types.IPAllocationModeNone {
+			netConn.SecondaryIpType = "IPV6"
+		}
 		netConn.NetworkConnectionIndex = index
 		netConn.Network = networkName
 		if macIsSet {
@@ -887,6 +894,10 @@ func networksToConfig(d *schema.ResourceData, vapp *govcd.VApp) (types.NetworkCo
 
 		if net.ParseIP(ip) != nil {
 			netConn.IPAddress = ip
+		}
+
+		if net.ParseIP(secondaryIp) != nil {
+			netConn.SecondaryIpAddress = secondaryIp
 		}
 
 		adapterType, isSetAdapterType := nic["adapter_type"]
@@ -1200,7 +1211,9 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp, vdc *gov
 	for _, vmNet := range vm.VM.NetworkConnectionSection.NetworkConnection {
 		singleNIC := make(map[string]interface{})
 		singleNIC["ip_allocation_mode"] = vmNet.IPAddressAllocationMode
+		singleNIC["secondary_ip_allocation_mode"] = vmNet.SecondaryIpAddressAllocationMode
 		singleNIC["ip"] = vmNet.IPAddress
+		singleNIC["secondary_ip"] = vmNet.SecondaryIpAddress
 		singleNIC["mac"] = vmNet.MACAddress
 		singleNIC["adapter_type"] = vmNet.NetworkAdapterType
 		singleNIC["connected"] = vmNet.IsConnected
@@ -1226,7 +1239,7 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp, vdc *gov
 
 	vmStatus, err := vm.GetStatus()
 	if err != nil {
-		return nil, fmt.Errorf("unablet to check if VM is powered on: %s", err)
+		return nil, fmt.Errorf("unable to check if VM is powered on: %s", err)
 	}
 
 	// If at least one`network_dhcp_wait_seconds` was defined
