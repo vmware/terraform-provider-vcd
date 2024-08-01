@@ -32,9 +32,17 @@ func datasourceVcdRdeBehaviorInvocation() *schema.Resource {
 				Description: "If 'true', invokes the Behavior on every refresh",
 			},
 			"arguments": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "The arguments to be passed to the invoked Behavior",
+				Type:         schema.TypeMap,
+				Optional:     true,
+				Description:  "The arguments to be passed to the invoked Behavior",
+				Deprecated:   "Use 'arguments_json' instead",
+				ExactlyOneOf: []string{"arguments", "arguments_json"},
+			},
+			"arguments_json": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "The arguments to be passed to the invoked Behavior, as a JSON",
+				ExactlyOneOf: []string{"arguments", "arguments_json"},
 			},
 			"metadata": {
 				Type:        schema.TypeMap,

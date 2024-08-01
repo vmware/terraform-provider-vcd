@@ -255,11 +255,13 @@ func areMarshaledJsonEqual(json1, json2 []byte) (bool, error) {
 	return reflect.DeepEqual(unmarshaledJson1, unmarshaledJson2), nil
 }
 
-// removeKeysFromMap returns a new map that doesn't have the items from the original one that match with the given
-// prefixes. This function uses recursion to remove prefixes in nested maps, so the stopping condition is not having
-// more nested maps to scan.
+// removeItemsFromMapWithKeyPrefixes returns a new map that doesn't have the values from the original whose keys match with the given
+// prefixes. If the values are also maps (meaning that there are nested maps), this function will recursively remove prefixes in
+// those as well, until no more nested maps are found.
+// As this function uses recursion, ideally it should not be used with maps with a lot of nested maps.
 func removeItemsFromMapWithKeyPrefixes(input map[string]interface{}, prefixes []string) map[string]interface{} {
 	result := map[string]interface{}{}
+	// Initial scan for first level of keys
 	for k := range input {
 		removeItem := false
 		for _, prefix := range prefixes {
@@ -272,7 +274,7 @@ func removeItemsFromMapWithKeyPrefixes(input map[string]interface{}, prefixes []
 			result[k] = input[k]
 		}
 	}
-	// Another round to search for nested maps
+	// Recursively search inside nested maps
 	for k, v := range result {
 		if _, ok := v.(map[string]interface{}); ok {
 			result[k] = removeItemsFromMapWithKeyPrefixes(v.(map[string]interface{}), prefixes)
