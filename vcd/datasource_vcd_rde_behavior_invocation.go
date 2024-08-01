@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -41,13 +42,21 @@ func datasourceVcdRdeBehaviorInvocation() *schema.Resource {
 			"arguments_json": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Description:  "The arguments to be passed to the invoked Behavior, as a JSON",
+				Description:  "The arguments to be passed to the invoked Behavior, as a JSON string",
 				ExactlyOneOf: []string{"arguments", "arguments_json"},
 			},
 			"metadata": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Metadata to be passed to the invoked Behavior",
+				Type:         schema.TypeMap,
+				Optional:     true,
+				Description:  "Metadata to be passed to the invoked Behavior",
+				Deprecated:   "Use 'metadata_json' instead",
+				ExactlyOneOf: []string{"metadata", "metadata_json"},
+			},
+			"metadata_json": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "Metadata to be passed to the invoked Behavior, as a JSON string",
+				ExactlyOneOf: []string{"metadata", "metadata_json"},
 			},
 			"result": {
 				Type:        schema.TypeString,
@@ -68,9 +77,28 @@ func datasourceVcdRdeBehaviorInvocationRead(_ context.Context, d *schema.Resourc
 		if err != nil {
 			return diag.Errorf("[RDE Behavior Invocation] could not retrieve the RDE with ID '%s': %s", rdeId, err)
 		}
+
+		var arguments map[string]interface{}
+		var metadata map[string]interface{}
+		if a, ok := d.GetOk("arguments"); ok {
+			arguments = a.(map[string]interface{})
+		} else {
+			err = json.Unmarshal([]byte(d.Get("arguments_json").(string)), &arguments)
+			if err != nil {
+				return diag.Errorf("[RDE Behavior Invocation] could not read the arguments JSON: %s", err)
+			}
+		}
+		if m, ok := d.GetOk("metadata"); ok {
+			metadata = m.(map[string]interface{})
+		} else {
+			err = json.Unmarshal([]byte(d.Get("metadata_json").(string)), &metadata)
+			if err != nil {
+				return diag.Errorf("[RDE Behavior Invocation] could not read the metadata JSON: %s", err)
+			}
+		}
 		result, err := rde.InvokeBehavior(behaviorId, types.BehaviorInvocation{
-			Arguments: d.Get("arguments").(map[string]interface{}),
-			Metadata:  d.Get("metadata").(map[string]interface{}),
+			Arguments: arguments,
+			Metadata:  metadata,
 		})
 		if err != nil {
 			return diag.Errorf("[RDE Behavior Invocation] could not invoke the Behavior of the RDE with ID '%s': %s", rdeId, err)
