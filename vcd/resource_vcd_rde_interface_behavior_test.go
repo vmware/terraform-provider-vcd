@@ -22,7 +22,8 @@ func TestAccVcdRdeInterfaceBehavior(t *testing.T) {
 		"BehaviorName1":       t.Name(),
 		"BehaviorName2":       t.Name() + "json",
 		"BehaviorDescription": t.Name(),
-		"ExecutionId":         "MyActivity",
+		"ExecutionId1":        "MyActivity1",
+		"ExecutionId2":        "MyActivity2",
 		"ExecutionType":       "Activity",
 	}
 	testParamsNotEmpty(t, params)
@@ -31,7 +32,8 @@ func TestAccVcdRdeInterfaceBehavior(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION 1: %s\n", configText1)
 	params["FuncName"] = t.Name() + "-Step2"
 	params["BehaviorDescription"] = t.Name() + "Updated"
-	params["ExecutionId"] = "MyActivityUpdated"
+	params["ExecutionId1"] = "MyActivity1Updated"
+	params["ExecutionId2"] = "MyActivity2Updated"
 	configText2 := templateFill(testAccVcdRdeInterfaceBehavior, params)
 	debugPrintf("#[DEBUG] CONFIGURATION 2: %s\n", configText2)
 
@@ -53,13 +55,16 @@ func TestAccVcdRdeInterfaceBehavior(t *testing.T) {
 					resource.TestCheckResourceAttrPair(interfaceName, "id", behaviorName, "rde_interface_id"),
 					resource.TestCheckResourceAttr(behaviorName, "name", params["BehaviorName1"].(string)),
 					resource.TestCheckResourceAttr(behaviorName, "description", t.Name()),
-					resource.TestCheckResourceAttr(behaviorName, "execution.id", "MyActivity"),
+					resource.TestCheckResourceAttr(behaviorName, "execution.id", "MyActivity1"),
+					resource.TestCheckResourceAttr(behaviorName2, "execution.id", "MyActivity2"),
 					resource.TestCheckResourceAttr(behaviorName, "execution.type", "Activity"),
 					resource.TestCheckResourceAttrPair(behaviorName, "id", behaviorName, "ref"),
 					// Compare JSON and map values of executions
-					resource.TestCheckResourceAttrPair(behaviorName, "execution.id", behaviorName2, "execution.id"),
 					resource.TestCheckResourceAttrPair(behaviorName, "execution.type", behaviorName2, "execution.type"),
-					resource.TestCheckResourceAttrPair(behaviorName, "execution_json", behaviorName2, "execution_json"),
+					resource.TestMatchResourceAttr(behaviorName, "execution_json", regexp.MustCompile(`"type":.*"Activity"`)),
+					resource.TestMatchResourceAttr(behaviorName, "execution_json", regexp.MustCompile(`"id":.*"MyActivity1"`)),
+					resource.TestMatchResourceAttr(behaviorName2, "execution_json", regexp.MustCompile(`"type":.*"Activity"`)),
+					resource.TestMatchResourceAttr(behaviorName2, "execution_json", regexp.MustCompile(`"id":.*"MyActivity2"`)),
 				),
 			},
 			{
@@ -68,20 +73,24 @@ func TestAccVcdRdeInterfaceBehavior(t *testing.T) {
 					resource.TestCheckResourceAttrPair(interfaceName, "id", behaviorName, "rde_interface_id"),
 					resource.TestCheckResourceAttr(behaviorName, "name", params["BehaviorName1"].(string)),
 					resource.TestCheckResourceAttr(behaviorName, "description", t.Name()+"Updated"),
-					resource.TestCheckResourceAttr(behaviorName, "execution.id", "MyActivityUpdated"),
+					resource.TestCheckResourceAttr(behaviorName, "execution.id", "MyActivity1Updated"),
+					resource.TestCheckResourceAttr(behaviorName2, "execution.id", "MyActivity2Updated"),
 					resource.TestCheckResourceAttr(behaviorName, "execution.type", "Activity"),
 					resource.TestCheckResourceAttrPair(behaviorName, "id", behaviorName, "ref"),
 					// Compare JSON and map values of executions
-					resource.TestCheckResourceAttrPair(behaviorName, "execution.id", behaviorName2, "execution.id"),
 					resource.TestCheckResourceAttrPair(behaviorName, "execution.type", behaviorName2, "execution.type"),
-					resource.TestCheckResourceAttrPair(behaviorName, "execution_json", behaviorName2, "execution_json"),
+					resource.TestMatchResourceAttr(behaviorName, "execution_json", regexp.MustCompile(`"type":.*"Activity"`)),
+					resource.TestMatchResourceAttr(behaviorName, "execution_json", regexp.MustCompile(`"id":.*"MyActivity1Updated"`)),
+					resource.TestMatchResourceAttr(behaviorName2, "execution_json", regexp.MustCompile(`"type":.*"Activity"`)),
+					resource.TestMatchResourceAttr(behaviorName2, "execution_json", regexp.MustCompile(`"id":.*"MyActivity2Updated"`)),
 				),
 			},
 			{
-				ResourceName:      behaviorName,
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdInterfaceBehavior(params["Vendor"].(string), params["Nss"].(string), params["Version"].(string), params["BehaviorName1"].(string)),
+				ResourceName:            behaviorName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdInterfaceBehavior(params["Vendor"].(string), params["Nss"].(string), params["Version"].(string), params["BehaviorName1"].(string)),
+				ImportStateVerifyIgnore: []string{"always_update_secure_execution_properties"}, // Cannot be imported, it's just a flag in the provider
 			},
 		},
 	})
@@ -101,7 +110,7 @@ resource "vcd_rde_interface_behavior" "behavior1" {
   name             = "{{.BehaviorName1}}"
   description      = "{{.BehaviorDescription}}"
   execution = {
-    "id":   "{{.ExecutionId}}"
+    "id":   "{{.ExecutionId1}}"
     "type": "{{.ExecutionType}}"
   }
 }
@@ -111,7 +120,7 @@ resource "vcd_rde_interface_behavior" "behavior2" {
   name             = "{{.BehaviorName2}}"
   description      = "{{.BehaviorDescription}}"
   execution_json   = jsonencode({
-    "id":   "{{.ExecutionId}}"
+    "id":   "{{.ExecutionId2}}"
     "type": "{{.ExecutionType}}"
   })
 }

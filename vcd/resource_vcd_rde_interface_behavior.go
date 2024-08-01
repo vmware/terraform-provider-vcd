@@ -44,12 +44,14 @@ func resourceVcdRdeInterfaceBehavior() *schema.Resource {
 			"execution": {
 				Type:         schema.TypeMap,
 				Optional:     true,
+				Computed:     true, // As it's set automatically if 'execution_json' is used and it's a simple map
 				Description:  "Execution map of the Behavior",
 				ExactlyOneOf: []string{"execution", "execution_json"},
 			},
 			"execution_json": {
 				Type:                  schema.TypeString,
 				Optional:              true,
+				Computed:              true, // As it's set automatically if 'execution' is used
 				Description:           "Execution of the Behavior in JSON format, that allows to define complex Behavior executions",
 				ExactlyOneOf:          []string{"execution", "execution_json"},
 				DiffSuppressFunc:      hasBehaviorExecutionChanged,
@@ -108,7 +110,9 @@ func resourceVcdRdeInterfaceBehaviorCreateOrUpdate(ctx context.Context, d *schem
 		return diag.Errorf("[RDE Interface Behavior %s] could not retrieve the RDE Interface with ID '%s': %s", operation, interfaceId, err)
 	}
 	var execution map[string]interface{}
-	if _, ok := d.GetOk("execution_json"); ok {
+	// We don't use d.GetOk as this field is also Computed, hence Ok will be true almost always and would not detect changes
+	// when operation=update
+	if d.HasChange("execution_json") {
 		executionJson := d.Get("execution_json").(string)
 		err = json.Unmarshal([]byte(executionJson), &execution)
 		if err != nil {
