@@ -1207,7 +1207,7 @@ resource "vcd_network_routed_v2" "net1" {
   interface_type = "NON_DISTRIBUTED"
 
   static_ip_pool {
-	start_address = "1.1.1.10"
+    start_address = "1.1.1.10"
     end_address   = "1.1.1.20"
   }
 }
