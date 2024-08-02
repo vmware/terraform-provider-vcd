@@ -302,7 +302,7 @@ provider "vcd" {
   # If `saml_adfs_rpt_id` is not specified - VCD SAML Entity ID will be used automatically
   saml_adfs_rpt_id = "my-custom-rpt-id"
   # saml_adfs_cookie might looking up ADFS server in VCD with additional cookie.
-  saml_adfs_cookie = "sso-preferred=yes; sso_redirect_org={{.Org}}"
+  saml_adfs_cookie     = "sso-preferred=yes; sso_redirect_org={{.Org}}"
   org                  = var.vcd_org # Default for resources
   vdc                  = var.vcd_vdc # Default for resources
   url                  = var.vcd_url
