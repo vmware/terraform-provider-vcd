@@ -300,7 +300,9 @@ provider "vcd" {
   sysorg    = "my-org"
   auth_type = "saml_adfs"
   # If `saml_adfs_rpt_id` is not specified - VCD SAML Entity ID will be used automatically
-  saml_adfs_rpt_id     = "my-custom-rpt-id"
+  saml_adfs_rpt_id = "my-custom-rpt-id"
+  # saml_adfs_cookie might looking up ADFS server in VCD with additional cookie.
+  saml_adfs_cookie = "sso-preferred=yes; sso_redirect_org={{.Org}}"
   org                  = var.vcd_org # Default for resources
   vdc                  = var.vcd_vdc # Default for resources
   url                  = var.vcd_url
@@ -362,6 +364,10 @@ The following arguments are used to configure the VMware Cloud Director Provider
 * `saml_adfs_rpt_id` - (Optional) When using `auth_type=saml_adfs` VCD SAML entity ID will be used
   as Relaying Party Trust Identifier (RPT ID) by default. If a different RPT ID is needed - one can
   set it using this field. It can also be set with `VCD_SAML_ADFS_RPT_ID` environment variable.
+
+* `saml_adfs_cookie` - (Optional; *v3.14+*) An additional cookie that can be injected when looking
+up ADFS server from VCD. Example `sso-preferred=yes; sso_redirect_org={{.Org}}`. `{{.Org}}` will be
+replaced with actual Org during runtime.
 
 * `org` - (Required) This is the Cloud Director Org on which to run API
   operations. Can also be specified with the `VCD_ORG` environment
