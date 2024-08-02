@@ -49,6 +49,10 @@ type Config struct {
 	// CustomAdfsRptId allows to set custom Relaying Party Trust identifier. By default VCD Entity
 	// ID is used as Relaying Party Trust identifier.
 	CustomAdfsRptId string
+	// CustomAdfsCookie
+	// Placeholder {{.Org}} (if specified) will be replaced with real org
+	// E.g "sso-preferred=yes; sso_redirect_org={{.Org}}"
+	CustomAdfsCookie string
 
 	// IgnoredMetadata allows to configure a set of metadata entries that should be ignored by all the
 	// API operations related to metadata.
@@ -751,7 +755,7 @@ func (c *Config) Client() (*VCDClient, error) {
 	vcdClient := &VCDClient{
 		VCDClient: govcd.NewVCDClient(*authUrl, c.InsecureFlag,
 			govcd.WithMaxRetryTimeout(c.MaxRetryTimeout),
-			govcd.WithSamlAdfs(c.UseSamlAdfs, c.CustomAdfsRptId),
+			govcd.WithSamlAdfsAndCookie(c.UseSamlAdfs, c.CustomAdfsRptId, c.CustomAdfsCookie),
 			govcd.WithHttpUserAgent(userAgent),
 			govcd.WithIgnoredMetadata(c.IgnoredMetadata),
 		),
