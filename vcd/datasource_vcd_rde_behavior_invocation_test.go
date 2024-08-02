@@ -50,6 +50,8 @@ func TestAccVcdRdeBehaviorInvocation(t *testing.T) {
 					resource.TestMatchResourceAttr("data.vcd_rde_behavior_invocation.invoke2", "result",
 						regexp.MustCompile(fmt.Sprintf("\"urn:vcloud:type:%s:%s:%s\"", params["Vendor"], params["Nss"], params["Version"]))),
 					resource.TestCheckNoResourceAttr("data.vcd_rde_behavior_invocation.invoke3", "result"),
+					resource.TestMatchResourceAttr("data.vcd_rde_behavior_invocation.invoke4", "result",
+						regexp.MustCompile(fmt.Sprintf("\"urn:vcloud:type:%s:%s:%s\"", params["Vendor"], params["Nss"], params["Version"]))),
 				),
 			},
 		},
@@ -112,17 +114,28 @@ data "vcd_rde_behavior_invocation" "invoke" {
 data "vcd_rde_behavior_invocation" "invoke2" {
   rde_id      = vcd_rde.rde.id
   behavior_id = vcd_rde_interface_behavior.behavior.id
-  arguments = {
+  arguments_json = jsonencode({
     "arg1" : "not_used"
-  }
-  metadata = {
+  })
+  metadata_json = jsonencode({
     "meta1" : "not_used"
-  }
+  })
 }
 
 data "vcd_rde_behavior_invocation" "invoke3" {
   rde_id            = vcd_rde.rde.id
   behavior_id       = vcd_rde_interface_behavior.behavior.id
   invoke_on_refresh = false
+}
+
+data "vcd_rde_behavior_invocation" "invoke4" {
+  rde_id      = vcd_rde.rde.id
+  behavior_id = vcd_rde_interface_behavior.behavior.id
+  arguments = {
+    "arg1" : "not_used"
+  }
+  metadata = {
+    "meta1" : "not_used"
+  }
 }
 `

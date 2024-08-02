@@ -33,30 +33,30 @@ func datasourceVcdRdeBehaviorInvocation() *schema.Resource {
 				Description: "If 'true', invokes the Behavior on every refresh",
 			},
 			"arguments": {
-				Type:         schema.TypeMap,
-				Optional:     true,
-				Description:  "The arguments to be passed to the invoked Behavior",
-				Deprecated:   "Use 'arguments_json' instead",
-				ExactlyOneOf: []string{"arguments", "arguments_json"},
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Description:   "The arguments to be passed to the invoked Behavior",
+				Deprecated:    "Use 'arguments_json' instead",
+				ConflictsWith: []string{"arguments_json"},
 			},
 			"arguments_json": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Description:  "The arguments to be passed to the invoked Behavior, as a JSON string",
-				ExactlyOneOf: []string{"arguments", "arguments_json"},
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "The arguments to be passed to the invoked Behavior, as a JSON string",
+				ConflictsWith: []string{"arguments"},
 			},
 			"metadata": {
-				Type:         schema.TypeMap,
-				Optional:     true,
-				Description:  "Metadata to be passed to the invoked Behavior",
-				Deprecated:   "Use 'metadata_json' instead",
-				ExactlyOneOf: []string{"metadata", "metadata_json"},
+				Type:          schema.TypeMap,
+				Optional:      true,
+				Description:   "Metadata to be passed to the invoked Behavior",
+				Deprecated:    "Use 'metadata_json' instead",
+				ConflictsWith: []string{"metadata_json"},
 			},
 			"metadata_json": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Description:  "Metadata to be passed to the invoked Behavior, as a JSON string",
-				ExactlyOneOf: []string{"metadata", "metadata_json"},
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "Metadata to be passed to the invoked Behavior, as a JSON string",
+				ConflictsWith: []string{"metadata"},
 			},
 			"result": {
 				Type:        schema.TypeString,
@@ -82,16 +82,17 @@ func datasourceVcdRdeBehaviorInvocationRead(_ context.Context, d *schema.Resourc
 		var metadata map[string]interface{}
 		if a, ok := d.GetOk("arguments"); ok {
 			arguments = a.(map[string]interface{})
-		} else {
-			err = json.Unmarshal([]byte(d.Get("arguments_json").(string)), &arguments)
+		} else if a, ok = d.GetOk("arguments_json"); ok {
+			err = json.Unmarshal([]byte(a.(string)), &arguments)
 			if err != nil {
 				return diag.Errorf("[RDE Behavior Invocation] could not read the arguments JSON: %s", err)
 			}
 		}
+
 		if m, ok := d.GetOk("metadata"); ok {
 			metadata = m.(map[string]interface{})
-		} else {
-			err = json.Unmarshal([]byte(d.Get("metadata_json").(string)), &metadata)
+		} else if m, ok = d.GetOk("metadata_json"); ok {
+			err = json.Unmarshal([]byte(m.(string)), &metadata)
 			if err != nil {
 				return diag.Errorf("[RDE Behavior Invocation] could not read the metadata JSON: %s", err)
 			}
