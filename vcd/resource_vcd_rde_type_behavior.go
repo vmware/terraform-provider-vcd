@@ -178,6 +178,9 @@ func resourceVcdRdeTypeBehaviorDelete(_ context.Context, d *schema.ResourceData,
 	rdeTypeId := d.Get("rde_type_id").(string)
 	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			return nil // Already deleted
+		}
 		return diag.Errorf("[RDE Type Behavior delete] could not read the Behavior of RDE Type with ID '%s': %s", rdeTypeId, err)
 	}
 	err = rdeType.DeleteBehaviorOverride(d.Id())
