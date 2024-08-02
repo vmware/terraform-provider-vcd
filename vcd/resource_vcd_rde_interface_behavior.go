@@ -44,14 +44,12 @@ func resourceVcdRdeInterfaceBehavior() *schema.Resource {
 			"execution": {
 				Type:         schema.TypeMap,
 				Optional:     true,
-				Computed:     true, // As it's set automatically if 'execution_json' is used and it's a simple map
 				Description:  "Execution map of the Behavior",
 				ExactlyOneOf: []string{"execution", "execution_json"},
 			},
 			"execution_json": {
 				Type:                  schema.TypeString,
 				Optional:              true,
-				Computed:              true, // As it's set automatically if 'execution' is used
 				Description:           "Execution of the Behavior in JSON format, that allows to define complex Behavior executions",
 				ExactlyOneOf:          []string{"execution", "execution_json"},
 				DiffSuppressFunc:      hasBehaviorExecutionChanged,
@@ -172,8 +170,8 @@ func genericVcdRdeInterfaceBehaviorRead(_ context.Context, d *schema.ResourceDat
 	dSet(d, "name", behavior.Name)
 	dSet(d, "ref", behavior.Ref)
 	dSet(d, "description", behavior.Description)
-	// Prevents a panic when the execution coming from VCD is a complex JSON
-	// with a map of maps, which Terraform does not support.
+	// Checks whether the Behavior is a complex one (contains nested maps) or
+	// is simple (just a map of strings, aka TypeMap)
 	complexExecution := false
 	for _, v := range behavior.Execution {
 		if _, ok := v.(string); !ok {
@@ -181,20 +179,19 @@ func genericVcdRdeInterfaceBehaviorRead(_ context.Context, d *schema.ResourceDat
 			break
 		}
 	}
-	if !complexExecution {
+	if complexExecution {
+		executionJson, err := json.Marshal(behavior.Execution)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		dSet(d, "execution_json", string(executionJson))
+	} else {
 		err = d.Set("execution", behavior.Execution)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
-	// Sets the execution as JSON string in any case.
-	executionJson, err := json.Marshal(behavior.Execution)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	dSet(d, "execution_json", string(executionJson))
 	d.SetId(behavior.ID)
-
 	return nil
 }
 
