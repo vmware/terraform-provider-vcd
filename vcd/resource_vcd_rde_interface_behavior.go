@@ -207,6 +207,9 @@ func resourceVcdRdeInterfaceBehaviorDelete(_ context.Context, d *schema.Resource
 	interfaceId := d.Get("rde_interface_id").(string)
 	rdeInterface, err := vcdClient.GetDefinedInterfaceById(interfaceId)
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			return nil // Already deleted
+		}
 		return diag.Errorf("[RDE Interface Behavior delete] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 	err = rdeInterface.DeleteBehavior(d.Id())
