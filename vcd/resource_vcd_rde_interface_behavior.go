@@ -172,6 +172,7 @@ func genericVcdRdeInterfaceBehaviorRead(_ context.Context, d *schema.ResourceDat
 	dSet(d, "name", behavior.Name)
 	dSet(d, "ref", behavior.Ref)
 	dSet(d, "description", behavior.Description)
+
 	// Checks whether the Behavior is a complex one (contains nested maps) or
 	// is simple (just a map of strings, aka TypeMap)
 	complexExecution := false
@@ -183,10 +184,13 @@ func genericVcdRdeInterfaceBehaviorRead(_ context.Context, d *schema.ResourceDat
 	}
 	if !complexExecution {
 		err = d.Set("execution", behavior.Execution)
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	} else {
+		err = d.Set("execution", map[string]interface{}{})
 	}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	// Sets the execution as JSON string in any case.
 	executionJson, err := json.Marshal(behavior.Execution)
 	if err != nil {
