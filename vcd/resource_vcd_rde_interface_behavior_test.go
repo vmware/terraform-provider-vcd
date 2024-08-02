@@ -61,10 +61,14 @@ func TestAccVcdRdeInterfaceBehavior(t *testing.T) {
 					resource.TestCheckResourceAttrPair(behaviorName, "id", behaviorName, "ref"),
 					// Compare JSON and map values of executions
 					resource.TestCheckResourceAttrPair(behaviorName, "execution.type", behaviorName2, "execution.type"),
-					resource.TestMatchResourceAttr(behaviorName, "execution_json", regexp.MustCompile(`"type":.*"Activity"`)),
-					resource.TestMatchResourceAttr(behaviorName, "execution_json", regexp.MustCompile(`"id":.*"MyActivity1"`)),
+					resource.TestCheckResourceAttr(behaviorName, "execution.%", "2"),
+					resource.TestCheckResourceAttr(behaviorName, "execution.type", "Activity"),
+					resource.TestCheckResourceAttr(behaviorName, "execution.id", "MyActivity1"),
+					resource.TestMatchResourceAttr(behaviorName, "execution_json", regexp.MustCompile(`"type":.*"Activity"`)),  // Because it's a simple map
+					resource.TestMatchResourceAttr(behaviorName, "execution_json", regexp.MustCompile(`"id":.*"MyActivity1"`)), // Because it's a simple map
 					resource.TestMatchResourceAttr(behaviorName2, "execution_json", regexp.MustCompile(`"type":.*"Activity"`)),
 					resource.TestMatchResourceAttr(behaviorName2, "execution_json", regexp.MustCompile(`"id":.*"MyActivity2"`)),
+					resource.TestCheckResourceAttr(behaviorName2, "execution.%", "2"), // Because it's a simple map
 				),
 			},
 			{
@@ -79,10 +83,14 @@ func TestAccVcdRdeInterfaceBehavior(t *testing.T) {
 					resource.TestCheckResourceAttrPair(behaviorName, "id", behaviorName, "ref"),
 					// Compare JSON and map values of executions
 					resource.TestCheckResourceAttrPair(behaviorName, "execution.type", behaviorName2, "execution.type"),
-					resource.TestMatchResourceAttr(behaviorName, "execution_json", regexp.MustCompile(`"type":.*"Activity"`)),
-					resource.TestMatchResourceAttr(behaviorName, "execution_json", regexp.MustCompile(`"id":.*"MyActivity1Updated"`)),
+					resource.TestCheckResourceAttr(behaviorName, "execution.%", "2"),
+					resource.TestCheckResourceAttr(behaviorName, "execution.type", "Activity"),
+					resource.TestCheckResourceAttr(behaviorName, "execution.id", "MyActivity1Updated"),
+					resource.TestMatchResourceAttr(behaviorName, "execution_json", regexp.MustCompile(`"type":.*"Activity"`)),         // Because it's a simple map
+					resource.TestMatchResourceAttr(behaviorName, "execution_json", regexp.MustCompile(`"id":.*"MyActivity1Updated"`)), // Because it's a simple map
 					resource.TestMatchResourceAttr(behaviorName2, "execution_json", regexp.MustCompile(`"type":.*"Activity"`)),
 					resource.TestMatchResourceAttr(behaviorName2, "execution_json", regexp.MustCompile(`"id":.*"MyActivity2Updated"`)),
+					resource.TestCheckResourceAttr(behaviorName2, "execution.%", "2"), // Because it's a simple map
 				),
 			},
 			{

@@ -44,12 +44,14 @@ func resourceVcdRdeInterfaceBehavior() *schema.Resource {
 			"execution": {
 				Type:         schema.TypeMap,
 				Optional:     true,
+				Computed:     true, // Also set if 'execution_json' is set and the JSON is a simple one (no nested maps)
 				Description:  "Execution map of the Behavior",
 				ExactlyOneOf: []string{"execution", "execution_json"},
 			},
 			"execution_json": {
 				Type:                  schema.TypeString,
 				Optional:              true,
+				Computed:              true, // Also set if 'execution' is set
 				Description:           "Execution of the Behavior in JSON format, that allows to define complex Behavior executions",
 				ExactlyOneOf:          []string{"execution", "execution_json"},
 				DiffSuppressFunc:      hasBehaviorExecutionChanged,
@@ -179,19 +181,20 @@ func genericVcdRdeInterfaceBehaviorRead(_ context.Context, d *schema.ResourceDat
 			break
 		}
 	}
-	if complexExecution {
-		executionJson, err := json.Marshal(behavior.Execution)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		dSet(d, "execution_json", string(executionJson))
-	} else {
+	if !complexExecution {
 		err = d.Set("execution", behavior.Execution)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 	}
+	// Sets the execution as JSON string in any case.
+	executionJson, err := json.Marshal(behavior.Execution)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	dSet(d, "execution_json", string(executionJson))
 	d.SetId(behavior.ID)
+
 	return nil
 }
 
