@@ -37,12 +37,14 @@ func resourceVcdRdeTypeBehavior() *schema.Resource {
 			"execution": {
 				Type:         schema.TypeMap,
 				Optional:     true,
+				Computed:     true, // Also set if 'execution_json' is set and the JSON is a simple one (no nested maps)
 				Description:  "Execution map of the Behavior",
 				ExactlyOneOf: []string{"execution", "execution_json"},
 			},
 			"execution_json": {
 				Type:                  schema.TypeString,
 				Optional:              true,
+				Computed:              true, // Also set if 'execution' is set
 				Description:           "Execution of the Behavior in JSON format, that allows to define complex Behavior executions",
 				ExactlyOneOf:          []string{"execution", "execution_json"},
 				DiffSuppressFunc:      hasBehaviorExecutionChanged,
@@ -87,7 +89,9 @@ func resourceVcdRdeTypeBehaviorCreateOrUpdate(ctx context.Context, d *schema.Res
 		return diag.Errorf("[RDE Type Behavior %s] could not retrieve the RDE Type with ID '%s': %s", operation, rdeTypeId, err)
 	}
 	var execution map[string]interface{}
-	if _, ok := d.GetOk("execution_json"); ok {
+	// We don't use d.GetOk as this field is also Computed, hence Ok will be true almost always and would not detect changes
+	// when operation=update
+	if d.HasChange("execution_json") {
 		executionJson := d.Get("execution_json").(string)
 		err = json.Unmarshal([]byte(executionJson), &execution)
 		if err != nil {
@@ -143,8 +147,9 @@ func genericVcdRdeTypeBehaviorRead(_ context.Context, d *schema.ResourceData, me
 	dSet(d, "name", behavior.Name)
 	dSet(d, "ref", behavior.Ref)
 	dSet(d, "description", behavior.Description)
-	// Prevents a panic when the execution coming from VCD is a complex JSON
-	// with a map of maps, which Terraform does not support.
+
+	// Checks whether the Behavior is a complex one (contains nested maps) or
+	// is simple (just a map of strings, aka TypeMap)
 	complexExecution := false
 	for _, v := range behavior.Execution {
 		if _, ok := v.(string); !ok {
@@ -154,10 +159,13 @@ func genericVcdRdeTypeBehaviorRead(_ context.Context, d *schema.ResourceData, me
 	}
 	if !complexExecution {
 		err = d.Set("execution", behavior.Execution)
-		if err != nil {
-			return diag.FromErr(err)
-		}
+	} else {
+		err = d.Set("execution", map[string]interface{}{})
 	}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	// Sets the execution as JSON string in any case.
 	executionJson, err := json.Marshal(behavior.Execution)
 	if err != nil {
