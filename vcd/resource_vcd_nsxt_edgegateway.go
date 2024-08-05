@@ -1148,6 +1148,13 @@ type vdcOrVdcGroupVerifier interface {
 func doesNotWorkWithDistributedOnlyEdgeGateway(label string, vcdClient *VCDClient, nsxtEdge *govcd.NsxtEdgeGateway) error {
 	// VCD 10.6 supports "DISTRIBUTED_ONLY" Edge Gateway that has very limited set of configurations
 	// The error it returns is misleading therefore this validation should guide the user better
+	// Sample error:
+	// Error: [nsx-t firewall create/update] error creating NSX-T Firewall Rules: error setting
+	// NSX-T Firewall: error in HTTP PUT request: ACCESS_TO_RESOURCE_IS_FORBIDDEN - [
+	// 19-2024-08-05-15-02-04-250--9e6beec5-5b47-4797-ab0d-162fed8d1401 ] Either you need some or
+	// all of the following rights [ORG_VDC_GATEWAY_VIEW_FIREWALL] to perform operations
+	// [GATEWAY_VIEW_FIREWALL_NSX_T] for 5f1fc518-865a-4c43-8b13-408c11ed8c06 or the target entity
+	// is invalid.
 	if vcdClient.Client.APIVCDMaxVersionIs("< 39.0") {
 		return nil
 	}
