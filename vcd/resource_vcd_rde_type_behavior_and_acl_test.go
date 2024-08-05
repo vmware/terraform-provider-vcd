@@ -155,10 +155,11 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      rdeTypeBehavior,
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdInterfaceBehavior(params["Vendor"].(string), params["Nss"].(string), params["Version"].(string), params["Name"].(string)+"1"),
+				ResourceName:            rdeTypeBehavior,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdInterfaceBehavior(params["Vendor"].(string), params["Nss"].(string), params["Version"].(string), params["Name"].(string)+"1"),
+				ImportStateVerifyIgnore: []string{"always_update_secure_execution_properties"}, // Cannot be imported, it's just a flag
 			},
 			{
 				ResourceName:      interfaceBehaviorAcl,
