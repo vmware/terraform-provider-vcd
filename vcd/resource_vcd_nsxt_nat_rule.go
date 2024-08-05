@@ -136,6 +136,10 @@ func resourceVcdNsxtNatRuleCreate(ctx context.Context, d *schema.ResourceData, m
 		return diag.Errorf("[nsx-t nat rule create] error retrieving Edge Gateway: %s", err)
 	}
 
+	if err := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_nat_rule", vcdClient, nsxtEdge); err != nil {
+		return diag.FromErr(err)
+	}
+
 	nsxtNatRule, err := getNsxtNatType(d, vcdClient)
 	if err != nil {
 		return diag.Errorf("[nsx-t nat rule create] error getting NSX-T NAT rule type: %s", err)
@@ -265,6 +269,9 @@ func resourceVcdNsxtNatRuleImport(_ context.Context, d *schema.ResourceData, met
 	edgeGateway, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeGatewayName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to find Edge Gateway '%s': %s", edgeGatewayName, err)
+	}
+	if err := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_nat_rule", vcdClient, edgeGateway); err != nil {
+		return nil, err
 	}
 
 	natRule, err := edgeGateway.GetNatRuleByName(natRuleIdentifier)

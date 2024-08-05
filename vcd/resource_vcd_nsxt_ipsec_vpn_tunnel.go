@@ -274,6 +274,9 @@ func resourceVcdNsxtIpSecVpnTunnelCreate(ctx context.Context, d *schema.Resource
 	if err != nil {
 		return diag.Errorf("[nsx-t ipsec vpn tunnel create] error retrieving Edge Gateway: %s", err)
 	}
+	if err := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_ipsec_vpn_tunnel", vcdClient, nsxtEdge); err != nil {
+		return diag.FromErr(err)
+	}
 
 	ipSecVpnConfig, err := getNsxtIpSecVpnTunnelType(d)
 	if err != nil {
@@ -461,6 +464,10 @@ func resourceVcdNsxtIpSecVpnTunnelImport(_ context.Context, d *schema.ResourceDa
 	edgeGateway, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeGatewayName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to find Edge Gateway '%s': %s", edgeGatewayName, err)
+	}
+
+	if err := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_ipsec_vpn_tunnel", vcdClient, edgeGateway); err != nil {
+		return nil, err
 	}
 
 	ipSecVpnTunnel, err := edgeGateway.GetIpSecVpnTunnelByName(ipSecVpnTunnelIdentifier)

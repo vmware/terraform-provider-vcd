@@ -114,6 +114,9 @@ func resourceVcdEdgeBgpIpPrefixListCreate(ctx context.Context, d *schema.Resourc
 	if err != nil {
 		return diag.Errorf("[bgp ip prefix list create] error retrieving Edge Gateway: %s", err)
 	}
+	if err := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_edgegateway_bgp_ip_prefix_list", vcdClient, nsxtEdge); err != nil {
+		return diag.FromErr(err)
+	}
 
 	bgpIpPrefixList := getEdgeBgpIpPrefixListType(d)
 
@@ -258,6 +261,9 @@ func resourceVcdEdgeBgpIpPrefixListImport(_ context.Context, d *schema.ResourceD
 	edgeGateway, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeGatewayName)
 	if err != nil {
 		return nil, fmt.Errorf("[bgp ip prefix list import] unable to find Edge Gateway '%s': %s", edgeGatewayName, err)
+	}
+	if err := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_edgegateway_bgp_ip_prefix_list", vcdClient, edgeGateway); err != nil {
+		return nil, err
 	}
 
 	bgpPrefixList, err := edgeGateway.GetBgpIpPrefixListByName(bgpIpPrefixListName)

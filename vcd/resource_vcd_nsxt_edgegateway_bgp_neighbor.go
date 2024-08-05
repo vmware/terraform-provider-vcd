@@ -147,6 +147,9 @@ func resourceVcdEdgeBgpNeighborCreate(ctx context.Context, d *schema.ResourceDat
 	if err != nil {
 		return diag.Errorf("[bgp neighbor create] error retrieving Edge Gateway: %s", err)
 	}
+	if err := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_edgegateway_bgp_neighbor", vcdClient, nsxtEdge); err != nil {
+		return diag.FromErr(err)
+	}
 
 	bgpNeighbor := getEdgeBgpNeighborType(d)
 
@@ -290,6 +293,9 @@ func resourceVcdEdgeBgpNeighborImport(_ context.Context, d *schema.ResourceData,
 	edgeGateway, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeGatewayName)
 	if err != nil {
 		return nil, fmt.Errorf("[bgp neighbor import] unable to find Edge Gateway '%s': %s", edgeGatewayName, err)
+	}
+	if err := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_edgegateway_bgp_neighbor", vcdClient, edgeGateway); err != nil {
+		return nil, err
 	}
 
 	bgpPrefixList, err := edgeGateway.GetBgpNeighborByIp(bgpNeighborIp)

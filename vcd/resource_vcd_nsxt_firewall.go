@@ -144,6 +144,10 @@ func resourceVcdNsxtFirewallCreateUpdate(ctx context.Context, d *schema.Resource
 		return diag.Errorf("[nsx-t firewall create/update] error retrieving Edge Gateway: %s", err)
 	}
 
+	if err := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_firewall", vcdClient, nsxtEdge); err != nil {
+		return diag.FromErr(err)
+	}
+
 	firewallRulesType := getNsxtFirewallTypes(d)
 	firewallContainer := &types.NsxtFirewallRuleContainer{
 		UserDefinedRules: firewallRulesType,
@@ -241,6 +245,9 @@ func resourceVcdNsxtFirewallImport(_ context.Context, d *schema.ResourceData, me
 	edge, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeName)
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve NSX-T edge gateway with ID '%s': %s", d.Id(), err)
+	}
+	if err := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_firewall", vcdClient, edge); err != nil {
+		return nil, err
 	}
 
 	dSet(d, "org", orgName)

@@ -104,6 +104,9 @@ func resourceVcdEdgeBgpConfigCreateUpdate(ctx context.Context, d *schema.Resourc
 	if err != nil {
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}
+	if err := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_edgegateway_bgp_configuration", vcdClient, nsxtEdge); err != nil {
+		return diag.FromErr(err)
+	}
 
 	bgpConfig := getEdgeBgpConfigType(d)
 
@@ -208,6 +211,9 @@ func resourceVcdEdgeBgpConfigImport(_ context.Context, d *schema.ResourceData, m
 	edge, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeName)
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve NSX-T edge gateway with ID '%s': %s", d.Id(), err)
+	}
+	if err := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_edgegateway_bgp_configuration", vcdClient, edge); err != nil {
+		return nil, err
 	}
 
 	dSet(d, "org", orgName)
