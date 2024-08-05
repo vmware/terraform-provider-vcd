@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -51,7 +52,9 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 
 	interfaceBehavior1 := "vcd_rde_interface_behavior.behavior1"
 	interfaceBehavior2 := "vcd_rde_interface_behavior.behavior2"
+	interfaceBehavior3 := "vcd_rde_interface_behavior.behavior3"
 	rdeTypeBehavior := "vcd_rde_type_behavior.behavior_override"
+	rdeTypeBehavior2 := "vcd_rde_type_behavior.behavior_override2"
 	rdeTypeBehaviorDS := "data.vcd_rde_type_behavior.behavior_override_ds"
 	rdeTypeBehaviorInterfaceDS := "data.vcd_rde_type_behavior.behavior_interface_ds"
 	interfaceBehaviorAcl := "vcd_rde_type_behavior_acl.interface_acl"
@@ -76,6 +79,16 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 					resource.TestCheckResourceAttr(rdeTypeBehavior, "description", t.Name()+"Override"),
 					resource.TestCheckResourceAttr(rdeTypeBehavior, "execution.id", "MyActivityOverride"),
 					resource.TestCheckResourceAttr(rdeTypeBehavior, "execution.type", "noop"),
+					resource.TestMatchResourceAttr(rdeTypeBehavior, "execution_json", regexp.MustCompile(`"type":.*"noop"`)),             // Because it's a simple map
+					resource.TestMatchResourceAttr(rdeTypeBehavior, "execution_json", regexp.MustCompile(`"id":.*"MyActivityOverride"`)), // Because it's a simple map
+
+					// RDE Type Behavior with complex JSON
+					resource.TestCheckResourceAttrPair(rdeTypeBehavior2, "ref", interfaceBehavior3, "id"),
+					resource.TestCheckResourceAttr(rdeTypeBehavior2, "name", t.Name()+"3"),
+					resource.TestCheckResourceAttr(rdeTypeBehavior2, "description", t.Name()+"Override3"),
+					resource.TestMatchResourceAttr(rdeTypeBehavior2, "execution_json", regexp.MustCompile(`"type":.*"noop"`)),
+					resource.TestMatchResourceAttr(rdeTypeBehavior2, "execution_json", regexp.MustCompile(`"id":.*"MyActivityOverride3"`)),
+					resource.TestCheckResourceAttr(rdeTypeBehavior2, "execution.%", "2"), // Because it's a simple map
 
 					// Interface Access Levels
 					resource.TestCheckResourceAttrPair(interfaceBehaviorAcl, "id", interfaceBehavior2, "id"),
@@ -104,6 +117,15 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 					resource.TestCheckResourceAttr(rdeTypeBehavior, "description", t.Name()+"UpdatedOverride"),
 					resource.TestCheckResourceAttr(rdeTypeBehavior, "execution.id", "MyActivityUpdatedOverride"),
 					resource.TestCheckResourceAttr(rdeTypeBehavior, "execution.type", "noop"),
+					resource.TestMatchResourceAttr(rdeTypeBehavior, "execution_json", regexp.MustCompile(`"type":.*"noop"`)),                    // Because it's a simple map
+					resource.TestMatchResourceAttr(rdeTypeBehavior, "execution_json", regexp.MustCompile(`"id":.*"MyActivityUpdatedOverride"`)), // Because it's a simple map
+
+					// RDE Type Behavior with complex JSON
+					resource.TestCheckResourceAttrPair(rdeTypeBehavior2, "ref", interfaceBehavior3, "id"),
+					resource.TestCheckResourceAttr(rdeTypeBehavior2, "description", t.Name()+"UpdatedOverride3"),
+					resource.TestMatchResourceAttr(rdeTypeBehavior2, "execution_json", regexp.MustCompile(`"type":.*"noop"`)),
+					resource.TestMatchResourceAttr(rdeTypeBehavior2, "execution_json", regexp.MustCompile(`"id":.*"MyActivityUpdatedOverride3"`)),
+					resource.TestCheckResourceAttr(rdeTypeBehavior2, "execution.%", "2"), // Because it's a simple map
 
 					// Interface Access Levels
 					resource.TestCheckResourceAttrPair(interfaceBehaviorAcl, "id", interfaceBehavior2, "id"),
@@ -134,6 +156,7 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeTypeBehaviorDS, "execution.%", rdeTypeBehavior, "execution.%"),
 					resource.TestCheckResourceAttrPair(rdeTypeBehaviorDS, "execution.id", rdeTypeBehavior, "execution.id"),
 					resource.TestCheckResourceAttrPair(rdeTypeBehaviorDS, "execution.type", rdeTypeBehavior, "execution.type"),
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorDS, "execution_json", rdeTypeBehavior, "execution_json"),
 
 					// RDE Type Behavior from an Interface
 					resource.TestCheckResourceAttrPair(rdeTypeBehaviorInterfaceDS, "id", interfaceBehavior2, "id"),
@@ -142,6 +165,7 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 					resource.TestCheckResourceAttrPair(rdeTypeBehaviorInterfaceDS, "execution.%", interfaceBehavior2, "execution.%"),
 					resource.TestCheckResourceAttrPair(rdeTypeBehaviorInterfaceDS, "execution.id", interfaceBehavior2, "execution.id"),
 					resource.TestCheckResourceAttrPair(rdeTypeBehaviorInterfaceDS, "execution.type", interfaceBehavior2, "execution.type"),
+					resource.TestCheckResourceAttrPair(rdeTypeBehaviorInterfaceDS, "execution_json", interfaceBehavior2, "execution_json"),
 
 					// Interface Access Levels
 					resource.TestCheckResourceAttrPair(interfaceBehaviorAclDS, "id", interfaceBehaviorAcl, "id"),
@@ -206,6 +230,16 @@ resource "vcd_rde_interface_behavior" "behavior2" {
   })
 }
 
+resource "vcd_rde_interface_behavior" "behavior3" {
+  rde_interface_id = vcd_rde_interface.interface.id
+  name             = "{{.Name}}3"
+  description      = "{{.Description}}"
+  execution_json = jsonencode({
+    "id" : "{{.ExecutionId}}3"
+    "type" : "{{.ExecutionType}}"
+  })
+}
+
 resource "vcd_rde_type" "type" {
   nss           = "{{.Nss}}"
   version       = "{{.Version}}"
@@ -242,6 +276,16 @@ resource "vcd_rde_type_behavior" "behavior_override" {
     "id" : "{{.ExecutionId}}Override"
     "type" : "{{.ExecutionType}}"
   }
+}
+
+resource "vcd_rde_type_behavior" "behavior_override2" {
+  rde_type_id               = vcd_rde_type.type.id
+  rde_interface_behavior_id = vcd_rde_interface_behavior.behavior3.id
+  description               = "{{.Description}}Override3"
+  execution_json = jsonencode({
+    "id" : "{{.ExecutionId}}Override3"
+    "type" : "{{.ExecutionType}}"
+  })
 }
 
 resource "vcd_rde_type_behavior_acl" "type_acl" {
