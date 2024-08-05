@@ -73,7 +73,7 @@ The following arguments are supported:
 * `rde_interface_id` - (Required) The ID of the RDE Interface that owns the Behavior
 * `name` - (Required) Name of the Behavior
 * `description` - (Optional) A description specifying the contract of the Behavior
-* `execution_json` - (Optional; *v3.11*) A string representing a valid JSON that specifies the Behavior execution mechanism.
+* `execution_json` - (Optional; *v3.14*) A string representing a valid JSON that specifies the Behavior execution mechanism.
   You can find more information about the different execution types, like `WebHook`, `noop`, `Activity`, `MQTT`, `VRO`, `AWSLambdaFaaS`
   and others [in the Extensibility SDK documentation](https://vmware.github.io/vcd-ext-sdk/docs/defined_entities_api/behaviors).
   One of `execution_json` or `execution` must be set.

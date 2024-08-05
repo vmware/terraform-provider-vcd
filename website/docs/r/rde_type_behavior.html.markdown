@@ -49,9 +49,69 @@ resource "vcd_rde_type_behavior" "my_rde_type_behavior" {
   rde_type_id               = vcd_rde_type.my_rde_type.id
   rde_interface_behavior_id = vcd_rde_interface_behavior.my_interface_behavior.id
   execution = {
-    "id" : "addNodeOverrided"
+    "id" : "addNodeOverridden"
     "type" : "Activity"
   }
+}
+```
+
+## Example Usage With Execution Override with JSON
+
+```hcl
+data "vcd_rde_interface" "my_interface" {
+  vendor  = "bigcorp"
+  nss     = "tech1"
+  version = "1.2.3"
+}
+
+resource "vcd_rde_interface_behavior" "my_interface_behavior" {
+  rde_interface_id = vcd_rde_interface.my_interface.id
+  name             = "MyBehavior"
+  description      = "Adds a node to the cluster.\nParameters:\n  clusterId: the ID of the cluster\n  node: The node address\n"
+  execution_json = jsonencode({
+    "type" : "WebHook",
+    "id" : "testWebHook",
+    "href" : "https://hooks.slack.com:443/services/T07UZFN0N/B01EW5NC42D/rfjhHCGIwzuzQFrpPZiuLkIX",
+    "_internal_key" : "secretKey",
+    "execution_properties" : {
+      "template" : {
+        "content" : "<template_content_string>"
+      },
+      "_secure_token" : "secureToken",
+      "invocation_timeout" : 7
+    }
+  })
+}
+
+resource "vcd_rde_type" "my_rde_type" {
+  vendor        = "vmware"
+  nss           = "vcd"
+  version       = "4.5.6"
+  name          = "My VMware RDE Type"
+  interface_ids = [data.vcd_rde_interface.my_interface.id]
+  schema        = file("${path.module}/schemas/my-type-schema.json")
+
+  # Behaviors can't be created after the RDE Interface is used by a RDE Type
+  # so we need to depend on the Behavior to wait for it to be created first.
+  depends_on = [vcd_rde_interface_behavior.my_interface_behavior]
+}
+
+resource "vcd_rde_type_behavior" "my_rde_type_behavior" {
+  rde_type_id               = vcd_rde_type.my_rde_type.id
+  rde_interface_behavior_id = vcd_rde_interface_behavior.my_interface_behavior.id
+  execution_json = jsonencode({
+    "type" : "WebHook",
+    "id" : "testWebHookOverridden",
+    "href" : "https://hooks.slack.com:443/services/T07UZFN0N/B01EW5NC42D/rfjhHCGIwzuzQFrpPZiuLkIX",
+    "_internal_key" : "secretKey2",
+    "execution_properties" : {
+      "template" : {
+        "content" : "<template_content_string>"
+      },
+      "_secure_token" : "secureToken",
+      "invocation_timeout" : 7
+    }
+  })
 }
 ```
 
@@ -62,7 +122,7 @@ The following arguments are supported:
 * `rde_type_id` - (Required) The ID of the RDE Type that owns the Behavior
 * `rde_interface_behavior_id` - (Required) The ID of the [RDE Interface Behavior](/providers/vmware/vcd/latest/docs/resources/rde_interface_behavior) to override
 * `description` - (Optional) The description of the RDE Type Behavior.
-* `execution_json` - (Optional; *v3.11*) A string representing a valid JSON that specifies the Behavior execution mechanism.
+* `execution_json` - (Optional; *v3.14*) A string representing a valid JSON that specifies the Behavior execution mechanism.
   You can find more information about the different execution types, like `WebHook`, `noop`, `Activity`, `MQTT`, `VRO`, `AWSLambdaFaaS`
   and others [in the Extensibility SDK documentation](https://vmware.github.io/vcd-ext-sdk/docs/defined_entities_api/behaviors).
   One of `execution_json` or `execution` must be set.
