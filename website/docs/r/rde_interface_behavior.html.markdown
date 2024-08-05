@@ -47,7 +47,7 @@ resource "vcd_rde_interface_behavior" "my_behavior2" {
 resource "vcd_rde_interface_behavior" "my_behavior3" {
   rde_interface_id = vcd_rde_interface.my_interface.id
   name             = "MyBehavior3"
-  
+
   # 'execution_json' allows to use complex structures that are not possible with a regular
   # 'execution' map, like a nested "execution_properties" in a webhook behavior:
   execution_json = jsonencode({
@@ -55,12 +55,12 @@ resource "vcd_rde_interface_behavior" "my_behavior3" {
     "id" : "testWebHook",
     "href" : "https://hooks.slack.com:443/services/T07UZFN0N/B01EW5NC42D/rfjhHCGIwzuzQFrpPZiuLkIX",
     "_internal_key" : "secretKey",
-    "execution_properties":{
-      "template":{
-        "content":"<template_content_string>"
+    "execution_properties" : {
+      "template" : {
+        "content" : "<template_content_string>"
       },
-      "_secure_token":"secureToken",
-      "invocation_timeout":7
+      "_secure_token" : "secureToken",
+      "invocation_timeout" : 7
     }
   })
 }
