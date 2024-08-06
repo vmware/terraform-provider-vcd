@@ -64,7 +64,7 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          "internal",
-				Description:      "Optional interface type (only for NSX-V networks). One of 'INTERNAL' (default), 'DISTRIBUTED', 'SUBINTERFACE', `NON_DISTRIBUTED`",
+				Description:      "Optional interface type. One of 'INTERNAL' (default), 'DISTRIBUTED', 'SUBINTERFACE', `NON_DISTRIBUTED`",
 				ValidateFunc:     validation.StringInSlice([]string{"internal", "subinterface", "distributed", "non_distributed"}, true),
 				DiffSuppressFunc: suppressCase,
 			},
