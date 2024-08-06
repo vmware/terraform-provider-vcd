@@ -126,6 +126,9 @@ The following arguments are supported:
   You can find more information about the different execution types, like `WebHook`, `noop`, `Activity`, `MQTT`, `VRO`, `AWSLambdaFaaS`
   and others [in the Extensibility SDK documentation](https://vmware.github.io/vcd-ext-sdk/docs/defined_entities_api/behaviors).
   One of `execution_json` or `execution` must be set.
+* `always_update_secure_execution_properties` - (Optional; *v3.14*) Useful to update execution properties marked with `_secure_` and `_internal_`
+  as these are not retrievable from VCD, so they are not saved in state. Setting this to `true` will make the provider
+  to ask for updates whenever there is a secure property in the execution of the Behavior
 * `execution` - (Optional) A map that specifies the Behavior execution mechanism, this is just a simplification of `execution_json` that
   can make the configuration more readable for simpler Behaviors. One of `execution_json` or `execution` must be set.
 
