@@ -144,9 +144,6 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelCreate(ctx context.Context, d *schema.
 	if err != nil {
 		return diag.Errorf("[L2 VPN Tunnel create] error retrieving Edge Gateway: %s", err)
 	}
-	if err := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_edgegateway_l2_vpn_tunnel", vcdClient, nsxtEdge); err != nil {
-		return diag.FromErr(err)
-	}
 
 	tunnelConfig, err := readL2VpnTunnelFromSchema(d)
 	if err != nil {
@@ -154,6 +151,11 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelCreate(ctx context.Context, d *schema.
 	}
 	tunnel, err := nsxtEdge.CreateL2VpnTunnel(tunnelConfig)
 	if err != nil {
+		if strings.Contains(err.Error(), "or the target entity is invalid") {
+			if err2 := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_edgegateway_l2_vpn_tunnel", vcdClient, nsxtEdge); err2 != nil {
+				return diag.Errorf(err.Error() + "\n\n" + err2.Error())
+			}
+		}
 		return diag.Errorf("[L2 VPN Tunnel create] error creating L2 VPN Tunnel: %s", err)
 	}
 	d.SetId(tunnel.NsxtL2VpnTunnel.ID)
@@ -406,9 +408,6 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelImport(ctx context.Context, d *schema.
 	edge, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeName)
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve NSX-T Edge Gateway with ID '%s': %s", edgeName, err)
-	}
-	if err := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_edgegateway_l2_vpn_tunnel", vcdClient, edge); err != nil {
-		return nil, err
 	}
 
 	tunnel, err := edge.GetL2VpnTunnelByName(tunnelName)

@@ -117,14 +117,16 @@ func resourceVcdNsxtEdgeGatewayStaticRouteCreate(ctx context.Context, d *schema.
 	if err != nil {
 		return diag.Errorf("[NSX-T Edge Gateway Static Route create] error retrieving Edge Gateway: %s", err)
 	}
-	if err := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_edgegateway_static_route", vcdClient, nsxtEdge); err != nil {
-		diag.FromErr(err)
-	}
 
 	staticRouteConfig := getStaticRouteType(d)
 
 	createdStaticRoute, err := nsxtEdge.CreateStaticRoute(staticRouteConfig)
 	if err != nil {
+		if strings.Contains(err.Error(), "or the target entity is invalid") {
+			if err2 := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_edgegateway_static_route", vcdClient, nsxtEdge); err2 != nil {
+				return diag.Errorf(err.Error() + "\n\n" + err2.Error())
+			}
+		}
 		return diag.Errorf("[NSX-T Edge Gateway Static Route create] error creating Static Route: %s", err)
 	}
 
@@ -241,9 +243,6 @@ func resourceVcdNsxtEdgeGatewayStaticRouteImport(ctx context.Context, d *schema.
 	edgeGateway, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeGatewayName)
 	if err != nil {
 		return nil, fmt.Errorf("[NSX-T Edge Gateway Static Route import] unable to find Edge Gateway '%s': %s", edgeGatewayName, err)
-	}
-	if err := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_edgegateway_static_route", vcdClient, edgeGateway); err != nil {
-		return nil, err
 	}
 
 	_, _, err = net.ParseCIDR(staticRouteCidrOrName)
