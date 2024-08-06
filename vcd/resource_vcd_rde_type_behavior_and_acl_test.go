@@ -26,6 +26,7 @@ func TestAccVcdRdeTypeBehaviorAndAcl(t *testing.T) {
 		"TypeAccessLevels":      "\"urn:vcloud:accessLevel:FullControl\"",
 		"InterfaceAccessLevels": "\"urn:vcloud:accessLevel:FullControl\"",
 		"HookEvent":             "PostCreate",
+		"Tags":                  "rde",
 	}
 	testParamsNotEmpty(t, params)
 

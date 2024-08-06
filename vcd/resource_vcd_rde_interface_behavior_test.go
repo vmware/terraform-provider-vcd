@@ -25,6 +25,7 @@ func TestAccVcdRdeInterfaceBehavior(t *testing.T) {
 		"ExecutionId1":        "MyActivity1",
 		"ExecutionId2":        "MyActivity2",
 		"ExecutionType":       "Activity",
+		"Tags":                "rde",
 	}
 	testParamsNotEmpty(t, params)
 
