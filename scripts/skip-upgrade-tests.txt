@@ -349,3 +349,5 @@ vcd.ResourceSchema-vcd_nsxt_firewall.tf v3.12.1 "Added support for 'REJECT' and 
 vcd.ResourceSchema-vcd_vapp.tf v3.12.1 "Added fields 'vm_names', 'vapp_org_network_names', 'vapp_network_names'"
 vcd.ResourceSchema-vcd_vapp_vm.tf v3.12.1 "Added field 'extra_config'"
 vcd.ResourceSchema-vcd_vm.tf v3.12.1 "Added field 'extra_config'"
+vcd.ResourceSchema-vcd_rde_interface_behavior.tf v3.14.0 "Changed fields to computed and added new arguments"
+vcd.ResourceSchema-vcd_rde_type_behavior.tf v3.14.0 "Changed fields to computed and added new arguments"
