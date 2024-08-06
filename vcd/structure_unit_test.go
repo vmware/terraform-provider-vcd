@@ -166,7 +166,7 @@ func Test_areMarshaledJsonEqual(t *testing.T) {
 	}
 }
 
-func Test_removeItemsMapWithKeyPrefixes(t *testing.T) {
+func Test_removeItemsFromMapWithKeyPrefixes(t *testing.T) {
 	type args struct {
 		input    map[string]interface{}
 		prefixes []string
