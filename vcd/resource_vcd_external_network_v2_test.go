@@ -32,7 +32,6 @@ func TestAccVcdExternalNetworkV2NsxtT0Router(t *testing.T) {
 }
 
 func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
-
 	skipIfNotSysAdmin(t)
 
 	startAddress := "192.168.30.51"
@@ -1664,5 +1663,113 @@ resource "vcd_ip_space_ip_allocation" "public-ip-prefix-manual" {
   description   = "manually used IP Prefix"
 
   depends_on = [vcd_nsxt_edgegateway.ip-space]
+}
+`
+
+// TestAccVcdExternalNetworkV2DedicatedToEdgeUpdate tests that it is possible to extend external
+// network ip scope range while having it dedicated to an NSX-T Edge Gateway
+// Based on https://github.com/vmware/terraform-provider-vcd/issues/1183
+func TestAccVcdExternalNetworkV2DedicatedToEdgeUpdate(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	description := "Test External Network"
+	var params = StringMap{
+		"Org":             testConfig.VCD.Org,
+		"Vdc":             testConfig.Nsxt.Vdc,
+		"NsxtManager":     testConfig.Nsxt.Manager,
+		"NsxtTier0Router": testConfig.Nsxt.Tier0router,
+		"EndAddress":      "192.168.30.62",
+		"Description":     description,
+		"Netmask":         "24",
+		"TestName":        t.Name(),
+
+		"Tags": "network extnetwork nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "step"
+	configText := templateFill(testAccCheckVcdExternalNetworkV2NsxtWithDedicatedEdgeStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	params["EndAddress"] = "192.168.30.64" // extend subnet
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccCheckVcdExternalNetworkV2NsxtWithDedicatedEdgeStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText2)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", t.Name()),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_external_network_v2.ext-net-nsxt", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", t.Name()),
+				),
+			},
+		},
+	})
+
+	postTestChecks(t)
+}
+
+const testAccCheckVcdExternalNetworkV2NsxtWithDedicatedEdgeStep1 = testAccCheckVcdExternalNetworkV2NsxtDS + `
+# skip-binary-test: This test checks update functionality
+resource "vcd_external_network_v2" "ext-net-nsxt" {
+  name        = "{{.TestName}}"
+  description = "{{.Description}}"
+
+  nsxt_network {
+    nsxt_manager_id      = data.vcd_nsxt_manager.main.id
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  ip_scope {
+    enabled       = true
+    gateway       = "192.168.30.1"
+    prefix_length = "24"
+
+    static_ip_pool {
+      start_address = "192.168.30.51"
+      end_address   = "{{.EndAddress}}"
+    }
+  }
+}
+
+data "vcd_org_vdc" "vdc1" {
+  name = "{{.Vdc}}"
+}
+
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org         = "{{.Org}}"
+  owner_id    = data.vcd_org_vdc.vdc1.id
+  name        = "{{.TestName}}"
+  description = "Description"
+
+  external_network_id       = vcd_external_network_v2.ext-net-nsxt.id
+  dedicate_external_network = true
+
+  subnet {
+    gateway       = "192.168.30.1"
+    prefix_length = "24"
+    primary_ip    = "192.168.30.51"
+
+    allocated_ips {
+      start_address = "192.168.30.51"
+      end_address   = "192.168.30.60"
+    }
+  }
 }
 `
