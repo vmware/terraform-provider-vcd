@@ -122,6 +122,11 @@ func resourceVcdNsxtEdgeGatewayStaticRouteCreate(ctx context.Context, d *schema.
 
 	createdStaticRoute, err := nsxtEdge.CreateStaticRoute(staticRouteConfig)
 	if err != nil {
+		if strings.Contains(err.Error(), "or the target entity is invalid") {
+			if err2 := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_edgegateway_static_route", vcdClient, nsxtEdge); err2 != nil {
+				return diag.Errorf(err.Error() + "\n\n" + err2.Error())
+			}
+		}
 		return diag.Errorf("[NSX-T Edge Gateway Static Route create] error creating Static Route: %s", err)
 	}
 

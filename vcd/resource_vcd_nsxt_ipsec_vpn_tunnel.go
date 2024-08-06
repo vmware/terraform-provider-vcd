@@ -282,6 +282,11 @@ func resourceVcdNsxtIpSecVpnTunnelCreate(ctx context.Context, d *schema.Resource
 
 	createdIpSecVpnConfig, err := nsxtEdge.CreateIpSecVpnTunnel(ipSecVpnConfig)
 	if err != nil {
+		if strings.Contains(err.Error(), "or the target entity is invalid") {
+			if err2 := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_ipsec_vpn_tunnel", vcdClient, nsxtEdge); err2 != nil {
+				return diag.Errorf(err.Error() + "\n\n" + err2.Error())
+			}
+		}
 		return diag.Errorf("[nsx-t ipsec vpn tunnel create] error creating NSX-T IPsec VPN Tunnel configuration: %s", err)
 	}
 	// IPSec VPN Tunnel is already created - storing ID

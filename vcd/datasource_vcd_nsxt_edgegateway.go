@@ -52,6 +52,11 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Dedicating the External Network will enable Route Advertisement for this Edge Gateway.",
 			},
+			"deployment_mode": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Edge Gateway deployment mode. One of 'DISTRIBUTED_ONLY', 'ACTIVE_STANDBY'.",
+			},
 			"external_network_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
