@@ -1159,19 +1159,19 @@ func genericResourceList(d *schema.ResourceData, resType string, ancestors []str
 				identifier = ref.id
 			}
 			sanitizedName := ref.name
-			sanitizedId := identifier
 			if strings.Contains(ref.name, " ") {
 				// Names can have spaces in VCD, but must not have in HCL resource names
 				sanitizedName = strings.ReplaceAll(ref.name, " ", "_")
+			}
+			sanitizedId := fmt.Sprintf("%s%s%s", strings.Join(ancestors, ImportSeparator), ImportSeparator, identifier)
+			if strings.Contains(sanitizedId, " ") {
 				// Spaces must be between double quotes, otherwise importing won't work
-				sanitizedId = fmt.Sprintf("\"%s\"", identifier)
+				sanitizedId = fmt.Sprintf("\"%s\"", sanitizedId)
 			}
 
-			list = append(list, fmt.Sprintf("terraform import %s.%s %s%s%s",
+			list = append(list, fmt.Sprintf("terraform import %s.%s %s",
 				resourceType,
 				sanitizedName,
-				strings.Join(ancestors, ImportSeparator),
-				ImportSeparator,
 				sanitizedId))
 
 			ancestorsText := ""
