@@ -1144,7 +1144,14 @@ func genericResourceList(d *schema.ResourceData, resType string, ancestors []str
 		case "name_id":
 			list = append(list, ref.name+nameIdSeparator+ref.id)
 		case "hierarchy":
-			if ref.parent != "" {
+			// If the parent is already present in the ancestors slice, don't repeat it
+			addParent := true
+			for _, ancestor := range ancestors {
+				if ancestor == ref.parent {
+					addParent = false
+				}
+			}
+			if ref.parent != "" && addParent {
 				list = append(list, strings.Join(ancestors, nameIdSeparator)+
 					nameIdSeparator+ref.parent+
 					nameIdSeparator+ref.name)
