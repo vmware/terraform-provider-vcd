@@ -446,3 +446,75 @@ data "vcd_resource_list" "{{.ResName}}" {
   name_regex       = "{{.NameRegex}}"
 }
 `
+
+func TestAccVcdDatasourceResourceListSpecialChars(t *testing.T) {
+	preTestChecks(t)
+
+	var params = StringMap{
+		"Org": testConfig.VCD.Org,
+	}
+	testParamsNotEmpty(t, params)
+	configText := templateFill(testAccVcdDatasourceResourceListSpecialChars, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	// Obtains the last catalog position, to be able to test the new ones that this test
+	// creates (lists need to be checked directly by position)
+	vcdClient := createTemporaryVCDConnection(false)
+	org, err := vcdClient.GetAdminOrg(testConfig.VCD.Org)
+	if err != nil {
+		t.Fatal(err)
+	}
+	catalogs, err := org.QueryCatalogList()
+	if err != nil {
+		t.Fatal(err)
+	}
+	lastCatalog := len(catalogs)
+
+	resourceList := "data.vcd_resource_list.rs"
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceList, fmt.Sprintf("list.%d", lastCatalog), fmt.Sprintf("terraform import vcd_catalog.f_o_o '%s.f o o'", testConfig.VCD.Org)),
+					resource.TestCheckResourceAttr(resourceList, fmt.Sprintf("list.%d", lastCatalog+1), fmt.Sprintf("terraform import vcd_catalog.b_a_r '%s.b%%a$r'", testConfig.VCD.Org)),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdDatasourceResourceListSpecialChars = `
+resource "vcd_catalog" "cat1" {
+  org              = "{{.Org}}"
+  name             = "f o o"
+  delete_force     = "true"
+  delete_recursive = "true"
+}
+
+resource "vcd_catalog" "cat2" {
+  org              = "{{.Org}}"
+  name             = "b%a$r"
+  delete_force     = "true"
+  delete_recursive = "true"
+
+  # Guarantees a sequential order, to easily make assertions
+  depends_on = [vcd_catalog.cat1]
+}
+
+data "vcd_resource_list" "rs" {
+  name             = "test"
+  resource_type    = "vcd_catalog"
+  list_mode        = "import"
+
+  # Both catalogs need to be created
+  depends_on = [vcd_catalog.cat1, vcd_catalog.cat2]
+}
+`
