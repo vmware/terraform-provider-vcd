@@ -200,7 +200,7 @@ func resourceVcdExternalNetworkV2Create(ctx context.Context, d *schema.ResourceD
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] external network V2 creation initiated")
 
-	netType, err := getExternalNetworkV2Type(vcdClient, d, "")
+	netType, err := getExternalNetworkV2Type(vcdClient, d, "", false)
 	if err != nil {
 		return diag.Errorf("could not get network data: %s", err)
 	}
@@ -230,7 +230,7 @@ func resourceVcdExternalNetworkV2Update(ctx context.Context, d *schema.ResourceD
 		knownNsxtSegmentId = extNet.ExternalNetwork.NetworkBackings.Values[0].BackingID
 	}
 
-	netType, err := getExternalNetworkV2Type(vcdClient, d, knownNsxtSegmentId)
+	netType, err := getExternalNetworkV2Type(vcdClient, d, knownNsxtSegmentId, true)
 	if err != nil {
 		return diag.Errorf("could not get network data: %s", err)
 	}
@@ -309,7 +309,7 @@ func resourceVcdExternalNetworkV2Import(_ context.Context, d *schema.ResourceDat
 	return []*schema.ResourceData{d}, nil
 }
 
-func getExternalNetworkV2Type(vcdClient *VCDClient, d *schema.ResourceData, knownNsxtSegmentId string) (*types.ExternalNetworkV2, error) {
+func getExternalNetworkV2Type(vcdClient *VCDClient, d *schema.ResourceData, knownNsxtSegmentId string, isUpdate bool) (*types.ExternalNetworkV2, error) {
 	networkBackings, err := getExternalNetworkV2BackingType(vcdClient, d, knownNsxtSegmentId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting network backing type: %s", err)
@@ -347,7 +347,9 @@ func getExternalNetworkV2Type(vcdClient *VCDClient, d *schema.ResourceData, know
 		return nil, fmt.Errorf("'ip_scope' should not be set when 'use_ip_spaces' is enabled")
 	}
 
-	if !usingIpSpace && d.Get("dedicated_org_id").(string) != "" {
+	// During update, the "dedicated_org_id" might be populated if the child edge gateway has
+	// `dedicate_external_network` flag set, but it wouldn't be using IP Spaces.
+	if !isUpdate && !usingIpSpace && d.Get("dedicated_org_id").(string) != "" {
 		return nil, fmt.Errorf("'dedicated_org_id' can only be set when 'use_ip_spaces' is enabled")
 	}
 
