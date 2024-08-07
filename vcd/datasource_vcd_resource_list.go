@@ -1158,20 +1158,29 @@ func genericResourceList(d *schema.ResourceData, resType string, ancestors []str
 			if ref.importId {
 				identifier = ref.id
 			}
+			sanitizedName := ref.name
+			sanitizedId := identifier
+			if strings.Contains(ref.name, " ") {
+				// Names can have spaces in VCD, but must not have in HCL resource names
+				sanitizedName = strings.ReplaceAll(ref.name, " ", "_")
+				// Spaces must be between double quotes, otherwise importing won't work
+				sanitizedId = fmt.Sprintf("\"%s\"", identifier)
+			}
+
 			list = append(list, fmt.Sprintf("terraform import %s.%s %s%s%s",
 				resourceType,
-				ref.name,
+				sanitizedName,
 				strings.Join(ancestors, ImportSeparator),
 				ImportSeparator,
-				identifier))
+				sanitizedId))
 
 			ancestorsText := ""
 			if len(ancestors) > 0 {
 				ancestorsText = strings.Join(ancestors, ImportSeparator) + ImportSeparator
 			}
-			importData.WriteString(fmt.Sprintf("# Import directive for %s %s%s \n", resourceType, ancestorsText, ref.name))
+			importData.WriteString(fmt.Sprintf("# Import directive for %s %s%s \n", resourceType, ancestorsText, sanitizedName))
 			importData.WriteString("import {\n")
-			importData.WriteString(fmt.Sprintf("  to = %s.%s-%s\n", resourceType, ref.name, idTail(ref.id)))
+			importData.WriteString(fmt.Sprintf("  to = %s.%s-%s\n", resourceType, sanitizedName, idTail(ref.id)))
 			if len(ancestors) > 0 {
 				importData.WriteString(fmt.Sprintf("  id = \"%s%s%s\"\n",
 					strings.Join(ancestors, ImportSeparator), ImportSeparator, identifier))
