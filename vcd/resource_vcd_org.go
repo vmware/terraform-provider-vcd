@@ -196,6 +196,18 @@ func resourceOrg() *schema.Resource {
 				ConflictsWith: []string{"metadata_entry"},
 			},
 			"metadata_entry": metadataEntryResourceSchemaDeprecated("Organization"),
+			"account_lockout_login_attempts": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Description:  "Number of login attempts that will trigger an account lockout for the given user",
+				RequiredWith: []string{"account_lockout_interval"},
+			},
+			"account_lockout_interval": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Description:  "Once a user is locked out, they will not be able to log back in for this time period",
+				RequiredWith: []string{"account_lockout_login_attempts"},
+			},
 		},
 	}
 }

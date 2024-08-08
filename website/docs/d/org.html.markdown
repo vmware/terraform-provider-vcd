@@ -68,6 +68,8 @@ The following arguments are supported:
 * `list_of_catalogs` - (*v3.11+*) List of catalogs (sorted alphabetically), owned or shared, available to this organization.
 * `number_of_vdcs` - (*v3.11+*) Number of VDCs owned or shared, available to this organization.
 * `list_of_vdcs` - (*v3.11+*) List of VDCs (sorted alphabetically), owned or shared, available to this organization.
+* `account_lockout_login_attempts` - (*v3.14*) Number of login attempts that will trigger an account lockout for the given user
+* `account_lockout_interval` - (*v3.14*) Once a user is locked out, they will not be able to log back in for this time period
 
 <a id="vapp-lease"></a>
 ## vApp Lease
