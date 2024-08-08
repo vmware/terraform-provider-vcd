@@ -96,7 +96,7 @@ var sizingPolicyCpu = &schema.Resource{
 			ForceNew:     true,
 			Optional:     true,
 			Description:  "Defines the CPU limit in MHz for a VM. If not defined in the VDC compute policy, CPU limit is equal to the vCPU speed multiplied by the number of vCPUs.",
-			ValidateFunc: IsIntAndAtLeast(0),
+			ValidateFunc: IsIntAndAtLeast(-1),
 		},
 		"shares": {
 			Type:         schema.TypeString,
