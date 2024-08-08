@@ -62,7 +62,7 @@ To preserve compatibility until the next release, though, the parameter is still
  Each VM sizing policy supports the following attributes:
  
  * `shares` - (Optional) Defines the number of CPU shares for a VM. Shares specify the relative importance of a VM within a virtual data center. If a VM has twice as many shares of CPU as another VM, it is entitled to consume twice as much CPU when these two virtual machines are competing for resources. If not defined in the VDC compute policy, normal shares are applied to the VM.
- * `limit_in_mhz` - (Optional) Defines the CPU limit in MHz for a VM. If not defined in the VDC compute policy, CPU limit is equal to the vCPU speed multiplied by the number of vCPUs.
+ * `limit_in_mhz` - (Optional) Defines the CPU limit in MHz for a VM. If not defined in the VDC compute policy, CPU limit is equal to the vCPU speed multiplied by the number of vCPUs. Since *v3.14*, `-1` means unlimited.
  * `count` - (Required) Defines the number of vCPUs configured for a VM. This is a VM hardware configuration. When a tenant assigns the VM sizing policy to a VM, this count becomes the configured number of vCPUs for the VM.
  * `speed_in_mhz` - (Optional) Defines the vCPU speed of a core in MHz.
  * `cores_per_socket` - (Optional) The number of cores per socket for a VM. This is a VM hardware configuration. The number of vCPUs that is defined in the VM sizing policy must be divisible by the number of cores per socket. If the number of vCPUs is not divisible by the number of cores per socket, the number of cores per socket becomes invalid.
