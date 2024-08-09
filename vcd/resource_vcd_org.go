@@ -362,6 +362,7 @@ func getSettings(d *schema.ResourceData) *types.OrgSettings {
 		vappTemplateLeaseInputProvided = true
 		accountLockout := accountLockoutBlock.([]interface{})[0].(map[string]interface{})
 		settings.OrgPasswordPolicySettings = &types.OrgPasswordPolicySettings{
+			Xmlns:                         types.XMLNamespaceVCloud,
 			AccountLockoutEnabled:         accountLockout["enabled"].(bool),
 			InvalidLoginsBeforeLockout:    accountLockout["invalid_logins_before_lockout"].(int),
 			AccountLockoutIntervalMinutes: accountLockout["lockout_interval"].(int),
@@ -446,6 +447,7 @@ func resourceOrgUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 	adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings = settings.OrgGeneralSettings
 	adminOrg.AdminOrg.OrgSettings.OrgVAppTemplateSettings = settings.OrgVAppTemplateSettings
 	adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings = settings.OrgVAppLeaseSettings
+	adminOrg.AdminOrg.OrgSettings.OrgPasswordPolicySettings = settings.OrgPasswordPolicySettings
 
 	log.Printf("[TRACE] Org with id %s found", orgName)
 	// Check if the LDAP settings are correct.

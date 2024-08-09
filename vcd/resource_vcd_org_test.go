@@ -187,6 +187,8 @@ func TestAccVcdOrgFull(t *testing.T) {
 			templDeleteOnLeaseExp:        false,
 			templStorageLease:            3600 * 24 * 30, // 30 days (the default)
 			vappDeleteOnLeaseExp:         false,
+			metadataKey:                  "key6",
+			metadataValue:                "value6",
 			accountLockout:               true,
 		},
 	}
@@ -225,7 +227,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 		if od.accountLockout {
 			params["AccountLockout"] = "account_lockout {\n    enabled                        = true\n    invalid_logins_before_lockout = 7\n    lockout_interval                = 77\n}"
 		}
-		accountLockoutCheck := func(attempts, interval int) resource.TestCheckFunc {
+		accountLockoutCheck := func(resourceName string, attempts, interval int) resource.TestCheckFunc {
 			if !od.accountLockout {
 				return func(state *terraform.State) error {
 					return nil
@@ -317,7 +319,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 							resourceName, "vapp_template_lease.0.delete_on_storage_lease_expiration", fmt.Sprintf("%v", od.templDeleteOnLeaseExp)),
 						resource.TestCheckResourceAttr(
 							resourceName, "metadata."+od.metadataKey, od.metadataValue),
-						accountLockoutCheck(7, 77),
+						accountLockoutCheck(resourceName, 7, 77),
 					),
 				},
 				{
@@ -345,7 +347,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 							resourceName, fmt.Sprintf("metadata.%s", od.metadataKey)),
 						resource.TestCheckResourceAttr(
 							resourceName, "metadata."+updateParams["MetadataKey"].(string), updateParams["MetadataValue"].(string)),
-						accountLockoutCheck(19, 55),
+						accountLockoutCheck(resourceName, 19, 55),
 					),
 				},
 				{
