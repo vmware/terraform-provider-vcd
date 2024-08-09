@@ -4,11 +4,12 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"regexp"
-	"testing"
 )
 
 // TestAccVcdVAppVmUpdateCustomization tests that setting attribute customizaton.force to `true`
@@ -420,10 +421,12 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 
 	configTextVM := templateFill(testAccCheckVcdVAppVmUpdateCustomizationSettings, params)
 
+	params["VMName"] = netVmName1 + "-step1"
 	params["FuncName"] = t.Name() + "-step1"
 	configTextVMStep1 := templateFill(testAccCheckVcdVAppVmUpdateCustomizationSettingsStep1, params)
 
 	params["FuncName"] = t.Name() + "-step2"
+	params["VMName"] = netVmName1 + "-step2"
 	params["VappPowerOn"] = "false"
 	configTextVMStep2 := templateFill(testAccCheckVcdVAppVmUpdateCustomizationSettingsStep2, params)
 
@@ -435,7 +438,11 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdVAppVmDestroy(netVappName),
+			testAccCheckVcdVAppVmDestroy(netVmName1+"-step2"),
+			testAccCheckVcdVAppVmDestroy(netVmName1+"-step1"),
+		),
 		Steps: []resource.TestStep{
 			// Step 1
 			{
@@ -456,13 +463,13 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 			},
 			// Step 2 - join org domain (does not fail because enabled=false even though OS is not windows)
 			{
-				// Taint:  []string{"vcd_vapp_vm.test-vm"},
+				Taint: []string{"vcd_vapp_vm.test-vm"},
 				// Taint does not work in SDK 2.1.0 therefore every test step has resource address changed to force
 				// recreation of the VM
 				Config: configTextVMStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm-step2", &vapp, &vm),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step2", "name", netVmName1),
+					testAccCheckVcdVAppVmExists(netVappName, netVmName1+"-step1", "vcd_vapp_vm.test-vm-step2", &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step2", "name", netVmName1+"-step1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step2", "network.#", "0"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step2", "customization.#", "1"),
@@ -474,7 +481,7 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 			},
 			// Step 3 - join org domain enabled
 			{
-				// Taint:  []string{"vcd_vapp_vm.test-vm"},
+				Taint: []string{"vcd_vapp_vm.test-vm-step2"},
 				// Taint does not work in SDK 2.1.0 therefore every test step has resource address changed to force
 				// recreation of the VM
 				Config: configTextVMStep2,
@@ -482,8 +489,8 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 				// to prove that values are actually set and try to be applied on vCD.
 				ExpectError: regexp.MustCompile(`Join Domain is not supported for OS type .*`),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm-step3", &vapp, &vm),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step3", "name", netVmName1),
+					testAccCheckVcdVAppVmExists(netVappName, netVmName1+"-step2", "vcd_vapp_vm.test-vm-step3", &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step3", "name", netVmName1+"-step2"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step3", "network.#", "0"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step3", "customization.#", "1"),
