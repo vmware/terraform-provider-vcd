@@ -82,8 +82,12 @@ The following arguments are supported:
 * `rde_id` - (Required) The ID of the [RDE](/providers/vmware/vcd/latest/docs/resources/rde) which Behavior will be invoked
 * `behavior_id` - (Required) The ID of the [RDE Interface Behavior](/providers/vmware/vcd/latest/docs/resources/rde_interface_behavior) or
   the [RDE Interface Behavior](/providers/vmware/vcd/latest/docs/resources/rde_type_behavior) to invoke
-* `arguments` - (Optional) A map with the arguments of the invocation
-* `metadata` - (Optional) A map with the metadata of the invocation
+* `arguments` - (*Deprecated*; Optional) A map with the arguments of the invocation. Deprecated in favor of `arguments_json`
+* `arguments_json` - (Optional) A JSON string with the arguments of the invocation. The built-in function `jsonencode` can
+  be used to set it.
+* `metadata` - (*Deprecated*; Optional) A map with the metadata of the invocation. Deprecated in favor of `metadata_json`
+* `metadata_json` - (Optional) A JSON string with the arguments of the invocation. The built-in function `jsonencode` can
+  be used to set it.
 * `invoke_on_refresh` - (Optional) Defaults to `true`, indicates whether the Behavior should be invoked on every refresh.
   E.g. to suppress the invocation on the refresh step of `terraform destroy` operations, or to stop invoking a given Behavior temporarily.
 

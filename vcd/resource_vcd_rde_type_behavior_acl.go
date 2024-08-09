@@ -154,6 +154,9 @@ func resourceVcdRdeTypeBehaviorAccessLevelDelete(_ context.Context, d *schema.Re
 	vcdClient := meta.(*VCDClient)
 	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			return nil // Already deleted
+		}
 		return diag.Errorf("[RDE Type Behavior Access Level delete] could not retrieve the RDE Type with ID '%s': %s", rdeTypeId, err)
 	}
 

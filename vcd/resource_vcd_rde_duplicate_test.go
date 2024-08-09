@@ -22,6 +22,7 @@ func TestAccVcdRdeDuplicate(t *testing.T) {
 		"Org":        testConfig.VCD.Org,
 		"SchemaPath": getCurrentDir() + "/../test-resources/rde_type.json",
 		"EntityPath": getCurrentDir() + "/../test-resources/rde_instance.json",
+		"Tags":       "rde",
 	}
 	testParamsNotEmpty(t, params)
 

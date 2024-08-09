@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -34,9 +35,28 @@ func resourceVcdRdeTypeBehavior() *schema.Resource {
 				Description: "The ID of the original RDE Interface Behavior to override",
 			},
 			"execution": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Execution map of the Behavior that overrides the original",
+				Type:         schema.TypeMap,
+				Optional:     true,
+				Computed:     true, // Also set if 'execution_json' is set and the JSON is a simple one (no nested maps)
+				Description:  "Execution map of the Behavior",
+				ExactlyOneOf: []string{"execution", "execution_json"},
+			},
+			"execution_json": {
+				Type:                  schema.TypeString,
+				Optional:              true,
+				Computed:              true, // Also set if 'execution' is set
+				Description:           "Execution of the Behavior in JSON format, that allows to define complex Behavior executions",
+				ExactlyOneOf:          []string{"execution", "execution_json"},
+				DiffSuppressFunc:      isBehaviorExecutionEqual,
+				DiffSuppressOnRefresh: true,
+			},
+			"always_update_secure_execution_properties": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				Description: "Useful to update execution properties marked with _secure_ and _internal_," +
+					"as these are not retrievable from VCD, so they are not saved in state. Setting this to 'true' will make the Provider" +
+					"to ask for updates whenever there is a secure property in the execution of the Behavior",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -68,10 +88,22 @@ func resourceVcdRdeTypeBehaviorCreateOrUpdate(ctx context.Context, d *schema.Res
 	if err != nil {
 		return diag.Errorf("[RDE Type Behavior %s] could not retrieve the RDE Type with ID '%s': %s", operation, rdeTypeId, err)
 	}
+	var execution map[string]interface{}
+	// We don't use d.GetOk as this field is also Computed, hence Ok will be true almost always and would not detect changes
+	// when operation=update
+	if d.HasChange("execution_json") {
+		executionJson := d.Get("execution_json").(string)
+		err = json.Unmarshal([]byte(executionJson), &execution)
+		if err != nil {
+			return diag.Errorf("[RDE Interface Behavior %s] could not read the execution JSON: %s", operation, err)
+		}
+	} else {
+		execution = d.Get("execution").(map[string]interface{})
+	}
 	payload := types.Behavior{
 		ID:        d.Get("rde_interface_behavior_id").(string),
 		Ref:       d.Get("ref").(string),
-		Execution: d.Get("execution").(map[string]interface{}),
+		Execution: execution,
 	}
 	if desc, ok := d.GetOk("description"); ok {
 		payload.Description = desc.(string)
@@ -115,10 +147,31 @@ func genericVcdRdeTypeBehaviorRead(_ context.Context, d *schema.ResourceData, me
 	dSet(d, "name", behavior.Name)
 	dSet(d, "ref", behavior.Ref)
 	dSet(d, "description", behavior.Description)
-	err = d.Set("execution", behavior.Execution)
+
+	// Checks whether the Behavior is a complex one (contains nested maps) or
+	// is simple (just a map of strings, aka TypeMap)
+	complexExecution := false
+	for _, v := range behavior.Execution {
+		if _, ok := v.(string); !ok {
+			complexExecution = true
+			break
+		}
+	}
+	if !complexExecution {
+		err = d.Set("execution", behavior.Execution)
+	} else {
+		err = d.Set("execution", map[string]interface{}{})
+	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Sets the execution as JSON string in any case.
+	executionJson, err := json.Marshal(behavior.Execution)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	dSet(d, "execution_json", string(executionJson))
 	d.SetId(behavior.ID)
 
 	return nil
@@ -133,6 +186,9 @@ func resourceVcdRdeTypeBehaviorDelete(_ context.Context, d *schema.ResourceData,
 	rdeTypeId := d.Get("rde_type_id").(string)
 	rdeType, err := vcdClient.GetRdeTypeById(rdeTypeId)
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			return nil // Already deleted
+		}
 		return diag.Errorf("[RDE Type Behavior delete] could not read the Behavior of RDE Type with ID '%s': %s", rdeTypeId, err)
 	}
 	err = rdeType.DeleteBehaviorOverride(d.Id())

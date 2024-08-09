@@ -136,6 +136,9 @@ func resourceVcdRdeInterfaceUpdate(ctx context.Context, d *schema.ResourceData, 
 func resourceVcdRdeInterfaceDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	di, err := getDefinedInterface(d, meta)
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			return nil // Already deleted
+		}
 		return diag.FromErr(err)
 	}
 	err = di.Delete()

@@ -47,12 +47,22 @@ resource "vcd_rde_interface_behavior" "my_behavior2" {
 resource "vcd_rde_interface_behavior" "my_behavior3" {
   rde_interface_id = vcd_rde_interface.my_interface.id
   name             = "MyBehavior3"
-  execution = {
+
+  # 'execution_json' allows to use complex structures that are not possible with a regular
+  # 'execution' map, like a nested "execution_properties" in a webhook behavior:
+  execution_json = jsonencode({
     "type" : "WebHook",
     "id" : "testWebHook",
     "href" : "https://hooks.slack.com:443/services/T07UZFN0N/B01EW5NC42D/rfjhHCGIwzuzQFrpPZiuLkIX",
-    "_internal_key" : "secretKey"
-  }
+    "_internal_key" : "secretKey",
+    "execution_properties" : {
+      "template" : {
+        "content" : "<template_content_string>"
+      },
+      "_secure_token" : "secureToken",
+      "invocation_timeout" : 7
+    }
+  })
 }
 ```
 
@@ -63,9 +73,15 @@ The following arguments are supported:
 * `rde_interface_id` - (Required) The ID of the RDE Interface that owns the Behavior
 * `name` - (Required) Name of the Behavior
 * `description` - (Optional) A description specifying the contract of the Behavior
-* `execution` - (Required) A map that specifies the Behavior execution mechanism.
+* `execution_json` - (Optional; *v3.14*) A string representing a valid JSON that specifies the Behavior execution mechanism.
   You can find more information about the different execution types, like `WebHook`, `noop`, `Activity`, `MQTT`, `VRO`, `AWSLambdaFaaS`
-  and others [in the Extensibility SDK documentation](https://vmware.github.io/vcd-ext-sdk/docs/defined_entities_api/behaviors)
+  and others [in the Extensibility SDK documentation](https://vmware.github.io/vcd-ext-sdk/docs/defined_entities_api/behaviors).
+  One of `execution_json` or `execution` must be set.
+* `always_update_secure_execution_properties` - (Optional; *v3.14*) Useful to update execution properties marked with `_secure_` and `_internal_`
+  as these are not retrievable from VCD, so they are not saved in state. Setting this to `true` will make the provider
+  to ask for updates whenever there is a secure property in the execution of the Behavior
+* `execution` - (Optional) A map that specifies the Behavior execution mechanism, this is just a simplification of `execution_json` that
+  can make the configuration more readable for simpler Behaviors. One of `execution_json` or `execution` must be set.
 
 ## Attribute Reference
 

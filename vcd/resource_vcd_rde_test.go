@@ -32,6 +32,7 @@ func TestAccVcdRde(t *testing.T) {
 		"SchemaPath":     getCurrentDir() + "/../test-resources/rde_type.json",
 		"EntityPath":     getCurrentDir() + "/../test-resources/rde_instance.json",
 		"EntityUrl":      "https://raw.githubusercontent.com/vmware/terraform-provider-vcd/main/test-resources/rde_instance.json",
+		"Tags":           "rde",
 	}
 	testParamsNotEmpty(t, params)
 
