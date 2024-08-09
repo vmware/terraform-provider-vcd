@@ -463,9 +463,6 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 			},
 			// Step 2 - join org domain (does not fail because enabled=false even though OS is not windows)
 			{
-				Taint: []string{"vcd_vapp_vm.test-vm"},
-				// Taint does not work in SDK 2.1.0 therefore every test step has resource address changed to force
-				// recreation of the VM
 				Config: configTextVMStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1+"-step1", "vcd_vapp_vm.test-vm-step2", &vapp, &vm),
@@ -481,9 +478,6 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 			},
 			// Step 3 - join org domain enabled
 			{
-				Taint: []string{"vcd_vapp_vm.test-vm-step2"},
-				// Taint does not work in SDK 2.1.0 therefore every test step has resource address changed to force
-				// recreation of the VM
 				Config: configTextVMStep2,
 				// Our testing suite does not have Windows OS to actually try domain join so the point of this test is
 				// to prove that values are actually set and try to be applied on vCD.
