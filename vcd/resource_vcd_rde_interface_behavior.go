@@ -54,7 +54,7 @@ func resourceVcdRdeInterfaceBehavior() *schema.Resource {
 				Computed:              true, // Also set if 'execution' is set
 				Description:           "Execution of the Behavior in JSON format, that allows to define complex Behavior executions",
 				ExactlyOneOf:          []string{"execution", "execution_json"},
-				DiffSuppressFunc:      hasBehaviorExecutionChanged,
+				DiffSuppressFunc:      isBehaviorExecutionEqual,
 				DiffSuppressOnRefresh: true,
 			},
 			"always_update_secure_execution_properties": {
@@ -74,10 +74,10 @@ func resourceVcdRdeInterfaceBehavior() *schema.Resource {
 	}
 }
 
-// hasBehaviorExecutionChanged tells Terraform whether the Behavior execution in HCL configuration has changed compared
+// isBehaviorExecutionEqual tells Terraform whether the Behavior execution in HCL configuration has changed compared
 // to what it got from VCD, taking into account that VCD does not return fields that were created with "_internal_" or "_secure_"
 // prefix. So we must ignore those.
-func hasBehaviorExecutionChanged(_, oldValue, newValue string, d *schema.ResourceData) bool {
+func isBehaviorExecutionEqual(_, oldValue, newValue string, d *schema.ResourceData) bool {
 	var unmarshaledOldJson, unmarshaledNewJson map[string]interface{}
 	err := json.Unmarshal([]byte(oldValue), &unmarshaledOldJson)
 	if err != nil {
