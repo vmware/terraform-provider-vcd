@@ -1,2 +1,2 @@
-* Add account lockout arguments `account_lockout_login_attempts` and `account_lockout_interval` to `vcd_org` resource
-  and data source [GH-1304]
+* Add `account_lockout` block to `vcd_org` resource and data source, that specifies the account locking mechanism with the
+  sub-arguments `enabled`, `invalid_logins_before_lockout` and `lockout_interval_minutes` [GH-1304]
