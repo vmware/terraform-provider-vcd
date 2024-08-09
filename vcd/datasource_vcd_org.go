@@ -153,7 +153,7 @@ func datasourceVcdOrg() *schema.Resource {
 							Computed:    true,
 							Description: "Number of login attempts that will trigger an account lockout for the given user",
 						},
-						"lockout_interval": {
+						"lockout_interval_minutes": {
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Once a user is locked out, they will not be able to log back in for this time period",

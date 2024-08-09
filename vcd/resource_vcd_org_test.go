@@ -225,7 +225,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 		}
 
 		if od.accountLockout {
-			params["AccountLockout"] = "account_lockout {\n    enabled                        = true\n    invalid_logins_before_lockout = 7\n    lockout_interval                = 77\n}"
+			params["AccountLockout"] = "account_lockout {\n    enabled                        = true\n    invalid_logins_before_lockout = 7\n    lockout_interval_minutes                = 77\n}"
 		}
 		accountLockoutCheck := func(resourceName string, attempts, interval int) resource.TestCheckFunc {
 			if !od.accountLockout {
@@ -236,7 +236,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 			return resource.ComposeAggregateTestCheckFunc(
 				resource.TestCheckResourceAttr(resourceName, "account_lockout.0.enabled", "true"),
 				resource.TestCheckResourceAttr(resourceName, "account_lockout.0.invalid_logins_before_lockout", fmt.Sprintf("%d", attempts)),
-				resource.TestCheckResourceAttr(resourceName, "account_lockout.0.lockout_interval", fmt.Sprintf("%d", interval)),
+				resource.TestCheckResourceAttr(resourceName, "account_lockout.0.lockout_interval_minutes", fmt.Sprintf("%d", interval)),
 			)
 		}
 
@@ -263,7 +263,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 			updateParams["SkipDirective"] = "# skip-binary-test: VCD 10.4.2 cannot create disabled Orgs"
 		}
 		if od.accountLockout {
-			updateParams["AccountLockout"] = "account_lockout {\n    enabled                        = true\n    invalid_logins_before_lockout = 19\n    lockout_interval                = 55\n}"
+			updateParams["AccountLockout"] = "account_lockout {\n    enabled                        = true\n    invalid_logins_before_lockout = 19\n    lockout_interval_minutes                = 55\n}"
 		}
 
 		configTextUpdated := templateFill(testAccCheckVcdOrgFull, updateParams)

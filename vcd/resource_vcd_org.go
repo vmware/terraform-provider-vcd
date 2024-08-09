@@ -215,7 +215,7 @@ func resourceOrg() *schema.Resource {
 							Description:      "Number of login attempts that will trigger an account lockout for the given user",
 							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 20)),
 						},
-						"lockout_interval": {
+						"lockout_interval_minutes": {
 							Type:             schema.TypeInt,
 							Required:         true,
 							Description:      "Once a user is locked out, they will not be able to log back in for this time period",
@@ -365,7 +365,7 @@ func getSettings(d *schema.ResourceData) *types.OrgSettings {
 			Xmlns:                         types.XMLNamespaceVCloud,
 			AccountLockoutEnabled:         accountLockout["enabled"].(bool),
 			InvalidLoginsBeforeLockout:    accountLockout["invalid_logins_before_lockout"].(int),
-			AccountLockoutIntervalMinutes: accountLockout["lockout_interval"].(int),
+			AccountLockoutIntervalMinutes: accountLockout["lockout_interval_minutes"].(int),
 		}
 	}
 
@@ -591,7 +591,7 @@ func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.Ad
 		var accountLockout = make(map[string]interface{})
 		accountLockout["enabled"] = passwordPolicySettings.AccountLockoutEnabled
 		accountLockout["invalid_logins_before_lockout"] = passwordPolicySettings.InvalidLoginsBeforeLockout
-		accountLockout["lockout_interval"] = passwordPolicySettings.AccountLockoutIntervalMinutes
+		accountLockout["lockout_interval_minutes"] = passwordPolicySettings.AccountLockoutIntervalMinutes
 		err = d.Set("account_lockout", []map[string]interface{}{accountLockout})
 		if err != nil {
 			return diag.FromErr(err)
