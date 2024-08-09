@@ -85,6 +85,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 		templDeleteOnLeaseExp        bool
 		metadataKey                  string
 		metadataValue                string
+		accountLockout               bool
 	}
 	var orgList = []testOrgData{
 		{
@@ -172,6 +173,22 @@ func TestAccVcdOrgFull(t *testing.T) {
 			metadataKey:                  "key5",
 			metadataValue:                "value5",
 		},
+		{
+			name:                         "org6",
+			enabled:                      true,
+			canPublishCatalogs:           true,
+			canPublishExternalCatalogs:   false,
+			canSubscribeExternalCatalogs: true,
+			deployedVmQuota:              200,
+			storedVmQuota:                200,
+			runtimeLease:                 3600 * 24 * 7, // 7 days (the default)
+			powerOffonLeaseExp:           false,
+			vappStorageLease:             3600 * 24 * 14, // 14 days (the default)
+			templDeleteOnLeaseExp:        false,
+			templStorageLease:            3600 * 24 * 30, // 30 days (the default)
+			vappDeleteOnLeaseExp:         false,
+			accountLockout:               true,
+		},
 	}
 	willSkip := false
 
@@ -197,11 +214,28 @@ func TestAccVcdOrgFull(t *testing.T) {
 			"MetadataKey":                  od.metadataKey,
 			"MetadataValue":                od.metadataValue,
 			"SkipDirective":                " ", // one whitespace to avoid skipping test in `testParamsNotEmpty()`
+			"AccountLockout":               " ",
 		}
 		testParamsNotEmpty(t, params)
 
 		if createEnabledOrg && !params["IsEnabled"].(bool) {
 			params["SkipDirective"] = "# skip-binary-test: VCD 10.4.2 cannot create disabled Orgs"
+		}
+
+		if od.accountLockout {
+			params["AccountLockout"] = "account_lockout {\n    enabled                        = true\n    invalid_logins_before_lockout = 7\n    lockout_interval                = 77\n}"
+		}
+		accountLockoutCheck := func(attempts, interval int) resource.TestCheckFunc {
+			if !od.accountLockout {
+				return func(state *terraform.State) error {
+					return nil
+				}
+			}
+			return resource.ComposeAggregateTestCheckFunc(
+				resource.TestCheckResourceAttr(resourceName, "account_lockout.0.enabled", "true"),
+				resource.TestCheckResourceAttr(resourceName, "account_lockout.0.invalid_logins_before_lockout", fmt.Sprintf("%d", attempts)),
+				resource.TestCheckResourceAttr(resourceName, "account_lockout.0.lockout_interval", fmt.Sprintf("%d", interval)),
+			)
 		}
 
 		configText := templateFill(testAccCheckVcdOrgFull, params)
@@ -226,16 +260,19 @@ func TestAccVcdOrgFull(t *testing.T) {
 		if createEnabledOrg && !updateParams["IsEnabled"].(bool) {
 			updateParams["SkipDirective"] = "# skip-binary-test: VCD 10.4.2 cannot create disabled Orgs"
 		}
+		if od.accountLockout {
+			updateParams["AccountLockout"] = "account_lockout {\n    enabled                        = true\n    invalid_logins_before_lockout = 19\n    lockout_interval                = 55\n}"
+		}
 
 		configTextUpdated := templateFill(testAccCheckVcdOrgFull, updateParams)
 		if vcdShortTest {
 			willSkip = true
 			continue
 		}
-		fmt.Printf("org: %-5s - enabled %-5v - catalogs %-5v - externalCatalogs %-5v - subscribeExternalCatalogs %-5v - quotas [%3d %3d] - vapp {%10d %5v %10d %5v} - tmpl {%10d %5v}\n",
+		fmt.Printf("org: %-5s - enabled %-5v - catalogs %-5v - externalCatalogs %-5v - subscribeExternalCatalogs %-5v - quotas [%3d %3d] - vapp {%10d %5v %10d %5v} - tmpl {%10d %5v} - accountLockout %-5v\n",
 			od.name, od.enabled, od.canPublishCatalogs, od.canPublishExternalCatalogs, od.canSubscribeExternalCatalogs,
 			od.deployedVmQuota, od.storedVmQuota, od.runtimeLease, od.powerOffonLeaseExp, od.vappStorageLease,
-			od.vappDeleteOnLeaseExp, od.templStorageLease, od.templDeleteOnLeaseExp)
+			od.vappDeleteOnLeaseExp, od.templStorageLease, od.templDeleteOnLeaseExp, od.accountLockout)
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextUpdated)
 
@@ -280,6 +317,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 							resourceName, "vapp_template_lease.0.delete_on_storage_lease_expiration", fmt.Sprintf("%v", od.templDeleteOnLeaseExp)),
 						resource.TestCheckResourceAttr(
 							resourceName, "metadata."+od.metadataKey, od.metadataValue),
+						accountLockoutCheck(7, 77),
 					),
 				},
 				{
@@ -307,6 +345,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 							resourceName, fmt.Sprintf("metadata.%s", od.metadataKey)),
 						resource.TestCheckResourceAttr(
 							resourceName, "metadata."+updateParams["MetadataKey"].(string), updateParams["MetadataValue"].(string)),
+						accountLockoutCheck(19, 55),
 					),
 				},
 				{
@@ -394,6 +433,7 @@ resource "vcd_org" "{{.OrgName}}" {
   metadata = {
     {{.MetadataKey}} = "{{.MetadataValue}}"
   }
+  {{.AccountLockout}}
 }
 `
 

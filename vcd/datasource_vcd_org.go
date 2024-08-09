@@ -137,15 +137,29 @@ func datasourceVcdOrg() *schema.Resource {
 				Deprecated:  "Use metadata_entry instead",
 			},
 			"metadata_entry": metadataEntryDatasourceSchema("Organization"),
-			"account_lockout_login_attempts": {
-				Type:        schema.TypeInt,
+			"account_lockout": {
+				Type:        schema.TypeList,
 				Computed:    true,
-				Description: "Number of login attempts that will trigger an account lockout for the given user",
-			},
-			"account_lockout_interval": {
-				Type:        schema.TypeInt,
-				Computed:    true,
-				Description: "Once a user is locked out, they will not be able to log back in for this time period",
+				Description: "The account lockout properties set in this organization",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"enabled": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Whether account lockout is enabled or not",
+						},
+						"invalid_logins_before_lockout": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Number of login attempts that will trigger an account lockout for the given user",
+						},
+						"lockout_interval": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Once a user is locked out, they will not be able to log back in for this time period",
+						},
+					},
+				},
 			},
 		},
 	}

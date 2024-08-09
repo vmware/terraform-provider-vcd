@@ -196,17 +196,33 @@ func resourceOrg() *schema.Resource {
 				ConflictsWith: []string{"metadata_entry"},
 			},
 			"metadata_entry": metadataEntryResourceSchemaDeprecated("Organization"),
-			"account_lockout_login_attempts": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				Description:  "Number of login attempts that will trigger an account lockout for the given user",
-				RequiredWith: []string{"account_lockout_interval"},
-			},
-			"account_lockout_interval": {
-				Type:         schema.TypeInt,
-				Optional:     true,
-				Description:  "Once a user is locked out, they will not be able to log back in for this time period",
-				RequiredWith: []string{"account_lockout_login_attempts"},
+			"account_lockout": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true, // Exists even if it is not set
+				MaxItems:    1,
+				Description: "Defines account lockout properties in this organization",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"enabled": {
+							Type:        schema.TypeBool,
+							Required:    true,
+							Description: "Whether account lockout is enabled or not",
+						},
+						"invalid_logins_before_lockout": {
+							Type:             schema.TypeInt,
+							Required:         true,
+							Description:      "Number of login attempts that will trigger an account lockout for the given user",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 20)),
+						},
+						"lockout_interval": {
+							Type:             schema.TypeInt,
+							Required:         true,
+							Description:      "Once a user is locked out, they will not be able to log back in for this time period",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
+						},
+					},
+				},
 			},
 		},
 	}
@@ -339,6 +355,17 @@ func getSettings(d *schema.ResourceData) *types.OrgSettings {
 	}
 	if vappTemplateLeaseInputProvided {
 		settings.OrgVAppTemplateSettings = vappTemplateLeaseSettings
+	}
+
+	accountLockoutBlock, ok := d.GetOk("account_lockout")
+	if ok {
+		vappTemplateLeaseInputProvided = true
+		accountLockout := accountLockoutBlock.([]interface{})[0].(map[string]interface{})
+		settings.OrgPasswordPolicySettings = &types.OrgPasswordPolicySettings{
+			AccountLockoutEnabled:         accountLockout["enabled"].(bool),
+			InvalidLoginsBeforeLockout:    accountLockout["invalid_logins_before_lockout"].(int),
+			AccountLockoutIntervalMinutes: accountLockout["lockout_interval"].(int),
+		}
 	}
 
 	return settings
@@ -552,6 +579,18 @@ func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.Ad
 
 		vappTemplateLeaseSlice := []map[string]interface{}{vappTemplateLease}
 		err = d.Set("vapp_template_lease", vappTemplateLeaseSlice)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	passwordPolicySettings := adminOrg.AdminOrg.OrgSettings.OrgPasswordPolicySettings
+	if passwordPolicySettings != nil {
+		var accountLockout = make(map[string]interface{})
+		accountLockout["enabled"] = passwordPolicySettings.AccountLockoutEnabled
+		accountLockout["invalid_logins_before_lockout"] = passwordPolicySettings.InvalidLoginsBeforeLockout
+		accountLockout["lockout_interval"] = passwordPolicySettings.AccountLockoutIntervalMinutes
+		err = d.Set("account_lockout", []map[string]interface{}{accountLockout})
 		if err != nil {
 			return diag.FromErr(err)
 		}
