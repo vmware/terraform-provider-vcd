@@ -155,9 +155,9 @@ The following arguments are supported:
 * `name` - (Required) A unique name for the network
 * `description` - (Optional) An optional description of the network
 * `interface_type` - (Optional) An interface for the network. One of `internal` (default),
-  `subinterface`, `distributed`, `non_distributed` (requires the edge gateway to support distributed
+  `subinterface`, `distributed`, `non_distributed` (requires the Edge Gateway to support distributed
   networks). NSX-T supports only `internal` and `non_distributed` (*v3.14+*, requires Edge Gateway
-  to have [non distributed routing
+  to have [non-distributed routing
   enabled](/providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway#non_distributed_routing_enabled)).
 * `edge_gateway_id` - (Required) The ID of the Edge Gateway (NSX-V or NSX-T)
 * `gateway` - (Required) The gateway for this network (e.g. 192.168.1.1, 2002:0:0:1234:abcd:ffff:c0a7:121)
