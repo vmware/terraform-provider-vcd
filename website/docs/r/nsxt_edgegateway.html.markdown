@@ -333,7 +333,7 @@ definition at provider level.
 can be used to lookup ID by name.
 * `edge_cluster_id` - (Optional) Specific Edge Cluster ID if required
 * `dedicate_external_network` - (Optional) Dedicating the external network will enable Route Advertisement for this Edge Gateway. Default `false`.
-* `deployment_mode` - (Optional, *v3.14+*,*VCD 10.6+*) `ACTIVE_STANDBY` (default) or
+* `deployment_mode` - (Optional, *v3.14+*, *VCD 10.6+*) `ACTIVE_STANDBY` (default) or
   `DISTRIBUTED_ONLY` (VCD 10.6+). Distributed-only does not provide services that run on service
   router such as firewalling, NAT, VPN, DNS forwarding or static routes, instead, the distributed
   nature guarantees high north-south data throughput.
