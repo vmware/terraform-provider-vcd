@@ -337,6 +337,10 @@ can be used to lookup ID by name.
   tenants the [option of connecting Org Vdc networks to the Service
   Router](providers/vmware/vcd/latest/docs/resources/network_routed_v2#interface_type). This would
   force all VM traffic through the service router for that network. Default `false`.
+* `deployment_mode` - (Optional, *v3.14+*, *VCD 10.6+*) `ACTIVE_STANDBY` (default) or
+  `DISTRIBUTED_ONLY` (VCD 10.6+). Distributed-only does not provide services that run on service
+  router such as firewalling, NAT, VPN, DNS forwarding or static routes, instead, the distributed
+  nature guarantees high north-south data throughput.
 
 * `subnet` - (Optional) One or more [subnets](#edgegateway-subnet) defined for Edge Gateway. One of
   `subnet`, `subnet_with_total_ip_count` or `subnet_with_ip_count` is **required unless** parent

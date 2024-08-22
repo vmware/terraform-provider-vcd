@@ -151,6 +151,11 @@ func resourceVcdNsxtEdgegatewayL2VpnTunnelCreate(ctx context.Context, d *schema.
 	}
 	tunnel, err := nsxtEdge.CreateL2VpnTunnel(tunnelConfig)
 	if err != nil {
+		if strings.Contains(err.Error(), "or the target entity is invalid") {
+			if err2 := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_edgegateway_l2_vpn_tunnel", vcdClient, nsxtEdge); err2 != nil {
+				return diag.Errorf(err.Error() + "\n\n" + err2.Error())
+			}
+		}
 		return diag.Errorf("[L2 VPN Tunnel create] error creating L2 VPN Tunnel: %s", err)
 	}
 	d.SetId(tunnel.NsxtL2VpnTunnel.ID)
