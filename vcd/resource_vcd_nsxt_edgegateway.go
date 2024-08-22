@@ -948,7 +948,6 @@ func setNsxtEdgeGatewayData(vcdClient *VCDClient, edgeGateway *govcd.NsxtEdgeGat
 	edgeGw := edgeGateway.EdgeGateway
 	dSet(d, "name", edgeGw.Name)
 	dSet(d, "description", edgeGw.Description)
-	dSet(d, "edge_cluster_id", edgeGw.EdgeClusterConfig.PrimaryEdgeCluster.BackingID)
 	if edgeGw.NonDistributedRoutingEnabled != nil {
 		dSet(d, "non_distributed_routing_enabled", edgeGw.NonDistributedRoutingEnabled)
 	} else {
