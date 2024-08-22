@@ -501,7 +501,8 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	// --------------------------------------------------------------
 	// API Filters
 	// --------------------------------------------------------------
-	if govcdClient.Client.IsSysAdmin {
+
+	if govcdClient.Client.IsSysAdmin && govcdClient.Client.APIVCDMaxVersionIs(">= 37.3") {
 		apiFilters, err := govcdClient.GetAllApiFilters(nil)
 		if err != nil {
 			return fmt.Errorf("error retrieving API Filters: %s", err)
@@ -525,7 +526,7 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 	// --------------------------------------------------------------
 	// External Endpoints
 	// --------------------------------------------------------------
-	if govcdClient.Client.IsSysAdmin {
+	if govcdClient.Client.IsSysAdmin && govcdClient.Client.APIVCDMaxVersionIs(">= 37.3") {
 		externalEndpoints, err := govcdClient.GetAllExternalEndpoints(nil)
 		if err != nil {
 			return fmt.Errorf("error retrieving External Endpoints: %s", err)

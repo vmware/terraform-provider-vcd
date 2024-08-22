@@ -1,0 +1,1 @@
+* Reduce memory usage of test `TestAccVcdStandaloneVmWithVmSizing` to avoid errors on tiny VCD testing setups [GH-1306]

@@ -7,7 +7,7 @@ require (
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.34.0
 	github.com/kr/pretty v0.3.1
-	github.com/vmware/go-vcloud-director/v2 v2.26.0-alpha.3
+	github.com/vmware/go-vcloud-director/v2 v2.26.0-alpha.5
 )
 
 require (
@@ -70,4 +70,4 @@ require (
 	google.golang.org/protobuf v1.34.0 // indirect
 )
 
-replace github.com/vmware/go-vcloud-director/v2 => github.com/Didainius/go-vcloud-director/v2 v2.17.0-alpha.2.0.20240822062515-5817dda6131e
+replace github.com/vmware/go-vcloud-director/v2 => github.com/Didainius/go-vcloud-director/v2 v2.17.0-alpha.2.0.20240822062713-3ec072265f11

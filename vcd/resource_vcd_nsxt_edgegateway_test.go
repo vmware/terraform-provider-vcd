@@ -1336,3 +1336,86 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   }
 }
 `
+
+func TestAccVcdNsxtEdgeGatewayDistributedOnly(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	if checkVersion(testConfig.Provider.ApiVersion, "< 39.0") {
+		t.Skipf("This test tests VCD 10.6.0+ (API V39.0+) features. Skipping.")
+	}
+
+	var params = StringMap{
+		"Org":                testConfig.VCD.Org,
+		"NsxtVdc":            testConfig.Nsxt.Vdc,
+		"NsxtEdgeGatewayVcd": "nsxt-edge-test",
+		"ExternalNetwork":    testConfig.Nsxt.ExternalNetwork,
+		"DeploymentMode":     "DISTRIBUTED_ONLY",
+
+		"Tags": "gateway nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccNsxtEdgeGatewayDistributedOnlyStep1, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	params["FuncName"] = t.Name() + "step1"
+	params["DeploymentMode"] = "ACTIVE_STANDBY"
+	configText1 := templateFill(testAccNsxtEdgeGatewayDistributedOnlyStep1, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdNsxtEdgeGatewayDestroy(params["NsxtEdgeGatewayVcd"].(string)),
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "deployment_mode", "DISTRIBUTED_ONLY"),
+				),
+			},
+			{
+				ResourceName:      "vcd_nsxt_edgegateway.nsxt-edge",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(params["NsxtEdgeGatewayVcd"].(string)),
+			},
+			{
+				Config: configText1,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "deployment_mode", "ACTIVE_STANDBY"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccNsxtEdgeGatewayDistributedOnlyStep1 = testAccNsxtEdgeGatewayDataSources + `
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org                     = "{{.Org}}"
+  vdc                     = "{{.NsxtVdc}}"
+  name                    = "{{.NsxtEdgeGatewayVcd}}"
+
+  external_network_id = data.vcd_external_network_v2.existing-extnet.id
+  deployment_mode     = "{{.DeploymentMode}}"
+
+  subnet {
+     gateway               = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].gateway
+     prefix_length         = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].prefix_length
+
+     primary_ip            = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     allocated_ips {
+       start_address = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+       end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     }
+  }
+}
+`
