@@ -69,9 +69,9 @@ The following arguments are supported:
 * `number_of_vdcs` - (*v3.11+*) Number of VDCs owned or shared, available to this organization.
 * `list_of_vdcs` - (*v3.11+*) List of VDCs (sorted alphabetically), owned or shared, available to this organization.
 * `account_lockout` - (*v3.14+*) Contains the account lockout properties of the read organization:
-    * `enabled` - (*v3.14+*) Whether account lockout is enabled or not
-    * `invalid_logins_before_lockout` - (*v3.14+*) Number of login attempts that will trigger an account lockout for the given user
-    * `lockout_interval_minutes` - (*v3.14+*) Once a user is locked out, they will not be able to log back in for this time period
+    * `enabled` - Whether account lockout is enabled or not
+    * `invalid_logins_before_lockout` - Number of login attempts that will trigger an account lockout for the given user
+    * `lockout_interval_minutes` - Once a user is locked out, they will not be able to log back in for this time period
 
 <a id="vapp-lease"></a>
 ## vApp Lease

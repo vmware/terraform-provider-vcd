@@ -70,9 +70,9 @@ The following arguments are supported:
 * `vapp_lease` - (Optional; *v2.7+*) Defines lease parameters for vApps created in this organization. See [vApp Lease](#vapp-lease) below for details. 
 * `vapp_template_lease` - (Optional; *v2.7+*) Defines lease parameters for vApp templates created in this organization. See [vApp Template Lease](#vapp-template-lease) below for details.
 * `account_lockout` - (*v3.14+*) Defines account lockout properties in this organization:
-  * `enabled` - (*v3.14+*) Whether account lockout is enabled or not
-  * `invalid_logins_before_lockout` - (*v3.14+*) Number of login attempts that will trigger an account lockout for the given user
-  * `lockout_interval_minutes` - (*v3.14+*) Once a user is locked out, they will not be able to log back in for this time period
+  * `enabled` - Whether account lockout is enabled or not
+  * `invalid_logins_before_lockout` - Number of login attempts that will trigger an account lockout for the given user
+  * `lockout_interval_minutes` - Once a user is locked out, they will not be able to log back in for this time period
 
 ## Attribute Reference
 
