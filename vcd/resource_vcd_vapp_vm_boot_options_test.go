@@ -22,8 +22,7 @@ func TestAccVcdVAppVmBootOptions(t *testing.T) {
 		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
 	}
 
-	vcd := createTemporaryVCDConnection(false)
-	if vcd.Client.APIVCDMaxVersionIs("<37.1") {
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.1") {
 		t.Skip("Most boot options are only available since 37.1")
 	}
 
@@ -559,6 +558,109 @@ resource "vcd_vm" "{{.VMWithTemplateName}}" {
     boot_retry_delay   = 0
     boot_delay         = 0
     boot_retry_enabled = false
+  }
+}
+`
+
+func TestAccVcdVAppVmFromTemplateOverrideFirmware(t *testing.T) {
+	preTestChecks(t)
+	var (
+		vapp govcd.VApp
+		vm   govcd.VM
+	)
+
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.1") {
+		t.Skip("Most boot options are only available since 37.1")
+	}
+
+	var params = StringMap{
+		"Org":              testConfig.VCD.Org,
+		"Vdc":              testConfig.Nsxt.Vdc,
+		"CatalogName":      testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"VappTemplateName": testConfig.VCD.Catalog.NsxtCatalogItem,
+		"TestName":         t.Name(),
+
+		"Tags": "vapp vm",
+	}
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name()
+	configText1 := templateFill(testAccVcdVAppVmFromTemplateOverrideFirmware, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()),
+			testAccCheckVcdNsxtVAppVmDestroy(t.Name()+"-standalone"),
+		),
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdNsxtVAppVmExists(t.Name(), t.Name(), "vcd_vapp_vm.vappvm", &vapp, &vm),
+					testAccCheckVcdNsxtStandaloneVmExists(t.Name()+"-standalone", "vcd_vm.vm"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.vappvm", "firmware", "efi"),
+					resource.TestCheckResourceAttr("vcd_vm.vm", "firmware", "efi"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdVAppVmFromTemplateOverrideFirmware = `
+resource "vcd_vapp" "invapp" {
+  name     = "{{.TestName}}"
+  org      = "{{.Org}}"
+  vdc      = "{{.Vdc}}"
+  power_on = false
+}
+
+resource "vcd_vapp_vm" "vappvm" {
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  vapp_name     = vcd_vapp.invapp.name
+  name          = "{{.TestName}}"
+  computer_name = "{{.TestName}}"
+  catalog_name  = "{{.CatalogName}}"
+  template_name = "{{.VappTemplateName}}"
+  power_on      = false
+  memory        = 1024
+  cpus          = 2
+  cpu_cores     = 1
+
+  hardware_version       = "vmx-17"
+  firmware               = "efi"
+  os_type                = "ubuntu64Guest"
+  boot_options {
+    efi_secure_boot = true
+  }
+}
+
+
+resource "vcd_vm" "vm" {
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  name          = "{{.TestName}}-standalone"
+  computer_name = "{{.TestName}}"
+  catalog_name  = "{{.CatalogName}}"
+  template_name = "{{.VappTemplateName}}"
+  power_on      = false
+  memory        = 1024
+  cpus          = 2
+  cpu_cores     = 1
+
+  hardware_version       = "vmx-17"
+  firmware               = "efi"
+  os_type                = "ubuntu64Guest"
+  boot_options {
+    efi_secure_boot = true
   }
 }
 `
