@@ -2,12 +2,15 @@ package vcd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
+	"reflect"
 	"strings"
 )
 
@@ -39,9 +42,28 @@ func resourceVcdRdeInterfaceBehavior() *schema.Resource {
 				Description: "A description specifying the contract of the Behavior",
 			},
 			"execution": {
-				Type:        schema.TypeMap,
-				Required:    true,
-				Description: "Execution map of the Behavior",
+				Type:         schema.TypeMap,
+				Optional:     true,
+				Computed:     true, // Also set if 'execution_json' is set and the JSON is a simple one (no nested maps)
+				Description:  "Execution map of the Behavior",
+				ExactlyOneOf: []string{"execution", "execution_json"},
+			},
+			"execution_json": {
+				Type:                  schema.TypeString,
+				Optional:              true,
+				Computed:              true, // Also set if 'execution' is set
+				Description:           "Execution of the Behavior in JSON format, that allows to define complex Behavior executions",
+				ExactlyOneOf:          []string{"execution", "execution_json"},
+				DiffSuppressFunc:      isBehaviorExecutionEqual,
+				DiffSuppressOnRefresh: true,
+			},
+			"always_update_secure_execution_properties": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				Description: "Useful to update execution properties marked with _secure_ and _internal_," +
+					"as these are not retrievable from VCD, so they are not saved in state. Setting this to 'true' will make the Provider" +
+					"to ask for updates whenever there is a secure property in the execution of the Behavior",
 			},
 			"ref": {
 				Type:        schema.TypeString,
@@ -50,6 +72,30 @@ func resourceVcdRdeInterfaceBehavior() *schema.Resource {
 			},
 		},
 	}
+}
+
+// isBehaviorExecutionEqual tells Terraform whether the Behavior execution in HCL configuration has changed compared
+// to what it got from VCD, taking into account that VCD does not return fields that were created with "_internal_" or "_secure_"
+// prefix. So we must ignore those.
+func isBehaviorExecutionEqual(_, oldValue, newValue string, d *schema.ResourceData) bool {
+	var unmarshaledOldJson, unmarshaledNewJson map[string]interface{}
+	err := json.Unmarshal([]byte(oldValue), &unmarshaledOldJson)
+	if err != nil {
+		util.Logger.Printf("[ERROR] Could not unmarshal old value JSON: %s", oldValue)
+		return false
+	}
+	err = json.Unmarshal([]byte(newValue), &unmarshaledNewJson)
+	if err != nil {
+		util.Logger.Printf("[ERROR] Could not unmarshal new value JSON: %s", newValue)
+		return false
+	}
+
+	if d.Get("always_update_secure_execution_properties").(bool) {
+		return reflect.DeepEqual(oldValue, newValue)
+	}
+	filteredOldJson := removeItemsFromMapWithKeyPrefixes(unmarshaledOldJson, []string{"_internal_", "_secure_"})
+	filteredNewJson := removeItemsFromMapWithKeyPrefixes(unmarshaledNewJson, []string{"_internal_", "_secure_"})
+	return reflect.DeepEqual(filteredOldJson, filteredNewJson)
 }
 
 func resourceVcdRdeInterfaceBehaviorCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -63,10 +109,22 @@ func resourceVcdRdeInterfaceBehaviorCreateOrUpdate(ctx context.Context, d *schem
 	if err != nil {
 		return diag.Errorf("[RDE Interface Behavior %s] could not retrieve the RDE Interface with ID '%s': %s", operation, interfaceId, err)
 	}
+	var execution map[string]interface{}
+	// We don't use d.GetOk as this field is also Computed, hence Ok will be true almost always and would not detect changes
+	// when operation=update
+	if d.HasChange("execution_json") {
+		executionJson := d.Get("execution_json").(string)
+		err = json.Unmarshal([]byte(executionJson), &execution)
+		if err != nil {
+			return diag.Errorf("[RDE Interface Behavior %s] could not read the execution JSON: %s", operation, err)
+		}
+	} else {
+		execution = d.Get("execution").(map[string]interface{})
+	}
 	payload := types.Behavior{
 		ID:        d.Id(),
 		Name:      d.Get("name").(string),
-		Execution: d.Get("execution").(map[string]interface{}),
+		Execution: execution,
 		Ref:       d.Get("ref").(string),
 	}
 	if desc, ok := d.GetOk("description"); ok {
@@ -114,10 +172,31 @@ func genericVcdRdeInterfaceBehaviorRead(_ context.Context, d *schema.ResourceDat
 	dSet(d, "name", behavior.Name)
 	dSet(d, "ref", behavior.Ref)
 	dSet(d, "description", behavior.Description)
-	err = d.Set("execution", behavior.Execution)
+
+	// Checks whether the Behavior is a complex one (contains nested maps) or
+	// is simple (just a map of strings, aka TypeMap)
+	complexExecution := false
+	for _, v := range behavior.Execution {
+		if _, ok := v.(string); !ok {
+			complexExecution = true
+			break
+		}
+	}
+	if !complexExecution {
+		err = d.Set("execution", behavior.Execution)
+	} else {
+		err = d.Set("execution", map[string]interface{}{})
+	}
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Sets the execution as JSON string in any case.
+	executionJson, err := json.Marshal(behavior.Execution)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	dSet(d, "execution_json", string(executionJson))
 	d.SetId(behavior.ID)
 
 	return nil
@@ -132,6 +211,9 @@ func resourceVcdRdeInterfaceBehaviorDelete(_ context.Context, d *schema.Resource
 	interfaceId := d.Get("rde_interface_id").(string)
 	rdeInterface, err := vcdClient.GetDefinedInterfaceById(interfaceId)
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			return nil // Already deleted
+		}
 		return diag.Errorf("[RDE Interface Behavior delete] could not read the Behavior of RDE Interface with ID '%s': %s", interfaceId, err)
 	}
 	err = rdeInterface.DeleteBehavior(d.Id())
