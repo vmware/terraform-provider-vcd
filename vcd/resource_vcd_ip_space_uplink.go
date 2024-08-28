@@ -56,6 +56,15 @@ func resourceVcdIpSpaceUplink() *schema.Resource {
 				Computed:    true,
 				Description: "IP Space Status",
 			},
+			"associated_interface_ids": {
+				Optional:    true,
+				Computed:    true,
+				Type:        schema.TypeSet,
+				Description: "A set of Tier-0 interfaces to associate to this uplink",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
@@ -208,12 +217,26 @@ func resourceVcdIpSpaceUplinkImport(ctx context.Context, d *schema.ResourceData,
 }
 
 func getIpSpaceUplinkType(d *schema.ResourceData) *types.IpSpaceUplink {
-	return &types.IpSpaceUplink{
+	result := &types.IpSpaceUplink{
 		Name:               d.Get("name").(string),
 		Description:        d.Get("description").(string),
 		ExternalNetworkRef: &types.OpenApiReference{ID: d.Get("external_network_id").(string)},
 		IPSpaceRef:         &types.OpenApiReference{ID: d.Get("ip_space_id").(string)},
 	}
+
+	if _, ok := d.GetOk("associated_interfaces"); ok {
+		associatedInterfaceSlice := convertSchemaSetToSliceOfStrings(d.Get("associated_interfaces").(*schema.Set))
+		if len(associatedInterfaceSlice) > 0 {
+			associatedInterfaces := make([]types.IpSpaceUplinkInterface, len(associatedInterfaceSlice))
+			for i, v := range associatedInterfaceSlice {
+				associatedInterfaces[i].ID = v
+			}
+
+			result.Interfaces = associatedInterfaces
+		}
+	}
+	return result
+
 }
 
 func setIpSpaceUplinkData(d *schema.ResourceData, ipSpaceUplink *types.IpSpaceUplink) error {
@@ -230,6 +253,22 @@ func setIpSpaceUplinkData(d *schema.ResourceData, ipSpaceUplink *types.IpSpaceUp
 
 	dSet(d, "ip_space_type", ipSpaceUplink.IPSpaceType)
 	dSet(d, "status", ipSpaceUplink.Status)
+
+	if len(ipSpaceUplink.Interfaces) > 0 {
+		ids := make([]string, len(ipSpaceUplink.Interfaces))
+		for i, v := range ipSpaceUplink.Interfaces {
+			ids[i] = v.ID
+		}
+
+		associatedInterfaceSet := convertStringsToTypeSet(ids)
+		err := d.Set("associated_interface_ids", associatedInterfaceSet)
+		if err != nil {
+			return fmt.Errorf("error storing 'associated_interface_ids' to schema: %s", err)
+		}
+
+	} else {
+		dSet(d, "associated_interface_ids", nil)
+	}
 
 	return nil
 }
