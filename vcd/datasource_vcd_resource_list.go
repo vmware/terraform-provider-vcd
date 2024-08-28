@@ -1110,6 +1110,67 @@ func vdcTemplateList(d *schema.ResourceData, meta interface{}) (list []string, e
 	return genericResourceList(d, "vcd_org_vdc_template", ancestors, items)
 }
 
+func nsxtAlbServiceEngineGroup(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+	allSegs, err := client.GetAllAlbServiceEngineGroups("", nil)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]resourceRef, len(allSegs))
+	for i, seg := range allSegs {
+		items[i] = resourceRef{
+			name:   seg.NsxtAlbServiceEngineGroup.Name,
+			id:     seg.NsxtAlbServiceEngineGroup.ID,
+			href:   fmt.Sprintf("%s/cloudapi/%s%s%s", client.Client.VCDHREF.String(), types.OpenApiPathVersion1_0_0, types.OpenApiEndpointAlbServiceEngineGroups, seg.NsxtAlbServiceEngineGroup.ID),
+			parent: "System",
+		}
+	}
+	return genericResourceList(d, "vcd_nsxt_alb_service_engine_group", nil, items)
+}
+
+func nsxtAlbServiceEngineGroupAssignment(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+	edgeGatewayName := d.Get("parent").(string)
+	if edgeGatewayName == "" {
+		return nil, fmt.Errorf(`edge gateway name (as "parent") is required for this task`)
+	}
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve Org '%s' and VDC '%s': %s", d.Get("org"), d.Get("vdc"), err)
+	}
+	if vdc.IsNsxv() {
+		return nil, fmt.Errorf("can't list ALB Service Engine Groups from a NSX-V VDC")
+	}
+
+	nsxtEdgeGateway, err := vdc.GetNsxtEdgeGatewayByName(edgeGatewayName)
+	if err != nil {
+		return nil, err
+	}
+
+	queryParams := url.Values{}
+	queryParams.Add("filter", fmt.Sprintf("gatewayRef.id==%s", nsxtEdgeGateway.EdgeGateway.ID))
+
+	allSegs, err := client.GetAllAlbServiceEngineGroupAssignments(queryParams)
+	if err != nil {
+		return nil, err
+	}
+	items := make([]resourceRef, len(allSegs))
+	for i, seg := range allSegs {
+		items[i] = resourceRef{
+			id:   seg.NsxtAlbServiceEngineGroupAssignment.ID,
+			href: fmt.Sprintf("%s/cloudapi/%s%s%s", client.Client.VCDHREF.String(), types.OpenApiPathVersion1_0_0, types.OpenApiEndpointAlbServiceEngineGroupAssignments, seg.NsxtAlbServiceEngineGroupAssignment.ID),
+		}
+		if seg.NsxtAlbServiceEngineGroupAssignment.ServiceEngineGroupRef != nil {
+			items[i].name = seg.NsxtAlbServiceEngineGroupAssignment.ServiceEngineGroupRef.Name
+		}
+		if seg.NsxtAlbServiceEngineGroupAssignment.GatewayRef != nil {
+			items[i].parent = seg.NsxtAlbServiceEngineGroupAssignment.GatewayRef.Name
+		}
+	}
+
+	return genericResourceList(d, "vcd_nsxt_alb_edgegateway_service_engine_group", []string{org.Org.Name, vdc.Vdc.Name, nsxtEdgeGateway.EdgeGateway.Name}, items)
+}
+
 func genericResourceList(d *schema.ResourceData, resType string, ancestors []string, refs []resourceRef) (list []string, err error) {
 	listMode := d.Get("list_mode").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
@@ -1144,7 +1205,14 @@ func genericResourceList(d *schema.ResourceData, resType string, ancestors []str
 		case "name_id":
 			list = append(list, ref.name+nameIdSeparator+ref.id)
 		case "hierarchy":
-			if ref.parent != "" {
+			// If the parent is already present in the ancestors slice, don't repeat it
+			addParent := true
+			for _, ancestor := range ancestors {
+				if ancestor == ref.parent {
+					addParent = false
+				}
+			}
+			if ref.parent != "" && addParent {
 				list = append(list, strings.Join(ancestors, nameIdSeparator)+
 					nameIdSeparator+ref.parent+
 					nameIdSeparator+ref.name)
@@ -1158,9 +1226,15 @@ func genericResourceList(d *schema.ResourceData, resType string, ancestors []str
 			if ref.importId {
 				identifier = ref.id
 			}
-			list = append(list, fmt.Sprintf("terraform import %s.%s %s%s%s",
+			sanitizedName := ref.name
+			illegalHclNameCharsRegex := regexp.MustCompile(`[^a-zA-Z0-9_\-]+`)
+			if illegalHclNameCharsRegex.MatchString(ref.name) {
+				// Names can have special characters in VCD, but must not have in HCL resource names
+				sanitizedName = illegalHclNameCharsRegex.ReplaceAllString(ref.name, "_")
+			}
+			list = append(list, fmt.Sprintf("terraform import %s.%s '%s%s%s'",
 				resourceType,
-				ref.name,
+				sanitizedName,
 				strings.Join(ancestors, ImportSeparator),
 				ImportSeparator,
 				identifier))
@@ -1169,9 +1243,9 @@ func genericResourceList(d *schema.ResourceData, resType string, ancestors []str
 			if len(ancestors) > 0 {
 				ancestorsText = strings.Join(ancestors, ImportSeparator) + ImportSeparator
 			}
-			importData.WriteString(fmt.Sprintf("# Import directive for %s %s%s \n", resourceType, ancestorsText, ref.name))
+			importData.WriteString(fmt.Sprintf("# Import directive for %s %s%s \n", resourceType, ancestorsText, sanitizedName))
 			importData.WriteString("import {\n")
-			importData.WriteString(fmt.Sprintf("  to = %s.%s-%s\n", resourceType, ref.name, idTail(ref.id)))
+			importData.WriteString(fmt.Sprintf("  to = %s.%s-%s\n", resourceType, sanitizedName, idTail(ref.id)))
 			if len(ancestors) > 0 {
 				importData.WriteString(fmt.Sprintf("  id = \"%s%s%s\"\n",
 					strings.Join(ancestors, ImportSeparator), ImportSeparator, identifier))
@@ -1525,6 +1599,10 @@ func datasourceVcdResourceListRead(_ context.Context, d *schema.ResourceData, me
 		list, err = libraryCertificateList(d, meta)
 	case "vcd_org_vdc_template":
 		list, err = vdcTemplateList(d, meta)
+	case "vcd_nsxt_alb_service_engine_group":
+		list, err = nsxtAlbServiceEngineGroup(d, meta)
+	case "vcd_nsxt_alb_edgegateway_service_engine_group":
+		list, err = nsxtAlbServiceEngineGroupAssignment(d, meta)
 
 		//// place holder to remind of what needs to be implemented
 		//	case "edgegateway_vpn",

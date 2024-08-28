@@ -156,6 +156,14 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Optional:    true,
 				Description: "Dedicating the External Network will enable Route Advertisement for this Edge Gateway.",
 			},
+			"deployment_mode": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				Description:      "Edge Gateway deployment mode. One of 'DISTRIBUTED_ONLY', 'ACTIVE_STANDBY'. Default 'ACTIVE_STANDBY'. VCD 10.6+ ",
+				ValidateFunc:     validation.StringInSlice([]string{"ACTIVE_STANDBY", "DISTRIBUTED_ONLY"}, true),
+				DiffSuppressFunc: suppressCase,
+			},
 			"external_network_id": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -464,9 +472,10 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vcdClient *VCDClient, isCrea
 	}
 
 	edgeGatewayType := types.OpenAPIEdgeGateway{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		OwnerRef:    &types.OpenApiReference{ID: ownerId},
+		Name:           d.Get("name").(string),
+		Description:    d.Get("description").(string),
+		OwnerRef:       &types.OpenApiReference{ID: ownerId},
+		DeploymentMode: d.Get("deployment_mode").(string),
 	}
 
 	// Optional edge_cluster_id
@@ -932,11 +941,16 @@ func setNsxtEdgeGatewayData(vcdClient *VCDClient, edgeGateway *govcd.NsxtEdgeGat
 	edgeGw := edgeGateway.EdgeGateway
 	dSet(d, "name", edgeGw.Name)
 	dSet(d, "description", edgeGw.Description)
-	dSet(d, "edge_cluster_id", edgeGw.EdgeClusterConfig.PrimaryEdgeCluster.BackingID)
+	if edgeGw.EdgeClusterConfig != nil {
+		dSet(d, "edge_cluster_id", edgeGw.EdgeClusterConfig.PrimaryEdgeCluster.BackingID)
+	} else {
+		dSet(d, "edge_cluster_id", "")
+	}
+
 	if len(edgeGw.EdgeGatewayUplinks) < 1 {
 		return fmt.Errorf("no edge gateway uplinks detected during read")
 	}
-
+	dSet(d, "deployment_mode", edgeGw.DeploymentMode)
 	dSet(d, "owner_id", edgeGw.OwnerRef.ID)
 	dSet(d, "vdc", edgeGw.OwnerRef.Name)
 
@@ -1129,4 +1143,25 @@ func setNsxtEdgeGatewayAttachedExternalNetworkData(edgeGateway *govcd.NsxtEdgeGa
 type vdcOrVdcGroupVerifier interface {
 	IsNsxt() bool
 	GetNsxtEdgeGatewayByName(name string) (*govcd.NsxtEdgeGateway, error)
+}
+
+func doesNotWorkWithDistributedOnlyEdgeGateway(label string, vcdClient *VCDClient, nsxtEdge *govcd.NsxtEdgeGateway) error {
+	// VCD 10.6 supports "DISTRIBUTED_ONLY" Edge Gateway that has very limited set of configurations
+	// The error it returns is misleading therefore this validation should guide the user better
+	// Sample error:
+	// Error: [nsx-t firewall create/update] error creating NSX-T Firewall Rules: error setting
+	// NSX-T Firewall: error in HTTP PUT request: ACCESS_TO_RESOURCE_IS_FORBIDDEN - [
+	// 19-2024-08-05-15-02-04-250--9e6beec5-5b47-4797-ab0d-162fed8d1401 ] Either you need some or
+	// all of the following rights [ORG_VDC_GATEWAY_VIEW_FIREWALL] to perform operations
+	// [GATEWAY_VIEW_FIREWALL_NSX_T] for 5f1fc518-865a-4c43-8b13-408c11ed8c06 or the target entity
+	// is invalid.
+	if vcdClient.Client.APIVCDMaxVersionIs("< 39.0") {
+		return nil
+	}
+
+	if !strings.EqualFold(nsxtEdge.EdgeGateway.DeploymentMode, "DISTRIBUTED_ONLY") {
+		return nil
+	}
+
+	return fmt.Errorf("%s cannot be configured on DISTRIBUTED_ONLY NSX-T Edge Gateway", label)
 }
