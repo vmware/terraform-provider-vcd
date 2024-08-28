@@ -196,6 +196,34 @@ func resourceOrg() *schema.Resource {
 				ConflictsWith: []string{"metadata_entry"},
 			},
 			"metadata_entry": metadataEntryResourceSchemaDeprecated("Organization"),
+			"account_lockout": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true, // Exists even if it is not set
+				MaxItems:    1,
+				Description: "Defines account lockout properties in this organization",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"enabled": {
+							Type:        schema.TypeBool,
+							Required:    true,
+							Description: "Whether account lockout is enabled or not",
+						},
+						"invalid_logins_before_lockout": {
+							Type:             schema.TypeInt,
+							Required:         true,
+							Description:      "Number of login attempts that will trigger an account lockout for the given user",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 20)),
+						},
+						"lockout_interval_minutes": {
+							Type:             schema.TypeInt,
+							Required:         true,
+							Description:      "Once a user is locked out, they will not be able to log back in for this time period",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -329,6 +357,18 @@ func getSettings(d *schema.ResourceData) *types.OrgSettings {
 		settings.OrgVAppTemplateSettings = vappTemplateLeaseSettings
 	}
 
+	accountLockoutBlock, ok := d.GetOk("account_lockout")
+	if ok {
+		vappTemplateLeaseInputProvided = true
+		accountLockout := accountLockoutBlock.([]interface{})[0].(map[string]interface{})
+		settings.OrgPasswordPolicySettings = &types.OrgPasswordPolicySettings{
+			Xmlns:                         types.XMLNamespaceVCloud,
+			AccountLockoutEnabled:         accountLockout["enabled"].(bool),
+			InvalidLoginsBeforeLockout:    accountLockout["invalid_logins_before_lockout"].(int),
+			AccountLockoutIntervalMinutes: accountLockout["lockout_interval_minutes"].(int),
+		}
+	}
+
 	return settings
 }
 
@@ -407,6 +447,7 @@ func resourceOrgUpdate(ctx context.Context, d *schema.ResourceData, m interface{
 	adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings = settings.OrgGeneralSettings
 	adminOrg.AdminOrg.OrgSettings.OrgVAppTemplateSettings = settings.OrgVAppTemplateSettings
 	adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings = settings.OrgVAppLeaseSettings
+	adminOrg.AdminOrg.OrgSettings.OrgPasswordPolicySettings = settings.OrgPasswordPolicySettings
 
 	log.Printf("[TRACE] Org with id %s found", orgName)
 	// Check if the LDAP settings are correct.
@@ -540,6 +581,18 @@ func setOrgData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.Ad
 
 		vappTemplateLeaseSlice := []map[string]interface{}{vappTemplateLease}
 		err = d.Set("vapp_template_lease", vappTemplateLeaseSlice)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+	}
+
+	passwordPolicySettings := adminOrg.AdminOrg.OrgSettings.OrgPasswordPolicySettings
+	if passwordPolicySettings != nil {
+		var accountLockout = make(map[string]interface{})
+		accountLockout["enabled"] = passwordPolicySettings.AccountLockoutEnabled
+		accountLockout["invalid_logins_before_lockout"] = passwordPolicySettings.InvalidLoginsBeforeLockout
+		accountLockout["lockout_interval_minutes"] = passwordPolicySettings.AccountLockoutIntervalMinutes
+		err = d.Set("account_lockout", []map[string]interface{}{accountLockout})
 		if err != nil {
 			return diag.FromErr(err)
 		}
