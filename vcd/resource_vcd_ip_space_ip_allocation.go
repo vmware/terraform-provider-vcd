@@ -134,6 +134,9 @@ func resourceVcdIpAllocationCreate(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("error getting IP Space by ID '%s': %s", ipSpaceId, err)
 	}
 
+	vcdClient.lockById(ipSpace.IpSpace.ID)
+	defer vcdClient.unlockById(ipSpace.IpSpace.ID)
+
 	allocationConfig := types.IpSpaceIpAllocationRequest{
 		Type:     d.Get("type").(string),
 		Quantity: addrOf(1),
@@ -209,6 +212,9 @@ func resourceVcdIpAllocationUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("error getting Org by ID: %s", err)
 	}
 
+	vcdClient.lockById(ipSpaceId)
+	defer vcdClient.unlockById(ipSpaceId)
+
 	ipAllocation, err := org.GetIpSpaceAllocationById(ipSpaceId, d.Id())
 	if err != nil {
 		return diag.Errorf("error retrieving IP Allocation: %s", err)
@@ -282,6 +288,9 @@ func resourceVcdIpAllocationDelete(ctx context.Context, d *schema.ResourceData, 
 	vcdClient := meta.(*VCDClient)
 	orgId := d.Get("org_id").(string)
 	ipSpaceId := d.Get("ip_space_id").(string)
+
+	vcdClient.lockById(ipSpaceId)
+	defer vcdClient.unlockById(ipSpaceId)
 
 	org, err := vcdClient.GetOrgById(orgId)
 	if err != nil {

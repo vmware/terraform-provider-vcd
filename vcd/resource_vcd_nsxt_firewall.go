@@ -151,6 +151,12 @@ func resourceVcdNsxtFirewallCreateUpdate(ctx context.Context, d *schema.Resource
 
 	_, err = nsxtEdge.UpdateNsxtFirewall(firewallContainer)
 	if err != nil {
+		if strings.Contains(err.Error(), "or the target entity is invalid") {
+			if err2 := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_firewall", vcdClient, nsxtEdge); err2 != nil {
+				return diag.Errorf(err.Error() + "\n\n" + err2.Error())
+			}
+		}
+
 		return diag.Errorf("[nsx-t firewall create/update] error creating NSX-T Firewall Rules: %s", err)
 	}
 

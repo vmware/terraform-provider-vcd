@@ -308,7 +308,42 @@ import {
 }
 ```
 
-# Example 10 - List of roles with filter
+## Example 10 - List of ALB Service Engine Group assignments to an Edge Gateway
+
+This data source allows to list all the Service Engine Group assignments of an Edge Gateway, by specifying its
+name in the `parent` argument:
+
+```hcl
+data "vcd_resource_list" "my_edge_gateway_assignments" {
+  name          = "my_edge_gateway_assignments"
+  resource_type = "vcd_nsxt_alb_edgegateway_service_engine_group"
+  parent        = "my-edge-gateway"
+  list_mode     = "import"
+}
+
+# Shows the list of all Service Engine Groups assigned to the "my-edge-gateway" Edge Gateway,
+# with the corresponding import command
+output "assignments_list" {
+  value = data.vcd_resource_list.my_edge_gateway_assignments.list
+}
+```
+
+One can also list all Service Engine Groups by using `resource_type=vcd_nsxt_alb_service_engine_group`:
+
+```hcl
+data "vcd_resource_list" "all_segs" {
+  name          = "all_segs"
+  resource_type = "vcd_nsxt_alb_service_engine_group"
+  list_mode     = "name_id"
+}
+
+# Shows the list of all Service Engine Groups with name and ID:
+output "seg_list" {
+  value = data.vcd_resource_list.all_segs.list
+}
+```
+
+## Example 11 - List of roles with filter
 
 ```hcl
 data "vcd_resource_list" "role-filter1" {
@@ -391,6 +426,8 @@ The following arguments are supported:
     * `vcd_network_routed_v2`
     * `vcd_network_isolated_v2`
     * `vcd_nsxt_network_imported`
+    * `vcd_nsxt_alb_service_engine_group`
+    * `vcd_nsxt_alb_edgegateway_service_engine_group`
     * `vcd_library_certificate`
     * `vcd_provider_vdc`
     * `vcd_network_pool`

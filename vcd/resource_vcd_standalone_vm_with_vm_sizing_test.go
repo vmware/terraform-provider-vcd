@@ -92,7 +92,7 @@ func TestAccVcdStandaloneVmWithVmSizing(t *testing.T) {
 						"vcd_vm_sizing_policy.size_cpu", "id"),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "memory", "1024"),
+					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "memory", "512"),
 
 					testAccCheckVcdStandaloneVmExistsByVdc(testAccVcdVdc, netVmName2, "vcd_vm."+netVmName2),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName2, "name", netVmName2),
@@ -107,7 +107,7 @@ func TestAccVcdStandaloneVmWithVmSizing(t *testing.T) {
 						"vcd_vm_sizing_policy.size_full", "id"),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName2, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName2, "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName2, "memory", "2048"),
+					resource.TestCheckResourceAttr("vcd_vm."+netVmName2, "memory", "1024"),
 
 					testAccCheckVcdStandaloneVmExistsByVdc(testAccVcdVdc, netVmName3, "vcd_vm."+netVmName3),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName3, "name", netVmName3),
@@ -116,7 +116,7 @@ func TestAccVcdStandaloneVmWithVmSizing(t *testing.T) {
 						"vcd_vm_sizing_policy.size_cpu", "id"),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName3, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName3, "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName3, "memory", "2048"),
+					resource.TestCheckResourceAttr("vcd_vm."+netVmName3, "memory", "1024"),
 
 					testAccCheckVcdStandaloneVmExistsByVdc(testAccVcdVdc, netVmName4, "vcd_vm."+netVmName4),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName4, "name", netVmName4),
@@ -125,7 +125,7 @@ func TestAccVcdStandaloneVmWithVmSizing(t *testing.T) {
 						"vcd_vm_sizing_policy.size_full", "id"),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName4, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName4, "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName4, "memory", "2048"),
+					resource.TestCheckResourceAttr("vcd_vm."+netVmName4, "memory", "1024"),
 				),
 			},
 			// Step 1 - update
@@ -145,7 +145,7 @@ func TestAccVcdStandaloneVmWithVmSizing(t *testing.T) {
 						"vcd_vm_sizing_policy.size_full", "id"),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "memory", "2048"),
+					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "memory", "1024"),
 
 					testAccCheckVcdStandaloneVmExistsByVdc(testAccVcdVdc, netVmName2, "vcd_vm."+netVmName2),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName2, "name", netVmName2),
@@ -160,7 +160,7 @@ func TestAccVcdStandaloneVmWithVmSizing(t *testing.T) {
 						"vcd_vm_sizing_policy.size_cpu", "id"),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName2, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName2, "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName2, "memory", "2048"),
+					resource.TestCheckResourceAttr("vcd_vm."+netVmName2, "memory", "1024"),
 
 					testAccCheckVcdStandaloneVmExistsByVdc(testAccVcdVdc, netVmName3, "vcd_vm."+netVmName3),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName3, "name", netVmName3),
@@ -169,7 +169,7 @@ func TestAccVcdStandaloneVmWithVmSizing(t *testing.T) {
 						"vcd_vm_sizing_policy.size_cpu", "id"),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName3, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName3, "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName3, "memory", "3072"),
+					resource.TestCheckResourceAttr("vcd_vm."+netVmName3, "memory", "1536"),
 
 					testAccCheckVcdStandaloneVmExistsByVdc(testAccVcdVdc, netVmName5, "vcd_vm."+netVmName5),
 					resource.TestCheckResourceAttr("vcd_vm."+netVmName5, "name", netVmName5),
@@ -274,7 +274,7 @@ resource "vcd_vm_sizing_policy" "size_full" {
 
   memory {
     shares                = "1580"
-    size_in_mb            = "2048"
+    size_in_mb            = "1024"
     limit_in_mb           = "4800"
     reservation_guarantee = "0.5"
   }
@@ -342,7 +342,7 @@ resource "vcd_vm" "{{.VMName1}}" {
   memory_hot_add_enabled = true
 
   sizing_policy_id = vcd_vm_sizing_policy.size_cpu.id
-  memory           = 1024
+  memory           = 512
  }
 
 resource "vcd_vm" "{{.VMName2}}" {
@@ -375,7 +375,7 @@ resource "vcd_vm" "{{.VMName3}}" {
   power_on      = "false"
 
   sizing_policy_id = vcd_vm_sizing_policy.size_cpu.id
-  memory           = 2048
+  memory           = 1024
 }
 
 resource "vcd_vm" "{{.VMName4}}" {
@@ -431,7 +431,7 @@ resource "vcd_vm" "{{.VMName2}}" {
 
   sizing_policy_id = vcd_vm_sizing_policy.size_cpu.id
   # allows to change only not defined in sizing policy
-  memory           = 2048
+  memory           = 1024
 }
 
 resource "vcd_vm" "{{.VMName3}}" {
@@ -445,7 +445,7 @@ resource "vcd_vm" "{{.VMName3}}" {
 
   sizing_policy_id = vcd_vm_sizing_policy.size_cpu.id
   # allows to change only not defined in sizing policy
-  memory           = 3072
+  memory           = 1536
 }
 
 resource "vcd_vm" "{{.VMName5}}" {

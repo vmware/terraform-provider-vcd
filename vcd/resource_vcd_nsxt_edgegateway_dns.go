@@ -176,6 +176,11 @@ func resourceVcdNsxtEdgegatewayDnsCreateUpdate(ctx context.Context, d *schema.Re
 
 	updatedDns, err := dns.Update(dnsConfig)
 	if err != nil {
+		if strings.Contains(err.Error(), "or the target entity is invalid") {
+			if err2 := doesNotWorkWithDistributedOnlyEdgeGateway("vcd_nsxt_edgegateway_dns", vcdClient, nsxtEdge); err2 != nil {
+				return diag.Errorf(err.Error() + "\n\n" + err2.Error())
+			}
+		}
 		return diag.Errorf("[edge gateway dns %s] error updating DNS configuration: %s", origin, err)
 	}
 
