@@ -255,6 +255,35 @@ func areMarshaledJsonEqual(json1, json2 []byte) (bool, error) {
 	return reflect.DeepEqual(unmarshaledJson1, unmarshaledJson2), nil
 }
 
+// removeItemsFromMapWithKeyPrefixes returns a new map that doesn't have the values from the original whose keys match with the given
+// prefixes. If the values are also maps (meaning that there are nested maps), this function will recursively remove prefixes in
+// those as well, until no more nested maps are found.
+// As this function uses recursion, ideally it should not be used with maps with a lot of nested maps.
+func removeItemsFromMapWithKeyPrefixes(input map[string]interface{}, prefixes []string) map[string]interface{} {
+	result := map[string]interface{}{}
+	// Initial scan for first level of keys
+	for k := range input {
+		removeItem := false
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(k, prefix) {
+				removeItem = true
+				break
+			}
+		}
+		if !removeItem {
+			result[k] = input[k]
+		}
+	}
+	// Recursively search inside nested maps
+	for k, v := range result {
+		if _, ok := v.(map[string]interface{}); ok {
+			result[k] = removeItemsFromMapWithKeyPrefixes(v.(map[string]interface{}), prefixes)
+		}
+	}
+
+	return result
+}
+
 // createOrUpdateMetadata creates or updates metadata entries for the given resource and attribute name
 // TODO: This function implementation should be replaced with the implementation of `createOrUpdateMetadataEntryInVcd`
 // once "metadata" field is removed.

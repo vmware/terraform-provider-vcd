@@ -21,6 +21,7 @@ func TestAccVcdRdeInterface(t *testing.T) {
 		"Version": "1.0.0",
 		"Vendor":  "vendor1",
 		"Name":    t.Name(),
+		"Tags":    "rde",
 	}
 	testParamsNotEmpty(t, params)
 
