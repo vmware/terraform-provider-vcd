@@ -10,8 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-var TestVmPolicy = "TestVmPolicyBasic"
-
 func TestAccVcdVmSizingPolicy(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
@@ -25,7 +23,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 		"Description": "TestAccVcdVmSizingPolicyDescription",
 
 		"CpuShare":       "886",
-		"CpuLimit":       "12375",
+		"CpuLimit":       "-1",
 		"CpuCount":       "9",
 		"CpuSpeed":       "2500",
 		"CoresPerSocket": "3",
@@ -40,6 +38,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 
 	configText := templateFill(testAccCheckVmSizingPolicy_basic, params)
 	params["FuncName"] = t.Name() + "-Update"
+	params["CpuLimit"] = "12375"
 	updateText := templateFill(testAccCheckVmSizingPolicy_update, params)
 	params["FuncName"] = t.Name() + "-DataSource"
 	dataSourceText := templateFill(testAccCheckVmSizingPolicy_update+testAccVmSizingPolicyDataSource, params)
@@ -76,7 +75,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(resource2, "description", params["Description"].(string)+"_2"),
 
 					resource.TestCheckResourceAttr(resource2, "cpu.0.shares", params["CpuShare"].(string)),
-					resource.TestCheckResourceAttr(resource2, "cpu.0.limit_in_mhz", params["CpuLimit"].(string)),
+					resource.TestCheckResourceAttr(resource2, "cpu.0.limit_in_mhz", "-1"),
 					resource.TestCheckResourceAttr(resource2, "cpu.0.count", params["CpuCount"].(string)),
 					resource.TestCheckResourceAttr(resource2, "cpu.0.speed_in_mhz", params["CpuSpeed"].(string)),
 					resource.TestCheckResourceAttr(resource2, "cpu.0.cores_per_socket", params["CoresPerSocket"].(string)),
@@ -96,7 +95,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(resource4, "description", params["Description"].(string)+"_4"),
 
 					resource.TestCheckResourceAttr(resource4, "cpu.0.shares", params["CpuShare"].(string)),
-					resource.TestCheckResourceAttr(resource4, "cpu.0.limit_in_mhz", params["CpuLimit"].(string)),
+					resource.TestCheckResourceAttr(resource4, "cpu.0.limit_in_mhz", "-1"),
 					resource.TestCheckResourceAttr(resource4, "cpu.0.count", params["CpuCount"].(string)),
 					resource.TestCheckResourceAttr(resource4, "cpu.0.speed_in_mhz", params["CpuSpeed"].(string)),
 					resource.TestCheckResourceAttr(resource4, "cpu.0.cores_per_socket", params["CoresPerSocket"].(string)),

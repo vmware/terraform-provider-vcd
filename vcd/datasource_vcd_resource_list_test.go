@@ -34,6 +34,7 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		{name: "global_role", resourceType: "vcd_global_role", knownItem: "vApp Author"},
 		{name: "rights_bundle", resourceType: "vcd_rights_bundle", knownItem: "Default Rights Bundle"},
 		{name: "right", resourceType: "vcd_right", knownItem: "Catalog: Change Owner"},
+		{name: "alb-service-engine-group", resourceType: "vcd_nsxt_alb_service_engine_group"},
 
 		// entities belonging to an Org don't require an explicit parent, as it is given from the Org passed in the provider
 		// For each resource, we test with and without and explicit parent
@@ -234,6 +235,14 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 			parent:       testConfig.Nsxt.Vdc,
 			knownItem:    testConfig.Nsxt.EdgeGateway,
 		})
+		if testConfig.Nsxt.EdgeGateway != "" {
+			lists = append(lists, listDef{
+				name:         "vdc-nsxt-alb-edgegateway-service-engine-group",
+				resourceType: "vcd_nsxt_alb_edgegateway_service_engine_group",
+				vdc:          testConfig.Nsxt.Vdc,
+				parent:       testConfig.Nsxt.EdgeGateway,
+			})
+		}
 	} else {
 		fmt.Print("`Nsxt.Vdc` value isn't configured, datasource test using this will be skipped\n")
 	}
@@ -444,5 +453,77 @@ data "vcd_resource_list" "{{.ResName}}" {
   name             = "{{.ResName}}"
   resource_type    = "{{.ResType}}"
   name_regex       = "{{.NameRegex}}"
+}
+`
+
+func TestAccVcdDatasourceResourceListSpecialChars(t *testing.T) {
+	preTestChecks(t)
+
+	var params = StringMap{
+		"Org": testConfig.VCD.Org,
+	}
+	testParamsNotEmpty(t, params)
+	configText := templateFill(testAccVcdDatasourceResourceListSpecialChars, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	// Obtains the last catalog position, to be able to test the new ones that this test
+	// creates (lists need to be checked directly by position)
+	vcdClient := createTemporaryVCDConnection(false)
+	org, err := vcdClient.GetAdminOrg(testConfig.VCD.Org)
+	if err != nil {
+		t.Fatal(err)
+	}
+	catalogs, err := org.QueryCatalogList()
+	if err != nil {
+		t.Fatal(err)
+	}
+	lastCatalog := len(catalogs)
+
+	resourceList := "data.vcd_resource_list.rs"
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceList, fmt.Sprintf("list.%d", lastCatalog), fmt.Sprintf("terraform import vcd_catalog.f_o_o '%s.f o o'", testConfig.VCD.Org)),
+					resource.TestCheckResourceAttr(resourceList, fmt.Sprintf("list.%d", lastCatalog+1), fmt.Sprintf("terraform import vcd_catalog.b_a_r '%s.b%%a$r'", testConfig.VCD.Org)),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdDatasourceResourceListSpecialChars = `
+resource "vcd_catalog" "cat1" {
+  org              = "{{.Org}}"
+  name             = "f o o"
+  delete_force     = "true"
+  delete_recursive = "true"
+}
+
+resource "vcd_catalog" "cat2" {
+  org              = "{{.Org}}"
+  name             = "b%a$r"
+  delete_force     = "true"
+  delete_recursive = "true"
+
+  # Guarantees a sequential order, to easily make assertions
+  depends_on = [vcd_catalog.cat1]
+}
+
+data "vcd_resource_list" "rs" {
+  name             = "test"
+  resource_type    = "vcd_catalog"
+  list_mode        = "import"
+
+  # Both catalogs need to be created
+  depends_on = [vcd_catalog.cat1, vcd_catalog.cat2]
 }
 `
