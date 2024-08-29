@@ -468,9 +468,9 @@ resource "vcd_vm" "boot-image-vm" {
 }
 `
 
-// TestAccVcdVm_WithoutIopsRights tests VM creation with a user that does not have any View/edit IOPS rights.
+// TestAccVcdVm_WithoutOrganizationVdcDiskIopsRights tests VM creation with a user that does not have any "Organization vDC Disk: View/edit" IOPS rights.
 // This test will panic without fix made in https://github.com/vmware/terraform-provider-vcd/pull/1312
-func TestAccVcdVm_WithoutIopsRights(t *testing.T) {
+func TestAccVcdVm_WithoutOrganizationVdcDiskIopsRights(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
@@ -496,7 +496,8 @@ func TestAccVcdVm_WithoutIopsRights(t *testing.T) {
 	// Save the rights that are manipulated to restore them when the test is finished
 	var modifiedRights []types.OpenApiReference
 
-	// Restore the role with the rights that were removed, if needed, at the end of the test
+	// Restore the role with the rights that were removed, if needed, at the end of the test.
+	// The "modifiedRights" is set during test execution PreConfig phase
 	defer func() {
 		if len(modifiedRights) > 0 {
 			role, err := vcdClient.Client.GetGlobalRoleByName("Organization Administrator")
@@ -525,15 +526,19 @@ func TestAccVcdVm_WithoutIopsRights(t *testing.T) {
 						}
 						t.Fatal(err)
 					}
+					// Use a filter, so we only get the "Organization vDC Disk: ..." rights and skip the non-relevant ones
 					filter := make(url.Values)
 					filter.Set("filter", "name==Organization vDC Disk*")
 					existingRights, err := role.GetRights(filter)
 					if err != nil {
 						t.Fatal(err)
 					}
+					// If the rights are not present in that role, there's nothing else to do
 					if len(existingRights) == 0 {
 						return
 					}
+					// Convert the obtained rights to OpenApiReference to be able to remove them.
+					// We save them in the outer-scoped "modifiedRights" so they can be re-added later
 					for _, right := range existingRights {
 						modifiedRights = append(modifiedRights, types.OpenApiReference{
 							Name: right.Name,
