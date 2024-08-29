@@ -476,6 +476,7 @@ func TestAccVcdVm_WithoutIopsRights(t *testing.T) {
 	var params = StringMap{
 		"ProviderVcdOrg": providerVcdOrg1,
 		"Org":            testConfig.VCD.Org,
+		"Name":           t.Name(),
 		"Vdc":            testConfig.Nsxt.Vdc,
 		"Catalog":        testConfig.VCD.Catalog.NsxtBackedCatalogName,
 		"CatalogItem":    testConfig.VCD.Catalog.NsxtCatalogItem,
