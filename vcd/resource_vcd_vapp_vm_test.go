@@ -4,6 +4,8 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"net/url"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -463,6 +465,118 @@ resource "vcd_vm" "boot-image-vm" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
+}
+`
+
+// TestAccVcdVm_WithoutIopsRights tests VM creation with a user that does not have any View/edit IOPS rights.
+// This test will panic without fix made in <INSERT PR>.
+func TestAccVcdVm_WithoutIopsRights(t *testing.T) {
+	preTestChecks(t)
+
+	var params = StringMap{
+		"ProviderVcdOrg": providerVcdOrg1,
+		"Org":            testConfig.VCD.Org,
+		"Vdc":            testConfig.Nsxt.Vdc,
+		"Catalog":        testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"CatalogItem":    testConfig.VCD.Catalog.NsxtCatalogItem,
+		"Tags":           "vapp vm",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccCheckVcdVmWithoutIopsRights, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	vcdClient := createTemporaryVCDConnection(false)
+	// Save the rights that are manipulated to restore them when the test is finished
+	var modifiedRights []types.OpenApiReference
+
+	// Restore the role with the rights that were removed, if needed, at the end of the test
+	defer func() {
+		if len(modifiedRights) > 0 {
+			role, err := vcdClient.Client.GetGlobalRoleByName("Organization Administrator")
+			if err != nil {
+				t.Fatalf("could not restore rights after %s test finished, %s", t.Name(), err)
+			}
+			err = role.AddRights(modifiedRights)
+			if err != nil {
+				t.Fatalf("could not restore rights after %s test finished, %s", t.Name(), err)
+			}
+		}
+	}()
+
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: buildMultipleProviders(),
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				PreConfig: func() {
+					role, err := vcdClient.Client.GetGlobalRoleByName("Organization Administrator")
+					if err != nil {
+						if govcd.ContainsNotFound(err) {
+							t.Skipf("could not find required global role Organization Administrator")
+						}
+						t.Fatal(err)
+					}
+					filter := make(url.Values)
+					filter.Set("filter", "name==Organization vDC Disk*")
+					existingRights, err := role.GetRights(filter)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if len(existingRights) == 0 {
+						return
+					}
+					for _, right := range existingRights {
+						modifiedRights = append(modifiedRights, types.OpenApiReference{
+							Name: right.Name,
+							ID:   right.ID,
+						})
+					}
+					err = role.RemoveRights(modifiedRights)
+					if err != nil {
+						t.Fatal(err)
+					}
+				},
+				Check: resource.ComposeTestCheckFunc(),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccCheckVcdVmWithoutIopsRights = `
+data "vcd_catalog" "my-catalog" {
+  provider = {{.ProviderVcdOrg}}
+  org      = "{{.Org}}"
+  name     = "{{.Catalog}}"
+}
+
+data "vcd_catalog_vapp_template" "template" {
+  provider   = {{.ProviderVcdOrg}}
+  catalog_id = data.vcd_catalog.my-catalog.id
+  name       = "{{.CatalogItem}}"
+}
+
+resource "vcd_vm" "my_vm" {
+  provider         = {{.ProviderVcdOrg}}
+  org              = "{{.Org}}"
+  vdc              = "{{.Vdc}}"
+  name             = "{{.Name}}"
+  vapp_template_id = data.vcd_catalog_vapp_template.template.id
+  memory           = 512
+  cpus             = 1
+
+  override_template_disk {
+    bus_type        = "paravirtual"
+    size_in_mb      = "16384"
+    bus_number      = 0
+    unit_number     = 0
+    storage_profile = "*"
+  }
 }
 `
 
