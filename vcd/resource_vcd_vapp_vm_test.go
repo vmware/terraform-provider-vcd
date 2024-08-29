@@ -469,7 +469,7 @@ resource "vcd_vm" "boot-image-vm" {
 `
 
 // TestAccVcdVm_WithoutIopsRights tests VM creation with a user that does not have any View/edit IOPS rights.
-// This test will panic without fix made in <INSERT PR>.
+// This test will panic without fix made in https://github.com/vmware/terraform-provider-vcd/pull/1312
 func TestAccVcdVm_WithoutIopsRights(t *testing.T) {
 	preTestChecks(t)
 
