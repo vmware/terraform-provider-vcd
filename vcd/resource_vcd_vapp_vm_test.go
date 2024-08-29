@@ -472,15 +472,17 @@ resource "vcd_vm" "boot-image-vm" {
 // This test will panic without fix made in https://github.com/vmware/terraform-provider-vcd/pull/1312
 func TestAccVcdVm_WithoutIopsRights(t *testing.T) {
 	preTestChecks(t)
+	skipIfNotSysAdmin(t)
 
 	var params = StringMap{
-		"ProviderVcdOrg": providerVcdOrg1,
-		"Org":            testConfig.VCD.Org,
-		"Name":           t.Name(),
-		"Vdc":            testConfig.Nsxt.Vdc,
-		"Catalog":        testConfig.VCD.Catalog.NsxtBackedCatalogName,
-		"CatalogItem":    testConfig.VCD.Catalog.NsxtCatalogItem,
-		"Tags":           "vapp vm",
+		"ProviderVcdSystem": providerVcdSystem,
+		"ProviderVcdOrg":    providerVcdOrg1,
+		"Org":               testConfig.VCD.Org,
+		"Name":              t.Name(),
+		"Vdc":               testConfig.Nsxt.Vdc,
+		"Catalog":           testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"CatalogItem":       testConfig.VCD.Catalog.NsxtCatalogItem,
+		"Tags":              "vapp vm",
 	}
 	testParamsNotEmpty(t, params)
 
@@ -554,6 +556,14 @@ func TestAccVcdVm_WithoutIopsRights(t *testing.T) {
 }
 
 const testAccCheckVcdVmWithoutIopsRights = `
+# Acceptance tests only:
+# This data source initializes the 'testAccProvider' variable and prevents a panic
+# in 'testAccCheckVcdStandaloneVmDestroy' when running acceptance tests
+# (check TESTING.md "Tests with multiple providers" for more info)
+data "vcd_version" "dummy" {
+  provider = {{.ProviderVcdSystem}}
+}
+
 data "vcd_catalog" "my-catalog" {
   provider = {{.ProviderVcdOrg}}
   org      = "{{.Org}}"
