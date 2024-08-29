@@ -543,6 +543,7 @@ func TestAccVcdVm_WithoutIopsRights(t *testing.T) {
 					}
 				},
 				Check: resource.ComposeTestCheckFunc(
+					// Nothing to test here, we just want to assert that no panic is thrown anymore
 					resource.TestCheckResourceAttr("vcd_vm.my_vm", "name", t.Name()),
 				),
 			},
