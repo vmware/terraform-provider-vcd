@@ -61,6 +61,7 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "gateway", "1.1.1.1"),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "prefix_length", "24"),
 					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "static_ip_pool.#", "1"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "interface_type", "INTERNAL"),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_network_routed_v2.net1", "static_ip_pool.*", map[string]string{
 						"start_address": "1.1.1.10",
 						"end_address":   "1.1.1.20",
@@ -1131,3 +1132,83 @@ func TestAccVcdRoutedNetworkV2MetadataIgnore(t *testing.T) {
 			"EdgeGateway": testConfig.Nsxt.EdgeGateway,
 		})
 }
+
+func TestAccVcdRoutedNetworkV2NonDistributed(t *testing.T) {
+	preTestChecks(t)
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                testConfig.VCD.Org,
+		"NsxtVdc":            testConfig.Nsxt.Vdc,
+		"NsxtEdgeGatewayVcd": t.Name(),
+		"ExternalNetwork":    testConfig.Nsxt.ExternalNetwork,
+		"NetworkName":        t.Name(),
+		"Tags":               "network",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccVcdRoutedNetworkV2NonDistributed, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "interface_type", "NON_DISTRIBUTED"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "non_distributed_routing_enabled", "true"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdRoutedNetworkV2NonDistributed = `
+data "vcd_external_network_v2" "existing-extnet" {
+  name = "{{.ExternalNetwork}}"
+}
+
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org                     = "{{.Org}}"
+  vdc                     = "{{.NsxtVdc}}"
+  name                    = "{{.NsxtEdgeGatewayVcd}}"
+
+  external_network_id             = data.vcd_external_network_v2.existing-extnet.id
+  non_distributed_routing_enabled = true
+
+  subnet {
+     gateway               = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].gateway
+     prefix_length         = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].prefix_length
+
+     primary_ip            = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     allocated_ips {
+       start_address = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+       end_address   = tolist(tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].static_ip_pool)[0].end_address
+     }
+  }
+}
+
+resource "vcd_network_routed_v2" "net1" {
+  org  = "{{.Org}}"
+  name = "nsxt-routed-test-initial"
+
+  edge_gateway_id = vcd_nsxt_edgegateway.nsxt-edge.id
+
+  gateway        = "1.1.1.1"
+  prefix_length  = 24
+  interface_type = "NON_DISTRIBUTED"
+
+  static_ip_pool {
+    start_address = "1.1.1.10"
+    end_address   = "1.1.1.20"
+  }
+}
+`
