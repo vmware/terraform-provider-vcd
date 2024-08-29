@@ -510,6 +510,7 @@ func TestAccVcdVm_WithoutIopsRights(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: buildMultipleProviders(),
+		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(t.Name(), params["Org"].(string), params["Vdc"].(string)),
 		Steps: []resource.TestStep{
 			{
 				Config: configText,
@@ -541,7 +542,9 @@ func TestAccVcdVm_WithoutIopsRights(t *testing.T) {
 						t.Fatal(err)
 					}
 				},
-				Check: resource.ComposeTestCheckFunc(),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_vm.my_vm", "name", t.Name()),
+				),
 			},
 		},
 	})
