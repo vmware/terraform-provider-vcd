@@ -114,6 +114,8 @@
     "manager": "nsxManager1",
     "//": "NSX-T tier-0 router used for external network tests",
     "tier0router": "tier-0-2",
+    "//": "NSX-T tier-0 router interface for testing assignment of it to uplinks",
+    "tier0routerInterface": "interface-one",
     "//": "NSX-T tier-0 VRF router used for external network tests",
     "tier0routervrf": "tier-0-2",
     "//": "Existing External Network with correct configuration",

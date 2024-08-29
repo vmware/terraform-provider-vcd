@@ -59,7 +59,7 @@ func resourceVcdIpSpaceUplink() *schema.Resource {
 			"associated_interface_ids": {
 				Optional:    true,
 				Type:        schema.TypeSet,
-				Description: "A set of Tier-0 interfaces to associate to this uplink",
+				Description: "A set of Tier-0 Router Interfaces to associate with this uplink",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -232,9 +232,6 @@ func getIpSpaceUplinkType(d *schema.ResourceData) *types.IpSpaceUplink {
 
 		result.Interfaces = associatedInterfaces
 	}
-	// else {
-	// 	result.Interfaces = []types.IpSpaceUplinkInterface{}
-	// }
 
 	return result
 }
