@@ -58,7 +58,6 @@ func resourceVcdIpSpaceUplink() *schema.Resource {
 			},
 			"associated_interface_ids": {
 				Optional:    true,
-				Computed:    true,
 				Type:        schema.TypeSet,
 				Description: "A set of Tier-0 interfaces to associate to this uplink",
 				Elem: &schema.Schema{
@@ -224,19 +223,20 @@ func getIpSpaceUplinkType(d *schema.ResourceData) *types.IpSpaceUplink {
 		IPSpaceRef:         &types.OpenApiReference{ID: d.Get("ip_space_id").(string)},
 	}
 
-	if _, ok := d.GetOk("associated_interfaces"); ok {
-		associatedInterfaceSlice := convertSchemaSetToSliceOfStrings(d.Get("associated_interfaces").(*schema.Set))
-		if len(associatedInterfaceSlice) > 0 {
-			associatedInterfaces := make([]types.IpSpaceUplinkInterface, len(associatedInterfaceSlice))
-			for i, v := range associatedInterfaceSlice {
-				associatedInterfaces[i].ID = v
-			}
-
-			result.Interfaces = associatedInterfaces
+	if _, ok := d.GetOk("associated_interface_ids"); ok {
+		associatedInterfaceSlice := convertSchemaSetToSliceOfStrings(d.Get("associated_interface_ids").(*schema.Set))
+		associatedInterfaces := make([]types.IpSpaceUplinkInterface, len(associatedInterfaceSlice))
+		for i, v := range associatedInterfaceSlice {
+			associatedInterfaces[i].ID = v
 		}
-	}
-	return result
 
+		result.Interfaces = associatedInterfaces
+	}
+	// else {
+	// 	result.Interfaces = []types.IpSpaceUplinkInterface{}
+	// }
+
+	return result
 }
 
 func setIpSpaceUplinkData(d *schema.ResourceData, ipSpaceUplink *types.IpSpaceUplink) error {

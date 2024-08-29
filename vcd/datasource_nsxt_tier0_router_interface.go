@@ -8,14 +8,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func datasourceVcdNsxtTier0Interface() *schema.Resource {
+func datasourceVcdNsxtTier0RouterInterface() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceNsxtTier0InterfaceRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of NSX-T Tier-0 router.",
+				Description: "Name of NSX-T Tier-0 Router Interface",
 			},
 			"external_network_id": {
 				Type:        schema.TypeString,
@@ -25,7 +25,7 @@ func datasourceVcdNsxtTier0Interface() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Description of Tier-0 assigned interface",
+				Description: "Description of Tier-0 Router Interface",
 			},
 			"type": {
 				Type:        schema.TypeString,
@@ -44,7 +44,7 @@ func datasourceNsxtTier0InterfaceRead(_ context.Context, d *schema.ResourceData,
 
 	t0Interface, err := vcdClient.GetTier0RouterInterfaceByName(externalNetworkId, name)
 	if err != nil {
-		return diag.Errorf("error retrieving Tier-0 router interface by name '%s': %s", name, err)
+		return diag.Errorf("error retrieving Tier-0 Router Interface by name '%s': %s", name, err)
 	}
 
 	d.SetId(t0Interface.ID)
