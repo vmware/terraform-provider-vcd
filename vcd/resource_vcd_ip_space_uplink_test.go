@@ -208,7 +208,7 @@ func TestAccVcdIpSpaceUplinkInterfaceAssociation(t *testing.T) {
 
 					resource.TestCheckResourceAttr("data.vcd_nsxt_tier0_router_interface.one", "name", params["AssociatedInterface"].(string)),
 					resource.TestCheckResourceAttrSet("data.vcd_nsxt_tier0_router_interface.one", "type"),
-					resource.TestCheckResourceAttr("data.vcd_nsxt_tier0_router_interface.one", "description", ""),
+					resource.TestCheckResourceAttr("data.vcd_nsxt_tier0_router_interface.one", "description", "created for test"),
 				),
 			},
 			{
@@ -320,7 +320,7 @@ func TestAccVcdIpSpaceUplinkInterfaceAssociationUpdate(t *testing.T) {
 
 					resource.TestCheckResourceAttr("data.vcd_nsxt_tier0_router_interface.one", "name", params["AssociatedInterface"].(string)),
 					resource.TestCheckResourceAttrSet("data.vcd_nsxt_tier0_router_interface.one", "type"),
-					resource.TestCheckResourceAttr("data.vcd_nsxt_tier0_router_interface.one", "description", ""),
+					resource.TestCheckResourceAttr("data.vcd_nsxt_tier0_router_interface.one", "description", "created for test"),
 				),
 			},
 		},
