@@ -57,7 +57,7 @@ resource "vcd_ip_space_uplink" "u1" {
 ```hcl
 data "vcd_nsxt_tier0_interface" "one" {
   external_network_id = vcd_external_network_v2.provider-gateway.id
-  name = "interface-one"
+  name                = "interface-one"
 }
 
 resource "vcd_ip_space_uplink" "u1" {
