@@ -972,8 +972,8 @@ func changeComputePoliciesAndDefaultId(d *schema.ResourceData, vcdClient *VCDCli
 	for _, attribute := range computePolicyAttributes {
 		vmComputePolicyIds = append(vmComputePolicyIds, convertSchemaSetToSliceOfStrings(d.Get(attribute).(*schema.Set))...)
 	}
-	if !contains(vmComputePolicyIds, defaultPolicyId.(string)) {
-		return fmt.Errorf("`default_compute_policy_id` %s is not present in any of `%v`", defaultPolicyId.(string), computePolicyAttributes)
+	if defaultPolicyId.(string) != "" && !contains(vmComputePolicyIds, defaultPolicyId.(string)) {
+		return fmt.Errorf("`default_compute_policy_id` '%s' is not present in any of `%v`", defaultPolicyId.(string), computePolicyAttributes)
 	}
 
 	var vdcComputePolicyReferenceList []*types.Reference
@@ -1010,6 +1010,8 @@ func changeComputePoliciesAndDefaultId(d *schema.ResourceData, vcdClient *VCDCli
 	for _, policyId := range vmComputePolicyIds {
 		vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, &types.Reference{HREF: vcdComputePolicyHref + policyId})
 	}
+	// The default policy may not be set in the Terraform arguments explicitly (can be Computed)
+	vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, vdc.AdminVdc.DefaultComputePolicy)
 	policyReferences.VdcComputePolicyReference = vdcComputePolicyReferenceList
 
 	_, err = updatedVdc.SetAssignedComputePolicies(policyReferences)
