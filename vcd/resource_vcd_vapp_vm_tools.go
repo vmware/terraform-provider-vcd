@@ -1291,22 +1291,33 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp, vdc *gov
 	return nets, nil
 }
 
-func updateHardwareVersionAndOsType(d *schema.ResourceData, vm *govcd.VM) error {
+func updateHardwareVersionOsTypeAndFirmware(vcdClient *VCDClient, d *schema.ResourceData, vm *govcd.VM) error {
 	var err error
-	var osTypeOrHardwareVersionChanged bool
+	var osTypeOrHardwareVersionOrFirmwareChanged bool
+
+	supportsFirmware := vcdClient.Client.APIVCDMaxVersionIs(">=37.1")
+	var firmware interface{}
+	var ok bool
+	if firmware, ok = d.GetOk("firmware"); ok {
+		if !supportsFirmware {
+			return fmt.Errorf("firmware is supported in VCD 10.4.1+")
+		}
+		vm.VM.VmSpecSection.Firmware = firmware.(string)
+		osTypeOrHardwareVersionOrFirmwareChanged = true
+	}
 
 	vmSpecSection := vm.VM.VmSpecSection
 	if hardwareVersion := d.Get("hardware_version").(string); hardwareVersion != "" {
 		vmSpecSection.HardwareVersion = &types.HardwareVersion{Value: hardwareVersion}
-		osTypeOrHardwareVersionChanged = true
+		osTypeOrHardwareVersionOrFirmwareChanged = true
 	}
 
 	if osType := d.Get("os_type").(string); osType != "" {
 		vmSpecSection.OsType = osType
-		osTypeOrHardwareVersionChanged = true
+		osTypeOrHardwareVersionOrFirmwareChanged = true
 	}
 
-	if osTypeOrHardwareVersionChanged {
+	if osTypeOrHardwareVersionOrFirmwareChanged {
 		_, err = vm.UpdateVmSpecSection(vmSpecSection, d.Get("description").(string))
 		if err != nil {
 			return fmt.Errorf("error changing VM spec section: %s", err)

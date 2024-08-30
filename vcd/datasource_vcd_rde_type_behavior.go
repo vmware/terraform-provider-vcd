@@ -29,6 +29,12 @@ func datasourceVcdRdeTypeBehavior() *schema.Resource {
 				Type:        schema.TypeMap,
 				Computed:    true,
 				Description: "Execution map of the Behavior",
+				Deprecated:  "This argument cannot consider complex execution structures. For that purpose, use 'execution_json' instead",
+			},
+			"execution_json": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Execution of the Behavior in JSON format",
 			},
 			"ref": {
 				Type:        schema.TypeString,

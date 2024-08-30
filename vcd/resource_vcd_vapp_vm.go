@@ -1305,7 +1305,7 @@ func createVmFromImage(d *schema.ResourceData, meta interface{}, vmType typeOfVm
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// This part of code handles additional VM create operations, which can not be set during
 	// initial VM creation.
-	// __Only__ template based VMs are addressed here.
+	// __Only__ template based VMs and VM Copies are addressed here.
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	// If a MAC address is specified for NIC - it does not get set with initial create call therefore
@@ -1359,7 +1359,8 @@ func createVmFromImage(d *schema.ResourceData, meta interface{}, vmType typeOfVm
 	// Such fields are processed:
 	// * os_type
 	// * hardware_version
-	err = updateHardwareVersionAndOsType(d, vm)
+	// * firmware
+	err = updateHardwareVersionOsTypeAndFirmware(vcdClient, d, vm)
 	if err != nil {
 		return nil, fmt.Errorf("error updating hardware version and OS type : %s", err)
 	}

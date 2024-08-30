@@ -21,6 +21,7 @@ func TestAccVcdRdeUpgrade(t *testing.T) {
 		"SchemaPath": getCurrentDir() + "/../test-resources/rde_type.json",
 		"EntityPath": getCurrentDir() + "/../test-resources/rde_instance.json",
 		"RdeTypeId":  "vcd_rde_type.rde_type1.id",
+		"Tags":       "rde",
 	}
 	testParamsNotEmpty(t, params)
 

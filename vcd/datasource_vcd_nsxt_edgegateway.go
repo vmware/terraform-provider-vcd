@@ -203,6 +203,11 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Total number of IPs allocated for this Gateway from NSX-T Segment backed External Network uplinks",
 			},
+			"non_distributed_routing_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "A flag indicating whether non-distributed routing is enabled or not.",
+			},
 		},
 	}
 }

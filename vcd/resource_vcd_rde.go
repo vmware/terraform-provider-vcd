@@ -350,6 +350,9 @@ func resourceVcdRdeDelete(_ context.Context, d *schema.ResourceData, meta interf
 	vcdClient := meta.(*VCDClient)
 	rde, err := getRde(d, vcdClient, "resource")
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			return nil // Already deleted
+		}
 		return diag.FromErr(err)
 	}
 

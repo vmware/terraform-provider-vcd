@@ -64,8 +64,8 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          "internal",
-				Description:      "Optional interface type (only for NSX-V networks). One of 'INTERNAL' (default), 'DISTRIBUTED', 'SUBINTERFACE'",
-				ValidateFunc:     validation.StringInSlice([]string{"internal", "subinterface", "distributed"}, true),
+				Description:      "Optional interface type. One of 'INTERNAL' (default), 'DISTRIBUTED', 'SUBINTERFACE', `NON_DISTRIBUTED`",
+				ValidateFunc:     validation.StringInSlice([]string{"internal", "subinterface", "distributed", "non_distributed"}, true),
 				DiffSuppressFunc: suppressCase,
 			},
 			"gateway": {
@@ -371,7 +371,7 @@ func setOpenApiOrgVdcRoutedNetworkData(d *schema.ResourceData, orgVdcNetwork *ty
 
 	if orgVdcNetwork.Connection != nil {
 		dSet(d, "edge_gateway_id", orgVdcNetwork.Connection.RouterRef.ID)
-		dSet(d, "interface_type", orgVdcNetwork.Connection.ConnectionType)
+		dSet(d, "interface_type", orgVdcNetwork.Connection.ConnectionTypeValue)
 	}
 
 	// Only one subnet can be defined although the structure accepts slice
@@ -430,7 +430,7 @@ func getOpenApiOrgVdcRoutedNetworkType(d *schema.ResourceData, vcdClient *VCDCli
 				ID: d.Get("edge_gateway_id").(string),
 			},
 			// API requires interface type in upper case, but we accept any case
-			ConnectionType: strings.ToUpper(d.Get("interface_type").(string)),
+			ConnectionTypeValue: strings.ToUpper(d.Get("interface_type").(string)),
 		},
 		Subnets: types.OrgVdcNetworkSubnets{
 			Values: []types.OrgVdcNetworkSubnetValues{
