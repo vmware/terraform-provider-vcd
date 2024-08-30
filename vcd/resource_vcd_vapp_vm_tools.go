@@ -696,6 +696,9 @@ func updateTemplateInternalDisks(d *schema.ResourceData, meta interface{}, vm go
 
 		// Update details of internal disk for disk existing in template
 		if value := internalDiskProvidedConfig["iops"]; value.(int) != 0 || diskCreatedByTemplate.IopsAllocation != nil {
+			if diskCreatedByTemplate.IopsAllocation == nil {
+				diskCreatedByTemplate.IopsAllocation = &types.IopsResource{}
+			}
 			iops := int64(value.(int))
 			diskCreatedByTemplate.IopsAllocation.Reservation = iops
 		}
