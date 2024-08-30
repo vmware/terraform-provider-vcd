@@ -161,7 +161,7 @@ func TestAccVcdIpSpaceUplinkInterfaceAssociation(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
 	if checkVersion(testConfig.Provider.ApiVersion, "< 38.0") {
-		t.Skipf("This test tests VCD 10.5.1+ (API V38.0+) features. Skipping.")
+		t.Skipf("This test tests VCD 10.5+ (API V38.0+) features. Skipping.")
 	}
 
 	// String map to fill the template
@@ -258,7 +258,7 @@ func TestAccVcdIpSpaceUplinkInterfaceAssociationUpdate(t *testing.T) {
 	skipIfNotSysAdmin(t)
 
 	if checkVersion(testConfig.Provider.ApiVersion, "< 38.0") {
-		t.Skipf("This test tests VCD 10.5.1+ (API V38.0+) features. Skipping.")
+		t.Skipf("This test tests VCD 10.5+ (API V38.0+) features. Skipping.")
 	}
 
 	// String map to fill the template
