@@ -19,7 +19,7 @@ func datasourceVcdCatalogAccessControl() *schema.Resource {
 			"catalog_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The ID of Catalog to use",
+				Description: "The ID of Catalog to read",
 			},
 			"shared_with_everyone": {
 				Type:        schema.TypeBool,
@@ -29,7 +29,7 @@ func datasourceVcdCatalogAccessControl() *schema.Resource {
 			"everyone_access_level": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Access level when the catalog is shared with everyone (only ReadOnly is available). Required when shared_with_everyone is set",
+				Description: "Access level when the catalog is shared with everyone",
 			},
 			"read_only_shared_with_all_orgs": {
 				Type:        schema.TypeBool,
@@ -44,17 +44,17 @@ func datasourceVcdCatalogAccessControl() *schema.Resource {
 						"org_id": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "ID of the Org to which we are sharing. Required if user_id or group_id is not set",
+							Description: "ID of the Org to which we are sharing",
 						},
 						"user_id": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "ID of the user to which we are sharing. Required if group_id or org_id is not set",
+							Description: "ID of the user to which we are sharing",
 						},
 						"group_id": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "ID of the group to which we are sharing. Required if user_id or org_id is not set",
+							Description: "ID of the group to which we are sharing",
 						},
 						"subject_name": {
 							Type:        schema.TypeString,
