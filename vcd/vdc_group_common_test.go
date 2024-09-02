@@ -34,7 +34,7 @@ resource "vcd_org_vdc" "newVdc" {
     }
 
     memory {
-      allocated = "768"
+      allocated = "256"
       limit     = "1024"
     }
   }

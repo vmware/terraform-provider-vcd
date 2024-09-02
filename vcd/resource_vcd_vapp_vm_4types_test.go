@@ -1472,7 +1472,7 @@ resource "vcd_vm_sizing_policy" "size_full" {
 
   memory {
     shares                = "1580"
-    size_in_mb            = "2048"
+    size_in_mb            = "512"
     limit_in_mb           = "4800"
     reservation_guarantee = "{{.MemoryGuaranteed}}"
   }
