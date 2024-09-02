@@ -252,6 +252,7 @@ func genericVcdCatalogAccessControlRead(_ context.Context, d *schema.ResourceDat
 		}
 	}
 
+	d.SetId(catalogId)
 	return nil
 }
 
