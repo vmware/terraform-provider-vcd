@@ -170,6 +170,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_org_vdc_template":                             datasourceVcdOrgVdcTemplate(),                          // 3.13
 	"vcd_external_endpoint":                            datasourceVcdExternalEndpoint(),                        // 3.14
 	"vcd_api_filter":                                   datasourceVcdApiFilter(),                               // 3.14
+	"vcd_catalog_access_control":                       datasourceVcdCatalogAccessControl(),                    // 3.14
 }
 
 var globalResourceMap = map[string]*schema.Resource{

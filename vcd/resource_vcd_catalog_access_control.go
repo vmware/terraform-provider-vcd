@@ -172,7 +172,11 @@ func resourceVcdCatalogAccessControlCreateUpdate(ctx context.Context, d *schema.
 	return resourceVcdCatalogAccessControlRead(ctx, d, meta)
 }
 
-func resourceVcdCatalogAccessControlRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdCatalogAccessControlRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdCatalogAccessControlRead(ctx, d, meta, "resource")
+}
+
+func genericVcdCatalogAccessControlRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	sessionInfo, err := vcdClient.Client.GetSessionInfo()
 	if err != nil {
@@ -184,9 +188,13 @@ func resourceVcdCatalogAccessControlRead(_ context.Context, d *schema.ResourceDa
 		return diag.Errorf("%s error while reading Org - %s", sessionText, err)
 	}
 
-	catalog, err := org.GetCatalogById(d.Id(), false)
+	catalogId := d.Id()
+	if catalogId == "" {
+		catalogId = d.Get("catalog_id").(string)
+	}
+	catalog, err := org.GetCatalogById(catalogId, false)
 	if err != nil {
-		if govcd.IsNotFound(err) {
+		if govcd.IsNotFound(err) && origin == "resource" {
 			d.SetId("")
 			return nil
 		} else {
