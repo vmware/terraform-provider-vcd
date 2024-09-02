@@ -51,14 +51,14 @@ func TestAccVcdCatalogAccessControl(t *testing.T) {
 	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCatalogAccessControl, params)
+	params["FuncName"] = t.Name() + "-ds"
+	dsText := templateFill(testAccCatalogAccessControl+testAccCatalogAccessControlDS, params)
 	params["AccessLevel1"] = types.ControlAccessReadWrite
 	params["SharedToEveryone"] = "false"
 	params["EveryoneAccessLevel"] = ""
 	params["FuncName"] = t.Name() + "-update"
 	params["SkipNotice"] = "# skip-binary-test: only for updates"
 	updateText := templateFill(testAccCatalogAccessControl, params)
-	params["FuncName"] = t.Name() + "-ds"
-	dsText := templateFill(testAccCatalogAccessControl+testAccCatalogAccessControlDS, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -131,6 +131,12 @@ func TestAccVcdCatalogAccessControl(t *testing.T) {
 				),
 			},
 			{
+				Config: dsText,
+				Check: resource.ComposeTestCheckFunc(
+					resourceFieldsEqual(resourceAC3, "data.vcd_catalog_access_control.ac_ds", nil),
+				),
+			},
+			{
 				Config: updateText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogAccessControlExists(resourceAC0, testConfig.VCD.Org),
@@ -150,12 +156,6 @@ func TestAccVcdCatalogAccessControl(t *testing.T) {
 						"subject_name": "ac-user1",
 						"access_level": types.ControlAccessReadWrite,
 					}),
-				),
-			},
-			{
-				Config: dsText,
-				Check: resource.ComposeTestCheckFunc(
-					resourceFieldsEqual(resourceAC3, "data.vcd_catalog_access_control.ac_ds", nil),
 				),
 			},
 			// Tests import by name
