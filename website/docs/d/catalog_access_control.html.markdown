@@ -22,7 +22,7 @@ data "vcd_catalog" "catalog" {
   name = "my-catalog"
 }
 
-resource "vcd_catalog_access_control" "ac" {
+data "vcd_catalog_access_control" "ac" {
   catalog_id = data.vcd_catalog.catalog.id
 }
 
