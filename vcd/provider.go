@@ -293,6 +293,8 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_org_vdc_template_instance":                    resourceVcdOrgVdcTemplateInstance(),                  // 3.13
 	"vcd_external_endpoint":                            resourceVcdExternalEndpoint(),                        // 3.14
 	"vcd_api_filter":                                   resourceVcdApiFilter(),                               // 3.14
+	"vcd_nsxt_alb_virtual_service_http_req_rules":      resourceVcdAlbVirtualServiceReqRules(),               // 3.14
+	"vcd_nsxt_alb_virtual_service_http_resp_Rules":     resourceVcdAlbVirtualServiceRespRules(),              // 3.14
 }
 
 // Provider returns a terraform.ResourceProvider.
