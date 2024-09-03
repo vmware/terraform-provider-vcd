@@ -972,6 +972,9 @@ func changeComputePoliciesAndDefaultId(d *schema.ResourceData, vcdClient *VCDCli
 	for _, attribute := range computePolicyAttributes {
 		vmComputePolicyIds = append(vmComputePolicyIds, convertSchemaSetToSliceOfStrings(d.Get(attribute).(*schema.Set))...)
 	}
+	// Check that the 'default_compute_policy_id' is not empty to prevent issue 1216: https://github.com/vmware/terraform-provider-vcd/issues/1216
+	// Otherwise, we can't set some Compute policies (like VM Placement policies) without an explicit default one
+	// (so VCD takes the System Default VM Sizing Policy automatically), which should be allowed.
 	if defaultPolicyId.(string) != "" && !contains(vmComputePolicyIds, defaultPolicyId.(string)) {
 		return fmt.Errorf("`default_compute_policy_id` '%s' is not present in any of `%v`", defaultPolicyId.(string), computePolicyAttributes)
 	}
