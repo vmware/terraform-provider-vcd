@@ -124,13 +124,13 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 
   compute_capacity {
     cpu {
-      allocated = 1024
-      limit     = 1024
+      allocated = 512
+      limit     = 512
     }
 
     memory {
-      allocated = 1024
-      limit     = 1024
+      allocated = 512
+      limit     = 512
     }
   }
 
@@ -150,6 +150,42 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   default_compute_policy_id = vcd_vm_placement_policy.placement1.id
   vm_placement_policy_ids   = [vcd_vm_placement_policy.placement1.id]
   vm_sizing_policy_ids = [vcd_vm_sizing_policy.sizing1.id]
+}
+
+resource "vcd_org_vdc" "{{.VdcName}}2" {
+  name = "{{.VdcName}}2"
+  org  = "{{.OrgName}}"
+
+  allocation_model  = "ReservationPool"
+  network_pool_name = "{{.NetworkPool}}"
+  provider_vdc_name = data.vcd_provider_vdc.pvdc.name
+
+  compute_capacity {
+    cpu {
+      allocated = 512
+      limit     = 512
+    }
+
+    memory {
+      allocated = 512
+      limit     = 512
+    }
+  }
+
+  storage_profile {
+    name     = "{{.ProviderVdcStorageProfile}}"
+    enabled  = true
+    limit    = 10240
+    default  = true
+  }
+
+  enabled                    = true
+  enable_thin_provisioning   = true
+  enable_fast_provisioning   = true
+  delete_force               = true
+  delete_recursive           = true
+
+  vm_placement_policy_ids   = [vcd_vm_placement_policy.placement1.id]
 }
 `
 
@@ -207,13 +243,13 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 
   compute_capacity {
     cpu {
-      allocated = 1024
-      limit     = 1024
+      allocated = 512
+      limit     = 512
     }
 
     memory {
-      allocated = 1024
-      limit     = 1024
+      allocated = 512
+      limit     = 512
     }
   }
 
@@ -233,5 +269,42 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   default_compute_policy_id = vcd_vm_placement_policy.placement1.id
   vm_placement_policy_ids   = [vcd_vm_placement_policy.placement1.id]
   vm_sizing_policy_ids = [vcd_vm_sizing_policy.sizing1.id, vcd_vm_sizing_policy.sizing2.id]
+}
+
+resource "vcd_org_vdc" "{{.VdcName}}2" {
+  name = "{{.VdcName}}2"
+  org  = "{{.OrgName}}"
+
+  allocation_model  = "ReservationPool"
+  network_pool_name = "{{.NetworkPool}}"
+  provider_vdc_name = data.vcd_provider_vdc.pvdc.name
+
+  compute_capacity {
+    cpu {
+      allocated = 512
+      limit     = 512
+    }
+
+    memory {
+      allocated = 512
+      limit     = 512
+    }
+  }
+
+  storage_profile {
+    name     = "{{.ProviderVdcStorageProfile}}"
+    enabled  = true
+    limit    = 10240
+    default  = true
+  }
+
+  enabled                    = true
+  enable_thin_provisioning   = true
+  enable_fast_provisioning   = true
+  delete_force               = true
+  delete_recursive           = true
+
+  default_compute_policy_id = vcd_vm_placement_policy.placement1.id
+  vm_placement_policy_ids   = [vcd_vm_placement_policy.placement1.id]
 }
 `
