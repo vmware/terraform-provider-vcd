@@ -1790,7 +1790,7 @@ func TestAccVcdVAppVm_4types_sizing_max(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory", "2048"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory", "512"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm.template-vm", "sizing_policy_id", "vcd_vm_sizing_policy.size_full", "id"),
 
 					// Empty vApp VM checks
