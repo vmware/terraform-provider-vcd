@@ -52,6 +52,22 @@ resource "vcd_ip_space_uplink" "u1" {
 }
 ```
 
+## Example Usage (Adding IP Space Uplink with Tier-0 Router Associated Interfaces)
+
+```hcl
+data "vcd_nsxt_tier0_interface" "one" {
+  external_network_id = vcd_external_network_v2.provider-gateway.id
+  name                = "interface-one"
+}
+
+resource "vcd_ip_space_uplink" "u1" {
+  name                     = "uplink"
+  external_network_id      = vcd_external_network_v2.provider-gateway.id
+  ip_space_id              = vcd_ip_space.space1.id
+  associated_interface_ids = [data.vcd_nsxt_tier0_interface.one.id]
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -60,6 +76,10 @@ The following arguments are supported:
 * `description` - (Optional) An optional description for IP Space Uplink
 * `external_network_id` - (Required) External Network ID For IP Space Uplink configuration
 * `ip_space_id` - (Required) IP Space ID configuration
+* `associated_interface_ids_id` - (Optional; *v3.14+*, *VCD 10.5+*) A set of Tier-0 Router Interface
+  IDs that can be associated with the Uplink. Data Source
+  [vcd_nsxt_tier0_router_interface](/providers/vmware/vcd/latest/docs/data-sources/nsxt_tier0_router_interface)
+  can help to look it up.
 
 ## Attribute Reference
 
