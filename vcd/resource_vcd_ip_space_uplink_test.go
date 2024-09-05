@@ -155,3 +155,175 @@ resource "vcd_ip_space_uplink" "u1" {
   ip_space_id         = vcd_ip_space.space1.id
 }
 `
+
+func TestAccVcdIpSpaceUplinkInterfaceAssociation(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	if checkVersion(testConfig.Provider.ApiVersion, "< 38.0") {
+		t.Skipf("This test tests VCD 10.5+ (API V38.0+) features. Skipping.")
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"TestName":            t.Name(),
+		"NsxtManager":         testConfig.Nsxt.Manager,
+		"NsxtTier0Router":     testConfig.Nsxt.Tier0router,
+		"ExternalNetworkName": t.Name(),
+		"AssociatedInterface": testConfig.Nsxt.Tier0routerInterface,
+
+		"Tags": "network nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "step1"
+	configText1 := templateFill(testAccVcdIpSpaceUplinkInterfaceAssociationStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccVcdIpSpaceUplinkInterfaceAssociationStep2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_external_network_v2.provider-gateway", "id"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "id"),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "description", ""),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "external_network_id"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "ip_space_id"),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "ip_space_type", "PUBLIC"),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "associated_interface_ids.#", "1"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "status"),
+
+					resource.TestCheckResourceAttr("data.vcd_nsxt_tier0_router_interface.one", "name", params["AssociatedInterface"].(string)),
+					resource.TestCheckResourceAttrSet("data.vcd_nsxt_tier0_router_interface.one", "type"),
+					resource.TestCheckResourceAttr("data.vcd_nsxt_tier0_router_interface.one", "description", "created for test"),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_external_network_v2.provider-gateway", "id"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "id"),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "description", ""),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "external_network_id"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "ip_space_id"),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "ip_space_type", "PUBLIC"),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "associated_interface_ids.#", "0"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "status"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccVcdIpSpaceUplinkInterfaceAssociationStep1 = testAccVcdIpSpaceUplinkPrereqs + `
+resource "vcd_ip_space_uplink" "u1" {
+  name                     = "{{.TestName}}"
+  external_network_id      = vcd_external_network_v2.provider-gateway.id
+  ip_space_id              = vcd_ip_space.space1.id
+  associated_interface_ids = [data.vcd_nsxt_tier0_router_interface.one.id]
+}
+
+data "vcd_nsxt_tier0_router_interface" "one" {
+  external_network_id = vcd_external_network_v2.provider-gateway.id
+  name                = "{{.AssociatedInterface}}"
+}
+`
+
+const testAccVcdIpSpaceUplinkInterfaceAssociationStep2 = testAccVcdIpSpaceUplinkPrereqs + `
+resource "vcd_ip_space_uplink" "u1" {
+  name                     = "{{.TestName}}"
+  external_network_id      = vcd_external_network_v2.provider-gateway.id
+  ip_space_id              = vcd_ip_space.space1.id
+}
+`
+
+func TestAccVcdIpSpaceUplinkInterfaceAssociationUpdate(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	if checkVersion(testConfig.Provider.ApiVersion, "< 38.0") {
+		t.Skipf("This test tests VCD 10.5+ (API V38.0+) features. Skipping.")
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"TestName":            t.Name(),
+		"NsxtManager":         testConfig.Nsxt.Manager,
+		"NsxtTier0Router":     testConfig.Nsxt.Tier0router,
+		"ExternalNetworkName": t.Name(),
+		"AssociatedInterface": testConfig.Nsxt.Tier0routerInterface,
+
+		"Tags": "network nsxt",
+	}
+	testParamsNotEmpty(t, params)
+
+	params["FuncName"] = t.Name() + "step1"
+	configText1 := templateFill(testAccVcdIpSpaceUplinkInterfaceAssociationStep2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccVcdIpSpaceUplinkInterfaceAssociationStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: configText1,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_external_network_v2.provider-gateway", "id"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "id"),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "description", ""),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "external_network_id"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "ip_space_id"),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "ip_space_type", "PUBLIC"),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "associated_interface_ids.#", "0"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "status"),
+				),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_ip_space.space1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_external_network_v2.provider-gateway", "id"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "id"),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "description", ""),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "external_network_id"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "ip_space_id"),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "ip_space_type", "PUBLIC"),
+					resource.TestCheckResourceAttr("vcd_ip_space_uplink.u1", "associated_interface_ids.#", "1"),
+					resource.TestCheckResourceAttrSet("vcd_ip_space_uplink.u1", "status"),
+
+					resource.TestCheckResourceAttr("data.vcd_nsxt_tier0_router_interface.one", "name", params["AssociatedInterface"].(string)),
+					resource.TestCheckResourceAttrSet("data.vcd_nsxt_tier0_router_interface.one", "type"),
+					resource.TestCheckResourceAttr("data.vcd_nsxt_tier0_router_interface.one", "description", "created for test"),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}

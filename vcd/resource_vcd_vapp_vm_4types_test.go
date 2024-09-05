@@ -1472,7 +1472,7 @@ resource "vcd_vm_sizing_policy" "size_full" {
 
   memory {
     shares                = "1580"
-    size_in_mb            = "2048"
+    size_in_mb            = "512"
     limit_in_mb           = "4800"
     reservation_guarantee = "{{.MemoryGuaranteed}}"
   }
@@ -1790,28 +1790,28 @@ func TestAccVcdVAppVm_4types_sizing_max(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "vm_type", "vcd_vapp_vm"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory", "2048"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm", "memory", "512"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm.template-vm", "sizing_policy_id", "vcd_vm_sizing_policy.size_full", "id"),
 
 					// Empty vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "vm_type", "vcd_vapp_vm"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory", "2048"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm", "memory", "512"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm.empty-vm", "sizing_policy_id", "vcd_vm_sizing_policy.size_full", "id"),
 
 					// Standalone template VM checks
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "vm_type", "vcd_vm"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm", "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory", "2048"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm", "memory", "512"),
 					resource.TestCheckResourceAttrPair("vcd_vm.template-vm", "sizing_policy_id", "vcd_vm_sizing_policy.size_full", "id"),
 
 					// Standalone empty VM checks
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "vm_type", "vcd_vm"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory", "2048"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm", "memory", "512"),
 					resource.TestCheckResourceAttrPair("vcd_vm.empty-vm", "sizing_policy_id", "vcd_vm_sizing_policy.size_full", "id"),
 
 					// VM copy checks
@@ -1825,28 +1825,28 @@ func TestAccVcdVAppVm_4types_sizing_max(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "vm_type", "vcd_vapp_vm"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "memory", "2048"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.template-vm-copy", "memory", "512"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm.template-vm-copy", "sizing_policy_id", "vcd_vm_sizing_policy.size_full", "id"),
 
 					// Empty vApp VM checks
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "vm_type", "vcd_vapp_vm"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "memory", "2048"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.empty-vm-copy", "memory", "512"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm.template-vm-copy", "sizing_policy_id", "vcd_vm_sizing_policy.size_full", "id"),
 
 					// Standalone template VM checks
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "vm_type", "vcd_vm"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "memory", "2048"),
+					resource.TestCheckResourceAttr("vcd_vm.template-vm-copy", "memory", "512"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm.template-vm-copy", "sizing_policy_id", "vcd_vm_sizing_policy.size_full", "id"),
 
 					// Standalone empty VM checks
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "vm_type", "vcd_vm"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "memory", "2048"),
+					resource.TestCheckResourceAttr("vcd_vm.empty-vm-copy", "memory", "512"),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm.template-vm-copy", "sizing_policy_id", "vcd_vm_sizing_policy.size_full", "id"),
 				),
 			},
