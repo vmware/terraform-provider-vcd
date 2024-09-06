@@ -83,6 +83,16 @@ func convertSchemaSetToSliceOfStrings(param *schema.Set) []string {
 	return result
 }
 
+func convertSchemaSetToSliceOfInts(param *schema.Set) []int {
+	paramList := param.List()
+	result := make([]int, len(paramList))
+	for index, value := range paramList {
+		result[index] = value.(int)
+	}
+
+	return result
+}
+
 // convertTypeListToSliceOfStrings accepts Terraform's TypeList structure `[]interface{}` and
 // converts it to slice of strings.
 func convertTypeListToSliceOfStrings(param []interface{}) []string {
@@ -102,6 +112,16 @@ func convertStringsToTypeSet(param []string) *schema.Set {
 	}
 
 	set := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), sliceOfInterfaces)
+	return set
+}
+
+func convertIntsToTypeSet(param []int) *schema.Set {
+	sliceOfInterfaces := make([]interface{}, len(param))
+	for index, value := range param {
+		sliceOfInterfaces[index] = value
+	}
+
+	set := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeInt}), sliceOfInterfaces)
 	return set
 }
 

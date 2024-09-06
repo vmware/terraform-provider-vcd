@@ -11,7 +11,7 @@ func resourceVcdAlbVirtualServiceRespRules() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdAlbVirtualServiceRespRulesCreate,
 		ReadContext:   resourceVcdAlbVirtualServiceRespRulesRead,
-		UpdateContext: resourceVcdAlbVirtualServiceRespRulesUpdate,
+		// UpdateContext: resourceVcdAlbVirtualServiceRespRulesUpdate,
 		DeleteContext: resourceVcdAlbVirtualServiceRespRulesDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdAlbVirtualServiceRespRulesImport,
