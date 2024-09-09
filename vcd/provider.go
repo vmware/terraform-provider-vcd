@@ -171,6 +171,8 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_external_endpoint":                            datasourceVcdExternalEndpoint(),                        // 3.14
 	"vcd_api_filter":                                   datasourceVcdApiFilter(),                               // 3.14
 	"vcd_nsxt_tier0_router_interface":                  datasourceVcdNsxtTier0RouterInterface(),                // 3.14
+	"vcd_nsxt_alb_virtual_service_http_req_rules":      datasourceVcdAlbVirtualServiceReqRules(),               // 3.14
+	// "vcd_nsxt_alb_virtual_service_http_resp_Rules":     datasourceVcdAlbVirtualServiceRespRules(),              // 3.14
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -295,7 +297,8 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_external_endpoint":                            resourceVcdExternalEndpoint(),                        // 3.14
 	"vcd_api_filter":                                   resourceVcdApiFilter(),                               // 3.14
 	"vcd_nsxt_alb_virtual_service_http_req_rules":      resourceVcdAlbVirtualServiceReqRules(),               // 3.14
-	"vcd_nsxt_alb_virtual_service_http_resp_Rules":     resourceVcdAlbVirtualServiceRespRules(),              // 3.14
+	"vcd_nsxt_alb_virtual_service_http_resp_rules":     resourceVcdAlbVirtualServiceRespRules(),              // 3.14
+	"vcd_nsxt_alb_virtual_service_http_sec_rules":      resourceVcdAlbVirtualServiceRespRules(),              // 3.14
 }
 
 // Provider returns a terraform.ResourceProvider.

@@ -11,14 +11,14 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-func resourceVcdAlbVirtualServiceReqRules() *schema.Resource {
+func resourceVcdAlbVirtualServiceSecRules() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdAlbVirtualServiceReqRulesCreate,
-		ReadContext:   resourceVcdAlbVirtualServiceReqRulesRead,
+		CreateContext: resourceVcdAlbVirtualServiceSecRulesCreate,
+		ReadContext:   resourceVcdAlbVirtualServiceSecRulesRead,
 		// Update is the same as create and it does not have any additional details like rule IDs
 		// which are important for updates in some cases.
-		UpdateContext: resourceVcdAlbVirtualServiceReqRulesCreate,
-		DeleteContext: resourceVcdAlbVirtualServiceReqRulesDelete,
+		UpdateContext: resourceVcdAlbVirtualServiceSecRulesCreate,
+		DeleteContext: resourceVcdAlbVirtualServiceSecRulesDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdAlbVirtualServiceImport,
 		},
@@ -33,14 +33,14 @@ func resourceVcdAlbVirtualServiceReqRules() *schema.Resource {
 			"rule": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Elem:        nsxtAlbVirtualServiceReqRule,
+				Elem:        nsxtAlbVirtualServiceSecRule,
 				Description: "A single HTTP Request Rule",
 			},
 		},
 	}
 }
 
-var nsxtAlbVirtualServiceReqRule = &schema.Resource{
+var nsxtAlbVirtualServiceSecRule = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"name": {
 			Type:        schema.TypeString,
@@ -69,178 +69,82 @@ var nsxtAlbVirtualServiceReqRule = &schema.Resource{
 			Type:        schema.TypeSet,
 			Optional:    true,
 			Description: "Actions to perform with the rule that matches",
-			Elem:        nsxtAlbVirtualServiceReqRuleActions,
+			Elem:        nsxtAlbVirtualServiceSecRuleActions,
 		},
 	},
 }
 
-var nsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
+var nsxtAlbVirtualServiceSecRuleActions = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"client_ip_address": {
-			Type:        schema.TypeList,
-			MaxItems:    1,
-			Optional:    true,
-			Description: "",
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"criteria": {
-						Type:         schema.TypeString,
-						Optional:     true,
-						ValidateFunc: validation.StringInSlice([]string{"IS_IN", "IS_NOT_IN"}, false),
-						Description:  "Criterion to use for IP address matching the HTTP request. Options - IS_IN, IS_NOT_IN.",
-					},
-					"ip_addresses": {
-						Type:        schema.TypeSet,
-						Optional:    true,
-						Description: "Enter IPv4 or IPv6 address, range or CIDR",
-						Elem: &schema.Schema{
-							Type: schema.TypeString,
-						},
-					},
-				},
-			},
-		},
-		"service_ports": {
-			Type:        schema.TypeList,
-			MaxItems:    1,
-			Optional:    true,
-			Description: "",
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"criteria": {
-						Type:         schema.TypeString,
-						Optional:     true,
-						ValidateFunc: validation.StringInSlice([]string{"IS_IN", "IS_NOT_IN"}, false),
-						Description:  "Criterion to use for port matching the HTTP request. Options - IS_IN, IS_NOT_IN",
-					},
-					"ports": {
-						Type:        schema.TypeSet,
-						Optional:    true,
-						Description: "Listening TCP ports. Allowed values are 1-65535",
-						Elem: &schema.Schema{
-							Type: schema.TypeInt,
-						},
-					},
-				},
-			},
-		},
-		"protocol_type": {
+		"redirect_to_https": {
 			Type:         schema.TypeString,
 			Optional:     true,
-			ValidateFunc: validation.StringInSlice([]string{"HTTP", "HTTPS"}, false),
-			Description:  "Protocol to match - 'HTTP' or 'HTTPS'",
+			Description:  "Port number that should be redirected to HTTPS",
+			ValidateFunc: IsIntAndAtLeast(1), // Using TypeString + validation to be able to distinguish empty value and '0'
 		},
-		"http_method": {
+		"connections": {
+			Type:         schema.TypeString,
+			Optional:     true,
+			Description:  "ALLOW or CLOSE connections",
+			ValidateFunc: validation.StringInSlice([]string{"ALLOW", "CLOSE"}, false),
+		},
+		"rate_limit": {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
 			Description: "",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					"criteria": {
+					"count": {
 						Type:         schema.TypeString,
 						Optional:     true,
-						ValidateFunc: validation.StringInSlice([]string{"IS_IN", "IS_NOT_IN"}, false),
-						Description:  "Criterion to use for matching the method in the HTTP request. Options - IS_IN, IS_NOT_IN",
+						Description:  "Maximum number of connections, requests or packets permitted each period. The count must be between 1 and 1000000000",
+						ValidateFunc: IsIntAndAtLeast(1), // Using TypeString + validation to be able to distinguish empty value and '0'
 					},
-					"method": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "HTTP methods to match. Options - GET, PUT, POST, DELETE, HEAD, OPTIONS, TRACE, CONNECT, PATCH, PROPFIND, PROPPATCH, MKCOL, COPY, MOVE, LOCK, UNLOCK",
+					"period": {
+						Type:         schema.TypeString,
+						Optional:     true,
+						Description:  "Time value in seconds to enforce rate count. The period must be between 1 and 1000000000.",
+						ValidateFunc: IsIntAndAtLeast(1), // Using TypeString + validation to be able to distinguish empty value and '0'
+					},
+					"action": {
+						Type:         schema.TypeString,
+						Optional:     true,
+						Description:  "Time value in seconds to enforce rate count. The period must be between 1 and 1000000000.",
+						ValidateFunc: validation.StringInSlice([]string{"ALLOW", "CLOSE"}, false),
 					},
 				},
 			},
 		},
-		"path": {
+
+		"send_response": {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
 			Description: "",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					"criteria": {
+					"content": {
 						Type:        schema.TypeString,
 						Optional:    true,
-						Description: "Criterion to use for matching the path in the HTTP request URI. Options - BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL, REGEX_MATCH, REGEX_DOES_NOT_MATCH",
+						Description: "Base64 encoded content",
 					},
-					"paths": {
-						Type:        schema.TypeSet,
+					"content_type": {
+						Type:        schema.TypeString,
 						Optional:    true,
-						Description: "String values to match the path",
-						Elem: &schema.Schema{
-							Type: schema.TypeString,
-						},
+						Description: "MIME type for the content",
+					},
+					"status_code": {
+						Type:         schema.TypeString,
+						Optional:     true,
+						Description:  "HTTP Status code to send",
+						ValidateFunc: IsIntAndAtLeast(1), // Using TypeString + validation to be able to distinguish empty value and '0'
 					},
 				},
 			},
 		},
-		"query": {
-			Type:        schema.TypeSet,
-			Optional:    true,
-			Description: "HTTP request query strings in key=value format",
-			Elem: &schema.Schema{
-				Type: schema.TypeString,
-			},
-		},
-		"request_headers": {
-			Type:        schema.TypeSet,
-			Optional:    true,
-			Description: "",
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"criteria": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "Criterion to use for matching headers and cookies in the HTTP request amd response. Options - EXISTS, DOES_NOT_EXIST, BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL",
-					},
-					"name": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "Name of the HTTP header whose value is to be matched. Must be non-blank and fewer than 10240 characters",
-					},
-					"value": {
 
-						Type:        schema.TypeSet,
-						Computed:    true,
-						Description: "String values to match for an HTTP header",
-						Elem: &schema.Schema{
-							Type: schema.TypeString,
-						},
-					},
-				},
-			},
-		},
-		"cookie": {
-			Type:        schema.TypeList,
-			MaxItems:    1,
-			Optional:    true,
-			Description: "",
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"criteria": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "Criterion to use for matching cookies in the HTTP request. Options - EXISTS, DOES_NOT_EXIST, BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL",
-					},
-					"name": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "Name of the HTTP cookie whose value is to be matched",
-					},
-					"value": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "String values to match for an HTTP cookie",
-					},
-				},
-			},
-		},
-	},
-}
-
-var nsxtAlbVirtualServiceReqRuleActions = &schema.Resource{
-	Schema: map[string]*schema.Schema{
-		"redirect": {
+		"local_response_action": {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
@@ -281,6 +185,49 @@ var nsxtAlbVirtualServiceReqRuleActions = &schema.Resource{
 				},
 			},
 		},
+		"allowOrCloseConnectionAction": {
+			Type:        schema.TypeList,
+			MaxItems:    1,
+			Optional:    true,
+			Description: "",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"protocol": {
+						Type:         schema.TypeString,
+						Optional:     true,
+						Description:  "HTTP or HTTPS protocol",
+						ValidateFunc: validation.StringInSlice([]string{"HTTP", "HTTPS"}, false),
+					},
+					"port": {
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
+					},
+					"status_code": {
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Description: "One of the redirect status codes - 301, 302, 307",
+					},
+					"host": {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Description: "Host to which redirect the request. Default is the original host",
+					},
+					"path": {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
+					},
+					"keep_query": {
+						Type:        schema.TypeBool,
+						Optional:    true,
+						Description: "Path to which redirect the request. Default is the original path",
+					},
+				},
+			},
+		},
+		/// unused
+
 		"modify_header": {
 			Type:        schema.TypeSet,
 			Optional:    true,
@@ -340,7 +287,7 @@ var nsxtAlbVirtualServiceReqRuleActions = &schema.Resource{
 	},
 }
 
-func resourceVcdAlbVirtualServiceReqRulesCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbVirtualServiceSecRulesCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	albVsId := d.Get("virtual_service_id").(string)
@@ -352,26 +299,26 @@ func resourceVcdAlbVirtualServiceReqRulesCreate(ctx context.Context, d *schema.R
 	vcdMutexKV.kvLock(albVirtualService.NsxtAlbVirtualService.GatewayRef.ID)
 	defer vcdMutexKV.kvUnlock(albVirtualService.NsxtAlbVirtualService.GatewayRef.ID)
 
-	cfg, err := getEdgeVirtualServiceHttpRequestRuleType(d)
+	cfg, err := getEdgeVirtualServiceHttpSecurityRuleType(d)
 	if err != nil {
 		return diag.Errorf("error getting HTTP Request Rule type: %s", err)
 	}
 
-	_, err = albVirtualService.UpdateHttpRequestRules(cfg)
+	_, err = albVirtualService.UpdateHttpSecurityRules(cfg)
 	if err != nil {
 		return diag.Errorf("error creating HTTP Request Rules: %s", err)
 	}
 
 	d.SetId(albVirtualService.NsxtAlbVirtualService.ID)
 
-	return resourceVcdAlbVirtualServiceReqRulesRead(ctx, d, meta)
+	return resourceVcdAlbVirtualServiceSecRulesRead(ctx, d, meta)
 }
 
-func resourceVcdAlbVirtualServiceReqRulesRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return genericVcdAlbVirtualServiceReqRulesRead(ctx, d, meta, "resource")
+func resourceVcdAlbVirtualServiceSecRulesRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdAlbVirtualServiceSecRulesRead(ctx, d, meta, "resource")
 }
 
-func genericVcdAlbVirtualServiceReqRulesRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
+func genericVcdAlbVirtualServiceSecRulesRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	albVirtualService, err := vcdClient.GetAlbVirtualServiceById(d.Get("virtual_service_id").(string))
@@ -383,13 +330,13 @@ func genericVcdAlbVirtualServiceReqRulesRead(ctx context.Context, d *schema.Reso
 		return diag.FromErr(fmt.Errorf("could not retrieve NSX-T ALB Virtual Service: %s", err))
 	}
 
-	rules, err := albVirtualService.GetAllHttpRequestRules(nil)
+	rules, err := albVirtualService.GetAllHttpSecurityRules(nil)
 	if err != nil {
 		return diag.Errorf("could not retrieve HTTP Request Rules: %s", err)
 	}
 
 	dSet(d, "virtual_service_id", albVirtualService.NsxtAlbVirtualService.ID)
-	err = setEdgeVirtualServiceHttpRequestRuleData(d, rules)
+	err = setEdgeVirtualServiceHttpSecuritytRuleData(d, rules)
 	if err != nil {
 		return diag.Errorf("error storing HTTP Request Rule: %s", err)
 	}
@@ -397,7 +344,7 @@ func genericVcdAlbVirtualServiceReqRulesRead(ctx context.Context, d *schema.Reso
 	return nil
 }
 
-func resourceVcdAlbVirtualServiceReqRulesDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbVirtualServiceSecRulesDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	albVsId := d.Get("virtual_service_id").(string)
@@ -409,7 +356,7 @@ func resourceVcdAlbVirtualServiceReqRulesDelete(ctx context.Context, d *schema.R
 	vcdMutexKV.kvLock(albVirtualService.NsxtAlbVirtualService.GatewayRef.ID)
 	defer vcdMutexKV.kvUnlock(albVirtualService.NsxtAlbVirtualService.GatewayRef.ID)
 
-	_, err = albVirtualService.UpdateHttpRequestRules(&types.EdgeVirtualServiceHttpRequestRules{})
+	_, err = albVirtualService.UpdateHttpSecurityRules(&types.EdgeVirtualServiceHttpSecurityRules{})
 	if err != nil {
 		return diag.Errorf("error creating HTTP Request Rules: %s", err)
 	}
@@ -419,10 +366,10 @@ func resourceVcdAlbVirtualServiceReqRulesDelete(ctx context.Context, d *schema.R
 	return nil
 }
 
-func getEdgeVirtualServiceHttpRequestRuleType(d *schema.ResourceData) (*types.EdgeVirtualServiceHttpRequestRules, error) {
+func getEdgeVirtualServiceHttpSecurityRuleType(d *schema.ResourceData) (*types.EdgeVirtualServiceHttpSecurityRules, error) {
 
 	rules := d.Get("rule").(*schema.Set)
-	rulesType := make([]types.EdgeVirtualServiceHttpRequestRule, rules.Len())
+	rulesType := make([]types.EdgeVirtualServiceHttpSecurityRule, rules.Len())
 
 	for ruleIndex, rule := range rules.List() {
 		ruleInterface := rule.(map[string]interface{})
@@ -431,17 +378,17 @@ func getEdgeVirtualServiceHttpRequestRuleType(d *schema.ResourceData) (*types.Ed
 		rulesType[ruleIndex].Active = ruleInterface["active"].(bool)
 		rulesType[ruleIndex].Logging = ruleInterface["logging"].(bool)
 		rulesType[ruleIndex].MatchCriteria = getMatchCriteriaType(ruleInterface["match_criteria"].(*schema.Set))
-		rulesType[ruleIndex].RedirectAction, rulesType[ruleIndex].HeaderActions, rulesType[ruleIndex].RewriteURLAction = getActionsType(ruleInterface["actions"].(*schema.Set))
+		// rulesType[ruleIndex].RedirectAction, rulesType[ruleIndex].HeaderActions, rulesType[ruleIndex].RewriteURLAction = getSecurityActionsType(ruleInterface["actions"].(*schema.Set))
 
 	}
 
-	structure := &types.EdgeVirtualServiceHttpRequestRules{
+	structure := &types.EdgeVirtualServiceHttpSecurityRules{
 		Values: rulesType,
 	}
 	return structure, nil
 }
 
-func getMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualServiceHttpRequestRuleMatchCriteria {
+func getSecurityMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualServiceHttpRequestRuleMatchCriteria {
 	if matchCriteria.Len() == 0 {
 		return types.EdgeVirtualServiceHttpRequestRuleMatchCriteria{}
 	}
@@ -524,7 +471,7 @@ func getMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualServiceHtt
 	return criteria
 }
 
-func getActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpRequestRuleRedirectAction, []*types.EdgeVirtualServiceHttpRequestRuleHeaderActions, *types.EdgeVirtualServiceHttpRequestRuleRewriteURLAction) {
+func getSecurityActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpRequestRuleRedirectAction, []*types.EdgeVirtualServiceHttpRequestRuleHeaderActions, *types.EdgeVirtualServiceHttpRequestRuleRewriteURLAction) {
 	if actions.Len() == 0 {
 		return nil, nil, nil
 	}
@@ -581,7 +528,7 @@ func getActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpRequestRu
 	return redir, mod, rew
 }
 
-func setEdgeVirtualServiceHttpRequestRuleData(d *schema.ResourceData, rules []*types.EdgeVirtualServiceHttpRequestRule) error {
+func setEdgeVirtualServiceHttpSecuritytRuleData(d *schema.ResourceData, rules []*types.EdgeVirtualServiceHttpSecurityRule) error {
 	allRules := make([]interface{}, len(rules))
 
 	for ruleIndex, rule := range rules {
@@ -676,49 +623,49 @@ func setEdgeVirtualServiceHttpRequestRuleData(d *schema.ResourceData, rules []*t
 
 		actions := make([]interface{}, 1)
 		actionsMap := make(map[string]interface{})
+		/*
+			// 'redirect'
+			redirect := make([]interface{}, 0)
+			if rule.RedirectAction != nil {
+				singleRedirect := make(map[string]interface{})
+				singleRedirect["protocol"] = rule.RedirectAction.Protocol
+				singleRedirect["port"] = rule.RedirectAction.Port
+				singleRedirect["status_code"] = rule.RedirectAction.StatusCode
+				singleRedirect["host"] = rule.RedirectAction.Host
+				singleRedirect["path"] = rule.RedirectAction.Path
+				singleRedirect["keep_query"] = rule.RedirectAction.KeepQuery
 
-		// 'redirect'
-		redirect := make([]interface{}, 0)
-		if rule.RedirectAction != nil {
-			singleRedirect := make(map[string]interface{})
-			singleRedirect["protocol"] = rule.RedirectAction.Protocol
-			singleRedirect["port"] = rule.RedirectAction.Port
-			singleRedirect["status_code"] = rule.RedirectAction.StatusCode
-			singleRedirect["host"] = rule.RedirectAction.Host
-			singleRedirect["path"] = rule.RedirectAction.Path
-			singleRedirect["keep_query"] = rule.RedirectAction.KeepQuery
-
-			redirect = append(redirect, singleRedirect)
-		}
-		actionsMap["redirect"] = redirect
-
-		// 'modify_header'
-
-		modifyHeader := make([]interface{}, 0)
-		if rule.HeaderActions != nil {
-			for _, mh := range rule.HeaderActions {
-				singleModifyHeader := make(map[string]interface{})
-				singleModifyHeader["action"] = mh.Action
-				singleModifyHeader["name"] = mh.Name
-				singleModifyHeader["value"] = mh.Value
-
-				modifyHeader = append(modifyHeader, singleModifyHeader)
+				redirect = append(redirect, singleRedirect)
 			}
-		}
-		actionsMap["modify_header"] = modifyHeader
+			actionsMap["redirect"] = redirect
 
-		// 'rewrite_url'
-		rewriteUrl := make([]interface{}, 0)
-		if rule.RewriteURLAction != nil {
-			singleRewriteUrl := make(map[string]interface{})
-			singleRewriteUrl["host_header"] = rule.RewriteURLAction.Host
-			singleRewriteUrl["existing_path"] = rule.RewriteURLAction.Path
-			singleRewriteUrl["keep_query"] = rule.RewriteURLAction.KeepQuery
-			singleRewriteUrl["query"] = rule.RewriteURLAction.Query
+			// 'modify_header'
 
-			rewriteUrl = append(rewriteUrl, singleRewriteUrl)
-		}
-		actionsMap["rewrite_url"] = rewriteUrl
+			modifyHeader := make([]interface{}, 0)
+			if rule.HeaderActions != nil {
+				for _, mh := range rule.HeaderActions {
+					singleModifyHeader := make(map[string]interface{})
+					singleModifyHeader["action"] = mh.Action
+					singleModifyHeader["name"] = mh.Name
+					singleModifyHeader["value"] = mh.Value
+
+					modifyHeader = append(modifyHeader, singleModifyHeader)
+				}
+			}
+			actionsMap["modify_header"] = modifyHeader
+
+			// 'rewrite_url'
+			rewriteUrl := make([]interface{}, 0)
+			if rule.RewriteURLAction != nil {
+				singleRewriteUrl := make(map[string]interface{})
+				singleRewriteUrl["host_header"] = rule.RewriteURLAction.Host
+				singleRewriteUrl["existing_path"] = rule.RewriteURLAction.Path
+				singleRewriteUrl["keep_query"] = rule.RewriteURLAction.KeepQuery
+				singleRewriteUrl["query"] = rule.RewriteURLAction.Query
+
+				rewriteUrl = append(rewriteUrl, singleRewriteUrl)
+			}
+			actionsMap["rewrite_url"] = rewriteUrl */
 
 		actions[0] = actionsMap
 		singleRule["actions"] = actions
