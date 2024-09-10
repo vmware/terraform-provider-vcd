@@ -171,6 +171,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_external_endpoint":                            datasourceVcdExternalEndpoint(),                        // 3.14
 	"vcd_api_filter":                                   datasourceVcdApiFilter(),                               // 3.14
 	"vcd_nsxt_tier0_router_interface":                  datasourceVcdNsxtTier0RouterInterface(),                // 3.14
+	"vcd_catalog_access_control":                       datasourceVcdCatalogAccessControl(),                    // 3.14
 }
 
 var globalResourceMap = map[string]*schema.Resource{

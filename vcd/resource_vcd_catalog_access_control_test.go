@@ -51,6 +51,8 @@ func TestAccVcdCatalogAccessControl(t *testing.T) {
 	testParamsNotEmpty(t, params)
 
 	configText := templateFill(testAccCatalogAccessControl, params)
+	params["FuncName"] = t.Name() + "-ds"
+	dsText := templateFill(testAccCatalogAccessControl+testAccCatalogAccessControlDS, params)
 	params["AccessLevel1"] = types.ControlAccessReadWrite
 	params["SharedToEveryone"] = "false"
 	params["EveryoneAccessLevel"] = ""
@@ -63,6 +65,7 @@ func TestAccVcdCatalogAccessControl(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CREATION CONFIGURATION: %s", configText)
 	debugPrintf("#[DEBUG] UPDATE CONFIGURATION: %s", updateText)
+	debugPrintf("#[DEBUG] DATA SOURCE CONFIGURATION: %s", dsText)
 
 	resourceAC0 := "vcd_catalog_access_control.AC-Catalog0"
 	resourceAC1 := "vcd_catalog_access_control.AC-Catalog1"
@@ -128,6 +131,12 @@ func TestAccVcdCatalogAccessControl(t *testing.T) {
 				),
 			},
 			{
+				Config: dsText,
+				Check: resource.ComposeTestCheckFunc(
+					resourceFieldsEqual(resourceAC3, "data.vcd_catalog_access_control.ac_ds", nil),
+				),
+			},
+			{
 				Config: updateText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogAccessControlExists(resourceAC0, testConfig.VCD.Org),
@@ -147,8 +156,8 @@ func TestAccVcdCatalogAccessControl(t *testing.T) {
 						"subject_name": "ac-user1",
 						"access_level": types.ControlAccessReadWrite,
 					}),
-				)},
-
+				),
+			},
 			// Tests import by name
 			{
 				Config:            configText,
@@ -332,5 +341,13 @@ resource "vcd_catalog_access_control" "{{.AccessControlIdentifier4}}" {
     user_id      = vcd_org_user.{{.UserName2}}.id
     access_level = "{{.AccessLevel2}}"
   }
+}
+`
+
+const testAccCatalogAccessControlDS = `
+data "vcd_catalog_access_control" "ac_ds" {
+  org        = vcd_catalog_access_control.{{.AccessControlIdentifier3}}.org
+  catalog_id = vcd_catalog_access_control.{{.AccessControlIdentifier3}}.catalog_id
+  depends_on = [vcd_catalog_access_control.{{.AccessControlIdentifier3}}]
 }
 `
