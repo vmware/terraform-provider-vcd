@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -107,11 +108,75 @@ var nsxtAlbVirtualServiceSecRuleActions = &schema.Resource{
 						Description:  "Time value in seconds to enforce rate count. The period must be between 1 and 1000000000.",
 						ValidateFunc: IsIntAndAtLeast(1), // Using TypeString + validation to be able to distinguish empty value and '0'
 					},
-					"action": {
-						Type:         schema.TypeString,
-						Optional:     true,
-						Description:  "Time value in seconds to enforce rate count. The period must be between 1 and 1000000000.",
-						ValidateFunc: validation.StringInSlice([]string{"ALLOW", "CLOSE"}, false),
+					"action_close_connection": {
+						Type:        schema.TypeBool,
+						Optional:    true,
+						Description: "",
+					},
+					"action_redirect": {
+						Type:        schema.TypeList,
+						Optional:    true,
+						Description: "",
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								"protocol": {
+									Type:         schema.TypeString,
+									Optional:     true,
+									Description:  "HTTP or HTTPS protocol",
+									ValidateFunc: validation.StringInSlice([]string{"HTTP", "HTTPS"}, false),
+								},
+								"port": {
+									Type:        schema.TypeInt,
+									Optional:    true,
+									Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
+								},
+								"status_code": {
+									Type:        schema.TypeInt,
+									Optional:    true,
+									Description: "One of the redirect status codes - 301, 302, 307",
+								},
+								"host": {
+									Type:        schema.TypeString,
+									Optional:    true,
+									Description: "Host to which redirect the request. Default is the original host",
+								},
+								"path": {
+									Type:        schema.TypeString,
+									Optional:    true,
+									Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
+								},
+								"keep_query": {
+									Type:        schema.TypeBool,
+									Optional:    true,
+									Description: "Path to which redirect the request. Default is the original path",
+								},
+							},
+						},
+					},
+					"action_local_response": {
+						Type:        schema.TypeList,
+						Optional:    true,
+						Description: "",
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								"content": {
+									Type:        schema.TypeString,
+									Optional:    true,
+									Description: "Base64 encoded content",
+								},
+								"content_type": {
+									Type:        schema.TypeString,
+									Optional:    true,
+									Description: "MIME type for the content",
+								},
+								"status_code": {
+									Type:         schema.TypeString,
+									Optional:     true,
+									Description:  "HTTP Status code to send",
+									ValidateFunc: IsIntAndAtLeast(1), // Using TypeString + validation to be able to distinguish empty value and '0'
+								},
+							},
+						},
 					},
 				},
 			},
@@ -139,147 +204,6 @@ var nsxtAlbVirtualServiceSecRuleActions = &schema.Resource{
 						Optional:     true,
 						Description:  "HTTP Status code to send",
 						ValidateFunc: IsIntAndAtLeast(1), // Using TypeString + validation to be able to distinguish empty value and '0'
-					},
-				},
-			},
-		},
-
-		"local_response_action": {
-			Type:        schema.TypeList,
-			MaxItems:    1,
-			Optional:    true,
-			Description: "",
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"protocol": {
-						Type:         schema.TypeString,
-						Optional:     true,
-						Description:  "HTTP or HTTPS protocol",
-						ValidateFunc: validation.StringInSlice([]string{"HTTP", "HTTPS"}, false),
-					},
-					"port": {
-						Type:        schema.TypeInt,
-						Optional:    true,
-						Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
-					},
-					"status_code": {
-						Type:        schema.TypeInt,
-						Optional:    true,
-						Description: "One of the redirect status codes - 301, 302, 307",
-					},
-					"host": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "Host to which redirect the request. Default is the original host",
-					},
-					"path": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
-					},
-					"keep_query": {
-						Type:        schema.TypeBool,
-						Optional:    true,
-						Description: "Path to which redirect the request. Default is the original path",
-					},
-				},
-			},
-		},
-		"allowOrCloseConnectionAction": {
-			Type:        schema.TypeList,
-			MaxItems:    1,
-			Optional:    true,
-			Description: "",
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"protocol": {
-						Type:         schema.TypeString,
-						Optional:     true,
-						Description:  "HTTP or HTTPS protocol",
-						ValidateFunc: validation.StringInSlice([]string{"HTTP", "HTTPS"}, false),
-					},
-					"port": {
-						Type:        schema.TypeInt,
-						Optional:    true,
-						Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
-					},
-					"status_code": {
-						Type:        schema.TypeInt,
-						Optional:    true,
-						Description: "One of the redirect status codes - 301, 302, 307",
-					},
-					"host": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "Host to which redirect the request. Default is the original host",
-					},
-					"path": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
-					},
-					"keep_query": {
-						Type:        schema.TypeBool,
-						Optional:    true,
-						Description: "Path to which redirect the request. Default is the original path",
-					},
-				},
-			},
-		},
-		/// unused
-
-		"modify_header": {
-			Type:        schema.TypeSet,
-			Optional:    true,
-			Description: "",
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"action": {
-						Type:         schema.TypeString,
-						Optional:     true,
-						Description:  "One of the following HTTP header actions. Options - ADD, REMOVE, REPLACE",
-						ValidateFunc: validation.StringInSlice([]string{"ADD", "REMOVE", "REPLACE"}, false),
-					},
-					"name": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "HTTP header name",
-					},
-					"value": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "HTTP header value",
-					},
-				},
-			},
-		},
-		"rewrite_url": {
-			Type:        schema.TypeList,
-			MaxItems:    1,
-			Optional:    true,
-			Description: "",
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"host_header": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "Host to use for the rewritten URL",
-					},
-					"existing_path": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "Path to use for the rewritten URL",
-					},
-					"keep_query": {
-						Type:        schema.TypeBool,
-						Optional:    true,
-						Default:     true,
-						Description: "Whether or not to keep the existing query string when rewriting the URL",
-					},
-					"query": {
-						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "Query string to use or append to the existing query string in the rewritten URL",
 					},
 				},
 			},
@@ -378,8 +302,16 @@ func getEdgeVirtualServiceHttpSecurityRuleType(d *schema.ResourceData) (*types.E
 		rulesType[ruleIndex].Active = ruleInterface["active"].(bool)
 		rulesType[ruleIndex].Logging = ruleInterface["logging"].(bool)
 		rulesType[ruleIndex].MatchCriteria = getMatchCriteriaType(ruleInterface["match_criteria"].(*schema.Set))
-		// rulesType[ruleIndex].RedirectAction, rulesType[ruleIndex].HeaderActions, rulesType[ruleIndex].RewriteURLAction = getSecurityActionsType(ruleInterface["actions"].(*schema.Set))
 
+		redirectToHttpsActions, allowOrCloseConnection, rateLimitAction, localResponseAction, err := getSecurityActionsType(ruleInterface["actions"].(*schema.Set))
+		if err != nil {
+			return nil, err
+		}
+
+		rulesType[ruleIndex].RedirectToHTTPSAction = redirectToHttpsActions
+		rulesType[ruleIndex].AllowOrCloseConnectionAction = allowOrCloseConnection
+		rulesType[ruleIndex].RateLimitAction = rateLimitAction
+		rulesType[ruleIndex].LocalResponseAction = localResponseAction
 	}
 
 	structure := &types.EdgeVirtualServiceHttpSecurityRules{
@@ -471,61 +403,117 @@ func getSecurityMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 	return criteria
 }
 
-func getSecurityActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpRequestRuleRedirectAction, []*types.EdgeVirtualServiceHttpRequestRuleHeaderActions, *types.EdgeVirtualServiceHttpRequestRuleRewriteURLAction) {
+func getSecurityActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpSecurityRuleRedirectToHTTPSAction, string, *types.EdgeVirtualServiceHttpSecurityRuleRateLimitAction, *types.EdgeVirtualServiceHttpSecurityRuleRateLimitLocalResponseAction, error) {
 	if actions.Len() == 0 {
-		return nil, nil, nil
+		return nil, "", nil, nil, nil
 	}
 	schemaSet := actions.List()
 	actionsIf := schemaSet[0].(map[string]interface{})
 
-	redirectStructure := actionsIf["redirect"].([]interface{})
-	var redir *types.EdgeVirtualServiceHttpRequestRuleRedirectAction
-	modifyHeaderStructure := actionsIf["modify_header"].(*schema.Set)
-	var mod []*types.EdgeVirtualServiceHttpRequestRuleHeaderActions
-
-	rewriteUrlStructure := actionsIf["rewrite_url"].([]interface{})
-	var rew *types.EdgeVirtualServiceHttpRequestRuleRewriteURLAction
-
-	// Process any redirection cases, if specified
-	if len(redirectStructure) > 0 {
-		redirectStructureMap := redirectStructure[0].(map[string]interface{})
-		redir = &types.EdgeVirtualServiceHttpRequestRuleRedirectAction{}
-
-		redir.Protocol = redirectStructureMap["protocol"].(string)
-		redir.Host = redirectStructureMap["host"].(string)
-		redir.Port = redirectStructureMap["port"].(int)
-		redir.StatusCode = redirectStructureMap["status_code"].(int)
-		redir.Path = redirectStructureMap["path"].(string)
-		redir.KeepQuery = redirectStructureMap["keep_query"].(bool)
-	}
-
-	// Process any header rewrite cases, if specified
-	if modifyHeaderStructure.Len() > 0 {
-		newModifyHeaderStructure := make([]*types.EdgeVirtualServiceHttpRequestRuleHeaderActions, modifyHeaderStructure.Len())
-		for headerIndex, header := range modifyHeaderStructure.List() {
-			headerMap := header.(map[string]interface{})
-
-			newModifyHeaderStructure[headerIndex] = &types.EdgeVirtualServiceHttpRequestRuleHeaderActions{
-				Action: headerMap["action"].(string),
-				Name:   headerMap["name"].(string),
-				Value:  headerMap["value"].(string),
-			}
+	// 'redirect_to_https'
+	redirToHttps := actionsIf["redirect_to_https"].(string)
+	var redirToHttpsStruct *types.EdgeVirtualServiceHttpSecurityRuleRedirectToHTTPSAction
+	if redirToHttps != "" {
+		intPort, err := strconv.Atoi(redirToHttps)
+		if err != nil {
+			return nil, "", nil, nil, fmt.Errorf("error converting 'redirect_to_https' field to integer: %s", err)
 		}
-		mod = newModifyHeaderStructure
+		redirToHttpsStruct = &types.EdgeVirtualServiceHttpSecurityRuleRedirectToHTTPSAction{Port: intPort}
 	}
 
-	// Process any rewrite_url cases if any
-	if len(rewriteUrlStructure) > 0 {
-		rewriteUrlStructureMap := rewriteUrlStructure[0].(map[string]interface{})
-		rew = &types.EdgeVirtualServiceHttpRequestRuleRewriteURLAction{}
-		rew.Host = rewriteUrlStructureMap["host_header"].(string)
-		rew.Path = rewriteUrlStructureMap["existing_path"].(string)
-		rew.KeepQuery = rewriteUrlStructureMap["keep_query"].(bool)
-		rew.Query = rewriteUrlStructureMap["query"].(string)
+	// 'connections'
+	connections := actionsIf["connections"].(string)
+
+	// 'rate_limit'
+	rateLimitSet := actionsIf["rate_limit"].(*schema.Set)
+	var rateLimitType *types.EdgeVirtualServiceHttpSecurityRuleRateLimitAction
+	if rateLimitSet.Len() > 0 {
+		rateLimitMap := rateLimitSet.List()[0].(map[string]interface{})
+
+		rateLimitCountStr := rateLimitMap["count"].(string)
+		rateLimitCountInt, err := strconv.Atoi(rateLimitCountStr)
+		if err != nil {
+			return nil, "", nil, nil, fmt.Errorf("error converting 'rate_limit.0.count' to int: %s", err)
+		}
+
+		rateLimitPeriodStr := rateLimitMap["period"].(string)
+		rateLimitPeriodInt, err := strconv.Atoi(rateLimitPeriodStr)
+		if err != nil {
+			return nil, "", nil, nil, fmt.Errorf("error converting 'rate_limit.0.period' to int: %s", err)
+		}
+
+		rateLimitType = &types.EdgeVirtualServiceHttpSecurityRuleRateLimitAction{
+			Count:  rateLimitCountInt,
+			Period: rateLimitPeriodInt,
+		}
+
+		// Check if any action for rate limit is set
+		// 'action_close_connection'
+		rateLimitActionCloseConnection := rateLimitMap["action_close_connection"].(bool)
+		if rateLimitActionCloseConnection {
+			rateLimitType.CloseConnectionAction = "CLOSE" // The only option possible
+		}
+
+		// 'action_redirect'
+		rateLimitActionRedirect := rateLimitMap["action_redirect"].([]interface{})
+		var redir *types.EdgeVirtualServiceHttpRequestRuleRedirectAction
+		if len(rateLimitActionRedirect) > 0 {
+			redirectStructureMap := rateLimitActionRedirect[0].(map[string]interface{})
+			redir = &types.EdgeVirtualServiceHttpRequestRuleRedirectAction{}
+
+			redir.Protocol = redirectStructureMap["protocol"].(string)
+			redir.Host = redirectStructureMap["host"].(string)
+			redir.Port = redirectStructureMap["port"].(int)
+			redir.StatusCode = redirectStructureMap["status_code"].(int)
+			redir.Path = redirectStructureMap["path"].(string)
+			redir.KeepQuery = redirectStructureMap["keep_query"].(bool)
+
+			rateLimitType.RedirectAction = redir
+		}
+
+		// 'action_local_response'
+		rateLimitActionLocalResponse := rateLimitMap["action_local_response"].([]interface{})
+		var rateLimitSendResponseType *types.EdgeVirtualServiceHttpSecurityRuleRateLimitLocalResponseAction
+		if len(rateLimitActionLocalResponse) > 0 {
+			redirectStructureMap := rateLimitActionLocalResponse[0].(map[string]interface{})
+
+			statusCodeStr := redirectStructureMap["status_code"].(string)
+			statusCodeInt, err := strconv.Atoi(statusCodeStr)
+			if err != nil {
+				return nil, "", nil, nil, fmt.Errorf("error converting 'send_response.0.status_code' to int: %s", err)
+			}
+
+			rateLimitSendResponseType = &types.EdgeVirtualServiceHttpSecurityRuleRateLimitLocalResponseAction{
+				Content:     redirectStructureMap["content"].(string),
+				ContentType: redirectStructureMap["content_type"].(string),
+				StatusCode:  statusCodeInt,
+			}
+
+			rateLimitType.LocalResponseAction = rateLimitSendResponseType
+		}
 
 	}
 
-	return redir, mod, rew
+	// 'send_response'
+	sendResponse := actionsIf["send_response"].([]interface{})
+	var sendResponseType *types.EdgeVirtualServiceHttpSecurityRuleRateLimitLocalResponseAction
+	if len(sendResponse) > 0 {
+		redirectStructureMap := sendResponse[0].(map[string]interface{})
+
+		statusCodeStr := redirectStructureMap["status_code"].(string)
+		statusCodeInt, err := strconv.Atoi(statusCodeStr)
+		if err != nil {
+			return nil, "", nil, nil, fmt.Errorf("error converting 'send_response.0.status_code' to int: %s", err)
+		}
+
+		sendResponseType = &types.EdgeVirtualServiceHttpSecurityRuleRateLimitLocalResponseAction{
+			Content:     redirectStructureMap["content"].(string),
+			ContentType: redirectStructureMap["content_type"].(string),
+			StatusCode:  statusCodeInt,
+		}
+	}
+
+	return redirToHttpsStruct, connections, rateLimitType, sendResponseType, nil
 }
 
 func setEdgeVirtualServiceHttpSecuritytRuleData(d *schema.ResourceData, rules []*types.EdgeVirtualServiceHttpSecurityRule) error {
@@ -623,49 +611,79 @@ func setEdgeVirtualServiceHttpSecuritytRuleData(d *schema.ResourceData, rules []
 
 		actions := make([]interface{}, 1)
 		actionsMap := make(map[string]interface{})
-		/*
-			// 'redirect'
-			redirect := make([]interface{}, 0)
-			if rule.RedirectAction != nil {
-				singleRedirect := make(map[string]interface{})
-				singleRedirect["protocol"] = rule.RedirectAction.Protocol
-				singleRedirect["port"] = rule.RedirectAction.Port
-				singleRedirect["status_code"] = rule.RedirectAction.StatusCode
-				singleRedirect["host"] = rule.RedirectAction.Host
-				singleRedirect["path"] = rule.RedirectAction.Path
-				singleRedirect["keep_query"] = rule.RedirectAction.KeepQuery
 
-				redirect = append(redirect, singleRedirect)
+		// 'redirect_to_https'
+		if rule.RedirectToHTTPSAction != nil {
+			port := rule.RedirectToHTTPSAction.Port
+			actionsMap["redirect_to_https"] = strconv.Itoa(port)
+		} else {
+			actionsMap["redirect_to_https"] = ""
+		}
+
+		// 'connections'
+		if rule.AllowOrCloseConnectionAction != "" {
+			actionsMap["connections"] = rule.AllowOrCloseConnectionAction
+		} else {
+			actionsMap["connections"] = ""
+		}
+
+		// 'rate_limit'
+		rateLimit := make([]interface{}, 0)
+		if rule.RateLimitAction != nil {
+			singleEntry := make(map[string]interface{})
+
+			singleEntry["count"] = strconv.Itoa(rule.RateLimitAction.Count)
+			singleEntry["period"] = strconv.Itoa(rule.RateLimitAction.Period)
+			singleEntry["action_close_connection"] = rule.RateLimitAction.CloseConnectionAction
+
+			rateLimitLocalResponseActionInterface := make([]interface{}, 0)
+			rateLimitLocalResponseActionMap := make(map[string]interface{})
+
+			//
+			if rule.RateLimitAction.RedirectAction != nil {
+				singleRedirectActionEntryInterface := make([]interface{}, 0)
+				singleRedirectActionEntry := make(map[string]interface{})
+
+				singleRedirectActionEntry["protocol"] = rule.RateLimitAction.RedirectAction.Protocol
+				singleRedirectActionEntry["port"] = rule.RateLimitAction.RedirectAction.Port
+				singleRedirectActionEntry["status_code"] = rule.RateLimitAction.RedirectAction.StatusCode
+				singleRedirectActionEntry["host"] = rule.RateLimitAction.RedirectAction.Host
+				singleRedirectActionEntry["path"] = rule.RateLimitAction.RedirectAction.Path
+				singleRedirectActionEntry["keep_query"] = rule.RateLimitAction.RedirectAction.KeepQuery
+
+				singleRedirectActionEntryInterface = append(singleRedirectActionEntryInterface, singleRedirectActionEntry)
+				rateLimitLocalResponseActionMap["action_redirect"] = singleRedirectActionEntryInterface
 			}
-			actionsMap["redirect"] = redirect
+			singleEntry["action_redirect"] = rateLimitLocalResponseActionInterface
 
-			// 'modify_header'
+			if rule.RateLimitAction.LocalResponseAction != nil {
+				singleLocalResponseActionEntryInterface := make([]interface{}, 0)
+				singleLocalResponseActionEntry := make(map[string]interface{})
 
-			modifyHeader := make([]interface{}, 0)
-			if rule.HeaderActions != nil {
-				for _, mh := range rule.HeaderActions {
-					singleModifyHeader := make(map[string]interface{})
-					singleModifyHeader["action"] = mh.Action
-					singleModifyHeader["name"] = mh.Name
-					singleModifyHeader["value"] = mh.Value
+				singleLocalResponseActionEntry["content"] = rule.LocalResponseAction.Content
+				singleLocalResponseActionEntry["content_type"] = rule.LocalResponseAction.ContentType
+				singleLocalResponseActionEntry["status_code"] = rule.LocalResponseAction.StatusCode
 
-					modifyHeader = append(modifyHeader, singleModifyHeader)
-				}
+				singleLocalResponseActionEntryInterface = append(singleLocalResponseActionEntryInterface, singleLocalResponseActionEntry)
+				rateLimitLocalResponseActionMap["action_local_response"] = singleLocalResponseActionEntryInterface
 			}
-			actionsMap["modify_header"] = modifyHeader
+			singleEntry["action_local_response"] = rateLimitLocalResponseActionInterface
 
-			// 'rewrite_url'
-			rewriteUrl := make([]interface{}, 0)
-			if rule.RewriteURLAction != nil {
-				singleRewriteUrl := make(map[string]interface{})
-				singleRewriteUrl["host_header"] = rule.RewriteURLAction.Host
-				singleRewriteUrl["existing_path"] = rule.RewriteURLAction.Path
-				singleRewriteUrl["keep_query"] = rule.RewriteURLAction.KeepQuery
-				singleRewriteUrl["query"] = rule.RewriteURLAction.Query
+			rateLimit = append(rateLimit, singleEntry)
+		}
+		actionsMap["rate_limit"] = rateLimit
 
-				rewriteUrl = append(rewriteUrl, singleRewriteUrl)
-			}
-			actionsMap["rewrite_url"] = rewriteUrl */
+		// 'action_local_response'
+		sendResponse := make([]interface{}, 0)
+		if rule.LocalResponseAction != nil {
+			singleEntry := make(map[string]interface{})
+			singleEntry["content"] = rule.LocalResponseAction.Content
+			singleEntry["content_type"] = rule.LocalResponseAction.ContentType
+			// sendResponse[0]["content"] = rule.LocalResponseAction.Content
+
+			sendResponse = append(sendResponse, singleEntry)
+		}
+		actionsMap["send_response"] = sendResponse
 
 		actions[0] = actionsMap
 		singleRule["actions"] = actions

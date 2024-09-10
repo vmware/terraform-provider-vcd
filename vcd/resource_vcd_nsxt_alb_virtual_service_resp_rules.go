@@ -751,7 +751,7 @@ func setEdgeVirtualServiceHttpResponsetRuleData(d *schema.ResourceData, rules []
 			singleStatusCode["http_status_code"] = rule.MatchCriteria.StatusCodeMatch.StatusCodes[0]
 			statusCode = append(statusCode, singleStatusCode)
 		}
-		matchCriteriaMap["status_code"] = httpMethod
+		matchCriteriaMap["status_code"] = statusCode
 
 		// Pack root entry
 		matchCriteria[0] = matchCriteriaMap
