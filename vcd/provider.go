@@ -170,6 +170,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_org_vdc_template":                             datasourceVcdOrgVdcTemplate(),                          // 3.13
 	"vcd_external_endpoint":                            datasourceVcdExternalEndpoint(),                        // 3.14
 	"vcd_api_filter":                                   datasourceVcdApiFilter(),                               // 3.14
+	"vcd_nsxt_tier0_router_interface":                  datasourceVcdNsxtTier0RouterInterface(),                // 3.14
 	"vcd_catalog_access_control":                       datasourceVcdCatalogAccessControl(),                    // 3.14
 }
 
@@ -328,6 +329,12 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("VCD_SAML_ADFS_RPT_ID", nil),
 				Description: "Allows to specify custom Relaying Party Trust Identifier for auth_type=saml_adfs",
 			},
+			"saml_adfs_cookie": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("VCD_SAML_ADFS_COOKIE", nil),
+				Description: "Allows to specify custom cookie for ADFS server lookup. '{{.Org}}' is replaced by real Org -  e.g. 'sso-preferred=yes; sso_redirect_org={{.Org}}'",
+			},
 
 			"token": {
 				Type:        schema.TypeString,
@@ -477,6 +484,7 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 	case "saml_adfs":
 		config.UseSamlAdfs = true
 		config.CustomAdfsRptId = d.Get("saml_adfs_rpt_id").(string)
+		config.CustomAdfsCookie = d.Get("saml_adfs_cookie").(string)
 	case "token":
 		if config.Token == "" {
 			return nil, diag.Errorf("empty token detected with 'auth_type' == 'token'")

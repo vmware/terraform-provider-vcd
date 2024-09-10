@@ -44,6 +44,14 @@ func datasourceVcdIpSpaceUplink() *schema.Resource {
 				Computed:    true,
 				Description: "IP Space Status",
 			},
+			"associated_interface_ids": {
+				Computed:    true,
+				Type:        schema.TypeSet,
+				Description: "A set of Tier-0 Router Interfaces to associate with this uplink",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
