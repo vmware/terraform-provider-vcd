@@ -113,7 +113,7 @@ var nsxtAlbVsSecRuleActions = &schema.Resource{
 					"action_close_connection": {
 						Type:        schema.TypeBool,
 						Optional:    true,
-						Description: "",
+						Description: "Set to true if the connection should be closed",
 					},
 					"action_redirect": {
 						Type:        schema.TypeList,

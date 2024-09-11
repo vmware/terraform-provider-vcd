@@ -1,6 +1,12 @@
 package vcd
 
-/*
+import (
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
+
 func datasourceVcdAlbVirtualServiceRespRules() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdAlbVirtualServiceRespRulesRead,
@@ -13,16 +19,16 @@ func datasourceVcdAlbVirtualServiceRespRules() *schema.Resource {
 				Description: "NSX-T ALB Virtual Service ID",
 			},
 			"rule": {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Computed:    true,
-				Elem:        dsNsxtAlbVirtualServiceReqRule,
-				Description: "A single HTTP Request Rule",
+				Elem:        dsNsxtAlbVirtualServiceRespRule,
+				Description: "HTTP Responses Rules",
 			},
 		},
 	}
 }
 
-var dsNsxtAlbVirtualServiceReqRule = &schema.Resource{
+var dsNsxtAlbVirtualServiceRespRule = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"name": {
 			Type:        schema.TypeString,
@@ -32,7 +38,7 @@ var dsNsxtAlbVirtualServiceReqRule = &schema.Resource{
 		"active": {
 			Type:        schema.TypeBool,
 			Computed:    true,
-			Description: "Defines is the rule is active or not",
+			Description: "Defines if the rule is active or not",
 		},
 		"logging": {
 			Type:        schema.TypeBool,
@@ -43,18 +49,18 @@ var dsNsxtAlbVirtualServiceReqRule = &schema.Resource{
 			Type:        schema.TypeSet,
 			Computed:    true,
 			Description: "Rule matching Criteria",
-			Elem:        dsNsxtAlbVirtualServiceReqRuleMatchCriteria,
+			Elem:        dsNsxtAlbVirtualServiceRespRuleMatchCriteria,
 		},
 		"actions": {
 			Type:        schema.TypeSet,
 			Computed:    true,
 			Description: "Actions to perform with the rule that matches",
-			Elem:        dsNsxtAlbVirtualServiceReqRuleActions,
+			Elem:        dsNsxtAlbVirtualServiceRespRuleActions,
 		},
 	},
 }
 
-var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
+var dsNsxtAlbVirtualServiceRespRuleMatchCriteria = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"client_ip_address": {
 			Type:        schema.TypeList,
@@ -70,7 +76,7 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 					"ip_addresses": {
 						Type:        schema.TypeSet,
 						Computed:    true,
-						Description: "Enter IPv4 or IPv6 address, range or CIDR",
+						Description: "A set of IP addresses",
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
 						},
@@ -87,12 +93,12 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 					"criteria": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Criteria to use for port matching the HTTP request. Options - IS_IN, IS_NOT_IN",
+						Description: "Criteria to use for IP address matching the HTTP request. Options - IS_IN, IS_NOT_IN",
 					},
 					"ports": {
 						Type:        schema.TypeSet,
 						Computed:    true,
-						Description: "Listening TCP ports. Allowed values are 1-65535",
+						Description: "A set of TCP ports. Allowed values are 1-65535",
 						Elem: &schema.Schema{
 							Type: schema.TypeInt,
 						},
@@ -105,7 +111,7 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 			Computed:    true,
 			Description: "Protocol to match - 'HTTP' or 'HTTPS'",
 		},
-		"http_method": {
+		"http_methods": {
 			Type:        schema.TypeList,
 			Computed:    true,
 			Description: "",
@@ -114,12 +120,16 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 					"criteria": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Criteria to use for matching the method in the HTTP request. Options - IS_IN, IS_NOT_IN",
+						Description: "Criteria to use for IP address matching the HTTP request. Options - IS_IN, IS_NOT_IN",
 					},
-					"method": {
-						Type:        schema.TypeString,
-						Computed:    true,
+					"methods": {
+						Type:     schema.TypeSet,
+						Computed: true,
+						// Not validating these options as it might not be finite list and API returns proper explanations
 						Description: "HTTP methods to match. Options - GET, PUT, POST, DELETE, HEAD, OPTIONS, TRACE, CONNECT, PATCH, PROPFIND, PROPPATCH, MKCOL, COPY, MOVE, LOCK, UNLOCK",
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
 					},
 				},
 			},
@@ -149,7 +159,7 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 		"query": {
 			Type:        schema.TypeSet,
 			Computed:    true,
-			Description: "HTTP request query strings in key=value format",
+			Description: "HTTP request query strings to match",
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
@@ -157,7 +167,7 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 		"request_headers": {
 			Type:        schema.TypeSet,
 			Computed:    true,
-			Description: "",
+			Description: "A set of rules for matching request headers",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
@@ -170,8 +180,7 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 						Computed:    true,
 						Description: "Name of the HTTP header whose value is to be matched. Must be non-blank and fewer than 10240 characters",
 					},
-					"value": {
-
+					"values": {
 						Type:        schema.TypeSet,
 						Computed:    true,
 						Description: "String values to match for an HTTP header",
@@ -185,7 +194,7 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 		"cookie": {
 			Type:        schema.TypeList,
 			Computed:    true,
-			Description: "",
+			Description: "Rule for matching cookie",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
@@ -206,15 +215,85 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 				},
 			},
 		},
-	},
-}
 
-var dsNsxtAlbVirtualServiceReqRuleActions = &schema.Resource{
-	Schema: map[string]*schema.Schema{
-		"redirect": {
+		//
+		"location_header": {
 			Type:        schema.TypeList,
 			Computed:    true,
 			Description: "",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"criteria": {
+						Type:        schema.TypeString,
+						Optional:    true,
+						Description: "Criteria to use for matching location header. Options - BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL, REGEX_MATCH, REGEX_DOES_NOT_MATCH",
+					},
+					"values": {
+						Type:        schema.TypeSet,
+						Optional:    true,
+						Description: "A set of values to match for criteria",
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
+					},
+				},
+			},
+		},
+		"response_headers": {
+			Type:        schema.TypeSet,
+			Computed:    true,
+			Description: "A set of criteria to match response headers",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"criteria": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "Criteria to use for matching headers and cookies in the HTTP request amd response. Options - EXISTS, DOES_NOT_EXIST, BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL",
+					},
+					"name": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "Name of the HTTP header whose value is to be matched",
+					},
+					"values": {
+						Type:        schema.TypeSet,
+						Computed:    true,
+						Description: "A set of values to match for an HTTP header",
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
+					},
+				},
+			},
+		},
+		"status_code": {
+			Type:        schema.TypeList,
+			Computed:    true,
+			Description: "HTTP Status code to match",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"criteria": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "Criteria to use for IP address matching the HTTP request. Options - IS_IN, IS_NOT_IN.",
+					},
+					"http_status_code": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "Enter a http status code or range",
+					},
+				},
+			},
+		},
+	},
+}
+
+var dsNsxtAlbVirtualServiceRespRuleActions = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"rewrite_location_header": {
+			Type:        schema.TypeList,
+			Computed:    true,
+			Description: "Rewrite location header",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"protocol": {
@@ -225,27 +304,22 @@ var dsNsxtAlbVirtualServiceReqRuleActions = &schema.Resource{
 					"port": {
 						Type:        schema.TypeInt,
 						Computed:    true,
-						Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
-					},
-					"status_code": {
-						Type:        schema.TypeInt,
-						Computed:    true,
-						Description: "One of the redirect status codes - 301, 302, 307",
+						Description: "Port to which redirect the request",
 					},
 					"host": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Host to which redirect the request. Default is the original host",
+						Description: "Host to which redirect the request",
 					},
 					"path": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
+						Description: "Port to which redirect the request",
 					},
 					"keep_query": {
 						Type:        schema.TypeBool,
 						Computed:    true,
-						Description: "Path to which redirect the request. Default is the original path",
+						Description: "Path to which redirect the request",
 					},
 				},
 			},
@@ -274,39 +348,9 @@ var dsNsxtAlbVirtualServiceReqRuleActions = &schema.Resource{
 				},
 			},
 		},
-		"rewrite_url": {
-			Type:        schema.TypeList,
-			Computed:    true,
-			Description: "",
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"host_header": {
-						Type:        schema.TypeString,
-						Computed:    true,
-						Description: "Host to use for the rewritten URL",
-					},
-					"existing_path": {
-						Type:        schema.TypeString,
-						Computed:    true,
-						Description: "Path to use for the rewritten URL",
-					},
-					"keep_query": {
-						Type:        schema.TypeBool,
-						Computed:    true,
-						Description: "Whether or not to keep the existing query string when rewriting the URL",
-					},
-					"query": {
-						Type:        schema.TypeString,
-						Computed:    true,
-						Description: "Query string to use or append to the existing query string in the rewritten URL",
-					},
-				},
-			},
-		},
 	},
 }
 
 func datasourceVcdAlbVirtualServiceRespRulesRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return genericVcdAlbVirtualServiceRespRulesRead(ctx, d, meta, "datasource")
 }
-*/
