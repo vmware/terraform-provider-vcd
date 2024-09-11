@@ -1,0 +1,1 @@
+* Corrected a malformed HCL snippet in the *"Connecting with a Service Account API token"* section of the documentation [GH-1322]
