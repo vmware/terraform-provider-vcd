@@ -57,7 +57,6 @@ var nsxtAlbVirtualServiceSecRule = &schema.Resource{
 		"logging": {
 			Type:        schema.TypeBool,
 			Optional:    true,
-			Default:     true,
 			Description: "Defines whether to enable logging with headers on rule match or not",
 		},
 		"match_criteria": {
