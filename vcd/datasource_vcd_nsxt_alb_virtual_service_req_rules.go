@@ -111,7 +111,7 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 			Computed:    true,
 			Description: "Protocol to match - 'HTTP' or 'HTTPS'",
 		},
-		"http_method": {
+		"http_methods": {
 			Type:        schema.TypeList,
 			Computed:    true,
 			Description: "",
@@ -122,10 +122,13 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 						Computed:    true,
 						Description: "Criterion to use for matching the method in the HTTP request. Options - IS_IN, IS_NOT_IN",
 					},
-					"method": {
-						Type:        schema.TypeString,
+					"methods": {
+						Type:        schema.TypeSet,
 						Computed:    true,
 						Description: "HTTP methods to match. Options - GET, PUT, POST, DELETE, HEAD, OPTIONS, TRACE, CONNECT, PATCH, PROPFIND, PROPPATCH, MKCOL, COPY, MOVE, LOCK, UNLOCK",
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
 					},
 				},
 			},

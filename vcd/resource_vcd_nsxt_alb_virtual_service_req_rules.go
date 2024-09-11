@@ -31,7 +31,7 @@ func resourceVcdAlbVirtualServiceReqRules() *schema.Resource {
 				Description: "NSX-T ALB Virtual Service ID",
 			},
 			"rule": {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Elem:        nsxtAlbVirtualServiceReqRule,
 				Description: "A single HTTP Request Rule",
@@ -130,7 +130,7 @@ var nsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 			ValidateFunc: validation.StringInSlice([]string{"HTTP", "HTTPS"}, false),
 			Description:  "Protocol to match - 'HTTP' or 'HTTPS'",
 		},
-		"http_method": {
+		"http_methods": {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
@@ -143,10 +143,13 @@ var nsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 						ValidateFunc: validation.StringInSlice([]string{"IS_IN", "IS_NOT_IN"}, false),
 						Description:  "Criterion to use for matching the method in the HTTP request. Options - IS_IN, IS_NOT_IN",
 					},
-					"method": {
-						Type:        schema.TypeString,
+					"methods": {
+						Type:        schema.TypeSet,
 						Optional:    true,
 						Description: "HTTP methods to match. Options - GET, PUT, POST, DELETE, HEAD, OPTIONS, TRACE, CONNECT, PATCH, PROPFIND, PROPPATCH, MKCOL, COPY, MOVE, LOCK, UNLOCK",
+						Elem: &schema.Schema{
+							Type: schema.TypeString,
+						},
 					},
 				},
 			},
@@ -198,10 +201,9 @@ var nsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 						Optional:    true,
 						Description: "Name of the HTTP header whose value is to be matched. Must be non-blank and fewer than 10240 characters",
 					},
-					"value": {
-
+					"values": {
 						Type:        schema.TypeSet,
-						Computed:    true,
+						Optional:    true,
 						Description: "String values to match for an HTTP header",
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -421,10 +423,10 @@ func resourceVcdAlbVirtualServiceReqRulesDelete(ctx context.Context, d *schema.R
 
 func getEdgeVirtualServiceHttpRequestRuleType(d *schema.ResourceData) (*types.EdgeVirtualServiceHttpRequestRules, error) {
 
-	rules := d.Get("rule").(*schema.Set)
-	rulesType := make([]types.EdgeVirtualServiceHttpRequestRule, rules.Len())
+	rules := d.Get("rule").([]interface{})
+	rulesType := make([]types.EdgeVirtualServiceHttpRequestRule, len(rules))
 
-	for ruleIndex, rule := range rules.List() {
+	for ruleIndex, rule := range rules {
 		ruleInterface := rule.(map[string]interface{})
 
 		rulesType[ruleIndex].Name = ruleInterface["name"].(string)
@@ -473,12 +475,12 @@ func getMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualServiceHtt
 		criteria.Protocol = protocolTypeCriteria
 	}
 
-	httpMethodCriteria := allCriteria["http_method"].([]interface{})
+	httpMethodCriteria := allCriteria["http_methods"].([]interface{})
 	if len(httpMethodCriteria) > 0 {
 		httpMethodCriteriaMap := httpMethodCriteria[0].(map[string]interface{})
 		criteria.MethodMatch = &types.EdgeVirtualServiceHttpRequestRuleMethodMatch{
 			MatchCriteria: httpMethodCriteriaMap["criteria"].(string),
-			Methods:       []string{httpMethodCriteriaMap["method"].(string)},
+			Methods:       convertSchemaSetToSliceOfStrings(httpMethodCriteriaMap["methods"].(*schema.Set)),
 		}
 	}
 
@@ -505,7 +507,7 @@ func getMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualServiceHtt
 			newHeaderCriteria[requestHeaderIndex] = types.EdgeVirtualServiceHttpRequestRuleHeaderMatch{
 				MatchCriteria: requestHeaderMap["criteria"].(string),
 				Key:           requestHeaderMap["name"].(string),
-				Value:         convertSchemaSetToSliceOfStrings(requestHeaderMap["value"].(*schema.Set)),
+				Value:         convertSchemaSetToSliceOfStrings(requestHeaderMap["values"].(*schema.Set)),
 			}
 		}
 		criteria.HeaderMatch = newHeaderCriteria
@@ -620,15 +622,15 @@ func setEdgeVirtualServiceHttpRequestRuleData(d *schema.ResourceData, rules []*t
 		// "protocol_type"
 		matchCriteriaMap["protocol_type"] = rule.MatchCriteria.Protocol
 
-		// "http_method"
+		// "http_methods"
 		httpMethod := make([]interface{}, 0)
 		if rule.MatchCriteria.MethodMatch != nil {
 			singleHttpMethod := make(map[string]interface{})
 			singleHttpMethod["criteria"] = rule.MatchCriteria.MethodMatch.MatchCriteria
-			singleHttpMethod["method"] = rule.MatchCriteria.MethodMatch.Methods[0]
+			singleHttpMethod["methods"] = convertStringsToTypeSet(rule.MatchCriteria.MethodMatch.Methods)
 			httpMethod = append(httpMethod, singleHttpMethod)
 		}
-		matchCriteriaMap["http_method"] = httpMethod
+		matchCriteriaMap["http_methods"] = httpMethod
 
 		// "singlePath"
 		path := make([]interface{}, 0)
@@ -649,7 +651,7 @@ func setEdgeVirtualServiceHttpRequestRuleData(d *schema.ResourceData, rules []*t
 			singleHedear := make(map[string]interface{})
 			singleHedear["criteria"] = h.MatchCriteria
 			singleHedear["name"] = h.Key
-			singleHedear["value"] = convertStringsToTypeSet(h.Value)
+			singleHedear["values"] = convertStringsToTypeSet(h.Value)
 
 			requestHeaders[i] = singleHedear
 		}

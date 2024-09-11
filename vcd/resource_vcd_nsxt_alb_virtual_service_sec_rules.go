@@ -32,7 +32,7 @@ func resourceVcdAlbVirtualServiceSecRules() *schema.Resource {
 				Description: "NSX-T ALB Virtual Service ID",
 			},
 			"rule": {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Elem:        nsxtAlbVirtualServiceSecRule,
 				Description: "A single HTTP Request Rule",
@@ -292,10 +292,10 @@ func resourceVcdAlbVirtualServiceSecRulesDelete(ctx context.Context, d *schema.R
 
 func getEdgeVirtualServiceHttpSecurityRuleType(d *schema.ResourceData) (*types.EdgeVirtualServiceHttpSecurityRules, error) {
 
-	rules := d.Get("rule").(*schema.Set)
-	rulesType := make([]types.EdgeVirtualServiceHttpSecurityRule, rules.Len())
+	rules := d.Get("rule").([]interface{})
+	rulesType := make([]types.EdgeVirtualServiceHttpSecurityRule, len(rules))
 
-	for ruleIndex, rule := range rules.List() {
+	for ruleIndex, rule := range rules {
 		ruleInterface := rule.(map[string]interface{})
 
 		rulesType[ruleIndex].Name = ruleInterface["name"].(string)
@@ -352,12 +352,12 @@ func getSecurityMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 		criteria.Protocol = protocolTypeCriteria
 	}
 
-	httpMethodCriteria := allCriteria["http_method"].([]interface{})
+	httpMethodCriteria := allCriteria["http_methods"].([]interface{})
 	if len(httpMethodCriteria) > 0 {
 		httpMethodCriteriaMap := httpMethodCriteria[0].(map[string]interface{})
 		criteria.MethodMatch = &types.EdgeVirtualServiceHttpRequestRuleMethodMatch{
 			MatchCriteria: httpMethodCriteriaMap["criteria"].(string),
-			Methods:       []string{httpMethodCriteriaMap["method"].(string)},
+			Methods:       convertSchemaSetToSliceOfStrings(httpMethodCriteriaMap["methods"].(*schema.Set)),
 		}
 	}
 
@@ -384,7 +384,7 @@ func getSecurityMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 			newHeaderCriteria[requestHeaderIndex] = types.EdgeVirtualServiceHttpRequestRuleHeaderMatch{
 				MatchCriteria: requestHeaderMap["criteria"].(string),
 				Key:           requestHeaderMap["name"].(string),
-				Value:         convertSchemaSetToSliceOfStrings(requestHeaderMap["value"].(*schema.Set)),
+				Value:         convertSchemaSetToSliceOfStrings(requestHeaderMap["values"].(*schema.Set)),
 			}
 		}
 		criteria.HeaderMatch = newHeaderCriteria
@@ -425,10 +425,10 @@ func getSecurityActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpS
 	connections := actionsIf["connections"].(string)
 
 	// 'rate_limit'
-	rateLimitSet := actionsIf["rate_limit"].(*schema.Set)
+	rateLimitSlice := actionsIf["rate_limit"].([]interface{})
 	var rateLimitType *types.EdgeVirtualServiceHttpSecurityRuleRateLimitAction
-	if rateLimitSet.Len() > 0 {
-		rateLimitMap := rateLimitSet.List()[0].(map[string]interface{})
+	if len(rateLimitSlice) > 0 {
+		rateLimitMap := rateLimitSlice[0].(map[string]interface{})
 
 		rateLimitCountStr := rateLimitMap["count"].(string)
 		rateLimitCountInt, err := strconv.Atoi(rateLimitCountStr)
@@ -498,17 +498,17 @@ func getSecurityActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpS
 	sendResponse := actionsIf["send_response"].([]interface{})
 	var sendResponseType *types.EdgeVirtualServiceHttpSecurityRuleRateLimitLocalResponseAction
 	if len(sendResponse) > 0 {
-		redirectStructureMap := sendResponse[0].(map[string]interface{})
+		sendResponseMap := sendResponse[0].(map[string]interface{})
 
-		statusCodeStr := redirectStructureMap["status_code"].(string)
+		statusCodeStr := sendResponseMap["status_code"].(string)
 		statusCodeInt, err := strconv.Atoi(statusCodeStr)
 		if err != nil {
 			return nil, "", nil, nil, fmt.Errorf("error converting 'send_response.0.status_code' to int: %s", err)
 		}
 
 		sendResponseType = &types.EdgeVirtualServiceHttpSecurityRuleRateLimitLocalResponseAction{
-			Content:     redirectStructureMap["content"].(string),
-			ContentType: redirectStructureMap["content_type"].(string),
+			Content:     sendResponseMap["content"].(string),
+			ContentType: sendResponseMap["content_type"].(string),
 			StatusCode:  statusCodeInt,
 		}
 	}
@@ -555,15 +555,15 @@ func setEdgeVirtualServiceHttpSecuritytRuleData(d *schema.ResourceData, rules []
 		// "protocol_type"
 		matchCriteriaMap["protocol_type"] = rule.MatchCriteria.Protocol
 
-		// "http_method"
+		// "http_methods"
 		httpMethod := make([]interface{}, 0)
 		if rule.MatchCriteria.MethodMatch != nil {
 			singleHttpMethod := make(map[string]interface{})
 			singleHttpMethod["criteria"] = rule.MatchCriteria.MethodMatch.MatchCriteria
-			singleHttpMethod["method"] = rule.MatchCriteria.MethodMatch.Methods[0]
+			singleHttpMethod["methods"] = convertStringsToTypeSet(rule.MatchCriteria.MethodMatch.Methods)
 			httpMethod = append(httpMethod, singleHttpMethod)
 		}
-		matchCriteriaMap["http_method"] = httpMethod
+		matchCriteriaMap["http_methods"] = httpMethod
 
 		// "singlePath"
 		path := make([]interface{}, 0)
@@ -584,7 +584,7 @@ func setEdgeVirtualServiceHttpSecuritytRuleData(d *schema.ResourceData, rules []
 			singleHedear := make(map[string]interface{})
 			singleHedear["criteria"] = h.MatchCriteria
 			singleHedear["name"] = h.Key
-			singleHedear["value"] = convertStringsToTypeSet(h.Value)
+			singleHedear["values"] = convertStringsToTypeSet(h.Value)
 
 			requestHeaders[i] = singleHedear
 		}
@@ -630,18 +630,20 @@ func setEdgeVirtualServiceHttpSecuritytRuleData(d *schema.ResourceData, rules []
 		// 'rate_limit'
 		rateLimit := make([]interface{}, 0)
 		if rule.RateLimitAction != nil {
-			singleEntry := make(map[string]interface{})
+			rateLimitEntry := make(map[string]interface{})
 
-			singleEntry["count"] = strconv.Itoa(rule.RateLimitAction.Count)
-			singleEntry["period"] = strconv.Itoa(rule.RateLimitAction.Period)
-			singleEntry["action_close_connection"] = rule.RateLimitAction.CloseConnectionAction
+			rateLimitEntry["count"] = strconv.Itoa(rule.RateLimitAction.Count)
+			rateLimitEntry["period"] = strconv.Itoa(rule.RateLimitAction.Period)
+			if rule.RateLimitAction.CloseConnectionAction != "" {
+				rateLimitEntry["action_close_connection"] = true
+			}
 
-			rateLimitLocalResponseActionInterface := make([]interface{}, 0)
-			rateLimitLocalResponseActionMap := make(map[string]interface{})
+			// rateLimitLocalResponseActionInterface := make([]interface{}, 0)
+			// rateLimitLocalResponseActionMap := make(map[string]interface{})
 
 			//
+			singleRedirectActionEntryInterface := make([]interface{}, 0)
 			if rule.RateLimitAction.RedirectAction != nil {
-				singleRedirectActionEntryInterface := make([]interface{}, 0)
 				singleRedirectActionEntry := make(map[string]interface{})
 
 				singleRedirectActionEntry["protocol"] = rule.RateLimitAction.RedirectAction.Protocol
@@ -652,34 +654,34 @@ func setEdgeVirtualServiceHttpSecuritytRuleData(d *schema.ResourceData, rules []
 				singleRedirectActionEntry["keep_query"] = rule.RateLimitAction.RedirectAction.KeepQuery
 
 				singleRedirectActionEntryInterface = append(singleRedirectActionEntryInterface, singleRedirectActionEntry)
-				rateLimitLocalResponseActionMap["action_redirect"] = singleRedirectActionEntryInterface
+				// rateLimitLocalResponseActionMap["action_redirect"] = singleRedirectActionEntryInterface
 			}
-			singleEntry["action_redirect"] = rateLimitLocalResponseActionInterface
+			rateLimitEntry["action_redirect"] = singleRedirectActionEntryInterface
 
+			singleLocalResponseActionEntryInterface := make([]interface{}, 0)
 			if rule.RateLimitAction.LocalResponseAction != nil {
-				singleLocalResponseActionEntryInterface := make([]interface{}, 0)
 				singleLocalResponseActionEntry := make(map[string]interface{})
 
-				singleLocalResponseActionEntry["content"] = rule.LocalResponseAction.Content
-				singleLocalResponseActionEntry["content_type"] = rule.LocalResponseAction.ContentType
-				singleLocalResponseActionEntry["status_code"] = rule.LocalResponseAction.StatusCode
+				singleLocalResponseActionEntry["content"] = rule.RateLimitAction.LocalResponseAction.Content
+				singleLocalResponseActionEntry["content_type"] = rule.RateLimitAction.LocalResponseAction.ContentType
+				singleLocalResponseActionEntry["status_code"] = strconv.Itoa(rule.RateLimitAction.LocalResponseAction.StatusCode)
 
 				singleLocalResponseActionEntryInterface = append(singleLocalResponseActionEntryInterface, singleLocalResponseActionEntry)
-				rateLimitLocalResponseActionMap["action_local_response"] = singleLocalResponseActionEntryInterface
+				// rateLimitLocalResponseActionMap["action_local_response"] = singleLocalResponseActionEntryInterface
 			}
-			singleEntry["action_local_response"] = rateLimitLocalResponseActionInterface
+			rateLimitEntry["action_local_response"] = singleLocalResponseActionEntryInterface
 
-			rateLimit = append(rateLimit, singleEntry)
+			rateLimit = append(rateLimit, rateLimitEntry)
 		}
 		actionsMap["rate_limit"] = rateLimit
 
-		// 'action_local_response'
+		// 'send_response'
 		sendResponse := make([]interface{}, 0)
 		if rule.LocalResponseAction != nil {
 			singleEntry := make(map[string]interface{})
 			singleEntry["content"] = rule.LocalResponseAction.Content
 			singleEntry["content_type"] = rule.LocalResponseAction.ContentType
-			// sendResponse[0]["content"] = rule.LocalResponseAction.Content
+			singleEntry["status_code"] = strconv.Itoa(rule.LocalResponseAction.StatusCode)
 
 			sendResponse = append(sendResponse, singleEntry)
 		}
