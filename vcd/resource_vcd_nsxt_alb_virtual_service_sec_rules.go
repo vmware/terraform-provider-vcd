@@ -224,7 +224,7 @@ func resourceVcdAlbVirtualServiceSecRulesCreate(ctx context.Context, d *schema.R
 	vcdMutexKV.kvLock(albVirtualService.NsxtAlbVirtualService.GatewayRef.ID)
 	defer vcdMutexKV.kvUnlock(albVirtualService.NsxtAlbVirtualService.GatewayRef.ID)
 
-	cfg, err := getEdgeVirtualServiceHttpSecurityRuleType(d)
+	cfg, err := getAlbVsHttpSecurityRuleType(d)
 	if err != nil {
 		return diag.Errorf("error getting HTTP Request Rule type: %s", err)
 	}
@@ -261,7 +261,7 @@ func genericVcdAlbVirtualServiceSecRulesRead(ctx context.Context, d *schema.Reso
 	}
 
 	dSet(d, "virtual_service_id", albVirtualService.NsxtAlbVirtualService.ID)
-	err = setEdgeVirtualServiceHttpSecuritytRuleData(d, rules)
+	err = setAlbVsHttpSecuritytRuleData(d, rules)
 	if err != nil {
 		return diag.Errorf("error storing HTTP Request Rule: %s", err)
 	}
@@ -281,7 +281,7 @@ func resourceVcdAlbVirtualServiceSecRulesDelete(ctx context.Context, d *schema.R
 	vcdMutexKV.kvLock(albVirtualService.NsxtAlbVirtualService.GatewayRef.ID)
 	defer vcdMutexKV.kvUnlock(albVirtualService.NsxtAlbVirtualService.GatewayRef.ID)
 
-	_, err = albVirtualService.UpdateHttpSecurityRules(&types.EdgeVirtualServiceHttpSecurityRules{})
+	_, err = albVirtualService.UpdateHttpSecurityRules(&types.AlbVsHttpSecurityRules{})
 	if err != nil {
 		return diag.Errorf("error creating HTTP Request Rules: %s", err)
 	}
@@ -291,10 +291,10 @@ func resourceVcdAlbVirtualServiceSecRulesDelete(ctx context.Context, d *schema.R
 	return nil
 }
 
-func getEdgeVirtualServiceHttpSecurityRuleType(d *schema.ResourceData) (*types.EdgeVirtualServiceHttpSecurityRules, error) {
+func getAlbVsHttpSecurityRuleType(d *schema.ResourceData) (*types.AlbVsHttpSecurityRules, error) {
 
 	rules := d.Get("rule").([]interface{})
-	rulesType := make([]types.EdgeVirtualServiceHttpSecurityRule, len(rules))
+	rulesType := make([]types.AlbVsHttpSecurityRule, len(rules))
 
 	for ruleIndex, rule := range rules {
 		ruleInterface := rule.(map[string]interface{})
@@ -315,25 +315,25 @@ func getEdgeVirtualServiceHttpSecurityRuleType(d *schema.ResourceData) (*types.E
 		rulesType[ruleIndex].LocalResponseAction = localResponseAction
 	}
 
-	structure := &types.EdgeVirtualServiceHttpSecurityRules{
+	structure := &types.AlbVsHttpSecurityRules{
 		Values: rulesType,
 	}
 	return structure, nil
 }
 
-func getSecurityMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualServiceHttpRequestRuleMatchCriteria {
+func getSecurityMatchCriteriaType(matchCriteria *schema.Set) types.AlbVsHttpRequestRuleMatchCriteria {
 	if matchCriteria.Len() == 0 {
-		return types.EdgeVirtualServiceHttpRequestRuleMatchCriteria{}
+		return types.AlbVsHttpRequestRuleMatchCriteria{}
 	}
 	schemaSet := matchCriteria.List()
 
 	allCriteria := schemaSet[0].(map[string]interface{})
-	criteria := types.EdgeVirtualServiceHttpRequestRuleMatchCriteria{}
+	criteria := types.AlbVsHttpRequestRuleMatchCriteria{}
 
 	clientIpAddressCriteria := allCriteria["client_ip_address"].([]interface{})
 	if len(clientIpAddressCriteria) > 0 {
 		clientIpAddressCriteriaMap := clientIpAddressCriteria[0].(map[string]interface{})
-		criteria.ClientIPMatch = &types.EdgeVirtualServiceHttpRequestRuleClientIPMatch{
+		criteria.ClientIPMatch = &types.AlbVsHttpRequestRuleClientIPMatch{
 			MatchCriteria: clientIpAddressCriteriaMap["criteria"].(string),
 			Addresses:     convertSchemaSetToSliceOfStrings(clientIpAddressCriteriaMap["ip_addresses"].(*schema.Set)),
 		}
@@ -342,7 +342,7 @@ func getSecurityMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 	servicePortsCriteria := allCriteria["service_ports"].([]interface{})
 	if len(servicePortsCriteria) > 0 {
 		servicePortsCriteriaMap := servicePortsCriteria[0].(map[string]interface{})
-		criteria.ServicePortMatch = &types.EdgeVirtualServiceHttpRequestRuleServicePortMatch{
+		criteria.ServicePortMatch = &types.AlbVsHttpRequestRuleServicePortMatch{
 			MatchCriteria: servicePortsCriteriaMap["criteria"].(string),
 			Ports:         convertSchemaSetToSliceOfInts(servicePortsCriteriaMap["ports"].(*schema.Set)),
 		}
@@ -356,7 +356,7 @@ func getSecurityMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 	httpMethodCriteria := allCriteria["http_methods"].([]interface{})
 	if len(httpMethodCriteria) > 0 {
 		httpMethodCriteriaMap := httpMethodCriteria[0].(map[string]interface{})
-		criteria.MethodMatch = &types.EdgeVirtualServiceHttpRequestRuleMethodMatch{
+		criteria.MethodMatch = &types.AlbVsHttpRequestRuleMethodMatch{
 			MatchCriteria: httpMethodCriteriaMap["criteria"].(string),
 			Methods:       convertSchemaSetToSliceOfStrings(httpMethodCriteriaMap["methods"].(*schema.Set)),
 		}
@@ -365,7 +365,7 @@ func getSecurityMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 	pathCriteria := allCriteria["path"].([]interface{})
 	if len(pathCriteria) > 0 {
 		pathCriteriaMap := pathCriteria[0].(map[string]interface{})
-		criteria.PathMatch = &types.EdgeVirtualServiceHttpRequestRulePathMatch{
+		criteria.PathMatch = &types.AlbVsHttpRequestRulePathMatch{
 			MatchCriteria: pathCriteriaMap["criteria"].(string),
 			MatchStrings:  convertSchemaSetToSliceOfStrings(pathCriteriaMap["paths"].(*schema.Set)),
 		}
@@ -378,11 +378,11 @@ func getSecurityMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 
 	requestHeaderCriteria := allCriteria["request_headers"].(*schema.Set)
 	if requestHeaderCriteria.Len() > 0 {
-		newHeaderCriteria := make([]types.EdgeVirtualServiceHttpRequestRuleHeaderMatch, requestHeaderCriteria.Len())
+		newHeaderCriteria := make([]types.AlbVsHttpRequestRuleHeaderMatch, requestHeaderCriteria.Len())
 		for requestHeaderIndex, requestHeader := range requestHeaderCriteria.List() {
 			requestHeaderMap := requestHeader.(map[string]interface{})
 
-			newHeaderCriteria[requestHeaderIndex] = types.EdgeVirtualServiceHttpRequestRuleHeaderMatch{
+			newHeaderCriteria[requestHeaderIndex] = types.AlbVsHttpRequestRuleHeaderMatch{
 				MatchCriteria: requestHeaderMap["criteria"].(string),
 				Key:           requestHeaderMap["name"].(string),
 				Value:         convertSchemaSetToSliceOfStrings(requestHeaderMap["values"].(*schema.Set)),
@@ -394,7 +394,7 @@ func getSecurityMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 	cookieCriteria := allCriteria["cookie"].([]interface{})
 	if len(cookieCriteria) > 0 {
 		cookieCriteriaMap := cookieCriteria[0].(map[string]interface{})
-		criteria.CookieMatch = &types.EdgeVirtualServiceHttpRequestRuleCookieMatch{
+		criteria.CookieMatch = &types.AlbVsHttpRequestRuleCookieMatch{
 			MatchCriteria: cookieCriteriaMap["criteria"].(string),
 			Key:           cookieCriteriaMap["name"].(string),
 			Value:         cookieCriteriaMap["value"].(string),
@@ -404,7 +404,7 @@ func getSecurityMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 	return criteria
 }
 
-func getSecurityActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpSecurityRuleRedirectToHTTPSAction, string, *types.EdgeVirtualServiceHttpSecurityRuleRateLimitAction, *types.EdgeVirtualServiceHttpSecurityRuleRateLimitLocalResponseAction, error) {
+func getSecurityActionsType(actions *schema.Set) (*types.AlbVsHttpSecurityRuleRedirectToHTTPSAction, string, *types.AlbVsHttpSecurityRuleRateLimitAction, *types.AlbVsHttpSecurityRuleRateLimitLocalResponseAction, error) {
 	if actions.Len() == 0 {
 		return nil, "", nil, nil, nil
 	}
@@ -413,13 +413,13 @@ func getSecurityActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpS
 
 	// 'redirect_to_https'
 	redirToHttps := actionsIf["redirect_to_https"].(string)
-	var redirToHttpsStruct *types.EdgeVirtualServiceHttpSecurityRuleRedirectToHTTPSAction
+	var redirToHttpsStruct *types.AlbVsHttpSecurityRuleRedirectToHTTPSAction
 	if redirToHttps != "" {
 		intPort, err := strconv.Atoi(redirToHttps)
 		if err != nil {
 			return nil, "", nil, nil, fmt.Errorf("error converting 'redirect_to_https' field to integer: %s", err)
 		}
-		redirToHttpsStruct = &types.EdgeVirtualServiceHttpSecurityRuleRedirectToHTTPSAction{Port: intPort}
+		redirToHttpsStruct = &types.AlbVsHttpSecurityRuleRedirectToHTTPSAction{Port: intPort}
 	}
 
 	// 'connections'
@@ -427,7 +427,7 @@ func getSecurityActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpS
 
 	// 'rate_limit'
 	rateLimitSlice := actionsIf["rate_limit"].([]interface{})
-	var rateLimitType *types.EdgeVirtualServiceHttpSecurityRuleRateLimitAction
+	var rateLimitType *types.AlbVsHttpSecurityRuleRateLimitAction
 	if len(rateLimitSlice) > 0 {
 		rateLimitMap := rateLimitSlice[0].(map[string]interface{})
 
@@ -443,7 +443,7 @@ func getSecurityActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpS
 			return nil, "", nil, nil, fmt.Errorf("error converting 'rate_limit.0.period' to int: %s", err)
 		}
 
-		rateLimitType = &types.EdgeVirtualServiceHttpSecurityRuleRateLimitAction{
+		rateLimitType = &types.AlbVsHttpSecurityRuleRateLimitAction{
 			Count:  rateLimitCountInt,
 			Period: rateLimitPeriodInt,
 		}
@@ -457,10 +457,10 @@ func getSecurityActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpS
 
 		// 'action_redirect'
 		rateLimitActionRedirect := rateLimitMap["action_redirect"].([]interface{})
-		var redir *types.EdgeVirtualServiceHttpRequestRuleRedirectAction
+		var redir *types.AlbVsHttpRequestRuleRedirectAction
 		if len(rateLimitActionRedirect) > 0 {
 			redirectStructureMap := rateLimitActionRedirect[0].(map[string]interface{})
-			redir = &types.EdgeVirtualServiceHttpRequestRuleRedirectAction{}
+			redir = &types.AlbVsHttpRequestRuleRedirectAction{}
 
 			redir.Protocol = redirectStructureMap["protocol"].(string)
 			redir.Host = redirectStructureMap["host"].(string)
@@ -474,7 +474,7 @@ func getSecurityActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpS
 
 		// 'action_local_response'
 		rateLimitActionLocalResponse := rateLimitMap["action_local_response"].([]interface{})
-		var rateLimitSendResponseType *types.EdgeVirtualServiceHttpSecurityRuleRateLimitLocalResponseAction
+		var rateLimitSendResponseType *types.AlbVsHttpSecurityRuleRateLimitLocalResponseAction
 		if len(rateLimitActionLocalResponse) > 0 {
 			redirectStructureMap := rateLimitActionLocalResponse[0].(map[string]interface{})
 
@@ -484,7 +484,7 @@ func getSecurityActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpS
 				return nil, "", nil, nil, fmt.Errorf("error converting 'send_response.0.status_code' to int: %s", err)
 			}
 
-			rateLimitSendResponseType = &types.EdgeVirtualServiceHttpSecurityRuleRateLimitLocalResponseAction{
+			rateLimitSendResponseType = &types.AlbVsHttpSecurityRuleRateLimitLocalResponseAction{
 				Content:     redirectStructureMap["content"].(string),
 				ContentType: redirectStructureMap["content_type"].(string),
 				StatusCode:  statusCodeInt,
@@ -497,7 +497,7 @@ func getSecurityActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpS
 
 	// 'send_response'
 	sendResponse := actionsIf["send_response"].([]interface{})
-	var sendResponseType *types.EdgeVirtualServiceHttpSecurityRuleRateLimitLocalResponseAction
+	var sendResponseType *types.AlbVsHttpSecurityRuleRateLimitLocalResponseAction
 	if len(sendResponse) > 0 {
 		sendResponseMap := sendResponse[0].(map[string]interface{})
 
@@ -507,7 +507,7 @@ func getSecurityActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpS
 			return nil, "", nil, nil, fmt.Errorf("error converting 'send_response.0.status_code' to int: %s", err)
 		}
 
-		sendResponseType = &types.EdgeVirtualServiceHttpSecurityRuleRateLimitLocalResponseAction{
+		sendResponseType = &types.AlbVsHttpSecurityRuleRateLimitLocalResponseAction{
 			Content:     sendResponseMap["content"].(string),
 			ContentType: sendResponseMap["content_type"].(string),
 			StatusCode:  statusCodeInt,
@@ -517,7 +517,7 @@ func getSecurityActionsType(actions *schema.Set) (*types.EdgeVirtualServiceHttpS
 	return redirToHttpsStruct, connections, rateLimitType, sendResponseType, nil
 }
 
-func setEdgeVirtualServiceHttpSecuritytRuleData(d *schema.ResourceData, rules []*types.EdgeVirtualServiceHttpSecurityRule) error {
+func setAlbVsHttpSecuritytRuleData(d *schema.ResourceData, rules []*types.AlbVsHttpSecurityRule) error {
 	allRules := make([]interface{}, len(rules))
 
 	for ruleIndex, rule := range rules {

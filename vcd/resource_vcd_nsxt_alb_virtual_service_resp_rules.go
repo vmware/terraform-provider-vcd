@@ -392,7 +392,7 @@ func resourceVcdAlbVirtualServiceRespRulesCreate(ctx context.Context, d *schema.
 	vcdMutexKV.kvLock(albVirtualService.NsxtAlbVirtualService.GatewayRef.ID)
 	defer vcdMutexKV.kvUnlock(albVirtualService.NsxtAlbVirtualService.GatewayRef.ID)
 
-	cfg, err := getEdgeVirtualServiceHttpResponseRuleType(d)
+	cfg, err := getAlbVsHttpResponseRuleType(d)
 	if err != nil {
 		return diag.Errorf("error getting HTTP Response Rule type: %s", err)
 	}
@@ -429,7 +429,7 @@ func genericVcdAlbVirtualServiceRespRulesRead(ctx context.Context, d *schema.Res
 	}
 
 	dSet(d, "virtual_service_id", albVirtualService.NsxtAlbVirtualService.ID)
-	err = setEdgeVirtualServiceHttpResponsetRuleData(d, rules)
+	err = setAlbVsHttpResponsetRuleData(d, rules)
 	if err != nil {
 		return diag.Errorf("error storing HTTP Response Rule: %s", err)
 	}
@@ -449,7 +449,7 @@ func resourceVcdAlbVirtualServiceRespRulesDelete(ctx context.Context, d *schema.
 	vcdMutexKV.kvLock(albVirtualService.NsxtAlbVirtualService.GatewayRef.ID)
 	defer vcdMutexKV.kvUnlock(albVirtualService.NsxtAlbVirtualService.GatewayRef.ID)
 
-	_, err = albVirtualService.UpdateHttpResponseRules(&types.EdgeVirtualServiceHttpResponseRules{})
+	_, err = albVirtualService.UpdateHttpResponseRules(&types.AlbVsHttpResponseRules{})
 	if err != nil {
 		return diag.Errorf("error creating HTTP Response Rules: %s", err)
 	}
@@ -459,10 +459,10 @@ func resourceVcdAlbVirtualServiceRespRulesDelete(ctx context.Context, d *schema.
 	return nil
 }
 
-func getEdgeVirtualServiceHttpResponseRuleType(d *schema.ResourceData) (*types.EdgeVirtualServiceHttpResponseRules, error) {
+func getAlbVsHttpResponseRuleType(d *schema.ResourceData) (*types.AlbVsHttpResponseRules, error) {
 
 	rules := d.Get("rule").([]interface{})
-	rulesType := make([]types.EdgeVirtualServiceHttpResponseRule, len(rules))
+	rulesType := make([]types.AlbVsHttpResponseRule, len(rules))
 
 	for ruleIndex, rule := range rules {
 		ruleInterface := rule.(map[string]interface{})
@@ -475,25 +475,25 @@ func getEdgeVirtualServiceHttpResponseRuleType(d *schema.ResourceData) (*types.E
 
 	}
 
-	structure := &types.EdgeVirtualServiceHttpResponseRules{
+	structure := &types.AlbVsHttpResponseRules{
 		Values: rulesType,
 	}
 	return structure, nil
 }
 
-func getResponseMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualServiceHttpResponseRuleMatchCriteria {
+func getResponseMatchCriteriaType(matchCriteria *schema.Set) types.AlbVsHttpResponseRuleMatchCriteria {
 	if matchCriteria.Len() == 0 {
-		return types.EdgeVirtualServiceHttpResponseRuleMatchCriteria{}
+		return types.AlbVsHttpResponseRuleMatchCriteria{}
 	}
 	schemaSet := matchCriteria.List()
 
 	allCriteria := schemaSet[0].(map[string]interface{})
-	criteria := types.EdgeVirtualServiceHttpResponseRuleMatchCriteria{}
+	criteria := types.AlbVsHttpResponseRuleMatchCriteria{}
 
 	clientIpAddressCriteria := allCriteria["client_ip_address"].([]interface{})
 	if len(clientIpAddressCriteria) > 0 {
 		clientIpAddressCriteriaMap := clientIpAddressCriteria[0].(map[string]interface{})
-		criteria.ClientIPMatch = &types.EdgeVirtualServiceHttpRequestRuleClientIPMatch{
+		criteria.ClientIPMatch = &types.AlbVsHttpRequestRuleClientIPMatch{
 			MatchCriteria: clientIpAddressCriteriaMap["criteria"].(string),
 			Addresses:     convertSchemaSetToSliceOfStrings(clientIpAddressCriteriaMap["ip_addresses"].(*schema.Set)),
 		}
@@ -502,7 +502,7 @@ func getResponseMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 	servicePortsCriteria := allCriteria["service_ports"].([]interface{})
 	if len(servicePortsCriteria) > 0 {
 		servicePortsCriteriaMap := servicePortsCriteria[0].(map[string]interface{})
-		criteria.ServicePortMatch = &types.EdgeVirtualServiceHttpRequestRuleServicePortMatch{
+		criteria.ServicePortMatch = &types.AlbVsHttpRequestRuleServicePortMatch{
 			MatchCriteria: servicePortsCriteriaMap["criteria"].(string),
 			Ports:         convertSchemaSetToSliceOfInts(servicePortsCriteriaMap["ports"].(*schema.Set)),
 		}
@@ -516,7 +516,7 @@ func getResponseMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 	httpMethodCriteria := allCriteria["http_methods"].([]interface{})
 	if len(httpMethodCriteria) > 0 {
 		httpMethodCriteriaMap := httpMethodCriteria[0].(map[string]interface{})
-		criteria.MethodMatch = &types.EdgeVirtualServiceHttpRequestRuleMethodMatch{
+		criteria.MethodMatch = &types.AlbVsHttpRequestRuleMethodMatch{
 			MatchCriteria: httpMethodCriteriaMap["criteria"].(string),
 			Methods:       convertSchemaSetToSliceOfStrings(httpMethodCriteriaMap["methods"].(*schema.Set)),
 		}
@@ -525,7 +525,7 @@ func getResponseMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 	pathCriteria := allCriteria["path"].([]interface{})
 	if len(pathCriteria) > 0 {
 		pathCriteriaMap := pathCriteria[0].(map[string]interface{})
-		criteria.PathMatch = &types.EdgeVirtualServiceHttpRequestRulePathMatch{
+		criteria.PathMatch = &types.AlbVsHttpRequestRulePathMatch{
 			MatchCriteria: pathCriteriaMap["criteria"].(string),
 			MatchStrings:  convertSchemaSetToSliceOfStrings(pathCriteriaMap["paths"].(*schema.Set)),
 		}
@@ -538,11 +538,11 @@ func getResponseMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 
 	requestHeaderCriteria := allCriteria["request_headers"].(*schema.Set)
 	if requestHeaderCriteria.Len() > 0 {
-		newHeaderCriteria := make([]types.EdgeVirtualServiceHttpRequestRuleHeaderMatch, requestHeaderCriteria.Len())
+		newHeaderCriteria := make([]types.AlbVsHttpRequestRuleHeaderMatch, requestHeaderCriteria.Len())
 		for requestHeaderIndex, requestHeader := range requestHeaderCriteria.List() {
 			requestHeaderMap := requestHeader.(map[string]interface{})
 
-			newHeaderCriteria[requestHeaderIndex] = types.EdgeVirtualServiceHttpRequestRuleHeaderMatch{
+			newHeaderCriteria[requestHeaderIndex] = types.AlbVsHttpRequestRuleHeaderMatch{
 				MatchCriteria: requestHeaderMap["criteria"].(string),
 				Key:           requestHeaderMap["name"].(string),
 				Value:         convertSchemaSetToSliceOfStrings(requestHeaderMap["values"].(*schema.Set)),
@@ -554,7 +554,7 @@ func getResponseMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 	cookieCriteria := allCriteria["cookie"].([]interface{})
 	if len(cookieCriteria) > 0 {
 		cookieCriteriaMap := cookieCriteria[0].(map[string]interface{})
-		criteria.CookieMatch = &types.EdgeVirtualServiceHttpRequestRuleCookieMatch{
+		criteria.CookieMatch = &types.AlbVsHttpRequestRuleCookieMatch{
 			MatchCriteria: cookieCriteriaMap["criteria"].(string),
 			Key:           cookieCriteriaMap["name"].(string),
 			Value:         cookieCriteriaMap["value"].(string),
@@ -565,7 +565,7 @@ func getResponseMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 	locationHeaderCriteria := allCriteria["location_header"].([]interface{})
 	if len(locationHeaderCriteria) > 0 {
 		locationHeaderCriteriaMap := locationHeaderCriteria[0].(map[string]interface{})
-		criteria.LocationHeaderMatch = &types.EdgeVirtualServiceHttpResponseLocationHeaderMatch{
+		criteria.LocationHeaderMatch = &types.AlbVsHttpResponseLocationHeaderMatch{
 			MatchCriteria: locationHeaderCriteriaMap["criteria"].(string),
 			Value:         convertSchemaSetToSliceOfStrings(locationHeaderCriteriaMap["values"].(*schema.Set)),
 		}
@@ -573,11 +573,11 @@ func getResponseMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 
 	responseHeaderCriteria := allCriteria["response_headers"].(*schema.Set)
 	if responseHeaderCriteria.Len() > 0 {
-		newHeaderCriteria := make([]types.EdgeVirtualServiceHttpRequestRuleHeaderMatch, responseHeaderCriteria.Len())
+		newHeaderCriteria := make([]types.AlbVsHttpRequestRuleHeaderMatch, responseHeaderCriteria.Len())
 		for responseHeaderIndex, responseHeader := range responseHeaderCriteria.List() {
 			responseHeaderMap := responseHeader.(map[string]interface{})
 
-			newHeaderCriteria[responseHeaderIndex] = types.EdgeVirtualServiceHttpRequestRuleHeaderMatch{
+			newHeaderCriteria[responseHeaderIndex] = types.AlbVsHttpRequestRuleHeaderMatch{
 				MatchCriteria: responseHeaderMap["criteria"].(string),
 				Key:           responseHeaderMap["name"].(string),
 				Value:         convertSchemaSetToSliceOfStrings(responseHeaderMap["values"].(*schema.Set)),
@@ -589,7 +589,7 @@ func getResponseMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 	statusCodeCriteria := allCriteria["status_code"].([]interface{})
 	if len(statusCodeCriteria) > 0 {
 		statusCodeCriteriaMap := statusCodeCriteria[0].(map[string]interface{})
-		criteria.StatusCodeMatch = &types.EdgeVirtualServiceHttpRuleStatusCodeMatch{
+		criteria.StatusCodeMatch = &types.AlbVsHttpRuleStatusCodeMatch{
 			MatchCriteria: statusCodeCriteriaMap["criteria"].(string),
 			StatusCodes:   []string{statusCodeCriteriaMap["http_status_code"].(string)},
 		}
@@ -598,7 +598,7 @@ func getResponseMatchCriteriaType(matchCriteria *schema.Set) types.EdgeVirtualSe
 	return criteria
 }
 
-func getRespActionsType(actions *schema.Set) ([]*types.EdgeVirtualServiceHttpRequestRuleHeaderActions, *types.EdgeVirtualServiceHttpRespRuleRewriteLocationHeaderAction) {
+func getRespActionsType(actions *schema.Set) ([]*types.AlbVsHttpRequestRuleHeaderActions, *types.AlbVsHttpRespRuleRewriteLocationHeaderAction) {
 	if actions.Len() == 0 {
 		return nil, nil
 	}
@@ -606,18 +606,18 @@ func getRespActionsType(actions *schema.Set) ([]*types.EdgeVirtualServiceHttpReq
 	actionsIf := schemaSet[0].(map[string]interface{})
 
 	modifyHeaderStructure := actionsIf["modify_header"].(*schema.Set)
-	var mod []*types.EdgeVirtualServiceHttpRequestRuleHeaderActions
+	var mod []*types.AlbVsHttpRequestRuleHeaderActions
 
 	rewriteUrlStructure := actionsIf["rewrite_location_header"].([]interface{})
-	var rew *types.EdgeVirtualServiceHttpRespRuleRewriteLocationHeaderAction
+	var rew *types.AlbVsHttpRespRuleRewriteLocationHeaderAction
 
 	// Process any header rewrite cases, if specified
 	if modifyHeaderStructure.Len() > 0 {
-		newModifyHeaderStructure := make([]*types.EdgeVirtualServiceHttpRequestRuleHeaderActions, modifyHeaderStructure.Len())
+		newModifyHeaderStructure := make([]*types.AlbVsHttpRequestRuleHeaderActions, modifyHeaderStructure.Len())
 		for headerIndex, header := range modifyHeaderStructure.List() {
 			headerMap := header.(map[string]interface{})
 
-			newModifyHeaderStructure[headerIndex] = &types.EdgeVirtualServiceHttpRequestRuleHeaderActions{
+			newModifyHeaderStructure[headerIndex] = &types.AlbVsHttpRequestRuleHeaderActions{
 				Action: headerMap["action"].(string),
 				Name:   headerMap["name"].(string),
 				Value:  headerMap["value"].(string),
@@ -629,7 +629,7 @@ func getRespActionsType(actions *schema.Set) ([]*types.EdgeVirtualServiceHttpReq
 	// Process any redirection cases, if specified
 	if len(rewriteUrlStructure) > 0 {
 		rewriteUrlStructure := rewriteUrlStructure[0].(map[string]interface{})
-		rew = &types.EdgeVirtualServiceHttpRespRuleRewriteLocationHeaderAction{}
+		rew = &types.AlbVsHttpRespRuleRewriteLocationHeaderAction{}
 		rew.Protocol = rewriteUrlStructure["protocol"].(string)
 		rew.Host = rewriteUrlStructure["host"].(string)
 		rew.Port = rewriteUrlStructure["port"].(int)
@@ -640,7 +640,7 @@ func getRespActionsType(actions *schema.Set) ([]*types.EdgeVirtualServiceHttpReq
 	return mod, rew
 }
 
-func setEdgeVirtualServiceHttpResponsetRuleData(d *schema.ResourceData, rules []*types.EdgeVirtualServiceHttpResponseRule) error {
+func setAlbVsHttpResponsetRuleData(d *schema.ResourceData, rules []*types.AlbVsHttpResponseRule) error {
 	allRules := make([]interface{}, len(rules))
 
 	for ruleIndex, rule := range rules {
