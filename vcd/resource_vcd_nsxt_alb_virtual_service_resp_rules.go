@@ -239,13 +239,12 @@ var nsxtAlbVirtualServiceRespRuleMatchCriteria = &schema.Resource{
 				},
 			},
 		},
-
-		//
+		// in addition to the same rules that are available for HTTP requests
 		"location_header": {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Description: "",
+			Description: "A matching criteria for Location header",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {

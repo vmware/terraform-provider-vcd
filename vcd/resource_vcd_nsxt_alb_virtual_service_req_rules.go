@@ -135,7 +135,7 @@ var nsxtAlbVsReqAndSecRuleMatchCriteria = &schema.Resource{
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Description: "",
+			Description: "HTTP methods that should be matched",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
@@ -270,17 +270,17 @@ var nsxtAlbVirtualServiceReqRuleActions = &schema.Resource{
 					"host": {
 						Type:        schema.TypeString,
 						Optional:    true,
-						Description: "Host to which redirect the request. Default is the original host",
+						Description: "Host to which redirect the request.",
 					},
 					"path": {
 						Type:        schema.TypeString,
 						Optional:    true,
-						Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
+						Description: "Path to which redirect the request.",
 					},
 					"keep_query": {
 						Type:        schema.TypeBool,
 						Optional:    true,
-						Description: "Path to which redirect the request. Default is the original path",
+						Description: "Should the query part be preserved",
 					},
 				},
 			},

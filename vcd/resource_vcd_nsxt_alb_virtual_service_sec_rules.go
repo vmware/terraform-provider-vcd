@@ -528,7 +528,7 @@ func setEdgeVirtualServiceHttpSecuritytRuleData(d *schema.ResourceData, rules []
 		singleRule["active"] = rule.Active
 		singleRule["logging"] = rule.Logging
 
-		////////// match_criteria block
+		// 'match_criteria' block
 
 		matchCriteria := make([]interface{}, 1)
 		matchCriteriaMap := make(map[string]interface{})
@@ -606,9 +606,9 @@ func setEdgeVirtualServiceHttpSecuritytRuleData(d *schema.ResourceData, rules []
 		matchCriteria[0] = matchCriteriaMap
 		singleRule["match_criteria"] = matchCriteria
 
-		////////// EOF match_criteria
+		// EOF 'match_criteria'
 
-		//// 'actions'
+		// 'actions'
 
 		actions := make([]interface{}, 1)
 		actionsMap := make(map[string]interface{})
@@ -639,10 +639,6 @@ func setEdgeVirtualServiceHttpSecuritytRuleData(d *schema.ResourceData, rules []
 				rateLimitEntry["action_close_connection"] = true
 			}
 
-			// rateLimitLocalResponseActionInterface := make([]interface{}, 0)
-			// rateLimitLocalResponseActionMap := make(map[string]interface{})
-
-			//
 			singleRedirectActionEntryInterface := make([]interface{}, 0)
 			if rule.RateLimitAction.RedirectAction != nil {
 				singleRedirectActionEntry := make(map[string]interface{})
@@ -668,7 +664,6 @@ func setEdgeVirtualServiceHttpSecuritytRuleData(d *schema.ResourceData, rules []
 				singleLocalResponseActionEntry["status_code"] = strconv.Itoa(rule.RateLimitAction.LocalResponseAction.StatusCode)
 
 				singleLocalResponseActionEntryInterface = append(singleLocalResponseActionEntryInterface, singleLocalResponseActionEntry)
-				// rateLimitLocalResponseActionMap["action_local_response"] = singleLocalResponseActionEntryInterface
 			}
 			rateLimitEntry["action_local_response"] = singleLocalResponseActionEntryInterface
 
@@ -691,7 +686,7 @@ func setEdgeVirtualServiceHttpSecuritytRuleData(d *schema.ResourceData, rules []
 		actions[0] = actionsMap
 		singleRule["actions"] = actions
 
-		//// EOF 'actions'
+		// EOF 'actions'
 
 		allRules[ruleIndex] = singleRule
 	}
