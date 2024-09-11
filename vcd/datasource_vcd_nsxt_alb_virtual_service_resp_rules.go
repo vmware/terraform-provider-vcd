@@ -42,7 +42,7 @@ var dsNsxtAlbVirtualServiceReqRule = &schema.Resource{
 		"match_criteria": {
 			Type:        schema.TypeSet,
 			Computed:    true,
-			Description: "Rule matching criterion",
+			Description: "Rule matching Criteria",
 			Elem:        dsNsxtAlbVirtualServiceReqRuleMatchCriteria,
 		},
 		"actions": {
@@ -65,7 +65,7 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 					"criteria": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Criterion to use for IP address matching the HTTP request. Options - IS_IN, IS_NOT_IN.",
+						Description: "Criteria to use for IP address matching the HTTP request. Options - IS_IN, IS_NOT_IN.",
 					},
 					"ip_addresses": {
 						Type:        schema.TypeSet,
@@ -87,7 +87,7 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 					"criteria": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Criterion to use for port matching the HTTP request. Options - IS_IN, IS_NOT_IN",
+						Description: "Criteria to use for port matching the HTTP request. Options - IS_IN, IS_NOT_IN",
 					},
 					"ports": {
 						Type:        schema.TypeSet,
@@ -114,7 +114,7 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 					"criteria": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Criterion to use for matching the method in the HTTP request. Options - IS_IN, IS_NOT_IN",
+						Description: "Criteria to use for matching the method in the HTTP request. Options - IS_IN, IS_NOT_IN",
 					},
 					"method": {
 						Type:        schema.TypeString,
@@ -133,7 +133,7 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 					"criteria": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Criterion to use for matching the path in the HTTP request URI. Options - BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL, REGEX_MATCH, REGEX_DOES_NOT_MATCH",
+						Description: "Criteria to use for matching the path in the HTTP request URI. Options - BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL, REGEX_MATCH, REGEX_DOES_NOT_MATCH",
 					},
 					"paths": {
 						Type:        schema.TypeSet,
@@ -163,7 +163,7 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 					"criteria": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Criterion to use for matching headers and cookies in the HTTP request amd response. Options - EXISTS, DOES_NOT_EXIST, BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL",
+						Description: "Criteria to use for matching headers and cookies in the HTTP request amd response. Options - EXISTS, DOES_NOT_EXIST, BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL",
 					},
 					"name": {
 						Type:        schema.TypeString,
@@ -191,7 +191,7 @@ var dsNsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 					"criteria": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Criterion to use for matching cookies in the HTTP request. Options - EXISTS, DOES_NOT_EXIST, BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL",
+						Description: "Criteria to use for matching cookies in the HTTP request. Options - EXISTS, DOES_NOT_EXIST, BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL",
 					},
 					"name": {
 						Type:        schema.TypeString,

@@ -51,7 +51,7 @@ var nsxtAlbVirtualServiceReqRule = &schema.Resource{
 			Type:        schema.TypeBool,
 			Optional:    true,
 			Default:     true,
-			Description: "Defines is the rule is active or not",
+			Description: "Defines if the rule is active or not",
 		},
 		"logging": {
 			Type:        schema.TypeBool,
@@ -61,38 +61,40 @@ var nsxtAlbVirtualServiceReqRule = &schema.Resource{
 		},
 		"match_criteria": {
 			Type:        schema.TypeSet,
-			Optional:    true,
-			Description: "Rule matching criterion",
-			Elem:        nsxtAlbVirtualServiceReqRuleMatchCriteria,
+			MaxItems:    1,
+			Required:    true,
+			Description: "Rule matching Criteria",
+			Elem:        nsxtAlbVsReqAndSecRuleMatchCriteria,
 		},
 		"actions": {
 			Type:        schema.TypeSet,
-			Optional:    true,
+			MaxItems:    1,
+			Required:    true,
 			Description: "Actions to perform with the rule that matches",
 			Elem:        nsxtAlbVirtualServiceReqRuleActions,
 		},
 	},
 }
 
-var nsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
+var nsxtAlbVsReqAndSecRuleMatchCriteria = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"client_ip_address": {
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Description: "",
+			Description: "Client IP Address criteria",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
 						Type:         schema.TypeString,
 						Optional:     true,
 						ValidateFunc: validation.StringInSlice([]string{"IS_IN", "IS_NOT_IN"}, false),
-						Description:  "Criterion to use for IP address matching the HTTP request. Options - IS_IN, IS_NOT_IN.",
+						Description:  "Criteria to use for IP address matching the HTTP request. Options - IS_IN, IS_NOT_IN.",
 					},
 					"ip_addresses": {
 						Type:        schema.TypeSet,
 						Optional:    true,
-						Description: "Enter IPv4 or IPv6 address, range or CIDR",
+						Description: "A set of IP addresses",
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
 						},
@@ -104,19 +106,19 @@ var nsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Description: "",
+			Description: "Service Port criteria",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
 						Type:         schema.TypeString,
 						Optional:     true,
 						ValidateFunc: validation.StringInSlice([]string{"IS_IN", "IS_NOT_IN"}, false),
-						Description:  "Criterion to use for port matching the HTTP request. Options - IS_IN, IS_NOT_IN",
+						Description:  "Criteria to use for IP address matching the HTTP request. Options - IS_IN, IS_NOT_IN",
 					},
 					"ports": {
 						Type:        schema.TypeSet,
 						Optional:    true,
-						Description: "Listening TCP ports. Allowed values are 1-65535",
+						Description: "A set of TCP ports. Allowed values are 1-65535",
 						Elem: &schema.Schema{
 							Type: schema.TypeInt,
 						},
@@ -141,11 +143,12 @@ var nsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 						Type:         schema.TypeString,
 						Optional:     true,
 						ValidateFunc: validation.StringInSlice([]string{"IS_IN", "IS_NOT_IN"}, false),
-						Description:  "Criterion to use for matching the method in the HTTP request. Options - IS_IN, IS_NOT_IN",
+						Description:  "Criteria to use for IP address matching the HTTP request. Options - IS_IN, IS_NOT_IN",
 					},
 					"methods": {
-						Type:        schema.TypeSet,
-						Optional:    true,
+						Type:     schema.TypeSet,
+						Optional: true,
+						// Not validating these options as it might not be finite list and API returns proper explanations
 						Description: "HTTP methods to match. Options - GET, PUT, POST, DELETE, HEAD, OPTIONS, TRACE, CONNECT, PATCH, PROPFIND, PROPPATCH, MKCOL, COPY, MOVE, LOCK, UNLOCK",
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -164,7 +167,7 @@ var nsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 					"criteria": {
 						Type:        schema.TypeString,
 						Optional:    true,
-						Description: "Criterion to use for matching the path in the HTTP request URI. Options - BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL, REGEX_MATCH, REGEX_DOES_NOT_MATCH",
+						Description: "Criteria to use for matching the path in the HTTP request URI. Options - BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL, REGEX_MATCH, REGEX_DOES_NOT_MATCH",
 					},
 					"paths": {
 						Type:        schema.TypeSet,
@@ -180,7 +183,7 @@ var nsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 		"query": {
 			Type:        schema.TypeSet,
 			Optional:    true,
-			Description: "HTTP request query strings in key=value format",
+			Description: "HTTP request query strings to match",
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
@@ -188,13 +191,13 @@ var nsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 		"request_headers": {
 			Type:        schema.TypeSet,
 			Optional:    true,
-			Description: "",
+			Description: "A set of rules for matching request headers",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
 						Type:        schema.TypeString,
 						Optional:    true,
-						Description: "Criterion to use for matching headers and cookies in the HTTP request amd response. Options - EXISTS, DOES_NOT_EXIST, BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL",
+						Description: "Criteria to use for matching headers and cookies in the HTTP request amd response. Options - EXISTS, DOES_NOT_EXIST, BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL",
 					},
 					"name": {
 						Type:        schema.TypeString,
@@ -216,13 +219,13 @@ var nsxtAlbVirtualServiceReqRuleMatchCriteria = &schema.Resource{
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Description: "",
+			Description: "Rule for matching cookie",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
 						Type:        schema.TypeString,
 						Optional:    true,
-						Description: "Criterion to use for matching cookies in the HTTP request. Options - EXISTS, DOES_NOT_EXIST, BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL",
+						Description: "Criteria to use for matching cookies in the HTTP request. Options - EXISTS, DOES_NOT_EXIST, BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL",
 					},
 					"name": {
 						Type:        schema.TypeString,
@@ -246,7 +249,7 @@ var nsxtAlbVirtualServiceReqRuleActions = &schema.Resource{
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Description: "",
+			Description: "Redirect request",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"protocol": {
@@ -286,7 +289,7 @@ var nsxtAlbVirtualServiceReqRuleActions = &schema.Resource{
 		"modify_header": {
 			Type:        schema.TypeSet,
 			Optional:    true,
-			Description: "",
+			Description: "A set of header modification rules",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"action": {
@@ -312,7 +315,7 @@ var nsxtAlbVirtualServiceReqRuleActions = &schema.Resource{
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Description: "",
+			Description: "URL rewrite rules",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"host_header": {
@@ -726,7 +729,6 @@ func setEdgeVirtualServiceHttpRequestRuleData(d *schema.ResourceData, rules []*t
 		singleRule["actions"] = actions
 
 		//// EOF 'actions'
-
 		allRules[ruleIndex] = singleRule
 	}
 

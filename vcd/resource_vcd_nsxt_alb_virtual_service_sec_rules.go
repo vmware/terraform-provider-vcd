@@ -62,20 +62,22 @@ var nsxtAlbVirtualServiceSecRule = &schema.Resource{
 		},
 		"match_criteria": {
 			Type:        schema.TypeSet,
-			Optional:    true,
-			Description: "Rule matching criterion",
-			Elem:        nsxtAlbVirtualServiceReqRuleMatchCriteria,
+			MaxItems:    1,
+			Required:    true,
+			Description: "Rule matching Criteria",
+			Elem:        nsxtAlbVsReqAndSecRuleMatchCriteria,
 		},
 		"actions": {
 			Type:        schema.TypeSet,
-			Optional:    true,
+			MaxItems:    1,
+			Required:    true,
 			Description: "Actions to perform with the rule that matches",
-			Elem:        nsxtAlbVirtualServiceSecRuleActions,
+			Elem:        nsxtAlbVsSecRuleActions,
 		},
 	},
 }
 
-var nsxtAlbVirtualServiceSecRuleActions = &schema.Resource{
+var nsxtAlbVsSecRuleActions = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"redirect_to_https": {
 			Type:         schema.TypeString,
@@ -93,7 +95,7 @@ var nsxtAlbVirtualServiceSecRuleActions = &schema.Resource{
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Description: "",
+			Description: "Apply actions based on rate limits",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"count": {
@@ -156,7 +158,7 @@ var nsxtAlbVirtualServiceSecRuleActions = &schema.Resource{
 					"action_local_response": {
 						Type:        schema.TypeList,
 						Optional:    true,
-						Description: "",
+						Description: "Send custom response",
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								"content": {
@@ -186,7 +188,7 @@ var nsxtAlbVirtualServiceSecRuleActions = &schema.Resource{
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Description: "",
+			Description: "Send custom response",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"content": {
