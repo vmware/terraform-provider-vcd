@@ -292,7 +292,6 @@ func resourceVcdAlbVirtualServiceSecRulesDelete(ctx context.Context, d *schema.R
 }
 
 func getAlbVsHttpSecurityRuleType(d *schema.ResourceData) (*types.AlbVsHttpSecurityRules, error) {
-
 	rules := d.Get("rule").([]interface{})
 	rulesType := make([]types.AlbVsHttpSecurityRule, len(rules))
 
@@ -519,7 +518,6 @@ func getSecurityActionsType(actions *schema.Set) (*types.AlbVsHttpSecurityRuleRe
 
 func setAlbVsHttpSecuritytRuleData(d *schema.ResourceData, rules []*types.AlbVsHttpSecurityRule) error {
 	allRules := make([]interface{}, len(rules))
-
 	for ruleIndex, rule := range rules {
 
 		singleRule := make(map[string]interface{})

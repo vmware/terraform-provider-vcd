@@ -460,7 +460,6 @@ func resourceVcdAlbVirtualServiceRespRulesDelete(ctx context.Context, d *schema.
 }
 
 func getAlbVsHttpResponseRuleType(d *schema.ResourceData) (*types.AlbVsHttpResponseRules, error) {
-
 	rules := d.Get("rule").([]interface{})
 	rulesType := make([]types.AlbVsHttpResponseRule, len(rules))
 
@@ -642,16 +641,14 @@ func getRespActionsType(actions *schema.Set) ([]*types.AlbVsHttpRequestRuleHeade
 
 func setAlbVsHttpResponsetRuleData(d *schema.ResourceData, rules []*types.AlbVsHttpResponseRule) error {
 	allRules := make([]interface{}, len(rules))
-
 	for ruleIndex, rule := range rules {
-
 		singleRule := make(map[string]interface{})
 
 		singleRule["name"] = rule.Name
 		singleRule["active"] = rule.Active
 		singleRule["logging"] = rule.Logging
 
-		////////// match_criteria block
+		// match_criteria block
 
 		matchCriteria := make([]interface{}, 1)
 		matchCriteriaMap := make(map[string]interface{})
@@ -761,9 +758,9 @@ func setAlbVsHttpResponsetRuleData(d *schema.ResourceData, rules []*types.AlbVsH
 		matchCriteria[0] = matchCriteriaMap
 		singleRule["match_criteria"] = matchCriteria
 
-		////////// EOF match_criteria
+		// EOF match_criteria
 
-		//// 'actions'
+		// 'actions'
 
 		actions := make([]interface{}, 1)
 		actionsMap := make(map[string]interface{})
@@ -800,7 +797,7 @@ func setAlbVsHttpResponsetRuleData(d *schema.ResourceData, rules []*types.AlbVsH
 		actions[0] = actionsMap
 		singleRule["actions"] = actions
 
-		//// EOF 'actions'
+		// EOF 'actions'
 
 		allRules[ruleIndex] = singleRule
 	}
