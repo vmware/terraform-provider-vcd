@@ -21,7 +21,7 @@ func datasourceVcdAlbVirtualServiceReqRules() *schema.Resource {
 			"rule": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Elem:        nsxtAlbVirtualServiceReqRule,
+				Elem:        dsNsxtAlbVirtualServiceReqRule,
 				Description: "A single HTTP Request Rule",
 			},
 		},
@@ -55,7 +55,7 @@ var dsNsxtAlbVirtualServiceReqRule = &schema.Resource{
 			Type:        schema.TypeSet,
 			Computed:    true,
 			Description: "Actions to perform with the rule that matches",
-			Elem:        nsxtAlbVirtualServiceReqRuleActions,
+			Elem:        dsNsxtAlbVsReqRuleActions,
 		},
 	},
 }
