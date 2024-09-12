@@ -21,7 +21,7 @@ func resourceVcdAlbVirtualServiceSecRules() *schema.Resource {
 		UpdateContext: resourceVcdAlbVirtualServiceSecRulesCreate,
 		DeleteContext: resourceVcdAlbVirtualServiceSecRulesDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdAlbVirtualServiceImport,
+			StateContext: resourceVcdAlbVirtualServiceHttpPolicyImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -262,6 +262,7 @@ func genericVcdAlbVirtualServiceSecRulesRead(ctx context.Context, d *schema.Reso
 	}
 
 	dSet(d, "virtual_service_id", albVirtualService.NsxtAlbVirtualService.ID)
+	d.SetId(albVirtualService.NsxtAlbVirtualService.ID)
 	err = setAlbVsHttpSecuritytRuleData(d, rules)
 	if err != nil {
 		return diag.Errorf("error storing HTTP Request Rule: %s", err)

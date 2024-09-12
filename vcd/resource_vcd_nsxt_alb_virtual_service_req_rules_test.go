@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,13 +13,11 @@ func TestAccVcdNsxtAlbVirtualServicePolicies(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
-	skipNoNsxtAlbConfiguration(t)
-
-	if testConfig.Certificates.Certificate1Path == "" || testConfig.Certificates.Certificate2Path == "" ||
-		testConfig.Certificates.Certificate1PrivateKeyPath == "" || testConfig.Certificates.Certificate1Pass == "" {
-		t.Skip("Variables Certificates.Certificate1Path, Certificates.Certificate2Path, " +
-			"Certificates.Certificate1PrivateKeyPath, Certificates.Certificate1Pass must be set")
+	if checkVersion(testConfig.Provider.ApiVersion, "< 38.0") {
+		t.Skipf("This test tests VCD 10.5.0+ (API V38.0+) features - ALB VS HTTP Policies. Skipping.")
 	}
+
+	skipNoNsxtAlbConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -47,6 +46,10 @@ func TestAccVcdNsxtAlbVirtualServicePolicies(t *testing.T) {
 	configText1 := templateFill(testAccVcdNsxtAlbVirtualServiceHttpRulesStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
+	params["FuncName"] = t.Name() + "step2"
+	configText2 := templateFill(testAccVcdNsxtAlbVirtualServiceHttpRulesStep2DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -54,31 +57,148 @@ func TestAccVcdNsxtAlbVirtualServicePolicies(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      resource.ComposeAggregateTestCheckFunc(
-		// testAccCheckVcdAlbControllerDestroy("vcd_nsxt_alb_controller.first"),
-		// testAccCheckVcdAlbServiceEngineGroupDestroy("vcd_nsxt_alb_cloud.first"),
-		// testAccCheckVcdAlbCloudDestroy("vcd_nsxt_alb_cloud.first"),
-		// testAccCheckVcdNsxtEdgeGatewayAlbSettingsDestroy(params["EdgeGw"].(string)),
-		// testAccCheckVcdAlbVirtualServiceDestroy("vcd_nsxt_alb_virtual_service.test"),
-		),
 
 		Steps: []resource.TestStep{
 			{
-				Config: configText1, // Setup prerequisites - configure NSX-T ALB in Provider
-				Check:  resource.ComposeAggregateTestCheckFunc(
-				// resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerVirtualService:`)),
-				// resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service.test", "name", t.Name()),
-				// resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service.test", "description", ""),
-				// resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service.test", "application_profile_type", "HTTP"),
-				// resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "pool_id", regexp.MustCompile(`^urn:vcloud:`)),
-				// resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "service_engine_group_id", regexp.MustCompile(`^urn:vcloud:`)),
-				// resource.TestCheckResourceAttrSet("vcd_nsxt_alb_virtual_service.test", "virtual_ip_address"),
-				// resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service.test", "service_port.#", "1"),
-				// resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_alb_virtual_service.test", "service_port.*", map[string]string{
-				// 	"start_port": "80",
-				// 	"end_port":   "81",
-				// 	"type":       "TCP_PROXY",
-				// }),
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+
+					// Request rule
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerVirtualService:`)),
+					resource.TestCheckResourceAttrPair("vcd_nsxt_alb_virtual_service.test", "id", "vcd_nsxt_alb_virtual_service_http_req_rules.test1", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.#", "4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.name", "criteria-max-rewrite"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.active", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.logging", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.actions.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.0.client_ip_address.0.criteria", "IS_NOT_IN"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.0.client_ip_address.0.ip_addresses.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.0.protocol_type", "HTTP"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.0.cookie.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.0.cookie.0.criteria", "DOES_NOT_END_WITH"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.0.cookie.0.name", "does-not-name"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.0.cookie.0.value", "does-not-value"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.0.http_methods.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.0.http_methods.0.criteria", "IS_IN"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.0.http_methods.0.methods.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.0.path.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.0.path.0.criteria", "CONTAINS"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.0.path.0.paths.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.0.query.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.0.request_headers.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.match_criteria.0.service_ports.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.actions.0.modify_header.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.actions.0.redirect.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.actions.0.rewrite_url.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.1.name", "criteria-max-modify-header"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.1.active", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.1.logging", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.1.match_criteria.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.1.actions.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.2.name", "criteria-max-rewrite-url"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.2.active", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.2.logging", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.2.match_criteria.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.2.actions.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.3.name", "one-criteria"),
+
+					// Response rule
+					resource.TestCheckResourceAttrPair("vcd_nsxt_alb_virtual_service.test", "id", "vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.#", "3"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.name", "criteria-max-rewrite"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.active", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.logging", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.actions.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.client_ip_address.0.criteria", "IS_NOT_IN"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.client_ip_address.0.ip_addresses.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.protocol_type", "HTTP"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.cookie.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.cookie.0.criteria", "DOES_NOT_END_WITH"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.cookie.0.name", "does-not-name"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.cookie.0.value", "does-not-value"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.http_methods.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.http_methods.0.criteria", "IS_IN"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.http_methods.0.methods.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.path.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.path.0.criteria", "CONTAINS"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.path.0.paths.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.query.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.request_headers.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.service_ports.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.location_header.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.location_header.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.response_headers.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.match_criteria.0.status_code.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.actions.0.rewrite_location_header.#", "1"),
+
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.1.name", "criteria-max-modify-header"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.1.active", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.1.logging", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.1.match_criteria.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.1.actions.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.2.name", "one-criteria"),
+
+					// Security rule
+					resource.TestCheckResourceAttrPair("vcd_nsxt_alb_virtual_service.test", "id", "vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.#", "9"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.name", "max-sec-redirect-to-https"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.active", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.logging", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.actions.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.0.client_ip_address.0.criteria", "IS_NOT_IN"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.0.client_ip_address.0.ip_addresses.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.0.protocol_type", "HTTP"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.0.cookie.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.0.cookie.0.criteria", "DOES_NOT_END_WITH"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.0.cookie.0.name", "does-not-name"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.0.cookie.0.value", "does-not-value"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.0.http_methods.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.0.http_methods.0.criteria", "IS_IN"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.0.http_methods.0.methods.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.0.path.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.0.path.0.criteria", "CONTAINS"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.0.path.0.paths.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.0.query.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.0.request_headers.#", "2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.match_criteria.0.service_ports.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.1.name", "max-sec-connection-allow"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.1.logging", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.2.name", "max-sec-connection-close"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.3.name", "max-sec-response"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.4.name", "max-sec-rate-limit-report-only"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.5.name", "max-sec-rate-limit-close-connection"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.6.name", "max-sec-rate-limit-redirect"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.7.name", "max-sec-rate-limit-local-resp"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.8.name", "one-criteria"),
+				),
+			},
+			{
+				ResourceName:      "vcd_nsxt_alb_virtual_service_http_req_rules.test1",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig.Nsxt.EdgeGateway, params["VirtualServiceName"].(string)),
+			},
+			{
+				ResourceName:      "vcd_nsxt_alb_virtual_service_http_resp_rules.test1",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig.Nsxt.EdgeGateway, params["VirtualServiceName"].(string)),
+			},
+			{
+				ResourceName:      "vcd_nsxt_alb_virtual_service_http_sec_rules.test1",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig.Nsxt.EdgeGateway, params["VirtualServiceName"].(string)),
+			},
+			{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resourceFieldsEqual("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "data.vcd_nsxt_alb_virtual_service_http_req_rules.test1", nil),
+					resourceFieldsEqual("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "data.vcd_nsxt_alb_virtual_service_http_resp_rules.test1", nil),
+					resourceFieldsEqual("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "data.vcd_nsxt_alb_virtual_service_http_sec_rules.test1", nil),
 				),
 			},
 		},
@@ -104,7 +224,6 @@ resource "vcd_nsxt_alb_virtual_service" "test" {
     type       = "TCP_PROXY"
   }
 }
-
 
 resource "vcd_nsxt_alb_virtual_service_http_req_rules" "test1" {
   virtual_service_id = vcd_nsxt_alb_virtual_service.test.id
@@ -152,7 +271,6 @@ resource "vcd_nsxt_alb_virtual_service_http_req_rules" "test1" {
         name     = "does-not-name"
         value    = "does-not-value"
       }
-
     }
 
     actions {
@@ -166,8 +284,9 @@ resource "vcd_nsxt_alb_virtual_service_http_req_rules" "test1" {
   }
 
   rule {
-    name   = "criteria-max-modify-header"
-    active = true
+    name    = "criteria-max-modify-header"
+    active  = false
+    logging = true
     match_criteria {
       client_ip_address {
         criteria     = "IS_NOT_IN"
@@ -185,6 +304,7 @@ resource "vcd_nsxt_alb_virtual_service_http_req_rules" "test1" {
         criteria = "IS_IN"
         methods  = ["COPY", "HEAD"]
       }
+
       path {
         criteria = "CONTAINS"
         paths    = ["/123", "/234"]
@@ -286,6 +406,26 @@ resource "vcd_nsxt_alb_virtual_service_http_req_rules" "test1" {
       }
     }
   }
+
+  rule {
+    name   = "one-criteria"
+    active = true
+    match_criteria {
+      service_ports {
+        criteria = "IS_IN"
+        ports    = [80, 81]
+      }
+    }
+
+    actions {
+      rewrite_url {
+        host_header   = "X-HOST-HEADER"
+        existing_path = "/123"
+        keep_query    = true
+        query         = "rewrite"
+      }
+    }
+  }
 }
 
 
@@ -357,7 +497,6 @@ resource "vcd_nsxt_alb_virtual_service_http_resp_rules" "test1" {
         criteria         = "IS_NOT_IN"
         http_status_code = "200"
       }
-
     }
 
     actions {
@@ -373,7 +512,7 @@ resource "vcd_nsxt_alb_virtual_service_http_resp_rules" "test1" {
 
   rule {
     name   = "criteria-max-modify-header"
-    active = true
+    active = false
     match_criteria {
       client_ip_address {
         criteria     = "IS_NOT_IN"
@@ -458,14 +597,26 @@ resource "vcd_nsxt_alb_virtual_service_http_resp_rules" "test1" {
     }
   }
 
+  rule {
+    name   = "one-criteria"
+    active = true
+    match_criteria {
+      protocol_type = "HTTP"
+    }
 
-
-
-
-
+    actions {
+      rewrite_location_header {
+        protocol   = "HTTP"
+        port       = 443
+        host       = "another-host"
+        path       = "/"
+        keep_query = true
+      }
+    }
+  }
 }
 
-resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "asd" {
+resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "test1" {
   virtual_service_id = vcd_nsxt_alb_virtual_service.test.id
 
   rule {
@@ -512,7 +663,6 @@ resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "asd" {
         name     = "does-not-name"
         value    = "does-not-value"
       }
-
     }
 
     actions {
@@ -523,7 +673,7 @@ resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "asd" {
   rule {
     name    = "max-sec-connection-allow"
     active  = true
-    logging = true
+    logging = false
     match_criteria {
       client_ip_address {
         criteria     = "IS_IN"
@@ -913,5 +1063,37 @@ resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "asd" {
       }
     }
   }
+
+  rule {
+    name    = "one-criteria"
+    active  = true
+    logging = true
+    match_criteria {
+      cookie {
+        criteria = "DOES_NOT_END_WITH"
+        name     = "does-not-name"
+        value    = "does-not-value"
+      }
+    }
+
+    actions {
+      redirect_to_https = "80"
+    }
+  }
+}
+`
+
+const testAccVcdNsxtAlbVirtualServiceHttpRulesStep2DS = testAccVcdNsxtAlbVirtualServiceHttpRulesStep1 + `
+# skip-binary-test: Data Source test
+data "vcd_nsxt_alb_virtual_service_http_req_rules" "test1" {
+  virtual_service_id = vcd_nsxt_alb_virtual_service.test.id
+}
+
+data "vcd_nsxt_alb_virtual_service_http_resp_rules" "test1" {
+  virtual_service_id = vcd_nsxt_alb_virtual_service.test.id
+}
+
+data "vcd_nsxt_alb_virtual_service_http_sec_rules" "test1" {
+  virtual_service_id = vcd_nsxt_alb_virtual_service.test.id
 }
 `

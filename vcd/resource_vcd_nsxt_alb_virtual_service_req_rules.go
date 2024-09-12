@@ -3,6 +3,8 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"log"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -20,7 +22,7 @@ func resourceVcdAlbVirtualServiceReqRules() *schema.Resource {
 		UpdateContext: resourceVcdAlbVirtualServiceReqRulesCreate,
 		DeleteContext: resourceVcdAlbVirtualServiceReqRulesDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdAlbVirtualServiceImport,
+			StateContext: resourceVcdAlbVirtualServiceHttpPolicyImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -394,6 +396,7 @@ func genericVcdAlbVirtualServiceReqRulesRead(ctx context.Context, d *schema.Reso
 	}
 
 	dSet(d, "virtual_service_id", albVirtualService.NsxtAlbVirtualService.ID)
+	d.SetId(albVirtualService.NsxtAlbVirtualService.ID)
 	err = setAlbVsHttpRequestRuleData(d, rules)
 	if err != nil {
 		return diag.Errorf("error storing HTTP Request Rule: %s", err)
@@ -731,4 +734,39 @@ func setAlbVsHttpRequestRuleData(d *schema.ResourceData, rules []*types.AlbVsHtt
 	}
 
 	return d.Set("rule", allRules)
+}
+
+func resourceVcdAlbVirtualServiceHttpPolicyImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	log.Printf("[TRACE] NSX-T ALB Virtual Service HTTP Policy import initiated")
+
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 4 {
+		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-or-vdc-group-name.nsxt-edge-gw-name.virtual_service_name")
+	}
+	orgName, vdcOrVdcGroupName, edgeName, virtualServiceName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+
+	vcdClient := meta.(*VCDClient)
+	vdcOrVdcGroup, err := lookupVdcOrVdcGroup(vcdClient, orgName, vdcOrVdcGroupName)
+	if err != nil {
+		return nil, err
+	}
+
+	if !vdcOrVdcGroup.IsNsxt() {
+		return nil, fmt.Errorf("ALB Virtual Services are only supported on NSX-T. Please use 'vcd_lb_virtual_server' for NSX-V load balancers")
+	}
+
+	edge, err := vdcOrVdcGroup.GetNsxtEdgeGatewayByName(edgeName)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve NSX-T edge gateway with ID '%s': %s", d.Id(), err)
+	}
+
+	albVirtualService, err := vcdClient.GetAlbVirtualServiceByName(edge.EdgeGateway.ID, virtualServiceName)
+	if err != nil {
+		return nil, fmt.Errorf("could not retrieve NSX-T ALB Virtual Service '%s': %s", virtualServiceName, err)
+	}
+
+	dSet(d, "virtual_service_id", albVirtualService.NsxtAlbVirtualService.ID)
+	d.SetId(albVirtualService.NsxtAlbVirtualService.ID)
+
+	return []*schema.ResourceData{d}, nil
 }
