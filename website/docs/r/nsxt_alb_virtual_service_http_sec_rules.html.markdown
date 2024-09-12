@@ -19,54 +19,15 @@ to redirect a request to HTTPS, or to apply a rate limit.
 ## Example Usage
 
 ```hcl
-resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "asd" {
+resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "example" {
   virtual_service_id = vcd_nsxt_alb_virtual_service.test.id
 
   rule {
-    name    = "max-sec-redirect-to-https"
+    name    = "sec-redirect-to-https"
     active  = true
     logging = true
     match_criteria {
-      client_ip_address {
-        criteria     = "IS_NOT_IN"
-        ip_addresses = ["1.1.1.1", "2.2.2.2"]
-      }
-
-      service_ports {
-        criteria = "IS_IN"
-        ports    = [80, 81]
-      }
-
       protocol_type = "HTTP"
-
-      http_methods {
-        criteria = "IS_IN"
-        methods  = ["COPY", "HEAD"]
-      }
-      path {
-        criteria = "CONTAINS"
-        paths    = ["/123", "/234"]
-      }
-      query = ["546", "666"]
-
-      request_headers {
-        criteria = "DOES_NOT_BEGIN_WITH"
-        name     = "X"
-        values   = ["value1", "value2"]
-      }
-
-      request_headers {
-        criteria = "DOES_NOT_EQUAL"
-        name     = "Y-DOES-NOT"
-        values   = ["value1", "value2"]
-      }
-
-      cookie {
-        criteria = "DOES_NOT_END_WITH"
-        name     = "does-not-name"
-        value    = "does-not-value"
-      }
-
     }
 
     actions {
@@ -75,9 +36,9 @@ resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "asd" {
   }
 
   rule {
-    name    = "max-sec-connection-allow"
+    name    = "sec-connection-allow"
     active  = true
-    logging = true
+    logging = false
     match_criteria {
       client_ip_address {
         criteria     = "IS_IN"
@@ -118,7 +79,6 @@ resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "asd" {
         name     = "does-not-name"
         value    = "does-not-value"
       }
-
     }
 
     actions {
@@ -127,50 +87,14 @@ resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "asd" {
   }
 
   rule {
-    name    = "max-sec-connection-close"
+    name    = "sec-connection-close"
     active  = true
     logging = true
     match_criteria {
-      client_ip_address {
-        criteria     = "IS_NOT_IN"
-        ip_addresses = ["2.1.1.1", "6.2.2.2"]
-      }
-
-      service_ports {
-        criteria = "IS_IN"
-        ports    = [80, 81]
-      }
-
-      protocol_type = "HTTP"
-
-      http_methods {
-        criteria = "IS_IN"
-        methods  = ["COPY", "HEAD"]
-      }
       path {
         criteria = "CONTAINS"
         paths    = ["/123", "/234"]
       }
-      query = ["546", "666"]
-
-      request_headers {
-        criteria = "DOES_NOT_BEGIN_WITH"
-        name     = "X"
-        values   = ["value1", "value2"]
-      }
-
-      request_headers {
-        criteria = "DOES_NOT_EQUAL"
-        name     = "Y-DOES-NOT"
-        values   = ["value1", "value2"]
-      }
-
-      cookie {
-        criteria = "DOES_NOT_END_WITH"
-        name     = "does-not-name"
-        value    = "does-not-value"
-      }
-
     }
 
     actions {
@@ -179,7 +103,7 @@ resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "asd" {
   }
 
   rule {
-    name    = "max-sec-response"
+    name    = "sec-response"
     active  = true
     logging = true
     match_criteria {
@@ -194,35 +118,6 @@ resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "asd" {
       }
 
       protocol_type = "HTTP"
-
-      http_methods {
-        criteria = "IS_IN"
-        methods  = ["COPY", "HEAD"]
-      }
-      path {
-        criteria = "CONTAINS"
-        paths    = ["/123", "/234"]
-      }
-      query = ["546", "666"]
-
-      request_headers {
-        criteria = "DOES_NOT_BEGIN_WITH"
-        name     = "X"
-        values   = ["value1", "value2"]
-      }
-
-      request_headers {
-        criteria = "DOES_NOT_EQUAL"
-        name     = "Y-DOES-NOT"
-        values   = ["value1", "value2"]
-      }
-
-      cookie {
-        criteria = "DOES_NOT_END_WITH"
-        name     = "does-not-name"
-        value    = "does-not-value"
-      }
-
     }
 
     actions {
@@ -235,105 +130,15 @@ resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "asd" {
   }
 
   rule {
-    name    = "max-sec-rate-limit-report-only"
+    name    = "sec-rate-limit-close-connection"
     active  = true
     logging = true
     match_criteria {
-      client_ip_address {
-        criteria     = "IS_NOT_IN"
-        ip_addresses = ["2.1.1.1", "6.2.2.2"]
-      }
-
-      service_ports {
-        criteria = "IS_IN"
-        ports    = [80, 81]
-      }
-
-      protocol_type = "HTTP"
-
-      http_methods {
-        criteria = "IS_IN"
-        methods  = ["COPY", "HEAD"]
-      }
-      path {
-        criteria = "CONTAINS"
-        paths    = ["/123", "/234"]
-      }
-      query = ["546", "666"]
-
       request_headers {
         criteria = "DOES_NOT_BEGIN_WITH"
         name     = "X"
         values   = ["value1", "value2"]
       }
-
-      request_headers {
-        criteria = "DOES_NOT_EQUAL"
-        name     = "Y-DOES-NOT"
-        values   = ["value1", "value2"]
-      }
-
-      cookie {
-        criteria = "DOES_NOT_END_WITH"
-        name     = "does-not-name"
-        value    = "does-not-value"
-      }
-
-    }
-
-    actions {
-      rate_limit {
-        count  = "10000"
-        period = "2000"
-      }
-    }
-  }
-
-  rule {
-    name    = "max-sec-rate-limit-close-connection"
-    active  = true
-    logging = true
-    match_criteria {
-      client_ip_address {
-        criteria     = "IS_NOT_IN"
-        ip_addresses = ["2.1.1.1", "6.2.2.2"]
-      }
-
-      service_ports {
-        criteria = "IS_IN"
-        ports    = [80, 81]
-      }
-
-      protocol_type = "HTTP"
-
-      http_methods {
-        criteria = "IS_IN"
-        methods  = ["COPY", "HEAD"]
-      }
-      path {
-        criteria = "CONTAINS"
-        paths    = ["/123", "/234"]
-      }
-      query = ["546", "666"]
-
-      request_headers {
-        criteria = "DOES_NOT_BEGIN_WITH"
-        name     = "X"
-        values   = ["value1", "value2"]
-      }
-
-      request_headers {
-        criteria = "DOES_NOT_EQUAL"
-        name     = "Y-DOES-NOT"
-        values   = ["value1", "value2"]
-      }
-
-      cookie {
-        criteria = "DOES_NOT_END_WITH"
-        name     = "does-not-name"
-        value    = "does-not-value"
-      }
-
     }
 
     actions {
@@ -346,50 +151,15 @@ resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "asd" {
   }
 
   rule {
-    name    = "max-sec-rate-limit-redirect"
+    name    = "sec-rate-limit-redirect"
     active  = true
     logging = true
     match_criteria {
-      client_ip_address {
-        criteria     = "IS_NOT_IN"
-        ip_addresses = ["2.1.1.1", "6.2.2.2"]
-      }
-
-      service_ports {
-        criteria = "IS_IN"
-        ports    = [80, 81]
-      }
-
-      protocol_type = "HTTP"
-
-      http_methods {
-        criteria = "IS_IN"
-        methods  = ["COPY", "HEAD"]
-      }
-      path {
-        criteria = "CONTAINS"
-        paths    = ["/123", "/234"]
-      }
-      query = ["546", "666"]
-
       request_headers {
         criteria = "DOES_NOT_BEGIN_WITH"
         name     = "X"
         values   = ["value1", "value2"]
       }
-
-      request_headers {
-        criteria = "DOES_NOT_EQUAL"
-        name     = "Y-DOES-NOT"
-        values   = ["value1", "value2"]
-      }
-
-      cookie {
-        criteria = "DOES_NOT_END_WITH"
-        name     = "does-not-name"
-        value    = "does-not-value"
-      }
-
     }
 
     actions {
@@ -409,50 +179,11 @@ resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "asd" {
   }
 
   rule {
-    name    = "max-sec-rate-limit-local-resp"
+    name    = "sec-rate-limit-local-resp"
     active  = true
     logging = true
     match_criteria {
-      client_ip_address {
-        criteria     = "IS_NOT_IN"
-        ip_addresses = ["2.1.1.1", "6.2.2.2"]
-      }
-
-      service_ports {
-        criteria = "IS_IN"
-        ports    = [80, 81]
-      }
-
-      protocol_type = "HTTP"
-
-      http_methods {
-        criteria = "IS_IN"
-        methods  = ["COPY", "HEAD"]
-      }
-      path {
-        criteria = "CONTAINS"
-        paths    = ["/123", "/234"]
-      }
       query = ["546", "666"]
-
-      request_headers {
-        criteria = "DOES_NOT_BEGIN_WITH"
-        name     = "X"
-        values   = ["value1", "value2"]
-      }
-
-      request_headers {
-        criteria = "DOES_NOT_EQUAL"
-        name     = "Y-DOES-NOT"
-        values   = ["value1", "value2"]
-      }
-
-      cookie {
-        criteria = "DOES_NOT_END_WITH"
-        name     = "does-not-name"
-        value    = "does-not-value"
-      }
-
     }
 
     actions {
@@ -465,6 +196,23 @@ resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "asd" {
           status_code  = "403"
         }
       }
+    }
+  }
+
+  rule {
+    name    = "one-criteria"
+    active  = true
+    logging = true
+    match_criteria {
+      cookie {
+        criteria = "DOES_NOT_END_WITH"
+        name     = "does-not-name"
+        value    = "does-not-value"
+      }
+    }
+
+    actions {
+      redirect_to_https = "80"
     }
   }
 }
@@ -534,26 +282,24 @@ One of the below actions should be specified per rule
 * `connections` - (Optional) One of `ALLOW` or `CLOSE`
 * `rate_limit` - (Optional) Rate based action
  * `count` - (Required) Amount of connections that are permitted within each period before triggering the action
- * `period` - (Required) Time value in secondsto enforce rate count.
+ * `period` - (Required) Time value in seconds to enforce rate count.
  * `action_close_connection` - (Optional) Boolean value to mark that the connection should be closed
    if `count` limit is hit.
  * `action_redirect` - (Optional)
-   * `protocol` - (Required) One of `HTTP`, `HTTPS`
-   * `port` - (Required) Destination port for redirect
-   * `status_code` - (Required) Status code to use for redirect. One of `301`, `302`, `307`
-   * `host` - (Required) Host, to which the request should be redirected
-   * `path` - (Required) Path to which the request should be redirected
-   * `keep_query` - (Required) Boolean value to mark if query part be preserved or not
+      * `protocol` - (Required) One of `HTTP`, `HTTPS`
+      * `port` - (Required) Destination port for redirect
+      * `status_code` - (Required) Status code to use for redirect. One of `301`, `302`, `307`
+      * `host` - (Required) Host, to which the request should be redirected
+      * `path` - (Required) Path to which the request should be redirected
+      * `keep_query` - (Required) Boolean value to mark if query part be preserved or not
  * `action_local_response` - (Optional)
-   * `content` - Base64 encoded content. Terraform function `base64encode` can be used.
-   * `content_type` - Mime type of content. E.g. `text/plain`
-   * `status_code` - (Required) Status code that should be sent. E.g. 403
+      * `content` - (Required) Base64 encoded content. Terraform function `base64encode` can be used.
+      * `content_type` - (Required) Mime type of content. E.g. `text/plain`
+      * `status_code` - (Required) Status code that should be sent. E.g. 403
 * `send_response` - (Optional) Send a customized response
  * `content` - Base64 encoded content. Terraform function `base64encode` can be used.
  * `content_type` - Mime type of content. E.g. `text/plain`
  * `status_code` - (Required) Status code that should be sent. E.g. 403
-
-
 
 ## Importing
 

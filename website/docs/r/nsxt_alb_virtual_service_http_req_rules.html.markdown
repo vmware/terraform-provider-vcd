@@ -79,49 +79,13 @@ resource "vcd_nsxt_alb_virtual_service_http_req_rules" "example" {
   }
 
   rule {
-    name   = "criteria-max-modify-header"
+    name   = "other"
     active = true
     match_criteria {
       client_ip_address {
         criteria     = "IS_NOT_IN"
         ip_addresses = ["1.1.1.1", "2.2.2.2"]
       }
-
-      service_ports {
-        criteria = "IS_IN"
-        ports    = [80, 81]
-      }
-
-      protocol_type = "HTTP"
-
-      http_methods {
-        criteria = "IS_IN"
-        methods  = ["COPY", "HEAD"]
-      }
-      path {
-        criteria = "CONTAINS"
-        paths    = ["/123", "/234"]
-      }
-      query = ["546", "666"]
-
-      request_headers {
-        criteria = "DOES_NOT_BEGIN_WITH"
-        name     = "X"
-        values   = ["value1", "value2"]
-      }
-
-      request_headers {
-        criteria = "DOES_NOT_EQUAL"
-        name     = "Y-DOES-NOT"
-        values   = ["value1", "value2"]
-      }
-
-      cookie {
-        criteria = "DOES_NOT_END_WITH"
-        name     = "does-not-name"
-        value    = "does-not-value"
-      }
-
     }
 
     actions {
@@ -139,63 +103,6 @@ resource "vcd_nsxt_alb_virtual_service_http_req_rules" "example" {
         action = "REPLACE"
         name   = "X-EXISTING-HEADER"
         value  = "new-value"
-      }
-
-    }
-  }
-
-  rule {
-    name   = "criteria-max-rewrite-url"
-    active = true
-    match_criteria {
-      client_ip_address {
-        criteria     = "IS_NOT_IN"
-        ip_addresses = ["1.1.1.1", "2.2.2.2"]
-      }
-
-      service_ports {
-        criteria = "IS_IN"
-        ports    = [80, 81]
-      }
-
-      protocol_type = "HTTP"
-
-      http_methods {
-        criteria = "IS_IN"
-        methods  = ["COPY", "HEAD"]
-      }
-      path {
-        criteria = "CONTAINS"
-        paths    = ["/123", "/234"]
-      }
-      query = ["546", "666"]
-
-      request_headers {
-        criteria = "DOES_NOT_BEGIN_WITH"
-        name     = "X"
-        values   = ["value1", "value2"]
-      }
-
-      request_headers {
-        criteria = "DOES_NOT_EQUAL"
-        name     = "Y-DOES-NOT"
-        values   = ["value1", "value2"]
-      }
-
-      cookie {
-        criteria = "DOES_NOT_END_WITH"
-        name     = "does-not-name"
-        value    = "does-not-value"
-      }
-
-    }
-
-    actions {
-      rewrite_url {
-        host_header   = "host-header"
-        existing_path = "/123"
-        keep_query    = true
-        query         = "new"
       }
     }
   }

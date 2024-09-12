@@ -19,75 +19,18 @@ application returns.
 ## Example Usage
 
 ```hcl
-resource "vcd_nsxt_alb_virtual_service_http_resp_rules" "test1" {
+resource "vcd_nsxt_alb_virtual_service_http_resp_rules" "example" {
   virtual_service_id = vcd_nsxt_alb_virtual_service.test.id
 
   rule {
-    name   = "criteria-max-rewrite"
-    active = true
+    name    = "rule1"
+    active  = true
+    logging = true
     match_criteria {
-      client_ip_address {
-        criteria     = "IS_NOT_IN"
-        ip_addresses = ["1.1.1.1", "2.2.2.2"]
-      }
-
-      service_ports {
-        criteria = "IS_IN"
-        ports    = [80, 81]
-      }
-
-      protocol_type = "HTTP"
-
-      http_methods {
-        criteria = "IS_IN"
-        methods  = ["COPY", "HEAD"]
-      }
-      path {
-        criteria = "CONTAINS"
-        paths    = ["/123", "/234"]
-      }
-      query = ["546", "666"]
-
-      request_headers {
-        criteria = "DOES_NOT_BEGIN_WITH"
-        name     = "X"
-        values   = ["value1", "value2"]
-      }
-
-      request_headers {
-        criteria = "DOES_NOT_EQUAL"
-        name     = "Y-DOES-NOT"
-        values   = ["value1", "value2"]
-      }
-
-      cookie {
-        criteria = "DOES_NOT_END_WITH"
-        name     = "does-not-name"
-        value    = "does-not-value"
-      }
-
-      location_header {
-        criteria = "DOES_NOT_EQUAL"
-        values   = ["one", "two"]
-      }
-
-      response_headers {
-        criteria = "CONTAINS"
-        name     = "X-CONTAINS-RESP-HEADER"
-        values   = ["vone", "vtwo"]
-      }
-
-      response_headers {
-        criteria = "DOES_NOT_END_WITH"
-        name     = "-END"
-        values   = ["asd", "bsd"]
-      }
-
       status_code {
         criteria         = "IS_NOT_IN"
         http_status_code = "200"
       }
-
     }
 
     actions {
@@ -103,7 +46,7 @@ resource "vcd_nsxt_alb_virtual_service_http_resp_rules" "test1" {
 
   rule {
     name   = "criteria-max-modify-header"
-    active = true
+    active = false
     match_criteria {
       client_ip_address {
         criteria     = "IS_NOT_IN"
@@ -121,11 +64,6 @@ resource "vcd_nsxt_alb_virtual_service_http_resp_rules" "test1" {
         criteria = "IS_IN"
         methods  = ["COPY", "HEAD"]
       }
-      path {
-        criteria = "CONTAINS"
-        paths    = ["/123", "/234"]
-      }
-      query = ["546", "666"]
 
       request_headers {
         criteria = "DOES_NOT_BEGIN_WITH"
@@ -179,14 +117,9 @@ resource "vcd_nsxt_alb_virtual_service_http_resp_rules" "test1" {
         name   = "X-ADDED-HEADER"
         value  = "value"
       }
-
-      modify_header {
-        action = "REPLACE"
-        name   = "X-EXISTING-HEADER"
-        value  = "new-value"
-      }
     }
   }
+
 }
 ```
 
