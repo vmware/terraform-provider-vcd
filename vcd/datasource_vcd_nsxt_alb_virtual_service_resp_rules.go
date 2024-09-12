@@ -13,9 +13,9 @@ func datasourceVcdAlbVirtualServiceRespRules() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"virtual_service_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
+				Type:     schema.TypeString,
+				Required: true,
+
 				Description: "NSX-T ALB Virtual Service ID",
 			},
 			"rule": {

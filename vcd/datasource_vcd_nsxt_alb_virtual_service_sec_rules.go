@@ -15,7 +15,6 @@ func datasourceVcdAlbVirtualServiceSecRules() *schema.Resource {
 			"virtual_service_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "NSX-T ALB Virtual Service ID",
 			},
 			"rule": {
