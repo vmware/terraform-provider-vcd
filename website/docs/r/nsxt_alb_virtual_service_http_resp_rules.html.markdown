@@ -191,9 +191,7 @@ and API validation will return errors
 * `modify_header` - (Optional) One or more blocks to perform actions on headers
  * `action` - (Required) One of `ADD`, `REMOVE`, `REPLACE`
  * `name` - (Required) Name of HTTP header
- * `value` - (Optional) New value to set (only for `ADD` and `REPLACE`) 
-
-
+ * `value` - (Optional) New value to set (only for `ADD` and `REPLACE`)
 
 ## Importing
 

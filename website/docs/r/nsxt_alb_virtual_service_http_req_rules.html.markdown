@@ -178,7 +178,6 @@ and API validation will return errors
  * `keep_query` - Whether or not to keep the existing query string when rewriting the URL
  * `query` - Query string to use or append to the existing query string in the rewritten URL
 
-
 ## Importing
 
 ~> The current implementation of Terraform import can only import resources into the state.
