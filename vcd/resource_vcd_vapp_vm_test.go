@@ -4,6 +4,8 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"net/url"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -463,6 +465,138 @@ resource "vcd_vm" "boot-image-vm" {
 
   os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
+}
+`
+
+// TestAccVcdVm_WithoutOrganizationVdcDiskIopsRights tests VM creation with a user that does not have any "Organization vDC Disk: View/edit" IOPS rights.
+// This test will panic without fix made in https://github.com/vmware/terraform-provider-vcd/pull/1312
+func TestAccVcdVm_WithoutOrganizationVdcDiskIopsRights(t *testing.T) {
+	preTestChecks(t)
+	skipIfNotSysAdmin(t)
+
+	var params = StringMap{
+		"ProviderVcdSystem": providerVcdSystem,
+		"ProviderVcdOrg":    providerVcdOrg1,
+		"Org":               testConfig.VCD.Org,
+		"Name":              t.Name(),
+		"Vdc":               testConfig.Nsxt.Vdc,
+		"Catalog":           testConfig.VCD.Catalog.NsxtBackedCatalogName,
+		"CatalogItem":       testConfig.VCD.Catalog.NsxtCatalogItem,
+		"Tags":              "vapp vm",
+	}
+	testParamsNotEmpty(t, params)
+
+	configText := templateFill(testAccCheckVcdVmWithoutIopsRights, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	vcdClient := createTemporaryVCDConnection(false)
+	// Save the rights that are manipulated to restore them when the test is finished
+	var modifiedRights []types.OpenApiReference
+
+	// Restore the role with the rights that were removed, if needed, at the end of the test.
+	// The "modifiedRights" is set during test execution PreConfig phase
+	defer func() {
+		if len(modifiedRights) > 0 {
+			role, err := vcdClient.Client.GetGlobalRoleByName("Organization Administrator")
+			if err != nil {
+				t.Fatalf("could not restore rights after %s test finished, %s", t.Name(), err)
+			}
+			err = role.AddRights(modifiedRights)
+			if err != nil {
+				t.Fatalf("could not restore rights after %s test finished, %s", t.Name(), err)
+			}
+		}
+	}()
+
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: buildMultipleProviders(),
+		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(t.Name(), params["Org"].(string), params["Vdc"].(string)),
+		Steps: []resource.TestStep{
+			{
+				Config: configText,
+				PreConfig: func() {
+					role, err := vcdClient.Client.GetGlobalRoleByName("Organization Administrator")
+					if err != nil {
+						if govcd.ContainsNotFound(err) {
+							t.Skipf("could not find required global role Organization Administrator")
+						}
+						t.Fatal(err)
+					}
+					// Use a filter, so we only get the "Organization vDC Disk: ..." rights and skip the non-relevant ones
+					filter := make(url.Values)
+					filter.Set("filter", "name==Organization vDC Disk*")
+					existingRights, err := role.GetRights(filter)
+					if err != nil {
+						t.Fatal(err)
+					}
+					// If the rights are not present in that role, there's nothing else to do
+					if len(existingRights) == 0 {
+						return
+					}
+					// Convert the obtained rights to OpenApiReference to be able to remove them.
+					// We save them in the outer-scoped "modifiedRights" so they can be re-added later
+					for _, right := range existingRights {
+						modifiedRights = append(modifiedRights, types.OpenApiReference{
+							Name: right.Name,
+							ID:   right.ID,
+						})
+					}
+					err = role.RemoveRights(modifiedRights)
+					if err != nil {
+						t.Fatal(err)
+					}
+				},
+				Check: resource.ComposeTestCheckFunc(
+					// Nothing to test here, we just want to assert that no panic is thrown anymore
+					resource.TestCheckResourceAttr("vcd_vm.my_vm", "name", t.Name()),
+				),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccCheckVcdVmWithoutIopsRights = `
+# Acceptance tests only:
+# This data source initializes the 'testAccProvider' variable and prevents a panic
+# in 'testAccCheckVcdStandaloneVmDestroy' when running acceptance tests
+# (check TESTING.md "Tests with multiple providers" for more info)
+data "vcd_version" "dummy" {
+  provider = {{.ProviderVcdSystem}}
+}
+
+data "vcd_catalog" "my-catalog" {
+  provider = {{.ProviderVcdOrg}}
+  org      = "{{.Org}}"
+  name     = "{{.Catalog}}"
+}
+
+data "vcd_catalog_vapp_template" "template" {
+  provider   = {{.ProviderVcdOrg}}
+  catalog_id = data.vcd_catalog.my-catalog.id
+  name       = "{{.CatalogItem}}"
+}
+
+resource "vcd_vm" "my_vm" {
+  provider         = {{.ProviderVcdOrg}}
+  org              = "{{.Org}}"
+  vdc              = "{{.Vdc}}"
+  name             = "{{.Name}}"
+  vapp_template_id = data.vcd_catalog_vapp_template.template.id
+  memory           = 512
+  cpus             = 1
+
+  override_template_disk {
+    bus_type        = "paravirtual"
+    size_in_mb      = "16384"
+    bus_number      = 0
+    unit_number     = 0
+    storage_profile = "*"
+  }
 }
 `
 

@@ -329,7 +329,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 						Description:  "Network type to use: 'vapp', 'org' or 'none'. Use 'vapp' for vApp network, 'org' to attach Org VDC network. 'none' for empty NIC.",
 					},
 					"ip_allocation_mode": {
-						Optional:     true,
+						Required:     true,
 						Type:         schema.TypeString,
 						ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
 						Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
