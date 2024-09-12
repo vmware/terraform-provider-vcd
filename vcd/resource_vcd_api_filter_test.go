@@ -15,6 +15,10 @@ func TestAccVcdApiFilter(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
+	if checkVersion(testConfig.Provider.ApiVersion, "< 37.3") {
+		t.Skipf("This test tests VCD 10.4.3+ (API V37.3+) features. Skipping.")
+	}
+
 	var params = StringMap{
 		"Vendor":            "vmware",
 		"Name":              t.Name(),
