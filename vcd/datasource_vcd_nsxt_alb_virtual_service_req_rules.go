@@ -43,7 +43,7 @@ var dsNsxtAlbVirtualServiceReqRule = &schema.Resource{
 		"logging": {
 			Type:        schema.TypeBool,
 			Computed:    true,
-			Description: "Defines whether to enable logging with headers on rule match or not",
+			Description: "Defines whether logging with headers on rule match is enabled or not",
 		},
 		"match_criteria": {
 			Type:        schema.TypeSet,
@@ -71,7 +71,7 @@ var dsNsxtAlbVsReqAndSecRuleMatchCriteria = &schema.Resource{
 					"criteria": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Criteria to use for IP address matching the HTTP request. Options - IS_IN, IS_NOT_IN.",
+						Description: "Criteria to use for IP address matching the HTTP request",
 					},
 					"ip_addresses": {
 						Type:        schema.TypeSet,
@@ -93,12 +93,12 @@ var dsNsxtAlbVsReqAndSecRuleMatchCriteria = &schema.Resource{
 					"criteria": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Criteria to use for IP address matching the HTTP request. Options - IS_IN, IS_NOT_IN",
+						Description: "Criteria to use for service port matching the HTTP request",
 					},
 					"ports": {
 						Type:        schema.TypeSet,
 						Computed:    true,
-						Description: "A set of TCP ports. Allowed values are 1-65535",
+						Description: "A set of TCP ports",
 						Elem: &schema.Schema{
 							Type: schema.TypeInt,
 						},
@@ -114,19 +114,18 @@ var dsNsxtAlbVsReqAndSecRuleMatchCriteria = &schema.Resource{
 		"http_methods": {
 			Type:        schema.TypeList,
 			Computed:    true,
-			Description: "",
+			Description: "HTTP methods that are matched",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Criteria to use for IP address matching the HTTP request. Options - IS_IN, IS_NOT_IN",
+						Description: "Criteria to use for HTTP method matching in the HTTP request",
 					},
 					"methods": {
-						Type:     schema.TypeSet,
-						Computed: true,
-						// Not validating these options as it might not be finite list and API returns proper explanations
-						Description: "HTTP methods to match. Options - GET, PUT, POST, DELETE, HEAD, OPTIONS, TRACE, CONNECT, PATCH, PROPFIND, PROPPATCH, MKCOL, COPY, MOVE, LOCK, UNLOCK",
+						Type:        schema.TypeSet,
+						Computed:    true,
+						Description: "HTTP methods that will be matched",
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
 						},
@@ -137,13 +136,13 @@ var dsNsxtAlbVsReqAndSecRuleMatchCriteria = &schema.Resource{
 		"path": {
 			Type:        schema.TypeList,
 			Computed:    true,
-			Description: "",
+			Description: "HTTP request path that will be matched",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Criteria to use for matching the path in the HTTP request URI. Options - BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL, REGEX_MATCH, REGEX_DOES_NOT_MATCH",
+						Description: "Criteria to use for matching the path in the HTTP request URI",
 					},
 					"paths": {
 						Type:        schema.TypeSet,
@@ -173,12 +172,12 @@ var dsNsxtAlbVsReqAndSecRuleMatchCriteria = &schema.Resource{
 					"criteria": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Criteria to use for matching headers and cookies in the HTTP request amd response. Options - EXISTS, DOES_NOT_EXIST, BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL",
+						Description: "Criteria to use for matching headers and cookies in the HTTP request amd response",
 					},
 					"name": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Name of the HTTP header whose value is to be matched. Must be non-blank and fewer than 10240 characters",
+						Description: "Name of the HTTP header whose value is to be matched",
 					},
 					"values": {
 						Type:        schema.TypeSet,
@@ -199,17 +198,17 @@ var dsNsxtAlbVsReqAndSecRuleMatchCriteria = &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
 						Type:        schema.TypeString,
-						Optional:    true,
-						Description: "Criteria to use for matching cookies in the HTTP request. Options - EXISTS, DOES_NOT_EXIST, BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL",
+						Computed:    true,
+						Description: "Criteria to use for matching cookies in the HTTP request",
 					},
 					"name": {
 						Type:        schema.TypeString,
-						Optional:    true,
+						Computed:    true,
 						Description: "Name of the HTTP cookie whose value is to be matched",
 					},
 					"value": {
 						Type:        schema.TypeString,
-						Optional:    true,
+						Computed:    true,
 						Description: "String values to match for an HTTP cookie",
 					},
 				},
@@ -234,27 +233,27 @@ var dsNsxtAlbVsReqRuleActions = &schema.Resource{
 					"port": {
 						Type:        schema.TypeInt,
 						Computed:    true,
-						Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
+						Description: "Port to which the request will be redirected",
 					},
 					"status_code": {
 						Type:        schema.TypeInt,
 						Computed:    true,
-						Description: "One of the redirect status codes - 301, 302, 307",
+						Description: "Redirect status code",
 					},
 					"host": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Host to which redirect the request. Default is the original host",
+						Description: "Host to which redirect the request",
 					},
 					"path": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
+						Description: "Port to which redirect the request",
 					},
 					"keep_query": {
 						Type:        schema.TypeBool,
 						Computed:    true,
-						Description: "Path to which redirect the request. Default is the original path",
+						Description: "Path to which redirect the request",
 					},
 				},
 			},
@@ -268,7 +267,7 @@ var dsNsxtAlbVsReqRuleActions = &schema.Resource{
 					"action": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "One of the following HTTP header actions. Options - ADD, REMOVE, REPLACE",
+						Description: "One of the following HTTP header actions",
 					},
 					"name": {
 						Type:        schema.TypeString,

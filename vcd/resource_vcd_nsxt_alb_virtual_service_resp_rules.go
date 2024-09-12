@@ -201,7 +201,7 @@ var nsxtAlbVirtualServiceRespRuleMatchCriteria = &schema.Resource{
 					"name": {
 						Type:        schema.TypeString,
 						Optional:    true,
-						Description: "Name of the HTTP header whose value is to be matched. Must be non-blank and fewer than 10240 characters",
+						Description: "Name of the HTTP header whose value is to be matched",
 					},
 					"values": {
 						Type:        schema.TypeSet,
