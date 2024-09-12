@@ -35,7 +35,7 @@ func resourceVcdAlbVirtualServiceSecRules() *schema.Resource {
 				Type:        schema.TypeList,
 				Optional:    true,
 				Elem:        nsxtAlbVirtualServiceSecRule,
-				Description: "A single HTTP Request Rule",
+				Description: "A single HTTP Security Rule",
 			},
 		},
 	}
@@ -64,7 +64,8 @@ var nsxtAlbVirtualServiceSecRule = &schema.Resource{
 			MaxItems:    1,
 			Required:    true,
 			Description: "Rule matching Criteria",
-			Elem:        nsxtAlbVsReqAndSecRuleMatchCriteria,
+			// Match criteria are the same as for HTTP Request
+			Elem: nsxtAlbVsReqAndSecRuleMatchCriteria,
 		},
 		"actions": {
 			Type:        schema.TypeSet,
@@ -106,7 +107,7 @@ var nsxtAlbVsSecRuleActions = &schema.Resource{
 					"period": {
 						Type:         schema.TypeString,
 						Optional:     true,
-						Description:  "Time value in seconds to enforce rate count. The period must be between 1 and 1000000000.",
+						Description:  "Time value in seconds to enforce rate count. The period must be between 1 and 1000000000",
 						ValidateFunc: IsIntAndAtLeast(1), // Using TypeString + validation to be able to distinguish empty value and '0'
 					},
 					"action_close_connection": {
@@ -320,14 +321,14 @@ func getAlbVsHttpSecurityRuleType(d *schema.ResourceData) (*types.AlbVsHttpSecur
 	return structure, nil
 }
 
-func getSecurityMatchCriteriaType(matchCriteria *schema.Set) types.AlbVsHttpRequestRuleMatchCriteria {
+func getSecurityMatchCriteriaType(matchCriteria *schema.Set) types.AlbVsHttpRequestAndSecurityRuleMatchCriteria {
 	if matchCriteria.Len() == 0 {
-		return types.AlbVsHttpRequestRuleMatchCriteria{}
+		return types.AlbVsHttpRequestAndSecurityRuleMatchCriteria{}
 	}
 	schemaSet := matchCriteria.List()
 
 	allCriteria := schemaSet[0].(map[string]interface{})
-	criteria := types.AlbVsHttpRequestRuleMatchCriteria{}
+	criteria := types.AlbVsHttpRequestAndSecurityRuleMatchCriteria{}
 
 	clientIpAddressCriteria := allCriteria["client_ip_address"].([]interface{})
 	if len(clientIpAddressCriteria) > 0 {

@@ -65,7 +65,7 @@ var dsNsxtAlbVirtualServiceRespRuleMatchCriteria = &schema.Resource{
 		"client_ip_address": {
 			Type:        schema.TypeList,
 			Computed:    true,
-			Description: "",
+			Description: "Criteria for matching client IP Address",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
@@ -87,7 +87,7 @@ var dsNsxtAlbVirtualServiceRespRuleMatchCriteria = &schema.Resource{
 		"service_ports": {
 			Type:        schema.TypeList,
 			Computed:    true,
-			Description: "",
+			Description: "Criteria for matching service ports",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
@@ -114,7 +114,7 @@ var dsNsxtAlbVirtualServiceRespRuleMatchCriteria = &schema.Resource{
 		"http_methods": {
 			Type:        schema.TypeList,
 			Computed:    true,
-			Description: "",
+			Description: "Criteria to match HTTP methods",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
@@ -137,7 +137,7 @@ var dsNsxtAlbVirtualServiceRespRuleMatchCriteria = &schema.Resource{
 		"path": {
 			Type:        schema.TypeList,
 			Computed:    true,
-			Description: "",
+			Description: "Criteria for matching request paths",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
@@ -215,12 +215,11 @@ var dsNsxtAlbVirtualServiceRespRuleMatchCriteria = &schema.Resource{
 				},
 			},
 		},
-
-		//
+		// in addition to the same rules that are available for HTTP requests
 		"location_header": {
 			Type:        schema.TypeList,
 			Computed:    true,
-			Description: "",
+			Description: "A matching criteria for Location header",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {

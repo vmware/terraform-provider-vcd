@@ -22,7 +22,7 @@ func datasourceVcdAlbVirtualServiceSecRules() *schema.Resource {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Elem:        dsNsxtAlbVirtualServiceSecRule,
-				Description: "A single HTTP Request Rule",
+				Description: "A single HTTP Security Rule",
 			},
 		},
 	}
@@ -49,7 +49,8 @@ var dsNsxtAlbVirtualServiceSecRule = &schema.Resource{
 			Type:        schema.TypeSet,
 			Computed:    true,
 			Description: "Rule matching Criteria",
-			Elem:        dsNsxtAlbVsReqAndSecRuleMatchCriteria,
+			// Match criteria are the same as for HTTP Request
+			Elem: dsNsxtAlbVsReqAndSecRuleMatchCriteria,
 		},
 		"actions": {
 			Type:        schema.TypeSet,
@@ -86,7 +87,7 @@ var dsNsxtAlbVsSecRuleActions = &schema.Resource{
 					"period": {
 						Type:        schema.TypeString,
 						Computed:    true,
-						Description: "Time value in seconds to enforce rate count. The period must be between 1 and 1000000000.",
+						Description: "Time value in seconds to enforce rate count. The period must be between 1 and 1000000000",
 					},
 					"action_close_connection": {
 						Type:        schema.TypeBool,

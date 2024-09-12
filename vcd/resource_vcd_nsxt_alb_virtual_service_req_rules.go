@@ -160,12 +160,13 @@ var nsxtAlbVsReqAndSecRuleMatchCriteria = &schema.Resource{
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Description: "",
+			Description: "Request path criteria",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
-						Type:        schema.TypeString,
-						Optional:    true,
+						Type:     schema.TypeString,
+						Optional: true,
+						// Validation does return options as opposed to the cases where we only have IS_IN, IS_NOT_IN
 						Description: "Criteria to use for matching the path in the HTTP request URI. Options - BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL, REGEX_MATCH, REGEX_DOES_NOT_MATCH",
 					},
 					"paths": {
@@ -218,7 +219,7 @@ var nsxtAlbVsReqAndSecRuleMatchCriteria = &schema.Resource{
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Description: "Rule for matching cookie",
+			Description: "Criteria for matching cookie",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
@@ -270,12 +271,12 @@ var nsxtAlbVirtualServiceReqRuleActions = &schema.Resource{
 					"host": {
 						Type:        schema.TypeString,
 						Optional:    true,
-						Description: "Host to which redirect the request.",
+						Description: "Host to which redirect the request",
 					},
 					"path": {
 						Type:        schema.TypeString,
 						Optional:    true,
-						Description: "Path to which redirect the request.",
+						Description: "Path to which redirect the request",
 					},
 					"keep_query": {
 						Type:        schema.TypeBool,
@@ -444,14 +445,14 @@ func getAlbVsHttpRequestRuleType(d *schema.ResourceData) (*types.AlbVsHttpReques
 	return structure, nil
 }
 
-func getMatchCriteriaType(matchCriteria *schema.Set) types.AlbVsHttpRequestRuleMatchCriteria {
+func getMatchCriteriaType(matchCriteria *schema.Set) types.AlbVsHttpRequestAndSecurityRuleMatchCriteria {
 	if matchCriteria.Len() == 0 {
-		return types.AlbVsHttpRequestRuleMatchCriteria{}
+		return types.AlbVsHttpRequestAndSecurityRuleMatchCriteria{}
 	}
 	schemaSet := matchCriteria.List()
 
 	allCriteria := schemaSet[0].(map[string]interface{})
-	criteria := types.AlbVsHttpRequestRuleMatchCriteria{}
+	criteria := types.AlbVsHttpRequestAndSecurityRuleMatchCriteria{}
 
 	clientIpAddressCriteria := allCriteria["client_ip_address"].([]interface{})
 	if len(clientIpAddressCriteria) > 0 {
@@ -594,7 +595,7 @@ func setAlbVsHttpRequestRuleData(d *schema.ResourceData, rules []*types.AlbVsHtt
 		singleRule["active"] = rule.Active
 		singleRule["logging"] = rule.Logging
 
-		////////// match_criteria block
+		// 'match_criteria' block
 
 		matchCriteria := make([]interface{}, 1)
 		matchCriteriaMap := make(map[string]interface{})
@@ -672,9 +673,9 @@ func setAlbVsHttpRequestRuleData(d *schema.ResourceData, rules []*types.AlbVsHtt
 		matchCriteria[0] = matchCriteriaMap
 		singleRule["match_criteria"] = matchCriteria
 
-		// EOF match_criteria
+		// EOF 'match_criteria' block
 
-		// 'actions'
+		// 'actions' block
 
 		actions := make([]interface{}, 1)
 		actionsMap := make(map[string]interface{})
@@ -725,7 +726,7 @@ func setAlbVsHttpRequestRuleData(d *schema.ResourceData, rules []*types.AlbVsHtt
 		actions[0] = actionsMap
 		singleRule["actions"] = actions
 
-		// EOF 'actions'
+		// EOF 'actions' block
 		allRules[ruleIndex] = singleRule
 	}
 

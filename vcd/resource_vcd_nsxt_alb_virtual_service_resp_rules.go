@@ -81,7 +81,7 @@ var nsxtAlbVirtualServiceRespRuleMatchCriteria = &schema.Resource{
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Description: "",
+			Description: "Criteria for matching client IP Address",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
@@ -105,7 +105,7 @@ var nsxtAlbVirtualServiceRespRuleMatchCriteria = &schema.Resource{
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Description: "",
+			Description: "Criteria for matching service ports",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
@@ -135,7 +135,7 @@ var nsxtAlbVirtualServiceRespRuleMatchCriteria = &schema.Resource{
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Description: "",
+			Description: "Criteria to match HTTP methods",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
@@ -160,7 +160,7 @@ var nsxtAlbVirtualServiceRespRuleMatchCriteria = &schema.Resource{
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Optional:    true,
-			Description: "",
+			Description: "Criteria for matching request paths",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
@@ -648,8 +648,7 @@ func setAlbVsHttpResponsetRuleData(d *schema.ResourceData, rules []*types.AlbVsH
 		singleRule["active"] = rule.Active
 		singleRule["logging"] = rule.Logging
 
-		// match_criteria block
-
+		// 'match_criteria' block
 		matchCriteria := make([]interface{}, 1)
 		matchCriteriaMap := make(map[string]interface{})
 
@@ -758,10 +757,9 @@ func setAlbVsHttpResponsetRuleData(d *schema.ResourceData, rules []*types.AlbVsH
 		matchCriteria[0] = matchCriteriaMap
 		singleRule["match_criteria"] = matchCriteria
 
-		// EOF match_criteria
+		// EOF 'match_criteria' block
 
-		// 'actions'
-
+		// 'actions' block
 		actions := make([]interface{}, 1)
 		actionsMap := make(map[string]interface{})
 
@@ -797,7 +795,7 @@ func setAlbVsHttpResponsetRuleData(d *schema.ResourceData, rules []*types.AlbVsH
 		actions[0] = actionsMap
 		singleRule["actions"] = actions
 
-		// EOF 'actions'
+		// EOF 'actions' block
 
 		allRules[ruleIndex] = singleRule
 	}
