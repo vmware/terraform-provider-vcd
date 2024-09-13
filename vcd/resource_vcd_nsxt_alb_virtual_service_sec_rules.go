@@ -229,12 +229,12 @@ func resourceVcdAlbVirtualServiceSecRulesCreate(ctx context.Context, d *schema.R
 
 	cfg, err := getAlbVsHttpSecurityRuleType(d)
 	if err != nil {
-		return diag.Errorf("error getting HTTP Request Rule type: %s", err)
+		return diag.Errorf("error getting HTTP Security Rule type: %s", err)
 	}
 
 	_, err = albVirtualService.UpdateHttpSecurityRules(cfg)
 	if err != nil {
-		return diag.Errorf("error creating HTTP Request Rules: %s", err)
+		return diag.Errorf("error creating HTTP Security Rules: %s", err)
 	}
 
 	d.SetId(albVirtualService.NsxtAlbVirtualService.ID)
@@ -260,14 +260,14 @@ func genericVcdAlbVirtualServiceSecRulesRead(ctx context.Context, d *schema.Reso
 
 	rules, err := albVirtualService.GetAllHttpSecurityRules(nil)
 	if err != nil {
-		return diag.Errorf("could not retrieve HTTP Request Rules: %s", err)
+		return diag.Errorf("could not retrieve HTTP Security Rules: %s", err)
 	}
 
 	dSet(d, "virtual_service_id", albVirtualService.NsxtAlbVirtualService.ID)
 	d.SetId(albVirtualService.NsxtAlbVirtualService.ID)
 	err = setAlbVsHttpSecuritytRuleData(d, rules)
 	if err != nil {
-		return diag.Errorf("error storing HTTP Request Rule: %s", err)
+		return diag.Errorf("error storing HTTP Security Rule: %s", err)
 	}
 
 	return nil
@@ -287,7 +287,7 @@ func resourceVcdAlbVirtualServiceSecRulesDelete(ctx context.Context, d *schema.R
 
 	_, err = albVirtualService.UpdateHttpSecurityRules(&types.AlbVsHttpSecurityRules{})
 	if err != nil {
-		return diag.Errorf("error creating HTTP Request Rules: %s", err)
+		return diag.Errorf("error creating HTTP Security Rules: %s", err)
 	}
 
 	return nil

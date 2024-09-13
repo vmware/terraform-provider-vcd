@@ -163,7 +163,8 @@ and API validation will return errors
 
 * `redirect` - (Optional) Redirects the request to different location
  * `protocol` - (Required) One of `HTTP`, `HTTPS`
- * `port` - (Required) Destination port for redirect
+ * `port` - (Required) Destination port for redirect. Default is 80 for `protocol` `HTTP`, 443 for
+   `HTTPS`
  * `status_code` - (Required) Status code to use for redirect. One of `301`, `302`, `307`
  * `host` - (Optional) Host, to which the request should be redirected
  * `path` - (Optional) Path to which the request should be redirected
@@ -175,7 +176,7 @@ and API validation will return errors
 * `rewrite_url` - (Optional) URL Rewrite rules, at most one block
  * `host_header` - (Required) Host to use for the rewritten URL
  * `existing_path` - (Required) Path to use for the rewritten URL
- * `keep_query` - (Optional)Whether or not to keep the existing query string when rewriting the URL
+ * `keep_query` - (Optional) Whether or not to keep the existing query string when rewriting the URL
  * `query` - (Optional) Query string to use or append to the existing query string in the rewritten URL
 
 ## Importing

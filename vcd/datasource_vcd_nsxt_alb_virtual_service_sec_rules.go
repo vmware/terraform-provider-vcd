@@ -96,7 +96,7 @@ var dsNsxtAlbVsSecRuleActions = &schema.Resource{
 					"action_redirect": {
 						Type:        schema.TypeList,
 						Computed:    true,
-						Description: "",
+						Description: "Redirect request",
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								"protocol": {
