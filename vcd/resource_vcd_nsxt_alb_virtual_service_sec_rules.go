@@ -152,7 +152,7 @@ var nsxtAlbVsSecRuleActions = &schema.Resource{
 									Type:        schema.TypeBool,
 									Optional:    true,
 									Default:     true,
-									Description: "Path to which redirect the request",
+									Description: "Should the query part be preserved",
 								},
 							},
 						},

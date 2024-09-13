@@ -346,12 +346,12 @@ var nsxtAlbVirtualServiceRespRuleActions = &schema.Resource{
 					"path": {
 						Type:        schema.TypeString,
 						Optional:    true,
-						Description: "Port to which redirect the request",
+						Description: "Path to which redirect the request",
 					},
 					"keep_query": {
 						Type:        schema.TypeBool,
 						Optional:    true,
-						Description: "Path to which redirect the request",
+						Description: "Should the query part be preserved",
 					},
 				},
 			},
