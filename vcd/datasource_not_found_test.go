@@ -140,6 +140,22 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 				skipVersionConstraint: "< 37.3",
 				datasourceName:        "vcd_api_filter",
 			},
+			{
+				skipVersionConstraint: "< 38.0",
+				datasourceName:        "vcd_nsxt_alb_virtual_service_http_req_rules",
+			},
+			{
+				skipVersionConstraint: "< 38.0",
+				datasourceName:        "vcd_nsxt_alb_virtual_service_http_resp_rules",
+			},
+			{
+				skipVersionConstraint: "< 38.0",
+				datasourceName:        "vcd_nsxt_alb_virtual_service_http_sec_rules",
+			},
+			{
+				skipVersionConstraint: "< 38.0",
+				datasourceName:        "vcd_nsxt_tier0_router_interface",
+			},
 		}
 		// urn:vcloud:ipSpace:2ec12e23-6911-4950-a33f-5602ae72ced2
 
@@ -328,6 +344,14 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			return templateFields
 		}
 
+		if (dataSourceName == "vcd_nsxt_alb_virtual_service_http_req_rules" ||
+			dataSourceName == "vcd_nsxt_alb_virtual_service_http_resp_rules" ||
+			dataSourceName == "vcd_nsxt_alb_virtual_service_http_sec_rules") &&
+			mandatoryFields[fieldIndex] == "virtual_service_id" {
+			// injecting fake ALB Virtual Service ID
+			templateFields = templateFields + `virtual_service_id = "urn:vcloud:loadBalancerVirtualService:00000000-a0b9-410a-96c6-3f56ecc93ea1"` + "\n"
+		}
+
 		if (dataSourceName == "vcd_org_saml" ||
 			dataSourceName == "vcd_org_saml_metadata" ||
 			dataSourceName == "vcd_org_ldap" ||
@@ -340,7 +364,6 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			mandatoryFields[fieldIndex] == "org_id" {
 			// injecting fake Org ID
 			templateFields = templateFields + `org_id = "urn:vcloud:org:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
-			// return templateFields
 		}
 
 		if dataSourceName == "vcd_solution_add_on_instance_publish" && mandatoryFields[fieldIndex] == "add_on_instance_name" {

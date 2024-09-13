@@ -1,0 +1,6 @@
+* **New Resource:** `vcd_nsxt_alb_virtual_service_http_req_rules` to manage ALB Virtual Service Request Rules [GH-1320]
+* **New Data Source:** `vcd_nsxt_alb_virtual_service_http_req_rules` to read ALB Virtual Service Request Rules [GH-1320]
+* **New Resource:** `vcd_nsxt_alb_virtual_service_http_resp_rules` to manage ALB Virtual Service Response Rules [GH-1320]
+* **New Data Source:** `vcd_nsxt_alb_virtual_service_http_resp_rules` to read ALB Virtual Service Response Rules [GH-1320]
+* **New Resource:** `vcd_nsxt_alb_virtual_service_http_sec_rules` to manage ALB Virtual Service Security Rules [GH-1320]
+* **New Data Source:** `vcd_nsxt_alb_virtual_service_http_sec_rules` to read ALB Virtual Service Security Rules [GH-1320]
