@@ -358,3 +358,4 @@ vcd.ResourceSchema-vcd_rde_interface_behavior.tf v3.13.0 "Changed fields to comp
 vcd.ResourceSchema-vcd_rde_type_behavior.tf v3.13.0 "Changed fields to computed and added new arguments"
 vcd.ResourceSchema-vcd_vm_sizing_policy.tf v3.13.0 "Changed description"
 vcd.ResourceSchema-vcd_vm_vgpu_policy.tf v3.13.0 "Changed description"
+vcd.ResourceSchema-vcd_network_routed_v2.tf v3.13.0 "Changed description"
