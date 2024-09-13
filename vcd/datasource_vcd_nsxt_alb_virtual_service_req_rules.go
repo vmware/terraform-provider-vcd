@@ -230,7 +230,7 @@ var dsNsxtAlbVsReqRuleActions = &schema.Resource{
 						Description: "HTTP or HTTPS protocol",
 					},
 					"port": {
-						Type:        schema.TypeInt,
+						Type:        schema.TypeString,
 						Computed:    true,
 						Description: "Port to which the request will be redirected",
 					},

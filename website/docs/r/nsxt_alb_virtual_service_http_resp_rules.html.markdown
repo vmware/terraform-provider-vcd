@@ -157,15 +157,21 @@ One or more of criteria can be specified to match traffic. At least one criteria
    `HEAD`, `OPTIONS`, `TRACE`, `CONNECT`, `PATCH`, `PROPFIND`, `PROPPATCH`, `MKCOL`, `COPY`, `MOVE`,
    `LOCK`, `UNLOCK`
 * `path` - (Optional) 
- * `criteria` - (Required) One of `BEGINS_WITH`, `DOES_NOT_BEGIN_WITH`, `CONTAINS`, `DOES_NOT_CONTAIN`, `ENDS_WITH`, `DOES_NOT_END_WITH`, `EQUALS`, `DOES_NOT_EQUAL`, `REGEX_MATCH`, `REGEX_DOES_NOT_MATCH`
+ * `criteria` - (Required) One of `BEGINS_WITH`, `DOES_NOT_BEGIN_WITH`, `CONTAINS`,
+   `DOES_NOT_CONTAIN`, `ENDS_WITH`, `DOES_NOT_END_WITH`, `EQUALS`, `DOES_NOT_EQUAL`, `REGEX_MATCH`,
+   `REGEX_DOES_NOT_MATCH`
  * `paths` - (Required) A set of patchs to match given criteria
 * `query` - (Optional) HTTP request query strings to match
 * `request_headers` - (Optional) One or more blocks of request headers to match
- * `criteria` - (Required) One of `BEGINS_WITH`, `DOES_NOT_BEGIN_WITH`, `CONTAINS`, `DOES_NOT_CONTAIN`, `ENDS_WITH`, `DOES_NOT_END_WITH`, `EQUALS`, `DOES_NOT_EQUAL`, `REGEX_MATCH`, `REGEX_DOES_NOT_MATCH`
+ * `criteria` - (Required) One of `BEGINS_WITH`, `DOES_NOT_BEGIN_WITH`, `CONTAINS`,
+   `DOES_NOT_CONTAIN`, `ENDS_WITH`, `DOES_NOT_END_WITH`, `EQUALS`, `DOES_NOT_EQUAL`, `REGEX_MATCH`,
+   `REGEX_DOES_NOT_MATCH`
  * `name` - (Required) Name of the header to match
  * `values` - (Required) A set of strings values that should match header value
 * `cookie` - (Optional) A block 
- * `criteria` - (Required) One of `BEGINS_WITH`, `DOES_NOT_BEGIN_WITH`, `CONTAINS`, `DOES_NOT_CONTAIN`, `ENDS_WITH`, `DOES_NOT_END_WITH`, `EQUALS`, `DOES_NOT_EQUAL`, `REGEX_MATCH`, `REGEX_DOES_NOT_MATCH`
+ * `criteria` - (Required) One of `BEGINS_WITH`, `DOES_NOT_BEGIN_WITH`, `CONTAINS`,
+   `DOES_NOT_CONTAIN`, `ENDS_WITH`, `DOES_NOT_END_WITH`, `EQUALS`, `DOES_NOT_EQUAL`, `REGEX_MATCH`,
+   `REGEX_DOES_NOT_MATCH`
  * `name` - (Required) Name of the HTTP cookie to match
  * `value` - (Required) A cookie value to match
 * `location_header` - (Optional) 
@@ -174,7 +180,9 @@ One or more of criteria can be specified to match traffic. At least one criteria
    `REGEX_DOES_NOT_MATCH`
  * `values` - (Required) A set of values to match for criteria
 * `response_headers` - (Optional) One or more blocks containng such fields
- * `criteria` - (Required) One of `BEGINS_WITH`, `DOES_NOT_BEGIN_WITH`, `CONTAINS`, `DOES_NOT_CONTAIN`, `ENDS_WITH`, `DOES_NOT_END_WITH`, `EQUALS`, `DOES_NOT_EQUAL`, `REGEX_MATCH`, `REGEX_DOES_NOT_MATCH`
+ * `criteria` - (Required) One of `BEGINS_WITH`, `DOES_NOT_BEGIN_WITH`, `CONTAINS`,
+   `DOES_NOT_CONTAIN`, `ENDS_WITH`, `DOES_NOT_END_WITH`, `EQUALS`, `DOES_NOT_EQUAL`, `REGEX_MATCH`,
+   `REGEX_DOES_NOT_MATCH`
  * `name` - (Required) Name of the HTTP header whose value is to be matched
  * `values` - (Required) A set of values to match for an HTTP header
 * `status_code` - (Optional) 
@@ -187,7 +195,12 @@ One or more of criteria can be specified to match traffic. At least one criteria
 One or more of action blocks can be specified. At least one is required. Some may prohibit others
 and API validation will return errors
 
-* `rewrite_location_header` - (Optional) 
+* `rewrite_location_header` - (Optional) Rewrites location header
+ * `protocol` - (Required) One of `HTTP`, `HTTPS`
+ * `port` - (Required) Destination port for redirect
+ * `host` - (Optional) Host, to which the request should be redirected
+ * `path` - (Optional) Path to which the request should be redirected
+ * `keep_query` - (Optional) Boolean value to mark if query part be preserved or not
 * `modify_header` - (Optional) One or more blocks to perform actions on headers
  * `action` - (Required) One of `ADD`, `REMOVE`, `REPLACE`
  * `name` - (Required) Name of HTTP header

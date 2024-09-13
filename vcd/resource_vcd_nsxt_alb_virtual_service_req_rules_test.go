@@ -66,7 +66,7 @@ func TestAccVcdNsxtAlbVirtualServicePolicies(t *testing.T) {
 					// Request rule
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_virtual_service.test", "id", regexp.MustCompile(`^urn:vcloud:loadBalancerVirtualService:`)),
 					resource.TestCheckResourceAttrPair("vcd_nsxt_alb_virtual_service.test", "id", "vcd_nsxt_alb_virtual_service_http_req_rules.test1", "id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.#", "4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.#", "6"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.name", "criteria-max-rewrite"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.active", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.0.logging", "false"),
@@ -102,10 +102,16 @@ func TestAccVcdNsxtAlbVirtualServicePolicies(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.2.match_criteria.#", "1"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.2.actions.#", "1"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.3.name", "one-criteria"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.4.name", "criteria-max-min-fields-redirect"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.4.actions.0.redirect.0.protocol", "HTTP"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.4.actions.0.redirect.0.protocol", "302"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.5.name", "criteria-max-min-fields-rewrite"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.5.actions.0.rewrite_url.0.host_header", "asd"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_req_rules.test1", "rule.5.actions.0.rewrite_url.0.existing_path", "/existing"),
 
 					// Response rule
 					resource.TestCheckResourceAttrPair("vcd_nsxt_alb_virtual_service.test", "id", "vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.#", "3"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.#", "5"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.name", "criteria-max-rewrite"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.active", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.0.logging", "false"),
@@ -139,10 +145,15 @@ func TestAccVcdNsxtAlbVirtualServicePolicies(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.1.match_criteria.#", "1"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.1.actions.#", "1"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.2.name", "one-criteria"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.3.name", "criteria-min-rewrite"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.3.actions.0.rewrite_location_header.0.protocol", "HTTP"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.3.actions.0.rewrite_location_header.0.port", "443"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.4.name", "criteria-min-modify-header"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_resp_rules.test1", "rule.4.actions.0.modify_header.#", "1"),
 
 					// Security rule
 					resource.TestCheckResourceAttrPair("vcd_nsxt_alb_virtual_service.test", "id", "vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.#", "9"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.#", "12"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.name", "max-sec-redirect-to-https"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.active", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.0.logging", "true"),
@@ -173,6 +184,9 @@ func TestAccVcdNsxtAlbVirtualServicePolicies(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.6.name", "max-sec-rate-limit-redirect"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.7.name", "max-sec-rate-limit-local-resp"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.8.name", "one-criteria"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.9.name", "one-criteria-action-min1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.10.name", "one-criteria-action-min2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_virtual_service_http_sec_rules.test1", "rule.11.name", "one-criteria-action-min3"),
 				),
 			},
 			{
@@ -426,6 +440,79 @@ resource "vcd_nsxt_alb_virtual_service_http_req_rules" "test1" {
       }
     }
   }
+
+  rule {
+    name   = "criteria-max-min-fields-redirect"
+    active = true
+    match_criteria {
+      client_ip_address {
+        criteria     = "IS_NOT_IN"
+        ip_addresses = ["1.1.1.1", "2.2.2.2"]
+      }
+
+      service_ports {
+        criteria = "IS_IN"
+        ports    = [80, 81]
+      }
+
+      protocol_type = "HTTP"
+
+      http_methods {
+        criteria = "IS_IN"
+        methods  = ["COPY", "HEAD"]
+      }
+      path {
+        criteria = "CONTAINS"
+        paths    = ["/123", "/234"]
+      }
+      query = ["546", "666"]
+
+      request_headers {
+        criteria = "DOES_NOT_BEGIN_WITH"
+        name     = "X"
+        values   = ["value1", "value2"]
+      }
+
+      request_headers {
+        criteria = "DOES_NOT_EQUAL"
+        name     = "Y-DOES-NOT"
+        values   = ["value1", "value2"]
+      }
+
+      cookie {
+        criteria = "DOES_NOT_END_WITH"
+        name     = "does-not-name"
+        value    = "does-not-value"
+      }
+    }
+
+    actions {
+      redirect {
+        protocol    = "HTTP"
+        status_code = 302
+      }
+    }
+  }
+
+  rule {
+    name   = "criteria-max-min-fields-rewrite"
+    active = true
+    match_criteria {
+      service_ports {
+        criteria = "IS_IN"
+        ports    = [80, 81]
+      }
+
+      protocol_type = "HTTP"
+    }
+
+    actions {
+      rewrite_url {
+        host_header   = "asd"
+        existing_path = "/existing"
+      }
+    }
+  }
 }
 
 
@@ -611,6 +698,44 @@ resource "vcd_nsxt_alb_virtual_service_http_resp_rules" "test1" {
         host       = "another-host"
         path       = "/"
         keep_query = true
+      }
+    }
+  }
+
+  rule {
+    name   = "criteria-min-rewrite"
+    active = true
+    match_criteria {
+
+      status_code {
+        criteria         = "IS_NOT_IN"
+        http_status_code = "200"
+      }
+    }
+
+    actions {
+      rewrite_location_header {
+        protocol = "HTTP"
+        port     = 443
+      }
+    }
+  }
+
+  rule {
+    name   = "criteria-min-modify-header"
+    active = true
+    match_criteria {
+
+      status_code {
+        criteria         = "IS_NOT_IN"
+        http_status_code = "200"
+      }
+    }
+
+    actions {
+      modify_header {
+        action = "REMOVE"
+        name   = "X-HEADER-ONE"
       }
     }
   }
@@ -1078,6 +1203,73 @@ resource "vcd_nsxt_alb_virtual_service_http_sec_rules" "test1" {
 
     actions {
       redirect_to_https = "80"
+    }
+  }
+
+  rule {
+    name    = "one-criteria-action-min1"
+    active  = true
+    logging = true
+    match_criteria {
+      cookie {
+        criteria = "DOES_NOT_END_WITH"
+        name     = "does-not-name"
+        value    = "does-not-value"
+      }
+    }
+
+    actions {
+      rate_limit {
+        count  = "10000"
+        period = "2000"
+        action_redirect {
+          protocol    = "HTTPS"
+          port        = 443
+          status_code = 301
+        }
+      }
+    }
+  }
+
+  rule {
+    name    = "one-criteria-action-min2"
+    active  = true
+    logging = true
+    match_criteria {
+      cookie {
+        criteria = "DOES_NOT_END_WITH"
+        name     = "does-not-name"
+        value    = "does-not-value"
+      }
+    }
+
+    actions {
+      rate_limit {
+        count  = "10000"
+        period = "2000"
+        action_local_response {
+          status_code  = "403"
+        }
+      }
+    }
+  }
+
+  rule {
+    name    = "one-criteria-action-min3"
+    active  = true
+    logging = true
+    match_criteria {
+      cookie {
+        criteria = "DOES_NOT_END_WITH"
+        name     = "does-not-name"
+        value    = "does-not-value"
+      }
+    }
+
+    actions {
+      send_response {
+        status_code = 403
+      }
     }
   }
 }

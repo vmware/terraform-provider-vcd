@@ -105,7 +105,7 @@ var dsNsxtAlbVsSecRuleActions = &schema.Resource{
 									Description: "HTTP or HTTPS protocol",
 								},
 								"port": {
-									Type:        schema.TypeInt,
+									Type:        schema.TypeString,
 									Computed:    true,
 									Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
 								},

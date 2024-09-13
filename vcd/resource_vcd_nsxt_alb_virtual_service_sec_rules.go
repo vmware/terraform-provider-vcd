@@ -33,7 +33,7 @@ func resourceVcdAlbVirtualServiceSecRules() *schema.Resource {
 			},
 			"rule": {
 				Type:        schema.TypeList,
-				Optional:    true,
+				Required:    true,
 				Elem:        nsxtAlbVirtualServiceSecRule,
 				Description: "A single HTTP Security Rule",
 			},
@@ -100,13 +100,13 @@ var nsxtAlbVsSecRuleActions = &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"count": {
 						Type:         schema.TypeString,
-						Optional:     true,
+						Required:     true,
 						Description:  "Maximum number of connections, requests or packets permitted each period. The count must be between 1 and 1000000000",
 						ValidateFunc: IsIntAndAtLeast(1), // Using TypeString + validation to be able to distinguish empty value and '0'
 					},
 					"period": {
 						Type:         schema.TypeString,
-						Optional:     true,
+						Required:     true,
 						Description:  "Time value in seconds to enforce rate count. The period must be between 1 and 1000000000",
 						ValidateFunc: IsIntAndAtLeast(1), // Using TypeString + validation to be able to distinguish empty value and '0'
 					},
@@ -118,39 +118,41 @@ var nsxtAlbVsSecRuleActions = &schema.Resource{
 					"action_redirect": {
 						Type:        schema.TypeList,
 						Optional:    true,
-						Description: "",
+						Description: "Redirect based on rate limits",
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
 								"protocol": {
 									Type:         schema.TypeString,
-									Optional:     true,
+									Required:     true,
 									Description:  "HTTP or HTTPS protocol",
 									ValidateFunc: validation.StringInSlice([]string{"HTTP", "HTTPS"}, false),
 								},
 								"port": {
-									Type:        schema.TypeInt,
-									Optional:    true,
-									Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
+									Type:         schema.TypeString,
+									Required:     true,
+									Description:  "Port to which redirect the request",
+									ValidateFunc: IsIntAndAtLeast(1),
 								},
 								"status_code": {
 									Type:        schema.TypeInt,
-									Optional:    true,
+									Required:    true,
 									Description: "One of the redirect status codes - 301, 302, 307",
 								},
 								"host": {
 									Type:        schema.TypeString,
 									Optional:    true,
-									Description: "Host to which redirect the request. Default is the original host",
+									Description: "Host to which redirect the request",
 								},
 								"path": {
 									Type:        schema.TypeString,
 									Optional:    true,
-									Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
+									Description: "Path to which redirect the request",
 								},
 								"keep_query": {
 									Type:        schema.TypeBool,
 									Optional:    true,
-									Description: "Path to which redirect the request. Default is the original path",
+									Default:     true,
+									Description: "Path to which redirect the request",
 								},
 							},
 						},
@@ -161,6 +163,12 @@ var nsxtAlbVsSecRuleActions = &schema.Resource{
 						Description: "Send custom response",
 						Elem: &schema.Resource{
 							Schema: map[string]*schema.Schema{
+								"status_code": {
+									Type:         schema.TypeString,
+									Required:     true,
+									Description:  "HTTP Status code to send",
+									ValidateFunc: IsIntAndAtLeast(1), // Using TypeString + validation to be able to distinguish empty value and '0'
+								},
 								"content": {
 									Type:        schema.TypeString,
 									Optional:    true,
@@ -170,12 +178,6 @@ var nsxtAlbVsSecRuleActions = &schema.Resource{
 									Type:        schema.TypeString,
 									Optional:    true,
 									Description: "MIME type for the content",
-								},
-								"status_code": {
-									Type:         schema.TypeString,
-									Optional:     true,
-									Description:  "HTTP Status code to send",
-									ValidateFunc: IsIntAndAtLeast(1), // Using TypeString + validation to be able to distinguish empty value and '0'
 								},
 							},
 						},
@@ -191,6 +193,12 @@ var nsxtAlbVsSecRuleActions = &schema.Resource{
 			Description: "Send custom response",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
+					"status_code": {
+						Type:         schema.TypeString,
+						Required:     true,
+						Description:  "HTTP Status code to send",
+						ValidateFunc: IsIntAndAtLeast(1), // Using TypeString + validation to be able to distinguish empty value and '0'
+					},
 					"content": {
 						Type:        schema.TypeString,
 						Optional:    true,
@@ -200,12 +208,6 @@ var nsxtAlbVsSecRuleActions = &schema.Resource{
 						Type:        schema.TypeString,
 						Optional:    true,
 						Description: "MIME type for the content",
-					},
-					"status_code": {
-						Type:         schema.TypeString,
-						Optional:     true,
-						Description:  "HTTP Status code to send",
-						ValidateFunc: IsIntAndAtLeast(1), // Using TypeString + validation to be able to distinguish empty value and '0'
 					},
 				},
 			},
@@ -382,7 +384,10 @@ func getSecurityActionsType(actions *schema.Set) (*types.AlbVsHttpSecurityRuleRe
 
 			redir.Protocol = redirectStructureMap["protocol"].(string)
 			redir.Host = redirectStructureMap["host"].(string)
-			redir.Port = redirectStructureMap["port"].(int)
+			if redirectStructureMap["port"] != "" {
+				portInt, _ := strconv.Atoi(redirectStructureMap["port"].(string)) // error is ignored because it is checked at field validation level
+				redir.Port = &portInt
+			}
 			redir.StatusCode = redirectStructureMap["status_code"].(int)
 			redir.Path = redirectStructureMap["path"].(string)
 			redir.KeepQuery = redirectStructureMap["keep_query"].(bool)
@@ -561,14 +566,17 @@ func setAlbVsHttpSecuritytRuleData(d *schema.ResourceData, rules []*types.AlbVsH
 				singleRedirectActionEntry := make(map[string]interface{})
 
 				singleRedirectActionEntry["protocol"] = rule.RateLimitAction.RedirectAction.Protocol
-				singleRedirectActionEntry["port"] = rule.RateLimitAction.RedirectAction.Port
+				if rule.RateLimitAction.RedirectAction.Port != nil {
+					singleRedirectActionEntry["port"] = strconv.Itoa(*rule.RateLimitAction.RedirectAction.Port)
+				} else {
+					singleRedirectActionEntry["port"] = ""
+				}
 				singleRedirectActionEntry["status_code"] = rule.RateLimitAction.RedirectAction.StatusCode
 				singleRedirectActionEntry["host"] = rule.RateLimitAction.RedirectAction.Host
 				singleRedirectActionEntry["path"] = rule.RateLimitAction.RedirectAction.Path
 				singleRedirectActionEntry["keep_query"] = rule.RateLimitAction.RedirectAction.KeepQuery
 
 				singleRedirectActionEntryInterface = append(singleRedirectActionEntryInterface, singleRedirectActionEntry)
-				// rateLimitLocalResponseActionMap["action_redirect"] = singleRedirectActionEntryInterface
 			}
 			rateLimitEntry["action_redirect"] = singleRedirectActionEntryInterface
 

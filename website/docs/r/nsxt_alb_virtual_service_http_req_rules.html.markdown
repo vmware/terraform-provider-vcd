@@ -165,18 +165,18 @@ and API validation will return errors
  * `protocol` - (Required) One of `HTTP`, `HTTPS`
  * `port` - (Required) Destination port for redirect
  * `status_code` - (Required) Status code to use for redirect. One of `301`, `302`, `307`
- * `host` - (Required) Host, to which the request should be redirected
- * `path` - (Required) Path to which the request should be redirected
- * `keep_query` - (Required) Boolean value to mark if query part be preserved or not
-* `modify_header` - (Optional) One or more blocks of header modification actions
+ * `host` - (Optional) Host, to which the request should be redirected
+ * `path` - (Optional) Path to which the request should be redirected
+ * `keep_query` - (Optional) Boolean value to mark if query part be preserved or not
+* `modify_header` - (Optional) An optional block of header modification actions
  * `action` - (Required) One of `ADD`, `REMOVE`, `REPLACE`
  * `name` - (Required) Name of the header to modify
  * `value` - (Optional) Value (only application to `ADD` and `REPLACE` actions)
-* `rewrite_url` - (Optional) URL Rewrite rules
- * `host_header` - Host to use for the rewritten URL
- * `existing_path` - Path to use for the rewritten URL
- * `keep_query` - Whether or not to keep the existing query string when rewriting the URL
- * `query` - Query string to use or append to the existing query string in the rewritten URL
+* `rewrite_url` - (Optional) URL Rewrite rules, at most one block
+ * `host_header` - (Required) Host to use for the rewritten URL
+ * `existing_path` - (Required) Path to use for the rewritten URL
+ * `keep_query` - (Optional)Whether or not to keep the existing query string when rewriting the URL
+ * `query` - (Optional) Query string to use or append to the existing query string in the rewritten URL
 
 ## Importing
 

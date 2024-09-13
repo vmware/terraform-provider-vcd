@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_alb_virtual_service_http_sec_rules"
 sidebar_current: "docs-vcd-resource-nsxt-alb-virtual-service-http-sec-rules"
 description: |-
-  Provides a resource to manage ALB Service Engine Groups policies for HTTP requests. HTTP security 
+  Provides a resource to manage ALB Service Engine Groups policies for HTTP security rules. HTTP security 
   rules allow users to configure allowing or denying certain requests, to close the TCP connection, 
   to redirect a request to HTTPS, or to apply a rate limit.
 ---
@@ -12,7 +12,7 @@ description: |-
 
 Supported in provider *v3.14+* and VCD 10.5+ with NSX-T and ALB.
 
-Provides a resource to manage ALB Service Engine Groups policies for HTTP requests. HTTP security 
+Provides a resource to manage ALB Service Engine Groups policies for HTTP security rules. HTTP security 
 rules allow users to configure allowing or denying certain requests, to close the TCP connection, 
 to redirect a request to HTTPS, or to apply a rate limit.
 

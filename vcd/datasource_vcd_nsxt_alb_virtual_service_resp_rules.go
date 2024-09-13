@@ -300,7 +300,7 @@ var dsNsxtAlbVirtualServiceRespRuleActions = &schema.Resource{
 						Description: "HTTP or HTTPS protocol",
 					},
 					"port": {
-						Type:        schema.TypeInt,
+						Type:        schema.TypeString,
 						Computed:    true,
 						Description: "Port to which redirect the request",
 					},
@@ -325,7 +325,7 @@ var dsNsxtAlbVirtualServiceRespRuleActions = &schema.Resource{
 		"modify_header": {
 			Type:        schema.TypeSet,
 			Computed:    true,
-			Description: "",
+			Description: "Modify header",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"action": {

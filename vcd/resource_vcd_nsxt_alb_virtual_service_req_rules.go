@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -34,7 +35,7 @@ func resourceVcdAlbVirtualServiceReqRules() *schema.Resource {
 			},
 			"rule": {
 				Type:        schema.TypeList,
-				Optional:    true,
+				Required:    true,
 				Elem:        nsxtAlbVirtualServiceReqRule,
 				Description: "A single HTTP Request Rule",
 			},
@@ -88,13 +89,13 @@ var nsxtAlbVsReqAndSecRuleMatchCriteria = &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
 						Type:         schema.TypeString,
-						Optional:     true,
+						Required:     true,
 						ValidateFunc: validation.StringInSlice([]string{"IS_IN", "IS_NOT_IN"}, false),
 						Description:  "Criteria to use for IP address matching the HTTP request. Options - IS_IN, IS_NOT_IN.",
 					},
 					"ip_addresses": {
 						Type:        schema.TypeSet,
-						Optional:    true,
+						Required:    true,
 						Description: "A set of IP addresses",
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -112,16 +113,17 @@ var nsxtAlbVsReqAndSecRuleMatchCriteria = &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
 						Type:         schema.TypeString,
-						Optional:     true,
+						Required:     true,
 						ValidateFunc: validation.StringInSlice([]string{"IS_IN", "IS_NOT_IN"}, false),
 						Description:  "Criteria to use for IP address matching the HTTP request. Options - IS_IN, IS_NOT_IN",
 					},
 					"ports": {
 						Type:        schema.TypeSet,
-						Optional:    true,
+						Required:    true,
 						Description: "A set of TCP ports. Allowed values are 1-65535",
 						Elem: &schema.Schema{
-							Type: schema.TypeInt,
+							Type:             schema.TypeInt,
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntBetween(1, 65535)),
 						},
 					},
 				},
@@ -142,13 +144,13 @@ var nsxtAlbVsReqAndSecRuleMatchCriteria = &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
 						Type:         schema.TypeString,
-						Optional:     true,
+						Required:     true,
 						ValidateFunc: validation.StringInSlice([]string{"IS_IN", "IS_NOT_IN"}, false),
 						Description:  "Criteria to use for IP address matching the HTTP request. Options - IS_IN, IS_NOT_IN",
 					},
 					"methods": {
 						Type:     schema.TypeSet,
-						Optional: true,
+						Required: true,
 						// Not validating these options as it might not be finite list and API returns proper explanations
 						Description: "HTTP methods to match. Options - GET, PUT, POST, DELETE, HEAD, OPTIONS, TRACE, CONNECT, PATCH, PROPFIND, PROPPATCH, MKCOL, COPY, MOVE, LOCK, UNLOCK",
 						Elem: &schema.Schema{
@@ -167,13 +169,13 @@ var nsxtAlbVsReqAndSecRuleMatchCriteria = &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
 						Type:     schema.TypeString,
-						Optional: true,
+						Required: true,
 						// Validation does return options as opposed to the cases where we only have IS_IN, IS_NOT_IN
 						Description: "Criteria to use for matching the path in the HTTP request URI. Options - BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL, REGEX_MATCH, REGEX_DOES_NOT_MATCH",
 					},
 					"paths": {
 						Type:        schema.TypeSet,
-						Optional:    true,
+						Required:    true,
 						Description: "String values to match the path",
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -198,17 +200,17 @@ var nsxtAlbVsReqAndSecRuleMatchCriteria = &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
 						Type:        schema.TypeString,
-						Optional:    true,
+						Required:    true,
 						Description: "Criteria to use for matching headers and cookies in the HTTP request amd response. Options - EXISTS, DOES_NOT_EXIST, BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL",
 					},
 					"name": {
 						Type:        schema.TypeString,
-						Optional:    true,
+						Required:    true,
 						Description: "Name of the HTTP header whose value is to be matched",
 					},
 					"values": {
 						Type:        schema.TypeSet,
-						Optional:    true,
+						Required:    true,
 						Description: "String values to match for an HTTP header",
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
@@ -226,17 +228,17 @@ var nsxtAlbVsReqAndSecRuleMatchCriteria = &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"criteria": {
 						Type:        schema.TypeString,
-						Optional:    true,
+						Required:    true,
 						Description: "Criteria to use for matching cookies in the HTTP request. Options - EXISTS, DOES_NOT_EXIST, BEGINS_WITH, DOES_NOT_BEGIN_WITH, CONTAINS, DOES_NOT_CONTAIN, ENDS_WITH, DOES_NOT_END_WITH, EQUALS, DOES_NOT_EQUAL",
 					},
 					"name": {
 						Type:        schema.TypeString,
-						Optional:    true,
+						Required:    true,
 						Description: "Name of the HTTP cookie whose value is to be matched",
 					},
 					"value": {
 						Type:        schema.TypeString,
-						Optional:    true,
+						Required:    true,
 						Description: "String values to match for an HTTP cookie",
 					},
 				},
@@ -256,18 +258,19 @@ var nsxtAlbVirtualServiceReqRuleActions = &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"protocol": {
 						Type:         schema.TypeString,
-						Optional:     true,
+						Required:     true,
 						Description:  "HTTP or HTTPS protocol",
 						ValidateFunc: validation.StringInSlice([]string{"HTTP", "HTTPS"}, false),
 					},
 					"port": {
-						Type:        schema.TypeInt,
-						Optional:    true,
-						Description: "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
+						Type:         schema.TypeString, // using TypeString to distinguish unset value
+						Optional:     true,
+						Description:  "Port to which redirect the request. Default is 80 for HTTP and 443 for HTTPS protocol",
+						ValidateFunc: IsIntAndAtLeast(1),
 					},
 					"status_code": {
 						Type:        schema.TypeInt,
-						Optional:    true,
+						Required:    true,
 						Description: "One of the redirect status codes - 301, 302, 307",
 					},
 					"host": {
@@ -283,6 +286,7 @@ var nsxtAlbVirtualServiceReqRuleActions = &schema.Resource{
 					"keep_query": {
 						Type:        schema.TypeBool,
 						Optional:    true,
+						Default:     true,
 						Description: "Should the query part be preserved",
 					},
 				},
@@ -296,18 +300,18 @@ var nsxtAlbVirtualServiceReqRuleActions = &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"action": {
 						Type:         schema.TypeString,
-						Optional:     true,
+						Required:     true,
 						Description:  "One of the following HTTP header actions. Options - ADD, REMOVE, REPLACE",
 						ValidateFunc: validation.StringInSlice([]string{"ADD", "REMOVE", "REPLACE"}, false),
 					},
 					"name": {
 						Type:        schema.TypeString,
-						Optional:    true,
+						Required:    true,
 						Description: "HTTP header name",
 					},
 					"value": {
 						Type:        schema.TypeString,
-						Optional:    true,
+						Optional:    true, // 'REMOVE' action does not require value
 						Description: "HTTP header value",
 					},
 				},
@@ -322,12 +326,12 @@ var nsxtAlbVirtualServiceReqRuleActions = &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"host_header": {
 						Type:        schema.TypeString,
-						Optional:    true,
+						Required:    true,
 						Description: "Host to use for the rewritten URL",
 					},
 					"existing_path": {
 						Type:        schema.TypeString,
-						Optional:    true,
+						Required:    true,
 						Description: "Path to use for the rewritten URL",
 					},
 					"keep_query": {
@@ -553,7 +557,10 @@ func getActionsType(actions *schema.Set) (*types.AlbVsHttpRequestRuleRedirectAct
 
 		redir.Protocol = redirectStructureMap["protocol"].(string)
 		redir.Host = redirectStructureMap["host"].(string)
-		redir.Port = redirectStructureMap["port"].(int)
+		if redirectStructureMap["port"].(string) != "" {
+			portInt, _ := strconv.Atoi(redirectStructureMap["port"].(string)) // error is ignored because it is checked at field validation level
+			redir.Port = &portInt
+		}
 		redir.StatusCode = redirectStructureMap["status_code"].(int)
 		redir.Path = redirectStructureMap["path"].(string)
 		redir.KeepQuery = redirectStructureMap["keep_query"].(bool)
@@ -688,7 +695,11 @@ func setAlbVsHttpRequestRuleData(d *schema.ResourceData, rules []*types.AlbVsHtt
 		if rule.RedirectAction != nil {
 			singleRedirect := make(map[string]interface{})
 			singleRedirect["protocol"] = rule.RedirectAction.Protocol
-			singleRedirect["port"] = rule.RedirectAction.Port
+			if rule.RedirectAction.Port != nil {
+				singleRedirect["port"] = strconv.Itoa(*rule.RedirectAction.Port)
+			} else {
+				singleRedirect["port"] = ""
+			}
 			singleRedirect["status_code"] = rule.RedirectAction.StatusCode
 			singleRedirect["host"] = rule.RedirectAction.Host
 			singleRedirect["path"] = rule.RedirectAction.Path
