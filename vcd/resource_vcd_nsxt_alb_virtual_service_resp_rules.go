@@ -459,8 +459,6 @@ func resourceVcdAlbVirtualServiceRespRulesDelete(ctx context.Context, d *schema.
 		return diag.Errorf("error creating HTTP Response Rules: %s", err)
 	}
 
-	d.SetId(albVirtualService.NsxtAlbVirtualService.ID)
-
 	return nil
 }
 
