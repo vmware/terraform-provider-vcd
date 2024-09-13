@@ -9,7 +9,7 @@ description: |-
 
 # vcd\_external\_endpoint
 
-Supported in provider *v3.14+* and VCD 10.4.3+.
+Supported in provider *v3.14+* and VCD 10.5.1+.
 
 Provides a resource to manage External Endpoints in VMware Cloud Director. An External Endpoint holds information for the
 HTTPS endpoint which requests will be proxied to when using a [`vcd_api_filter`](/providers/vmware/vcd/latest/docs/resources/api_filter).

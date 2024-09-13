@@ -233,7 +233,6 @@ and activating a VCD Service Account can be found in the
 provider "vcd" {
   auth_type                  = "service_account_token_file"
   service_account_token_file = "token.json"
-  sysorg                     = "System"
   org                        = var.vcd_org # Default for resources
   vdc                        = var.vcd_vdc # Default for resources
   url                        = var.vcd_url

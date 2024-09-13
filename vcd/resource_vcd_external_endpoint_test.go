@@ -14,6 +14,10 @@ func TestAccVcdExternalEndpoint(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
+	if checkVersion(testConfig.Provider.ApiVersion, "< 38.1") {
+		t.Skipf("This test tests VCD 10.5.1+ (API V38.1+) features. Skipping.")
+	}
+
 	vendor := "vmware"
 	name := t.Name()
 	version := "1.0.0"

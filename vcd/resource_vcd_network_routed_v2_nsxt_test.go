@@ -1135,6 +1135,7 @@ func TestAccVcdRoutedNetworkV2MetadataIgnore(t *testing.T) {
 
 func TestAccVcdRoutedNetworkV2NonDistributed(t *testing.T) {
 	preTestChecks(t)
+	skipIfNotSysAdmin(t)
 
 	// String map to fill the template
 	var params = StringMap{

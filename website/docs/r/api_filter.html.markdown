@@ -9,7 +9,7 @@ description: |-
 
 # vcd\_api\_filter
 
-Supported in provider *v3.14+* and VCD 10.4.3+.
+Supported in provider *v3.14+* and VCD 10.5.1+.
 
 Provides a resource to manage API Filters in VMware Cloud Director. An API Filter allows to extend VCD API with customised URLs
 that can be redirected to an [`vcd_external_endpoint`](/providers/vmware/vcd/latest/docs/resources/external_endpoint).
