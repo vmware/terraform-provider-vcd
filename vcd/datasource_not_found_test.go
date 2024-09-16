@@ -133,11 +133,11 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 				datasourceName:        "vcd_ip_space_custom_quota",
 			},
 			{
-				skipVersionConstraint: "< 37.3",
+				skipVersionConstraint: "< 38.1",
 				datasourceName:        "vcd_external_endpoint",
 			},
 			{
-				skipVersionConstraint: "< 37.3",
+				skipVersionConstraint: "< 38.1",
 				datasourceName:        "vcd_api_filter",
 			},
 			{
@@ -204,6 +204,7 @@ func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient)
 			"vcd_solution_add_on_instance_publish",
 			"vcd_external_endpoint",
 			"vcd_api_filter",
+			"vcd_nsxt_tier0_router_interface",
 		}
 		dataSourcesRequiringAlbConfig := []string{
 			"vcd_nsxt_alb_cloud",
