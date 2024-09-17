@@ -70,7 +70,7 @@
 
 ### NOTES
 * Reduce memory usage of test `TestAccVcdStandaloneVmWithVmSizing` to avoid errors on tiny VCD testing setups ([#1306](https://github.com/vmware/terraform-provider-vcd/pull/1306))
-* Corrected a malformed HCL snippet in the *"Connecting with a Service Account API token"* section of the documentation ([#1322](https://github.com/vmware/terraform-provider-vcd/pull/1322))
+* Correct a malformed HCL snippet in the *"Connecting with a Service Account API token"* section of the documentation ([#1322](https://github.com/vmware/terraform-provider-vcd/pull/1322))
 
 ## 3.13.0 (July 2, 2024)
 
