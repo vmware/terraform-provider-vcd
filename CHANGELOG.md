@@ -1,76 +1,76 @@
 ## 3.14.0 (TBC)
 
 ### FEATURES
-* **New Resource:** `vcd_external_endpoint` to manage External Endpoints [GH-1295, GH-1322]
-* **New Data Source:** `vcd_external_endpoint` to read External Endpoints [GH-1295, GH-1322]
-* **New Resource:** `vcd_api_filter` to manage API Filters [GH-1295, GH-1322]
-* **New Data Source:** `vcd_api_filter` to read API Filters [GH-1295, GH-1322]
+* **New Resource:** `vcd_external_endpoint` to manage External Endpoints ([#1295](https://github.com/vmware/terraform-provider-vcd/pull/1295), [#1322](https://github.com/vmware/terraform-provider-vcd/pull/1322))
+* **New Data Source:** `vcd_external_endpoint` to read External Endpoints ([#1295](https://github.com/vmware/terraform-provider-vcd/pull/1295), [#1322](https://github.com/vmware/terraform-provider-vcd/pull/1322))
+* **New Resource:** `vcd_api_filter` to manage API Filters ([#1295](https://github.com/vmware/terraform-provider-vcd/pull/1295), [#1322](https://github.com/vmware/terraform-provider-vcd/pull/1322))
+* **New Data Source:** `vcd_api_filter` to read API Filters ([#1295](https://github.com/vmware/terraform-provider-vcd/pull/1295), [#1322](https://github.com/vmware/terraform-provider-vcd/pull/1322))
 * **New Data Source:** `vcd_nsxt_tier0_router_interface` to read Tier-0 Router Interfaces that can
-  be assigned to IP Space Uplinks [GH-1311]
-* **New Data Source:** `vcd_catalog_access_control` to read Catalog access controls [GH-1315]
-* **New Resource:** `vcd_nsxt_alb_virtual_service_http_req_rules` to manage ALB Virtual Service Request Rules [GH-1320]
-* **New Data Source:** `vcd_nsxt_alb_virtual_service_http_req_rules` to read ALB Virtual Service Request Rules [GH-1320]
-* **New Resource:** `vcd_nsxt_alb_virtual_service_http_resp_rules` to manage ALB Virtual Service Response Rules [GH-1320]
-* **New Data Source:** `vcd_nsxt_alb_virtual_service_http_resp_rules` to read ALB Virtual Service Response Rules [GH-1320]
-* **New Resource:** `vcd_nsxt_alb_virtual_service_http_sec_rules` to manage ALB Virtual Service Security Rules [GH-1320]
-* **New Data Source:** `vcd_nsxt_alb_virtual_service_http_sec_rules` to read ALB Virtual Service Security Rules [GH-1320]
+  be assigned to IP Space Uplinks ([#1311](https://github.com/vmware/terraform-provider-vcd/pull/1311))
+* **New Data Source:** `vcd_catalog_access_control` to read Catalog access controls ([#1315](https://github.com/vmware/terraform-provider-vcd/pull/1315))
+* **New Resource:** `vcd_nsxt_alb_virtual_service_http_req_rules` to manage ALB Virtual Service Request Rules ([#1320](https://github.com/vmware/terraform-provider-vcd/pull/1320))
+* **New Data Source:** `vcd_nsxt_alb_virtual_service_http_req_rules` to read ALB Virtual Service Request Rules ([#1320](https://github.com/vmware/terraform-provider-vcd/pull/1320))
+* **New Resource:** `vcd_nsxt_alb_virtual_service_http_resp_rules` to manage ALB Virtual Service Response Rules ([#1320](https://github.com/vmware/terraform-provider-vcd/pull/1320))
+* **New Data Source:** `vcd_nsxt_alb_virtual_service_http_resp_rules` to read ALB Virtual Service Response Rules ([#1320](https://github.com/vmware/terraform-provider-vcd/pull/1320))
+* **New Resource:** `vcd_nsxt_alb_virtual_service_http_sec_rules` to manage ALB Virtual Service Security Rules ([#1320](https://github.com/vmware/terraform-provider-vcd/pull/1320))
+* **New Data Source:** `vcd_nsxt_alb_virtual_service_http_sec_rules` to read ALB Virtual Service Security Rules ([#1320](https://github.com/vmware/terraform-provider-vcd/pull/1320))
 
 ### IMPROVEMENTS
 * Add new argument `execution_json` to resources and data sources `vcd_rde_interface_behavior` and `vcd_rde_type_behavior`
-  to define complex behavior executions that could not be specified with the `execution` map [GH-1131]
+  to define complex behavior executions that could not be specified with the `execution` map ([#1131](https://github.com/vmware/terraform-provider-vcd/pull/1131))
 * Add new argument `arguments_json` and `metadata_json` to data source `vcd_rde_behavior_invocation` to be able to
-  invoke behaviors that have complex execution definitions [GH-1131]
+  invoke behaviors that have complex execution definitions ([#1131](https://github.com/vmware/terraform-provider-vcd/pull/1131))
 * Resources and data sources `vcd_vapp_vm` and `vcd_vm` support IPv6 via `secondary_ip_allocation_mode`
-  and `secondary_ip` fields [GH-1292]
+  and `secondary_ip` fields ([#1292](https://github.com/vmware/terraform-provider-vcd/pull/1292))
 * Add `vcd_nsxt_alb_edgegateway_service_engine_group` and `vcd_nsxt_alb_service_engine_group` resource types to
-  `vcd_resource_list` data source [GH-1296, GH-1322]
+  `vcd_resource_list` data source ([#1296](https://github.com/vmware/terraform-provider-vcd/pull/1296), [#1322](https://github.com/vmware/terraform-provider-vcd/pull/1322))
 * Add support for NSX-T Non-distributed Org VDC networks via flags `non_distributed_routing_enabled`
   in `vcd_nsxt_edgegateway` and `interface_type=non_distributed` in `vcd_network_routed_v2`
-  [GH-1297, GH-1322]
-* Add provider option `saml_adfs_cookie` that can help lookup of ADFS server [GH-1298]
-* Use Bearer token in SAML ADFS auth flow instead the old one [GH-1298]
-* Resource `vcd_nsxt_edgegateway` adds support for Distributed-only `deployment_mode` [GH-1300]
+  ([#1297](https://github.com/vmware/terraform-provider-vcd/pull/1297), [#1322](https://github.com/vmware/terraform-provider-vcd/pull/1322))
+* Add provider option `saml_adfs_cookie` that can help lookup of ADFS server ([#1298](https://github.com/vmware/terraform-provider-vcd/pull/1298))
+* Use Bearer token in SAML ADFS auth flow instead the old one ([#1298](https://github.com/vmware/terraform-provider-vcd/pull/1298))
+* Resource `vcd_nsxt_edgegateway` adds support for Distributed-only `deployment_mode` ([#1300](https://github.com/vmware/terraform-provider-vcd/pull/1300))
 * Add `account_lockout` block to `vcd_org` resource and data source, that specifies the account locking mechanism with the
-  sub-arguments `enabled`, `invalid_logins_before_lockout` and `lockout_interval_minutes` [GH-1304]
+  sub-arguments `enabled`, `invalid_logins_before_lockout` and `lockout_interval_minutes` ([#1304](https://github.com/vmware/terraform-provider-vcd/pull/1304))
 * Add IP Space locks for `vcd_ip_space_ip_allocation` to prevent concurrent modification error in
-  API [GH-1305]
+  API ([#1305](https://github.com/vmware/terraform-provider-vcd/pull/1305))
 * Resource `vcd_ip_space_uplink` adds support for managing IP Space Uplink Associated Interfaces via
-  `associated_interface_ids` and new data source `vcd_nsxt_tier0_interface` [GH-1311]
+  `associated_interface_ids` and new data source `vcd_nsxt_tier0_interface` ([#1311](https://github.com/vmware/terraform-provider-vcd/pull/1311))
 
 ### BUG FIXES
-* Fix [Issue 1287](https://github.com/vmware/terraform-provider-vcd/issues/1287) Read-only org sharing prevents sharing to users [GH-1291]
+* Fix [Issue 1287](https://github.com/vmware/terraform-provider-vcd/issues/1287) Read-only org sharing prevents sharing to users ([#1291](https://github.com/vmware/terraform-provider-vcd/pull/1291))
 * Fix [Issue 1183](https://github.com/vmware/terraform-provider-vcd/issues/1183) where updates might
   fail for vcd_external_network_v2 when NSX-T edge gateway has `dedicate_external_network=true`
-  [GH-1301]
+  ([#1301](https://github.com/vmware/terraform-provider-vcd/pull/1301))
 * Fix [Issue 1236](https://github.com/vmware/terraform-provider-vcd/issues/1236):
   `list_mode="import"` of data source `vcd_resource_list` created wrong import statements when VCD items names have special
-  characters [GH-1302]
+  characters ([#1302](https://github.com/vmware/terraform-provider-vcd/pull/1302))
 * Fix [Issue 1236](https://github.com/vmware/terraform-provider-vcd/issues/1236):
-  `list_mode="hierarchy"` of data source `vcd_resource_list` repeated the parent element twice when obtaining the hierarchy [GH-1302]
+  `list_mode="hierarchy"` of data source `vcd_resource_list` repeated the parent element twice when obtaining the hierarchy ([#1302](https://github.com/vmware/terraform-provider-vcd/pull/1302))
 * Fix [Issue 1243](https://github.com/vmware/terraform-provider-vcd/issues/1243):
-  Allow unlimited `limit_in_mhz` in `vcd_vm_sizing_policy` resource [GH-1303, GH-1318]
+  Allow unlimited `limit_in_mhz` in `vcd_vm_sizing_policy` resource ([#1303](https://github.com/vmware/terraform-provider-vcd/pull/1303), [#1318](https://github.com/vmware/terraform-provider-vcd/pull/1318))
 * Fix [Issue 1307](https://github.com/vmware/terraform-provider-vcd/issues/1307) in `vcd_vapp_vm`
   and `vcd_vm` resources where `firmware=efi` field wouldn't be applied for template based
-  VMs with `firmware=bios` on creation [GH-1308]
+  VMs with `firmware=bios` on creation ([#1308](https://github.com/vmware/terraform-provider-vcd/pull/1308))
 * Fix [Issue 1262](https://github.com/vmware/terraform-provider-vcd/issues/1262): Panic when creating a VM with `vcd_vm` and `vcd_vapp_vm`
-  when the VCD provider is configured with a user without "Organization vDC Disk: View/Edit IOPS" rights [GH-1312]
+  when the VCD provider is configured with a user without "Organization vDC Disk: View/Edit IOPS" rights ([#1312](https://github.com/vmware/terraform-provider-vcd/pull/1312))
 * Fix [Issue 1216](https://github.com/vmware/terraform-provider-vcd/issues/1216) in `vcd_org_vdc`
   which failed on creation when `vm_placement_policy_ids` were set but `default_compute_policy_id`
-  was not declared (System default was used instead) [GH-1313]
+  was not declared (System default was used instead) ([#1313](https://github.com/vmware/terraform-provider-vcd/pull/1313))
 * Fix [Issue 1205](https://github.com/vmware/terraform-provider-vcd/issues/1205) in `vcd_vapp_vm`
-  and `vcd_vm` resources where not setting `ip_allocation_mode` in a `network` block would cause a 500 error [GH-1317]
+  and `vcd_vm` resources where not setting `ip_allocation_mode` in a `network` block would cause a 500 error ([#1317](https://github.com/vmware/terraform-provider-vcd/pull/1317))
 
 ### DEPRECATIONS
 * Data source `vcd_rde_behavior_invocation` deprecate `arguments` and `metadata` arguments in favor of `arguments_json` and
-  `metadata_json`, that allow to invoke behaviors with complex execution definitions [GH-1131]
+  `metadata_json`, that allow to invoke behaviors with complex execution definitions ([#1131](https://github.com/vmware/terraform-provider-vcd/pull/1131))
 * Data source `vcd_rde_interface_behavior` deprecate `execution` in favor of `execution_json`, which allow to read
-  complex execution definitions from an existing behavior [GH-1131]
+  complex execution definitions from an existing behavior ([#1131](https://github.com/vmware/terraform-provider-vcd/pull/1131))
 * Data source `vcd_rde_type_behavior` deprecate `execution` in favor of `execution_json`, which allow to read
-  complex execution definitions from an existing behavior [GH-1131]
+  complex execution definitions from an existing behavior ([#1131](https://github.com/vmware/terraform-provider-vcd/pull/1131))
 
 ### NOTES
-* Reduce memory usage of test `TestAccVcdStandaloneVmWithVmSizing` to avoid errors on tiny VCD testing setups [GH-1306]
-* Corrected a malformed HCL snippet in the *"Connecting with a Service Account API token"* section of the documentation [GH-1322]
+* Reduce memory usage of test `TestAccVcdStandaloneVmWithVmSizing` to avoid errors on tiny VCD testing setups ([#1306](https://github.com/vmware/terraform-provider-vcd/pull/1306))
+* Corrected a malformed HCL snippet in the *"Connecting with a Service Account API token"* section of the documentation ([#1322](https://github.com/vmware/terraform-provider-vcd/pull/1322))
 
 ## 3.13.0 (July 2, 2024)
 
