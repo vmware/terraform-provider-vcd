@@ -69,6 +69,7 @@
   complex execution definitions from an existing behavior ([#1131](https://github.com/vmware/terraform-provider-vcd/pull/1131))
 
 ### NOTES
+* Bump [`go-vcloud-director`](https://github.com/vmware/go-vcloud-director) to v2.26.0 (SDK this provider uses for low level access to the VCD) ([#1325](https://github.com/vmware/terraform-provider-vcd/pull/1325))
 * Reduce memory usage of test `TestAccVcdStandaloneVmWithVmSizing` to avoid errors on tiny VCD testing setups ([#1306](https://github.com/vmware/terraform-provider-vcd/pull/1306))
 * Correct a malformed HCL snippet in the *"Connecting with a Service Account API token"* section of the documentation ([#1322](https://github.com/vmware/terraform-provider-vcd/pull/1322))
 
