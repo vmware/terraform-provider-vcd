@@ -1,4 +1,4 @@
-## 3.14.0 (TBC)
+## 3.14.0 (September 17, 2024)
 
 ### FEATURES
 * **New Resource:** `vcd_external_endpoint` to manage External Endpoints ([#1295](https://github.com/vmware/terraform-provider-vcd/pull/1295), [#1322](https://github.com/vmware/terraform-provider-vcd/pull/1322))
