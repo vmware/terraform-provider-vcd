@@ -530,10 +530,10 @@ example for usage details.
   is a maximum. VM must be powered on and _at least one_ of the following _must be true_:
 * VM has Guest Tools. It waits for IP address to be reported by Guest Tools. This is a slower option, but
   does not require for the VM to use Edge Gateways DHCP service.
-* VM DHCP interface is connected to routed Org network and is using Edge Gateways DHCP service (not
-  relayed). It works by querying DHCP leases on Edge Gateway. In general it is quicker than waiting
-  until Guest Tools report IP addresses, but is more constrained. However this is the only option if Guest
-  Tools are not present on the VM.
+* VM DHCP interface is connected to **NSX-V** routed Org network and is using Edge Gateways DHCP
+  service (not relayed). It works by querying DHCP leases on Edge Gateway. In general it is quicker
+  than waiting until Guest Tools report IP addresses, but is more constrained. However this is the
+  only option if Guest Tools are not present on the VM.
 * `os_type` - (Optional; *v2.9+*) Operating System type. Possible values can be found in [Os Types](#os-types). Required when creating empty VM.
 * `hardware_version` - (Optional; *v2.9+*) Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.). Required when creating empty VM.
 * `firmware` - (Optional; v3.11+, VCD 10.4.1+) Specify boot firmware of the VM. Can be `efi` or `bios`. If unset, defaults to `bios`. Changing the value requires the VM to power off.
