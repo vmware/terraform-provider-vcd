@@ -1,3 +1,7 @@
+## 4.0.0 (Unreleased)
+
+Changes in progress for v4.0.0 are available at [.changes/v4.0.0](https://github.com/vmware/terraform-provider-vcd/tree/main/.changes/v4.0.0) until the release.
+
 ## 3.14.0 (September 17, 2024)
 
 ### FEATURES
