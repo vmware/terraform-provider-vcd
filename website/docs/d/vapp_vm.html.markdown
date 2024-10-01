@@ -81,10 +81,10 @@ The following arguments are supported:
   __at least one__ of the following __must be true__:
  * VM has guest tools. It waits for IP address to be reported in vCD UI. This is a slower option, but
   does not require for the VM to use Edge Gateways DHCP service.
- * VM DHCP interface is connected to routed Org network and is using Edge Gateways DHCP service (not
-  relayed). It works by querying DHCP leases on edge gateway. In general it is quicker than waiting
-  until UI reports IP addresses, but is more constrained. However this is the only option if guest
-  tools are not present on the VM.
+ * VM DHCP interface is connected to **NSX-V** routed Org network and is using Edge Gateways DHCP
+  service (not relayed). It works by querying DHCP leases on edge gateway. In general it is quicker
+  than waiting until UI reports IP addresses, but is more constrained. However this is the only
+  option if guest tools are not present on the VM.
 
 ## Attribute reference
 
