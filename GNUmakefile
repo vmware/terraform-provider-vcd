@@ -2,7 +2,6 @@ TEST?=$$(go list ./... )
 GOFMT_FILES?=$$(find . -name '*.go' )
 WEBSITE_REPO=github.com/hashicorp/terraform-website
 GIT_DESCRIBE=$(shell git describe --tags)
-
 PKG_NAME=vcd
 
 default: build
@@ -136,6 +135,10 @@ testnetwork: fmtcheck
 # Runs the acceptance test for external network
 testextnetwork: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' extnetwork"
+
+# Runs the acceptance test for tm
+testtm: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' tm"
 
 # vets all .go files
 vet:
