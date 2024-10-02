@@ -30,37 +30,37 @@ func datasourceVcdTmRegion() *schema.Resource {
 			"nsx_manager_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "NSX Manager ID",
+				Description: "NSX-T Manager ID",
 			},
 			"cpu_capacity_mhz": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "",
+				Description: "CPU Capacity in MHz",
 			},
 			"cpu_reservation_capacity_mhz": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "",
+				Description: "CPU reservation in MHz",
 			},
-			"memory_capacity_mhz": {
+			"memory_capacity_mib": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "",
+				Description: "Memory capacity in MiB",
 			},
-			"memory_reservation_capacity_mhz": {
+			"memory_reservation_capacity_mib": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "",
+				Description: "Memory reservation in MiB",
 			},
 			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Status",
+				Description: "Status of the region",
 			},
 			"supervisors": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "A set supervisor IDs",
+				Description: "A set supervisor IDs used in this Region",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},

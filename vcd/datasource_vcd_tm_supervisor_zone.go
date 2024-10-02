@@ -26,7 +26,7 @@ func datasourceVcdTmSupervisorZone() *schema.Resource {
 			"vcenter_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "Parent vCenter ID",
 			},
 		},
 	}
@@ -57,18 +57,16 @@ func datasourceVcdTmSupervisorZoneRead(ctx context.Context, d *schema.ResourceDa
 
 func setSupervisorZoneData(d *schema.ResourceData, s *types.SupervisorZone) error {
 	vCenterId := ""
-	// regionId := ""
-
 	if s.VirtualCenter != nil {
 		vCenterId = s.VirtualCenter.ID
 	}
-
-	// if s.Region != nil {
-	// 	regionId = s.Region.ID
-	// }
-
 	dSet(d, "vcenter_id", vCenterId)
-	// dSet(d, "region_id", regionId)
+	dSet(d, "name", s.Name)
+	supervisorId := ""
+	if s.Supervisor != nil {
+		supervisorId = s.Supervisor.ID
+	}
+	dSet(d, "supervisor_id", supervisorId)
 
 	return nil
 }

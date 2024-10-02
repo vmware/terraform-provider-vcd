@@ -40,7 +40,7 @@ func resourceVcdTmOrg() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "Is the org enabled. Defaults to 'true'",
+				Description: "Defines if the Org enabled. Defaults to 'true'",
 			},
 			"is_subprovider": {
 				Type:        schema.TypeBool,
@@ -87,8 +87,9 @@ func resourceVcdTmOrg() *schema.Resource {
 				Description: "Number of directly managed Orgs",
 			},
 			"is_classic_tenant": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Defines whether the organization is a classic VRA-style tenant",
 			},
 		},
 	}
@@ -126,10 +127,8 @@ func resourceVcdTmOrgUpdate(ctx context.Context, d *schema.ResourceData, meta in
 
 	t.ID = o.TmOrg.ID
 
-	/// Injecting some fields that failed requirements
-	t.ManagedBy = o.TmOrg.ManagedBy // It is optional in docs, but API rejects
-
-	/// <> Injecting some fields that failed requirements
+	// Injecting some fields that failed requirements
+	t.ManagedBy = o.TmOrg.ManagedBy // It is optional in docs, but API rejects update without it
 
 	_, err = o.Update(t)
 	if err != nil {
@@ -213,7 +212,7 @@ func setTmOrgData(d *schema.ResourceData, org *types.TmOrg) error {
 	dSet(d, "is_enabled", org.IsEnabled)
 	dSet(d, "is_subprovider", org.CanManageOrgs)
 
-	// Computed
+	// Computed in resource
 	dSet(d, "org_vdc_count", org.OrgVdcCount)
 	dSet(d, "catalog_count", org.CatalogCount)
 	dSet(d, "vapp_count", org.VappCount)

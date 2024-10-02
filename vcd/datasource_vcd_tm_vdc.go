@@ -15,34 +15,41 @@ func datasourceVcdTmVdc() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of the VDC",
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Description of the VDC",
 			},
 			"is_enabled": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Defines if the VDC is enabled",
 			},
 			"org_id": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Parent Organization ID",
 			},
 			"region_id": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Parent Region ID",
 			},
 			"supervisor_ids": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "A set of Supervisor IDs that back this VDC",
 			},
 			"zone_resource_allocations": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem:     tmVdcDsZoneResourceAllocation,
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        tmVdcDsZoneResourceAllocation,
+				Description: "A set of Supervisor Zones and their resource allocations",
 			},
 			"status": {
 				Type:     schema.TypeString,
@@ -57,32 +64,32 @@ var tmVdcDsZoneResourceAllocation = &schema.Resource{
 		"zone_name": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Gateway address for a subnet",
+			Description: "Supervisor Zone Name",
 		},
 		"zone_id": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Prefix length for a subnet (e.g. 24)",
+			Description: "Supervisor Zone ID",
 		},
 		"memory_limit_mib": {
 			Type:        schema.TypeInt,
 			Computed:    true,
-			Description: "IP address on the edge gateway",
+			Description: "Memory limit in MiB",
 		},
 		"memory_reservation_mib": {
 			Type:        schema.TypeInt,
 			Computed:    true,
-			Description: "IP address on the edge gateway",
+			Description: "Memory reservation in MiB",
 		},
 		"cpu_limit_mhz": {
 			Type:        schema.TypeInt,
 			Computed:    true,
-			Description: "IP address on the edge gateway",
+			Description: "CPU limit in MHz",
 		},
 		"cpu_reservation_mhz": {
 			Type:        schema.TypeInt,
 			Computed:    true,
-			Description: "IP address on the edge gateway",
+			Description: "CPU reservation in MHz",
 		},
 	},
 }
@@ -109,6 +116,7 @@ func setTmVdcData(d *schema.ResourceData, vdc *types.TmVdc) error {
 	dSet(d, "name", vdc.Name)
 	dSet(d, "description", vdc.Description)
 	dSet(d, "is_enabled", vdc.IsEnabled)
+	dSet(d, "status", vdc.Status)
 
 	orgId := ""
 	if vdc.Org != nil {

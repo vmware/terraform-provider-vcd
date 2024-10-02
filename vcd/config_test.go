@@ -108,7 +108,9 @@ type TestConfig struct {
 		MaxRetryTimeout          int    `json:"maxRetryTimeout"`
 	} `json:"provider"`
 	Tm struct {
-		Org string `json:"org"`
+		Org    string `json:"org"`    // temporary field to identify
+		Region string `json:"region"` //
+		Vdc    string `json:"vdc"`    //
 	} `json:"tm"`
 	VCD struct {
 		Org         string `json:"org"`

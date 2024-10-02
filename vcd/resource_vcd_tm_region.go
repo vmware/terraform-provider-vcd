@@ -42,36 +42,35 @@ func resourceVcdTmRegion() *schema.Resource {
 				Required:    true,
 				Description: "NSX Manager ID",
 			},
-
 			"cpu_capacity_mhz": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "",
+				Description: "CPU Capacity in MHz",
 			},
 			"cpu_reservation_capacity_mhz": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "",
+				Description: "CPU reservation in MHz",
 			},
-			"memory_capacity_mhz": {
+			"memory_capacity_mib": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "",
+				Description: "Memory capacity in MiB",
 			},
-			"memory_reservation_capacity_mhz": {
+			"memory_reservation_capacity_mib": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "",
+				Description: "Memory reservation in MiB",
 			},
 			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Status",
+				Description: "Status of the region",
 			},
 			"supervisors": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "A set supervisor IDs",
+				Description: "A set supervisor IDs used in this Region",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -107,10 +106,6 @@ func resourceVcdTmRegionCreate(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceVcdTmRegionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if tmUpdateFuse {
-		return diag.Errorf("UPDATE FUSE ENABLED")
-	}
-
 	vcdClient := meta.(*VCDClient)
 	region, err := vcdClient.GetRegionById(d.Id())
 	if err != nil {
@@ -122,7 +117,10 @@ func resourceVcdTmRegionUpdate(ctx context.Context, d *schema.ResourceData, meta
 		return diag.Errorf("error getting Region type: %s", err)
 	}
 
-	region.Update(t)
+	_, err = region.Update(t)
+	if err != nil {
+		return diag.Errorf("error updating Region Type: %s", err)
+	}
 
 	return resourceVcdTmRegionRead(ctx, d, meta)
 }
@@ -150,9 +148,6 @@ func resourceVcdTmRegionRead(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func resourceVcdTmRegionDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if tmDeleteFuse {
-		return diag.Errorf("DELETE FUSE ENABLED")
-	}
 	vcdClient := meta.(*VCDClient)
 	region, err := vcdClient.GetRegionById(d.Id())
 	if err != nil {
@@ -197,8 +192,8 @@ func setRegionData(d *schema.ResourceData, region *types.Region) error {
 
 	dSet(d, "cpu_capacity_mhz", region.CPUCapacityMHz)
 	dSet(d, "cpu_reservation_capacity_mhz", region.CPUReservationCapacityMHz)
-	dSet(d, "memory_capacity_mhz", region.MemoryCapacityMiB)
-	dSet(d, "memory_reservation_capacity_mhz", region.MemoryReservationCapacityMiB)
+	dSet(d, "memory_capacity_mib", region.MemoryCapacityMiB)
+	dSet(d, "memory_reservation_capacity_mib", region.MemoryReservationCapacityMiB)
 	dSet(d, "status", region.Status)
 
 	err := d.Set("supervisors", extractIdsFromOpenApiReferences(region.Supervisors))

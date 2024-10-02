@@ -21,12 +21,12 @@ func datasourceVcdTmSupervisor() *schema.Resource {
 			"vcenter_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "Parent vCenter ID",
 			},
 			"region_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "Parent Region ID",
 			},
 		},
 	}

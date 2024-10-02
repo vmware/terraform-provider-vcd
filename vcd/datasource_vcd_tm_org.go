@@ -30,12 +30,12 @@ func datasourceVcdTmOrg() *schema.Resource {
 			"is_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Is the org enabled. Defaults to 'true'",
+				Description: "Defines is the Org enabled",
 			},
 			"is_subprovider": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Enables this organization to manage other organizations",
+				Description: "Defines if this Organization can manage other organizations",
 			},
 			"org_vdc_count": {
 				Type:        schema.TypeInt,
