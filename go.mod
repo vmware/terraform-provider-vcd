@@ -70,4 +70,4 @@ require (
 	google.golang.org/protobuf v1.34.0 // indirect
 )
 
-replace github.com/vmware/go-vcloud-director/v2 => github.com/Didainius/go-vcloud-director/v2 v2.17.0-alpha.2.0.20241002062825-5ac4de2b9276
+replace github.com/vmware/go-vcloud-director/v2 => /Users/abarreiro/Documents/Development/go-vcloud-director
