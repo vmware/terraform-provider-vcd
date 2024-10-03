@@ -2,6 +2,6 @@
 * **New Data Source:** `vcd_tm_org` to read Organizations using OpenAPI [GH-1338]
 * **New Resource:** `vcd_tm_region` to manage Regions [GH-1338]
 * **New Data Source:** `vcd_tm_region` to read Regions [GH-1338]
-* **New Data Source:** `vcd_tm_region` to read VDC using OpenAPI [GH-1338]
+* **New Data Source:** `vcd_tm_vdc` to read VDC using OpenAPI [GH-1338]
 * **New Data Source:** `vcd_tm_supervisor` to read Supervisor using OpenAPI [GH-1338]
 * **New Data Source:** `vcd_tm_supervisor_zone` to read Supervisor using OpenAPI [GH-1338]
