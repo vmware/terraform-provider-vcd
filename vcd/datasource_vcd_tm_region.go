@@ -30,7 +30,7 @@ func datasourceVcdTmRegion() *schema.Resource {
 			"nsx_manager_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "NSX-T Manager ID",
+				Description: "NSX Manager ID",
 			},
 			"cpu_capacity_mhz": {
 				Type:        schema.TypeInt,
@@ -60,7 +60,7 @@ func datasourceVcdTmRegion() *schema.Resource {
 			"supervisors": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "A set supervisor IDs used in this Region",
+				Description: "A set of supervisor IDs used in this Region",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -68,7 +68,7 @@ func datasourceVcdTmRegion() *schema.Resource {
 			"storage_policies": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "A set storage policies",
+				Description: "A set of storage policies",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -87,7 +87,7 @@ func datasourceVcdTmRegionRead(ctx context.Context, d *schema.ResourceData, meta
 
 	err = setRegionData(d, region.Region)
 	if err != nil {
-		return diag.Errorf("error storing data: %s", err)
+		return diag.Errorf("error storing Region data: %s", err)
 	}
 
 	d.SetId(region.Region.ID)

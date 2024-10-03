@@ -68,8 +68,9 @@ func datasourceVcdTmOrg() *schema.Resource {
 				Description: "Number of disks in the Org",
 			},
 			"can_publish": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Defines whether the organization can publish catalogs externally",
 			},
 			"directly_managed_org_count": {
 				Type:        schema.TypeInt,
@@ -77,8 +78,9 @@ func datasourceVcdTmOrg() *schema.Resource {
 				Description: "Number of directly managed Orgs",
 			},
 			"is_classic_tenant": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Defines whether the organization is a classic VRA-style tenant",
 			},
 		},
 	}

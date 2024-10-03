@@ -52,8 +52,9 @@ func datasourceVcdTmVdc() *schema.Resource {
 				Description: "A set of Supervisor Zones and their resource allocations",
 			},
 			"status": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "VDC status",
 			},
 		},
 	}

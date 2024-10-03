@@ -37,7 +37,7 @@ func datasourceVcdTmSupervisorRead(ctx context.Context, d *schema.ResourceData, 
 
 	s, err := vcdClient.GetSupervisorByName(d.Get("name").(string))
 	if err != nil {
-		return diag.Errorf("error getting Org: %s", err)
+		return diag.Errorf("error getting Supervisor: %s", err)
 	}
 
 	err = setSupervisorData(d, s.Supervisor)

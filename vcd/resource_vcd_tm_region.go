@@ -70,7 +70,7 @@ func resourceVcdTmRegion() *schema.Resource {
 			"supervisors": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "A set supervisor IDs used in this Region",
+				Description: "A set of supervisor IDs used in this Region",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -78,7 +78,7 @@ func resourceVcdTmRegion() *schema.Resource {
 			"storage_policies": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "A set storage policies",
+				Description: "A set of storage policies",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},

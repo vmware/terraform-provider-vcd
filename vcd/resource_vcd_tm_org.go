@@ -78,8 +78,9 @@ func resourceVcdTmOrg() *schema.Resource {
 				Description: "Number of disks in the Org",
 			},
 			"can_publish": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Defines whether the organization can publish catalogs externally",
 			},
 			"directly_managed_org_count": {
 				Type:        schema.TypeInt,
