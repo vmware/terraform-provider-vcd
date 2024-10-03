@@ -122,13 +122,13 @@ function acceptance_test {
     if [ -n "$VERBOSE" ]
     then
         echo "# check for config file"
-        echo "TF_ACC=1 go test -tags '$tags' -v -timeout $timeout"
+        echo "TF_ACC=1 go test -tags '$tags' -vcd-add-provider -v -timeout $timeout"
     fi
 
     if [ -z "$DRY_RUN" ]
     then
         check_for_config_file
-        TF_ACC=1 go test -tags "$tags" $testoptions -v -timeout $timeout
+        TF_ACC=1 go test -tags "$tags" $testoptions -vcd-add-provider -v -timeout $timeout
         check_exit_code
     fi
 }
@@ -402,6 +402,9 @@ case $wanted in
         ;;
     vm)
         acceptance_test vm
+        ;;
+    tm)
+        acceptance_test tm
         ;;
     network)
         acceptance_test network
