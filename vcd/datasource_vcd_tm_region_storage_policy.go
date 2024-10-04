@@ -10,7 +10,6 @@ import (
 func datasourceVcdTmRegionStoragePolicy() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdTmRegionStoragePolicyRead,
-
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
@@ -20,7 +19,27 @@ func datasourceVcdTmRegionStoragePolicy() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Region Storage Policy description",
+				Description: "Description of the Region Storage Policy",
+			},
+			"region_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The Region that this Region Storage Policy belongs to",
+			},
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The creation status of the Region Storage Policy. Can be [NOT_READY, READY]",
+			},
+			"storage_capacity_mb": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Storage capacity in megabytes for this Region Storage Policy",
+			},
+			"storage_consumed_mb": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Consumed storage in megabytes for this Region Storage Policy",
 			},
 		},
 	}

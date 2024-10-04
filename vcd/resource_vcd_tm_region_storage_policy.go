@@ -19,7 +19,6 @@ func resourceVcdTmRegionStoragePolicy() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdTmRegionStoragePolicyImport,
 		},
-
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
@@ -29,7 +28,27 @@ func resourceVcdTmRegionStoragePolicy() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Region Storage Policy description",
+				Description: "Description of the Region Storage Policy",
+			},
+			"region_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The Region that this Region Storage Policy belongs to",
+			},
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The creation status of the Region Storage Policy. Can be [NOT_READY, READY]",
+			},
+			"storage_capacity_mb": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Storage capacity in megabytes for this Region Storage Policy",
+			},
+			"storage_consumed_mb": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Consumed storage in megabytes for this Region Storage Policy",
 			},
 		},
 	}
@@ -79,7 +98,11 @@ func resourceVcdTmRegionStoragePolicyRead(ctx context.Context, d *schema.Resourc
 func genericVcdTmRegionStoragePolicyRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	rsp, err := vcdClient.GetRegionStoragePolicyById(d.Id())
+	id := d.Id()
+	if id == "" {
+		id = d.Get("name").(string)
+	}
+	rsp, err := vcdClient.GetRegionStoragePolicyById(id)
 	if err != nil {
 		if origin == "resource" && govcd.ContainsNotFound(err) {
 			d.SetId("")
@@ -137,5 +160,12 @@ func getRegionStoragePolicyType(d *schema.ResourceData) (*types.RegionStoragePol
 func setRegionStoragePolicyData(d *schema.ResourceData, rsp *types.RegionStoragePolicy) error {
 	dSet(d, "name", rsp.Name)
 	dSet(d, "description", rsp.Description)
+	if rsp.Region != nil {
+		dSet(d, "region_id", rsp.Region.ID)
+	}
+	dSet(d, "storage_capacity_mb", rsp.StorageCapacityMB)
+	dSet(d, "storage_consumed_mb", rsp.StorageConsumedMB)
+	dSet(d, "status", rsp.Status)
+
 	return nil
 }
