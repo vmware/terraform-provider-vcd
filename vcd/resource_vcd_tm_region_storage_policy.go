@@ -113,15 +113,14 @@ func genericVcdTmRegionStoragePolicyRead(_ context.Context, d *schema.ResourceDa
 
 	err = setRegionStoragePolicyData(d, rsp.RegionStoragePolicy)
 	if err != nil {
-		return diag.Errorf("error storing data: %s", err)
+		return diag.Errorf("error saving Region Storage Policy data into state: %s", err)
 	}
 
 	d.SetId(rsp.RegionStoragePolicy.ID)
-
 	return nil
 }
 
-func resourceVcdTmRegionStoragePolicyDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdTmRegionStoragePolicyDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	region, err := vcdClient.GetRegionById(d.Id())
 	if err != nil {
@@ -132,19 +131,19 @@ func resourceVcdTmRegionStoragePolicyDelete(ctx context.Context, d *schema.Resou
 	if err != nil {
 		return diag.Errorf("error deleting Region Storage Policy: %s", err)
 	}
+
 	return nil
 }
 
-func resourceVcdTmRegionStoragePolicyImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdTmRegionStoragePolicyImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
-
 	rsp, err := vcdClient.GetRegionStoragePolicyByName(d.Id())
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving Region Storage Policy: %s", err)
+		return nil, fmt.Errorf("error retrieving Region Storage Policy with name '%s': %s", d.Id(), err)
 	}
 
 	d.SetId(rsp.RegionStoragePolicy.ID)
-
+	dSet(d, "name", rsp.RegionStoragePolicy.Name)
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -153,16 +152,17 @@ func getRegionStoragePolicyType(d *schema.ResourceData) (*types.RegionStoragePol
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 	}
-
 	return t, nil
 }
 
 func setRegionStoragePolicyData(d *schema.ResourceData, rsp *types.RegionStoragePolicy) error {
 	dSet(d, "name", rsp.Name)
 	dSet(d, "description", rsp.Description)
+	regionId := ""
 	if rsp.Region != nil {
-		dSet(d, "region_id", rsp.Region.ID)
+		regionId = rsp.Region.ID
 	}
+	dSet(d, "region_id", regionId)
 	dSet(d, "storage_capacity_mb", rsp.StorageCapacityMB)
 	dSet(d, "storage_consumed_mb", rsp.StorageConsumedMB)
 	dSet(d, "status", rsp.Status)
