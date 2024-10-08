@@ -53,7 +53,7 @@ func resourceVcdTmNsxtManager() *schema.Resource {
 			},
 			"status": {
 				Type:        schema.TypeBool,
-				Required:    true,
+				Computed:    true,
 				Description: "Status of NSX-T Manager",
 			},
 		},

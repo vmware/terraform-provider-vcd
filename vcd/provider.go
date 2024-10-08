@@ -311,7 +311,6 @@ var globalResourceMap = map[string]*schema.Resource{
 
 	"vcd_tm_region":       resourceVcdTmRegion(),      // 4.0
 	"vcd_tm_org":          resourceVcdTmOrg(),         // 4.0
-	"vcd_vcenter":         resourceVcdVcenter(),       // 4.0
 	"vcd_tm_nsxt_manager": resourceVcdTmNsxtManager(), // 4.0
 }
 
