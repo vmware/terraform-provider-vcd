@@ -2,9 +2,10 @@ package vcd
 
 import (
 	"context"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"log"
 	"net/url"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -40,7 +41,7 @@ func datasourceVcdVcenter() *schema.Resource {
 				Computed:    true,
 				Description: "vCenter version",
 			},
-			// In UI this field is called `connection`, but it is a reserved field in Terrraform
+			// In UI this field is called `connection`, but it is a reserved field in Terraform
 			"connection_status": {
 				Type:        schema.TypeString,
 				Computed:    true,

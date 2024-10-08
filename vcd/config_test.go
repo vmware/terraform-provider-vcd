@@ -111,6 +111,10 @@ type TestConfig struct {
 		Org    string `json:"org"`    // temporary field to make skipIfNotTm work
 		Region string `json:"region"` //
 		Vdc    string `json:"vdc"`    //
+
+		NsxtManagerUsername string `json:"nsxtManagerUsername"`
+		NsxtManagerPassword string `json:"nsxtManagerPassword"`
+		NsxtManagerUrl      string `json:"nsxtManagerUrl"`
 	} `json:"tm"`
 	VCD struct {
 		Org         string `json:"org"`
