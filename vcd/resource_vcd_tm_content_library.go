@@ -119,14 +119,14 @@ func resourceVcdTmContentLibraryCreate(ctx context.Context, d *schema.ResourceDa
 		return diag.Errorf("error getting Content Library type: %s", err)
 	}
 
-	region, err := vcdClient.CreateContentLibrary(t)
+	cl, err := vcdClient.CreateContentLibrary(t)
 	if err != nil {
 		return diag.Errorf("error creating Content Library: %s", err)
 	}
 
-	d.SetId(region.ContentLibrary.ID)
+	d.SetId(cl.ContentLibrary.ID)
 
-	return resourceVcdTmRegionRead(ctx, d, meta)
+	return resourceVcdTmContentLibraryRead(ctx, d, meta)
 }
 
 func resourceVcdTmContentLibraryUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -146,7 +146,7 @@ func resourceVcdTmContentLibraryUpdate(ctx context.Context, d *schema.ResourceDa
 		return diag.Errorf("error updating Content Library Type: %s", err)
 	}
 
-	return resourceVcdTmRegionRead(ctx, d, meta)
+	return resourceVcdTmContentLibraryRead(ctx, d, meta)
 }
 
 func resourceVcdTmContentLibraryRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -179,12 +179,12 @@ func genericVcdTmContentLibraryRead(_ context.Context, d *schema.ResourceData, m
 
 func resourceVcdTmContentLibraryDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	region, err := vcdClient.GetRegionById(d.Id())
+	cl, err := vcdClient.GetRegionById(d.Id())
 	if err != nil {
 		return diag.Errorf("error retrieving Content Library: %s", err)
 	}
 
-	err = region.Delete()
+	err = cl.Delete()
 	if err != nil {
 		return diag.Errorf("error deleting Content Library: %s", err)
 	}

@@ -69,7 +69,7 @@ func resourceVcdTmRegionStoragePolicyCreate(ctx context.Context, d *schema.Resou
 
 	d.SetId(region.RegionStoragePolicy.ID)
 
-	return resourceVcdTmRegionRead(ctx, d, meta)
+	return resourceVcdTmRegionStoragePolicyRead(ctx, d, meta)
 }
 
 func resourceVcdTmRegionStoragePolicyUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -89,7 +89,7 @@ func resourceVcdTmRegionStoragePolicyUpdate(ctx context.Context, d *schema.Resou
 		return diag.Errorf("error updating Region Storage Policy Type: %s", err)
 	}
 
-	return resourceVcdTmRegionRead(ctx, d, meta)
+	return resourceVcdTmRegionStoragePolicyRead(ctx, d, meta)
 }
 
 func resourceVcdTmRegionStoragePolicyRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

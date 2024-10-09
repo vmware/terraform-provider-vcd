@@ -93,20 +93,6 @@ func datasourceVcdTmContentLibrary() *schema.Resource {
 	}
 }
 
-func datasourceVcdTmContentLibraryRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	vcdClient := meta.(*VCDClient)
-
-	cl, err := vcdClient.GetContentLibraryByName(d.Get("name").(string))
-	if err != nil {
-		return diag.Errorf("error getting Content Library: %s", err)
-	}
-
-	err = setTmContentLibraryData(d, cl.ContentLibrary)
-	if err != nil {
-		return diag.Errorf("error storing Content Library data: %s", err)
-	}
-
-	d.SetId(cl.ContentLibrary.ID)
-
-	return nil
+func datasourceVcdTmContentLibraryRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return genericVcdTmContentLibraryRead(ctx, d, meta, "datasource")
 }
