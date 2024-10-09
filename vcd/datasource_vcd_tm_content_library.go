@@ -121,6 +121,7 @@ func setTmContentLibraryData(d *schema.ResourceData, cl *types.ContentLibrary) e
 	dSet(d, "is_shared", cl.IsShared)
 	dSet(d, "is_subscribed", cl.IsSubscribed)
 	dSet(d, "library_type", cl.LibraryType)
+	dSet(d, "version_number", cl.VersionNumber)
 	if cl.Org != nil {
 		dSet(d, "owner_org_id", cl.Org.ID)
 	}
