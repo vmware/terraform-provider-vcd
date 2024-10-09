@@ -2,8 +2,6 @@ package vcd
 
 import (
 	"context"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -110,42 +108,5 @@ func datasourceVcdTmContentLibraryRead(_ context.Context, d *schema.ResourceData
 
 	d.SetId(cl.ContentLibrary.ID)
 
-	return nil
-}
-
-func setTmContentLibraryData(d *schema.ResourceData, cl *types.ContentLibrary) error {
-	dSet(d, "name", cl.Name)
-	dSet(d, "auto_attach", cl.AutoAttach)
-	dSet(d, "creation_date", cl.CreationDate)
-	dSet(d, "description", cl.Description)
-	dSet(d, "is_shared", cl.IsShared)
-	dSet(d, "is_subscribed", cl.IsSubscribed)
-	dSet(d, "library_type", cl.LibraryType)
-	dSet(d, "version_number", cl.VersionNumber)
-	if cl.Org != nil {
-		dSet(d, "owner_org_id", cl.Org.ID)
-	}
-
-	sps := make([]string, len(cl.StoragePolicies))
-	for i, sp := range cl.StoragePolicies {
-		sps[i] = sp.ID
-	}
-	err := d.Set("storage_policy_ids", sps)
-	if err != nil {
-		return err
-	}
-
-	if cl.SubscriptionConfig != nil {
-		err = d.Set("subscription_config", []interface{}{
-			map[string]interface{}{
-				"subscription_url": cl.SubscriptionConfig.SubscriptionUrl,
-				"password":         cl.SubscriptionConfig.Password,
-				"need_local_copy":  cl.SubscriptionConfig.NeedLocalCopy,
-			},
-		})
-		if err != nil {
-			return err
-		}
-	}
 	return nil
 }
