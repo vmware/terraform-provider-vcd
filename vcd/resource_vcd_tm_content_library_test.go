@@ -78,6 +78,6 @@ resource "vcd_tm_content_library" "cl" {
 
 const testAccVcdTmContentLibraryStep2 = testAccVcdTmContentLibraryStep1 + `
 data "vcd_tm_content_library" "cl_ds" {
-    name = vcd_tm_content_library.cl.name
+  name = vcd_tm_content_library.cl.name
 }
 `
