@@ -124,7 +124,7 @@ func resourceVcdTmContentLibraryCreate(ctx context.Context, d *schema.ResourceDa
 		return diag.Errorf("error creating Content Library: %s", err)
 	}
 
-	d.SetId(cl.ContentLibrary.ID)
+	d.SetId(cl.ContentLibrary.Id)
 
 	return resourceVcdTmContentLibraryRead(ctx, d, meta)
 }
@@ -173,7 +173,7 @@ func genericVcdTmContentLibraryRead(_ context.Context, d *schema.ResourceData, m
 		return diag.Errorf("error saving Content Library data into state: %s", err)
 	}
 
-	d.SetId(rsp.ContentLibrary.ID)
+	d.SetId(rsp.ContentLibrary.Id)
 	return nil
 }
 
@@ -199,15 +199,25 @@ func resourceVcdTmContentLibraryImport(_ context.Context, d *schema.ResourceData
 		return nil, fmt.Errorf("error retrieving Content Library with name '%s': %s", d.Id(), err)
 	}
 
-	d.SetId(rsp.ContentLibrary.ID)
+	d.SetId(rsp.ContentLibrary.Id)
 	dSet(d, "name", rsp.ContentLibrary.Name)
 	return []*schema.ResourceData{d}, nil
 }
 
 func getContentLibraryType(d *schema.ResourceData) (*types.ContentLibrary, error) {
 	t := &types.ContentLibrary{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
+		Name:            d.Get("name").(string),
+		Description:     d.Get("description").(string),
+		AutoAttach:      d.Get("auto_attach").(bool),
+		StoragePolicies: convertSliceOfStringsToOpenApiReferenceIds(convertTypeListToSliceOfStrings(d.Get("storage_policy_ids").([]interface{}))),
+	}
+	if v, ok := d.GetOk("subscription_config"); ok {
+		subsConfig := v.([]interface{})[0].(map[string]interface{})
+		t.SubscriptionConfig = &types.ContentLibrarySubscriptionConfig{
+			SubscriptionUrl: subsConfig["subscription_url"].(string),
+			NeedLocalCopy:   subsConfig["need_local_copy"].(bool),
+			Password:        subsConfig["password"].(string),
+		}
 	}
 	return t, nil
 }
