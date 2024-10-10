@@ -186,7 +186,7 @@ func genericVcdTmContentLibraryRead(_ context.Context, d *schema.ResourceData, m
 
 func resourceVcdTmContentLibraryDelete(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	cl, err := vcdClient.GetRegionById(d.Id())
+	cl, err := vcdClient.GetContentLibraryById(d.Id())
 	if err != nil {
 		return diag.Errorf("error retrieving Content Library: %s", err)
 	}
