@@ -23,11 +23,13 @@ func resourceVcdTmContentLibrary() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true, // TODO: Update not supported
 				Description: "The name of the Content Library",
 			},
 			"storage_policy_ids": {
 				Type:        schema.TypeSet,
 				Required:    true,
+				ForceNew:    true, // TODO: Update not supported
 				Description: "A set of Content Library or VDC Storage Policy IDs used by this Content Library",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -37,7 +39,7 @@ func resourceVcdTmContentLibrary() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
-				ForceNew: true,
+				ForceNew: true, // Cannot be updated
 				Description: "For Tenant Content Libraries this field represents whether this Content Library should be " +
 					"automatically attached to all current and future namespaces in the tenant organization. If no value is " +
 					"supplied during creation then this field will default to true. If a value of false is supplied, " +
@@ -53,6 +55,7 @@ func resourceVcdTmContentLibrary() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				ForceNew:    true, // TODO: Update not supported
 				Description: "The description of the Content Library",
 			},
 			"is_shared": {
@@ -86,6 +89,7 @@ func resourceVcdTmContentLibrary() *schema.Resource {
 						"subscription_url": {
 							Type:        schema.TypeString,
 							Required:    true,
+							ForceNew:    true, // TODO: Update not supported
 							Description: "Subscription url of this Content Library",
 						},
 						"password": {
@@ -97,6 +101,7 @@ func resourceVcdTmContentLibrary() *schema.Resource {
 						"need_local_copy": {
 							Type:        schema.TypeBool,
 							Optional:    true,
+							ForceNew:    true, // TODO: Update not supported
 							Description: "Whether to eagerly download content from publisher and store it locally",
 						},
 					},
@@ -155,11 +160,13 @@ func resourceVcdTmContentLibraryRead(ctx context.Context, d *schema.ResourceData
 func genericVcdTmContentLibraryRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	id := d.Id()
-	if id == "" {
-		id = d.Get("name").(string)
+	var cl *govcd.ContentLibrary
+	var err error
+	if d.Id() != "" {
+		cl, err = vcdClient.GetContentLibraryById(d.Id())
+	} else {
+		cl, err = vcdClient.GetContentLibraryByName(d.Get("name").(string))
 	}
-	rsp, err := vcdClient.GetContentLibraryById(id)
 	if err != nil {
 		if origin == "resource" && govcd.ContainsNotFound(err) {
 			d.SetId("")
@@ -168,12 +175,12 @@ func genericVcdTmContentLibraryRead(_ context.Context, d *schema.ResourceData, m
 		return diag.Errorf("error retrieving Content Library: %s", err)
 	}
 
-	err = setTmContentLibraryData(d, rsp.ContentLibrary)
+	err = setTmContentLibraryData(d, cl.ContentLibrary)
 	if err != nil {
 		return diag.Errorf("error saving Content Library data into state: %s", err)
 	}
 
-	d.SetId(rsp.ContentLibrary.Id)
+	d.SetId(cl.ContentLibrary.Id)
 	return nil
 }
 
@@ -209,7 +216,7 @@ func getContentLibraryType(d *schema.ResourceData) (*types.ContentLibrary, error
 		Name:            d.Get("name").(string),
 		Description:     d.Get("description").(string),
 		AutoAttach:      d.Get("auto_attach").(bool),
-		StoragePolicies: convertSliceOfStringsToOpenApiReferenceIds(convertTypeListToSliceOfStrings(d.Get("storage_policy_ids").([]interface{}))),
+		StoragePolicies: convertSliceOfStringsToOpenApiReferenceIds(convertTypeListToSliceOfStrings(d.Get("storage_policy_ids").(*schema.Set).List())),
 	}
 	if v, ok := d.GetOk("subscription_config"); ok {
 		subsConfig := v.([]interface{})[0].(map[string]interface{})

@@ -41,12 +41,12 @@ func resourceVcdTmRegionStoragePolicy() *schema.Resource {
 				Description: "The creation status of the Region Storage Policy. Can be [NOT_READY, READY]",
 			},
 			"storage_capacity_mb": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Storage capacity in megabytes for this Region Storage Policy",
 			},
 			"storage_consumed_mb": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Consumed storage in megabytes for this Region Storage Policy",
 			},
@@ -97,12 +97,13 @@ func resourceVcdTmRegionStoragePolicyRead(ctx context.Context, d *schema.Resourc
 }
 func genericVcdTmRegionStoragePolicyRead(_ context.Context, d *schema.ResourceData, meta interface{}, origin string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-
-	id := d.Id()
-	if id == "" {
-		id = d.Get("name").(string)
+	var rsp *govcd.RegionStoragePolicy
+	var err error
+	if d.Id() != "" {
+		rsp, err = vcdClient.GetRegionStoragePolicyById(d.Id())
+	} else {
+		rsp, err = vcdClient.GetRegionStoragePolicyByName(d.Get("name").(string))
 	}
-	rsp, err := vcdClient.GetRegionStoragePolicyById(id)
 	if err != nil {
 		if origin == "resource" && govcd.ContainsNotFound(err) {
 			d.SetId("")

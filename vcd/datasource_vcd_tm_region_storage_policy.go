@@ -32,12 +32,12 @@ func datasourceVcdTmRegionStoragePolicy() *schema.Resource {
 				Description: "The creation status of the Region Storage Policy. Can be [NOT_READY, READY]",
 			},
 			"storage_capacity_mb": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Storage capacity in megabytes for this Region Storage Policy",
 			},
 			"storage_consumed_mb": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Consumed storage in megabytes for this Region Storage Policy",
 			},
