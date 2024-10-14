@@ -30,7 +30,7 @@ func resourceVcdTmContentLibrary() *schema.Resource {
 				Type:        schema.TypeSet,
 				Required:    true,
 				ForceNew:    true, // TODO: Update not supported
-				Description: "A set of Content Library or VDC Storage Policy IDs used by this Content Library",
+				Description: "A set of Region Storage Policy IDs or VDC Storage Policy IDs used by this Content Library",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
