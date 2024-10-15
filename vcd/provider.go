@@ -306,6 +306,8 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_alb_virtual_service_http_sec_rules":      resourceVcdAlbVirtualServiceSecRules(),               // 3.14
 
 	"vcd_tm_content_library": resourceVcdTmContentLibrary(), // 4.0
+	"vcd_nsxt_manager":       resourceVcdTmNsxtManager(),    // 4.0
+	"vcd_vcenter":            resourceVcdVcenter(),          // 4.0
 }
 
 // Provider returns a terraform.ResourceProvider.
