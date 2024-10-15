@@ -10,6 +10,8 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
+// TODO: TM: validate compatibility with old data source
+
 func datasourceVcdVcenter() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdVcenterRead,

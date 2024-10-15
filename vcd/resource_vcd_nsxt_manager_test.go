@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccVcdTmNsxtManager(t *testing.T) {
+func TestAccVcdNsxtManager(t *testing.T) {
 	preTestChecks(t)
 
 	skipIfNotSysAdmin(t)
@@ -28,9 +28,9 @@ func TestAccVcdTmNsxtManager(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	configText1 := templateFill(testAccVcdTmNsxtManagerStep1, params)
+	configText1 := templateFill(testAccVcdNsxtManagerStep1, params)
 	params["FuncName"] = t.Name() + "-step2"
-	configText2 := templateFill(testAccVcdTmNsxtManagerStep2, params)
+	configText2 := templateFill(testAccVcdNsxtManagerStep2, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION step2: %s\n", configText1)
 	debugPrintf("#[DEBUG] CONFIGURATION step1: %s\n", configText2)
@@ -45,17 +45,17 @@ func TestAccVcdTmNsxtManager(t *testing.T) {
 			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("vcd_tm_nsxt_manager.test", "name", params["Testname"].(string)),
+					resource.TestCheckResourceAttr("vcd_nsxt_manager.test", "name", params["Testname"].(string)),
 				),
 			},
 			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
-					resourceFieldsEqual("vcd_tm_nsxt_manager.test", "data.vcd_tm_nsxt_manager.test", []string{"%"}),
+					resourceFieldsEqual("vcd_nsxt_manager.test", "data.vcd_nsxt_manager.test", []string{"%"}),
 				),
 			},
 			{
-				ResourceName:      "vcd_tm_nsxt_manager.test",
+				ResourceName:      "vcd_nsxt_manager.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateId:     params["Testname"].(string),
@@ -66,8 +66,8 @@ func TestAccVcdTmNsxtManager(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdTmNsxtManagerStep1 = `
-resource "vcd_tm_nsxt_manager" "test" {
+const testAccVcdNsxtManagerStep1 = `
+resource "vcd_nsxt_manager" "test" {
   name                   = "{{.Testname}}"
   description            = "terraform test"
   username               = "{{.Username}}"
@@ -77,8 +77,8 @@ resource "vcd_tm_nsxt_manager" "test" {
 }
 `
 
-const testAccVcdTmNsxtManagerStep2 = testAccVcdTmNsxtManagerStep1 + `
-data "vcd_tm_nsxt_manager" "test" {
-  name = vcd_tm_nsxt_manager.test.name
+const testAccVcdNsxtManagerStep2 = testAccVcdNsxtManagerStep1 + `
+data "vcd_nsxt_manager" "test" {
+  name = vcd_nsxt_manager.test.name
 }
 `

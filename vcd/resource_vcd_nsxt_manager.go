@@ -10,16 +10,16 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-const labelTmNsxtManager = "NSX-T Manager"
+const labelNsxtManager = "NSX-T Manager"
 
-func resourceVcdTmNsxtManager() *schema.Resource {
+func resourceVcdNsxtManager() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdTmNsxtManagerCreate,
-		ReadContext:   resourceVcdTmNsxtManagerRead,
-		UpdateContext: resourceVcdTmNsxtManagerUpdate,
-		DeleteContext: resourceVcdTmNsxtManagerDelete,
+		CreateContext: resourceVcdNsxtManagerCreate,
+		ReadContext:   resourceVcdNsxtManagerRead,
+		UpdateContext: resourceVcdNsxtManagerUpdate,
+		DeleteContext: resourceVcdNsxtManagerDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdTmNsxtManagerImport,
+			StateContext: resourceVcdNsxtManagerImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -68,46 +68,46 @@ func resourceVcdTmNsxtManager() *schema.Resource {
 	}
 }
 
-func resourceVcdTmNsxtManagerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtManagerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	c := crudConfig[*govcd.NsxtManagerOpenApi, types.NsxtManagerOpenApi]{
-		entityLabel:      labelTmNsxtManager,
-		getTypeFunc:      getTmNsxtManagerType,
-		stateStoreFunc:   setTmNsxtManagerData,
+		entityLabel:      labelNsxtManager,
+		getTypeFunc:      getNsxtManagerType,
+		stateStoreFunc:   setNsxtManagerData,
 		createFunc:       vcdClient.CreateNsxtManagerOpenApi,
-		resourceReadFunc: resourceVcdTmNsxtManagerRead,
+		resourceReadFunc: resourceVcdNsxtManagerRead,
 		preCreateHooks:   []beforeCreateHook{trustHostCertificate("url", "auto_trust_certificate")},
 	}
 	return createResource(ctx, d, meta, c)
 }
 
-func resourceVcdTmNsxtManagerUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtManagerUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	c := crudConfig[*govcd.NsxtManagerOpenApi, types.NsxtManagerOpenApi]{
-		entityLabel:      labelTmNsxtManager,
-		getTypeFunc:      getTmNsxtManagerType,
+		entityLabel:      labelNsxtManager,
+		getTypeFunc:      getNsxtManagerType,
 		getEntityFunc:    vcdClient.GetNsxtManagerOpenApiById,
-		resourceReadFunc: resourceVcdTmNsxtManagerRead,
+		resourceReadFunc: resourceVcdNsxtManagerRead,
 	}
 
 	return updateResource(ctx, d, meta, c)
 }
 
-func resourceVcdTmNsxtManagerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtManagerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	c := crudConfig[*govcd.NsxtManagerOpenApi, types.NsxtManagerOpenApi]{
-		entityLabel:    labelTmNsxtManager,
+		entityLabel:    labelNsxtManager,
 		getEntityFunc:  vcdClient.GetNsxtManagerOpenApiById,
-		stateStoreFunc: setTmNsxtManagerData,
+		stateStoreFunc: setNsxtManagerData,
 	}
 	return readResource(ctx, d, meta, c)
 }
 
-func resourceVcdTmNsxtManagerDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdNsxtManagerDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	c := crudConfig[*govcd.NsxtManagerOpenApi, types.NsxtManagerOpenApi]{
-		entityLabel:   labelTmNsxtManager,
+		entityLabel:   labelNsxtManager,
 		getEntityFunc: vcdClient.GetNsxtManagerOpenApiById,
 		// preDeleteHooks: []resourceHook[*govcd.VCenter]{disableBeforeDelete},
 	}
@@ -115,7 +115,7 @@ func resourceVcdTmNsxtManagerDelete(ctx context.Context, d *schema.ResourceData,
 	return deleteResource(ctx, d, meta, c)
 }
 
-func resourceVcdTmNsxtManagerImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNsxtManagerImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
 	nsxtManager, err := vcdClient.GetNsxtManagerOpenApiByName(d.Id())
@@ -126,7 +126,7 @@ func resourceVcdTmNsxtManagerImport(ctx context.Context, d *schema.ResourceData,
 	return []*schema.ResourceData{d}, nil
 }
 
-func getTmNsxtManagerType(d *schema.ResourceData) (*types.NsxtManagerOpenApi, error) {
+func getNsxtManagerType(d *schema.ResourceData) (*types.NsxtManagerOpenApi, error) {
 	t := &types.NsxtManagerOpenApi{
 		Name:                 d.Get("name").(string),
 		Description:          d.Get("description").(string),
@@ -139,9 +139,9 @@ func getTmNsxtManagerType(d *schema.ResourceData) (*types.NsxtManagerOpenApi, er
 	return t, nil
 }
 
-func setTmNsxtManagerData(d *schema.ResourceData, t *govcd.NsxtManagerOpenApi) error {
+func setNsxtManagerData(d *schema.ResourceData, t *govcd.NsxtManagerOpenApi) error {
 	if t == nil || t.NsxtManagerOpenApi == nil {
-		return fmt.Errorf("nil object for %s", labelTmNsxtManager)
+		return fmt.Errorf("nil object for %s", labelNsxtManager)
 	}
 	n := t.NsxtManagerOpenApi
 
