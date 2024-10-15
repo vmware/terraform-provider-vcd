@@ -60,7 +60,7 @@ func datasourceVcdNsxtManagerRead(ctx context.Context, d *schema.ResourceData, m
 	c := crudConfig[*govcd.NsxtManagerOpenApi, types.NsxtManagerOpenApi]{
 		entityLabel:    labelNsxtManager,
 		getEntityFunc:  vcdClient.GetNsxtManagerOpenApiByName,
-		stateStoreFunc: setTmNsxtManagerData,
+		stateStoreFunc: setNsxtManagerData,
 	}
 	return readDatasource(ctx, d, meta, c)
 }
