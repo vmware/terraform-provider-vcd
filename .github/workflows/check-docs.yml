@@ -21,6 +21,9 @@ jobs:
       with:
         fetch-depth: 0  # Required to have tag information available
 
+    - name: Install Terraform binary
+      uses: hashicorp/setup-terraform@v3
+
     - name: Set up Go 1.x
       uses: actions/setup-go@v3
       with:
