@@ -57,18 +57,18 @@ directive which can allow you to redirect import path to your own version of `go
     module github.com/vmware/terraform-provider-vcd/v2
     require (
     	...
-    	github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2
+    	github.com/vmware/go-vcloud-director/v3 v3.1.0-alpha.3
     	)
-    replace github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2 => github.com/my-git-user/go-vcloud-director/v2 v2.1.0-alpha.2    
+    replace github.com/vmware/go-vcloud-director/v3 v3.1.0-alpha.3 => github.com/my-git-user/go-vcloud-director/v3 v3.1.0-alpha.3    
  ```
  * You can also replace pointer to a branch with relative directory
  ```go
      module github.com/vmware/terraform-provider-vcd/v2
      require (
      	...
-     	github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2
+     	github.com/vmware/go-vcloud-director/v3 v3.1.0-alpha.2
      	)
-     replace github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2 => ../go-vcloud-director
+     replace github.com/vmware/go-vcloud-director/v3 v3.1.0-alpha.2 => ../go-vcloud-director
   ```
 
 See **CODING_GUIDELINES.md** for more advice on how to write code for this project.

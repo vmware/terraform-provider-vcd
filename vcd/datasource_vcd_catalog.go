@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"github.com/vmware/go-vcloud-director/v2/util"
+	"github.com/vmware/go-vcloud-director/v3/types/v56"
+	"github.com/vmware/go-vcloud-director/v3/util"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v3/govcd"
 )
 
 func datasourceVcdCatalog() *schema.Resource {

@@ -6,13 +6,13 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v3/govcd"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/vmware/go-vcloud-director/v2/util"
+	"github.com/vmware/go-vcloud-director/v3/util"
 )
 
 // BuildVersion holds version which is meant to be injected at build time using ldflags

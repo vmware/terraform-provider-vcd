@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v3/govcd"
+	"github.com/vmware/go-vcloud-director/v3/types/v56"
 )
 
 // This file contains routines that clean up the test suite after failed tests

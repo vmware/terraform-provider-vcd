@@ -2,8 +2,8 @@ package vcd
 
 import (
 	"context"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v3/govcd"
+	"github.com/vmware/go-vcloud-director/v3/types/v56"
 	"os"
 	"path"
 

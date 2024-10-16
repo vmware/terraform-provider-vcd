@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v3/govcd"
 )
 
 // TestAccVcdNsxtEdgeL2VpnTunnel tests the functionality of the L2 VPN Tunnel for both SERVER and CLIENT sessions
