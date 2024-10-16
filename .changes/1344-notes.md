@@ -1,0 +1,1 @@
+* Bump module version from `v3` to `v4`: `github.com/vmware/terraform-provider-vcd/v4` [GH-1344]
