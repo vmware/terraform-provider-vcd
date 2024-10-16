@@ -19,6 +19,7 @@ resource "vcd_vcenter" "test" {
   name                   = "TestAccVcdTmVcenter-rename"
   url                    = "https://host:443"
   auto_trust_certificate = true
+  refresh_on_read        = true
   username               = "admim@vsphere.local"
   password               = "CHANGE-ME"
   is_enabled             = true
@@ -33,6 +34,8 @@ The following arguments are supported:
 * `description` - (Optional) An optional description for vCenter server
 * `username` - (Required) A username for authenticating to vCenter server
 * `password` - (Required) A password for authenticating to vCenter server
+* `refresh_on_read` - (Optional) An optional flag to trigger refresh operation on every read. This
+  might take some time, but can help to load up new artifacts. Update is a no-op. Default `false`.
 * `url` - (Required) An URL of vCenter server
 * `auto_trust_certificate` - (Required) Defines if the certificate of a given vCenter server should
   automatically be added to trusted certificate store. **Note:** not having the certificate trusted
@@ -40,11 +43,21 @@ The following arguments are supported:
 * `is_enabled` - (Optional) Defines if the vCenter is enabled. Default `true`. The vCenter must
   always be disabled before removal (this resource will disable it automatically on destroy).
 
+
 ## Attribute Reference
 
 The following attributes are exported on this resource:
 
-* `max_virtual_services` - Maximum number of virtual services this NSX-T ALB Service Engine Group can run
+* `has_proxy` - Indicates that a proxy exists within vCloud Director that proxies this vCenter
+  server for access by authorized end-users
+* `is_connected` - Defines if the vCenter server is connected.
+* `mode` - One of `NONE`, `IAAS` (scoped to the provider), `SDDC` (scoped to tenants), `MIXED` (both
+  uses are possible)
+* `listener_state` - `INITIAL`, `INVALID_SETTINGS`, `UNSUPPORTED`, `DISCONNECTED`, `CONNECTING`,
+  `CONNECTED_SYNCING`, `CONNECTED`, `STOP_REQ`, `STOP_AND_PURGE_REQ`, `STOP_ACK`
+* `cluster_health_status` - Cluster health status. One of `GRAY` , `RED` , `YELLOW` , `GREEN`
+* `version` - vCenter version
+* `uuid` - UUID of vCenter
 
 ## Importing
 
