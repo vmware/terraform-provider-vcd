@@ -22,7 +22,6 @@ resource "vcd_nsxt_manager" "test" {
   password               = "CHANGE-ME"
   url                    = "https://HOST"
   auto_trust_certificate = true
-  network_provider_scope = ""
 }
 ```
 
@@ -38,13 +37,19 @@ The following arguments are supported:
 * `auto_trust_certificate` - (Required) Defines if the certificate of a given NSX-T Manager should
   automatically be added to trusted certificate store. **Note:** not having the certificate trusted
   will cause malfunction.
-* `network_provider_scope` - (Optional) 
+* `network_provider_scope` - (Optional) The network provider scope is the tenant facing name for the
+  NSX Manager.
 
 ## Attribute Reference
 
 The following attributes are exported on this resource:
 
-* `status` - Status of NSX-T Manager
+* `status` - Status of NSX-T Manager. One of:
+ * `PENDING` - Desired entity configuration has been received by system and is pending realization.
+ * `CONFIGURING` - The system is in process of realizing the entity.
+ * `REALIZED` - The entity is successfully realized in the system.
+ * `REALIZATION_FAILED` - There are some issues and the system is not able to realize the entity.
+ * `UNKNOWN` - Current state of entity is unknown.
 
 ## Importing
 
