@@ -6,7 +6,7 @@ description: |-
   Provides a VMware Cloud Foundation Tenant Manager Region Storage Policy data source. This can be used to read Content Libraries.
 ---
 
-# vcd\_independent\_disk
+# vcd\_tm\_region\_storage\_policy
 
 Provides a VMware Cloud Foundation Tenant Manager Region Storage Policy data source. This can be used to read Region Storage Policies.
 
