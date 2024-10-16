@@ -20,7 +20,7 @@ data "vcd_tm_region_storage_policy" "sp" {
 }
 
 resource "vcd_tm_content_library" "cl" {
-  name = "My Library"
+  name        = "My Library"
   description = "A simple library"
   storage_policy_ids = [
     data.vcd_tm_region_storage_policy.sp.id
