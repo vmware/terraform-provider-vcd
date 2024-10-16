@@ -16,11 +16,12 @@ type updateDeleter[O any, I any] interface {
 	Delete() error
 }
 
-type resourceHook[O any] func(O) error
-type beforeCreateHook func(*VCDClient, *schema.ResourceData) error
+type outerEntityHook[O any] func(O) error
+type schemaHook func(*VCDClient, *schema.ResourceData) error
 
+// crudConfig
 type crudConfig[O updateDeleter[O, I], I any] struct {
-	// entityLabel to use in logs and
+	// entityLabel to use
 	entityLabel string
 
 	// getTypeFunc is responsible for converting schema fields to inner type
@@ -32,19 +33,21 @@ type crudConfig[O updateDeleter[O, I], I any] struct {
 	// (which is created by 'getTypeFunc')
 	createFunc func(config *I) (O, error)
 
-	// resourceReadFunc
+	// resourceReadFunc that will be executed from Create and Update functions
 	resourceReadFunc func(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics
 
-	getEntityFunc func(id string) (O, error)
+	// getEntityFunc is a function that retrieves the entity
+	// It will use ID for resources and Name for data sources
+	getEntityFunc func(idOrName string) (O, error)
 
-	// pre-create hook
-	preCreateHooks []beforeCreateHook
+	// preCreateHooks will be executed before the entity is created
+	preCreateHooks []schemaHook
 
-	// Delete
-	preDeleteHooks []resourceHook[O]
+	// preDeleteHooks will be executed before the entity is deleted
+	preDeleteHooks []outerEntityHook[O]
 
-	// Read
-	readHooks []resourceHook[O]
+	// readHooks that will be executed after the entity is read, but before it is stored in state
+	readHooks []outerEntityHook[O]
 }
 
 func createResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema.ResourceData, meta interface{}, c crudConfig[O, I]) diag.Diagnostics {
@@ -54,7 +57,7 @@ func createResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema
 	}
 
 	vcdClient := meta.(*VCDClient)
-	err = executeBefore(vcdClient, d, c.preCreateHooks)
+	err = execSchemaHook(vcdClient, d, c.preCreateHooks)
 	if err != nil {
 		return diag.Errorf("error executing pre-create %s hooks: %s", c.entityLabel, err)
 	}
@@ -100,7 +103,7 @@ func readResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.Res
 		return diag.Errorf("error getting %s: %s", c.entityLabel, err)
 	}
 
-	err = executeHooks(retrievedEntity, c.readHooks)
+	err = execEntityHook(retrievedEntity, c.readHooks)
 	if err != nil {
 		return diag.Errorf("error executing read %s hooks: %s", c.entityLabel, err)
 	}
@@ -134,7 +137,7 @@ func deleteResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.R
 		return diag.Errorf("error getting %s: %s", c.entityLabel, err)
 	}
 
-	err = executeHooks(retrievedEntity, c.preDeleteHooks)
+	err = execEntityHook(retrievedEntity, c.preDeleteHooks)
 	if err != nil {
 		return diag.Errorf("error executing pre-delete %s hooks: %s", c.entityLabel, err)
 	}
@@ -147,7 +150,7 @@ func deleteResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.R
 	return nil
 }
 
-func executeBefore(vcdClient *VCDClient, d *schema.ResourceData, runList []beforeCreateHook) error {
+func execSchemaHook(vcdClient *VCDClient, d *schema.ResourceData, runList []schemaHook) error {
 	if len(runList) == 0 {
 		util.Logger.Printf("[DEBUG] No hooks to execute")
 		return nil
@@ -165,7 +168,7 @@ func executeBefore(vcdClient *VCDClient, d *schema.ResourceData, runList []befor
 	return nil
 }
 
-func executeHooks[O any](outerEntity O, runList []resourceHook[O]) error {
+func execEntityHook[O any](outerEntity O, runList []outerEntityHook[O]) error {
 	if len(runList) == 0 {
 		util.Logger.Printf("[DEBUG] No hooks to execute")
 		return nil

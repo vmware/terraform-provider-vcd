@@ -82,7 +82,7 @@ func resourceVcdNsxtManagerCreate(ctx context.Context, d *schema.ResourceData, m
 		stateStoreFunc:   setNsxtManagerData,
 		createFunc:       vcdClient.CreateNsxtManagerOpenApi,
 		resourceReadFunc: resourceVcdNsxtManagerRead,
-		preCreateHooks:   []beforeCreateHook{trustHostCertificate("url", "auto_trust_certificate")},
+		preCreateHooks:   []schemaHook{trustHostCertificate("url", "auto_trust_certificate")},
 	}
 	return createResource(ctx, d, meta, c)
 }

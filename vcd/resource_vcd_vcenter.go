@@ -155,7 +155,7 @@ func resourceVcdVcenterCreate(ctx context.Context, d *schema.ResourceData, meta 
 		createFunc:       vcdClient.CreateVcenter,
 		resourceReadFunc: resourceVcdVcenterRead,
 		// certificate should be trusted for the vCenter to work
-		preCreateHooks: []beforeCreateHook{trustHostCertificate("url", "auto_trust_certificate")},
+		preCreateHooks: []schemaHook{trustHostCertificate("url", "auto_trust_certificate")},
 	}
 	return createResource(ctx, d, meta, c)
 }
@@ -197,7 +197,7 @@ func resourceVcdVcenterRead(ctx context.Context, d *schema.ResourceData, meta in
 		// getEntityFunc:  vcdClient.GetVCenterById,// TODO: TM: use this function
 		getEntityFunc:  fakeGetById, // TODO: TM: remove this function
 		stateStoreFunc: setTmVcenterData,
-		readHooks:      []resourceHook[*govcd.VCenter]{refreshVcenter(shouldRefresh)}, // vCenter must be disabled before deletion,
+		readHooks:      []outerEntityHook[*govcd.VCenter]{refreshVcenter(shouldRefresh)}, // vCenter must be disabled before deletion,
 	}
 	return readResource(ctx, d, meta, c)
 }
@@ -208,7 +208,7 @@ func resourceVcdVcenterDelete(ctx context.Context, d *schema.ResourceData, meta 
 	c := crudConfig[*govcd.VCenter, types.VSphereVirtualCenter]{
 		entityLabel:    labelVirtualCenter,
 		getEntityFunc:  vcdClient.GetVCenterById,
-		preDeleteHooks: []resourceHook[*govcd.VCenter]{disableVcenter}, // vCenter must be disabled before deletion
+		preDeleteHooks: []outerEntityHook[*govcd.VCenter]{disableVcenter}, // vCenter must be disabled before deletion
 	}
 
 	return deleteResource(ctx, d, meta, c)
@@ -237,7 +237,7 @@ func disableVcenter(v *govcd.VCenter) error {
 
 // refreshVcenter triggers refresh os vCenter which is useful for reloading some of the vCenter
 // components
-func refreshVcenter(execute bool) resourceHook[*govcd.VCenter] {
+func refreshVcenter(execute bool) outerEntityHook[*govcd.VCenter] {
 	return func(v *govcd.VCenter) error {
 		if execute {
 			return v.Refresh()
@@ -250,7 +250,7 @@ func refreshVcenter(execute bool) resourceHook[*govcd.VCenter] {
 // * urlSchemaFieldName - Terraform schema field (TypeString) name that contains URL of entity
 // * trustSchemaFieldName - Terraform schema field (TypeBool) name that defines if the certificate should be trusted
 // Note. It will not add new entry if the certificate is already trusted
-func trustHostCertificate(urlSchemaFieldName, trustSchemaFieldName string) beforeCreateHook {
+func trustHostCertificate(urlSchemaFieldName, trustSchemaFieldName string) schemaHook {
 	return func(vcdClient *VCDClient, d *schema.ResourceData) error {
 		shouldExecute := d.Get(trustSchemaFieldName).(bool)
 		if !shouldExecute {
