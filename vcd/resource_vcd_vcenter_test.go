@@ -159,6 +159,6 @@ resource "vcd_vcenter" "test" {
 
 const testAccVcdVcenterStep4DS = testAccVcdVcenterStep3 + `
 data "vcd_vcenter" "test" {
-  name = "{{.Testname}}"
+  name = vcd_vcenter.test.name
 }
 `

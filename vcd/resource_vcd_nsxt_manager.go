@@ -52,11 +52,12 @@ func resourceVcdNsxtManager() *schema.Resource {
 			"auto_trust_certificate": {
 				Type:        schema.TypeBool,
 				Required:    true,
+				ForceNew:    true,
 				Description: fmt.Sprintf("Defines if the %s certificate should automatically be trusted", labelVirtualCenter),
 			},
 			"network_provider_scope": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: fmt.Sprintf("Network Provider Scope for %s", labelNsxtManager),
 			},
 			"status": {

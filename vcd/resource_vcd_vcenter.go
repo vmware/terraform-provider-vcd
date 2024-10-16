@@ -38,6 +38,7 @@ func resourceVcdVcenter() *schema.Resource {
 			"auto_trust_certificate": {
 				Type:        schema.TypeBool,
 				Required:    true,
+				ForceNew:    true,
 				Description: fmt.Sprintf("Defines if the %s certificate should automatically be trusted", labelVirtualCenter),
 			},
 			"refresh_on_read": {
