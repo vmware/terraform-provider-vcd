@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -19,37 +20,37 @@ func datasourceVcdNsxtManager() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of NSX-T Manager",
-			},
-			"href": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Name of NSX-T Manager",
+				Description: fmt.Sprintf("Name of %s", labelNsxtManager),
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Description of NSX-T Manager",
+				Description: fmt.Sprintf("Description of %s", labelNsxtManager),
 			},
 			"username": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Username for authenticating to NSX-T Manager",
+				Description: fmt.Sprintf("Username for authenticating to %s", labelNsxtManager),
 			},
 			"url": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "URL of NSX-T Manager",
+				Description: fmt.Sprintf("URL of %s", labelNsxtManager),
 			},
 			"network_provider_scope": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Network Provider Scope for NSX-T Manager",
+				Description: fmt.Sprintf("Network Provider Scope for %s", labelNsxtManager),
 			},
 			"status": {
-				Type:        schema.TypeBool,
+				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Status of NSX-T Manager",
+				Description: fmt.Sprintf("Status of %s", labelNsxtManager),
+			},
+			"href": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: fmt.Sprintf("HREF of %s", labelNsxtManager),
 			},
 		},
 	}

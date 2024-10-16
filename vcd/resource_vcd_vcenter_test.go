@@ -108,12 +108,12 @@ func TestAccVcdVcenter(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateId:           params["Testname"].(string),
-				ImportStateVerifyIgnore: []string{"password", "auto_trust_certificate"},
+				ImportStateVerifyIgnore: []string{"password", "auto_trust_certificate", "refresh_on_read"},
 			},
 			{
 				Config: configText4,
 				Check: resource.ComposeTestCheckFunc(
-					resourceFieldsEqual("vcd_vcenter.test", "vcd_vcenter.test", []string{"%"}),
+					resourceFieldsEqual("data.vcd_vcenter.test", "vcd_vcenter.test", []string{"%"}),
 				),
 			},
 		},
@@ -127,6 +127,7 @@ resource "vcd_vcenter" "test" {
   name                   = "{{.Testname}}"
   url                    = "{{.VcenterUrl}}"
   auto_trust_certificate = true
+  refresh_on_read        = true
   username               = "{{.VcenterUsername}}"
   password               = "{{.VcenterPassword}}"
   is_enabled             = true

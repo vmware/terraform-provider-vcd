@@ -26,28 +26,28 @@ func resourceVcdNsxtManager() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of NSX-T Manager",
+				Description: fmt.Sprintf("Name of %s", labelNsxtManager),
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Description of NSX-T Manager",
+				Description: fmt.Sprintf("Description of %s", labelNsxtManager),
 			},
 			"username": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Username for authenticating to NSX-T Manager",
+				Description: fmt.Sprintf("Username for authenticating to %s", labelNsxtManager),
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
-				Description: "Password for authenticating to NSX-T Manager ",
+				Description: fmt.Sprintf("Password for authenticating to %s", labelNsxtManager),
 			},
 			"url": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "URL of NSX-T Manager",
+				Description: fmt.Sprintf("URL of %s", labelNsxtManager),
 			},
 			"auto_trust_certificate": {
 				Type:        schema.TypeBool,
@@ -57,12 +57,17 @@ func resourceVcdNsxtManager() *schema.Resource {
 			"network_provider_scope": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Network Provider Scope for NSX-T Manager",
+				Description: fmt.Sprintf("Network Provider Scope for %s", labelNsxtManager),
 			},
 			"status": {
-				Type:        schema.TypeBool,
+				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Status of NSX-T Manager",
+				Description: fmt.Sprintf("Status of %s", labelNsxtManager),
+			},
+			"href": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: fmt.Sprintf("HREF of %s", labelNsxtManager),
 			},
 		},
 	}
@@ -109,7 +114,6 @@ func resourceVcdNsxtManagerDelete(ctx context.Context, d *schema.ResourceData, m
 	c := crudConfig[*govcd.NsxtManagerOpenApi, types.NsxtManagerOpenApi]{
 		entityLabel:   labelNsxtManager,
 		getEntityFunc: vcdClient.GetNsxtManagerOpenApiById,
-		// preDeleteHooks: []resourceHook[*govcd.VCenter]{disableBeforeDelete},
 	}
 
 	return deleteResource(ctx, d, meta, c)
@@ -149,10 +153,11 @@ func setNsxtManagerData(d *schema.ResourceData, t *govcd.NsxtManagerOpenApi) err
 	dSet(d, "name", n.Name)
 	dSet(d, "description", n.Description)
 	dSet(d, "username", n.Username)
-	dSet(d, "password", n.Password)
+	// dSet(d, "password", n.Password) // real password is never returned
 	dSet(d, "url", n.Url)
 	dSet(d, "network_provider_scope", n.NetworkProviderScope)
 	dSet(d, "status", n.Status)
+	dSet(d, "href", t.BuildHref())
 
 	return nil
 }

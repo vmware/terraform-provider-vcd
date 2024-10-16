@@ -42,6 +42,9 @@ type crudConfig[O updateDeleter[O, I], I any] struct {
 
 	// Delete
 	preDeleteHooks []resourceHook[O]
+
+	// Read
+	readHooks []resourceHook[O]
 }
 
 func createResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema.ResourceData, meta interface{}, c crudConfig[O, I]) diag.Diagnostics {
@@ -53,7 +56,7 @@ func createResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema
 	vcdClient := meta.(*VCDClient)
 	err = executeBefore(vcdClient, d, c.preCreateHooks)
 	if err != nil {
-		return diag.Errorf("error executing pre-delete %s hooks: %s", c.entityLabel, err)
+		return diag.Errorf("error executing pre-create %s hooks: %s", c.entityLabel, err)
 	}
 
 	createdEntity, err := c.createFunc(t)
@@ -95,6 +98,11 @@ func readResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.Res
 			util.Logger.Printf("[DEBUG] entity '%s' with ID '%s' not found. Removing from state", c.entityLabel, d.Id())
 		}
 		return diag.Errorf("error getting %s: %s", c.entityLabel, err)
+	}
+
+	err = executeHooks(retrievedEntity, c.readHooks)
+	if err != nil {
+		return diag.Errorf("error executing read %s hooks: %s", c.entityLabel, err)
 	}
 
 	err = c.stateStoreFunc(d, retrievedEntity)

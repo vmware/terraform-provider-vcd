@@ -15,7 +15,7 @@ func TestAccVcdNsxtManager(t *testing.T) {
 	skipIfNotTm(t)
 
 	if !testConfig.Tm.CreateNsxtManager {
-		t.Skipf("Skipping vCenter creation")
+		t.Skipf("Skipping NSX-T Manager creation")
 	}
 
 	var params = StringMap{
@@ -45,20 +45,23 @@ func TestAccVcdNsxtManager(t *testing.T) {
 			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
+					// stateDumper(),
 					resource.TestCheckResourceAttr("vcd_nsxt_manager.test", "name", params["Testname"].(string)),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_manager.test", "href"),
 				),
 			},
 			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
-					resourceFieldsEqual("vcd_nsxt_manager.test", "data.vcd_nsxt_manager.test", []string{"%"}),
+					resourceFieldsEqual("vcd_nsxt_manager.test", "data.vcd_nsxt_manager.test", []string{"%", "auto_trust_certificate", "password"}),
 				),
 			},
 			{
-				ResourceName:      "vcd_nsxt_manager.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateId:     params["Testname"].(string),
+				ResourceName:            "vcd_nsxt_manager.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateId:           params["Testname"].(string),
+				ImportStateVerifyIgnore: []string{"auto_trust_certificate", "password"},
 			},
 		},
 	})
@@ -74,6 +77,7 @@ resource "vcd_nsxt_manager" "test" {
   password               = "{{.Password}}"
   url                    = "{{.Url}}"
   network_provider_scope = ""
+  auto_trust_certificate = true
 }
 `
 

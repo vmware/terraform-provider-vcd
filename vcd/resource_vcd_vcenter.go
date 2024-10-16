@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strconv"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -41,6 +39,11 @@ func resourceVcdVcenter() *schema.Resource {
 				Type:        schema.TypeBool,
 				Required:    true,
 				Description: fmt.Sprintf("Defines if the %s certificate should automatically be trusted", labelVirtualCenter),
+			},
+			"refresh_on_read": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: fmt.Sprintf("Defines if the %s should be refreshed on every read operation", labelVirtualCenter),
 			},
 			"username": {
 				Type:        schema.TypeString,
@@ -157,6 +160,10 @@ func resourceVcdVcenterCreate(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceVcdVcenterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	if !d.HasChangeExcept("refresh_on_read") {
+		return nil
+	}
+
 	vcdClient := meta.(*VCDClient)
 	c := crudConfig[*govcd.VCenter, types.VSphereVirtualCenter]{
 		entityLabel:      labelVirtualCenter,
@@ -170,10 +177,26 @@ func resourceVcdVcenterUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 func resourceVcdVcenterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+
+	// TODO: TM: remove this block and use the commented one above
+	// endpoints by Name and by ID return differently formated url. Using the same getByName to
+	// match format everywhere
+	fakeGetById := func(id string) (*govcd.VCenter, error) {
+		vc, err := vcdClient.GetVCenterById(id)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving vCenter by Id: %s", err)
+		}
+
+		return vcdClient.GetVCenterByName(vc.VSphereVCenter.Name)
+	}
+
+	shouldRefresh := d.Get("refresh_on_read").(bool)
 	c := crudConfig[*govcd.VCenter, types.VSphereVirtualCenter]{
-		entityLabel:    labelVirtualCenter,
-		getEntityFunc:  vcdClient.GetVCenterById,
+		entityLabel: labelVirtualCenter,
+		// getEntityFunc:  vcdClient.GetVCenterById,// TODO: TM: use this function
+		getEntityFunc:  fakeGetById, // TODO: TM: remove this function
 		stateStoreFunc: setTmVcenterData,
+		readHooks:      []resourceHook[*govcd.VCenter]{refreshVcenter(shouldRefresh)}, // vCenter must be disabled before deletion,
 	}
 	return readResource(ctx, d, meta, c)
 }
@@ -211,6 +234,17 @@ func disableVcenter(v *govcd.VCenter) error {
 	return nil
 }
 
+// refreshVcenter triggers refresh os vCenter which is useful for reloading some of the vCenter
+// components
+func refreshVcenter(execute bool) resourceHook[*govcd.VCenter] {
+	return func(v *govcd.VCenter) error {
+		if execute {
+			return v.Refresh()
+		}
+		return nil
+	}
+}
+
 // trustHostCertificate can automatically add host certificate to trusted ones
 // * urlSchemaFieldName - Terraform schema field (TypeString) name that contains URL of entity
 // * trustSchemaFieldName - Terraform schema field (TypeBool) name that defines if the certificate should be trusted
@@ -222,56 +256,17 @@ func trustHostCertificate(urlSchemaFieldName, trustSchemaFieldName string) befor
 			util.Logger.Printf("[DEBUG] Skipping certificate trust execution as '%s' is false", trustSchemaFieldName)
 			return nil
 		}
-
-		parsedUrl, err := url.Parse(d.Get(urlSchemaFieldName).(string))
+		schemaUrl := d.Get(urlSchemaFieldName).(string)
+		parsedUrl, err := url.Parse(schemaUrl)
 		if err != nil {
-			return fmt.Errorf("error parsing provided url '%s': %s", d.Get(urlSchemaFieldName).(string), err)
+			return fmt.Errorf("error parsing provided url '%s': %s", schemaUrl, err)
 		}
 
-		port, err := strconv.Atoi(parsedUrl.Port())
+		_, err = vcdClient.AutoTrustCertificate(parsedUrl)
 		if err != nil {
-			return fmt.Errorf("error converting '%s' to int: %s", parsedUrl.Port(), err)
-		}
-		con := types.TestConnection{
-			Host:                          parsedUrl.Hostname(),
-			Port:                          port,
-			Secure:                        addrOf(true),
-			Timeout:                       10, // UI timeout value
-			HostnameVerificationAlgorithm: "HTTPS",
-		}
-		res, err := vcdClient.Client.TestConnection(con)
-		if err != nil {
-			return fmt.Errorf("error testing connection: %s", err)
+			return fmt.Errorf("error trusting '%s' certificate: %s", schemaUrl, err)
 		}
 
-		// Check if certificate is not trusted yet
-		if res != nil && res.TargetProbe != nil && res.TargetProbe.SSLResult != "SUCCESS" {
-
-			if res.TargetProbe.SSLResult == "ERROR_UNTRUSTED_CERTIFICATE" {
-				// Need to trust certificate
-				cert := res.TargetProbe.CertificateChain
-				if cert == "" {
-					return fmt.Errorf("error - certificate chain is empty. Connection result: '%s', SSL result: '%s'", res.TargetProbe.ConnectionResult, res.TargetProbe.SSLResult)
-				}
-
-				///
-				trust := &types.TrustedCertificate{
-					Alias:       fmt.Sprintf("%s_%s", parsedUrl.Hostname(), time.Now().UTC().Format(time.RFC3339)),
-					Certificate: cert,
-				}
-				trusted, err := vcdClient.VCDClient.CreateTrustedCertificate(trust)
-				if err != nil {
-					return fmt.Errorf("error trusting Certificate: %s", err)
-				}
-
-				util.Logger.Printf("[DEBUG] Certificate trust established ID - %s, Alias - %s",
-					trusted.TrustedCertificate.ID, trusted.TrustedCertificate.Alias)
-
-			} else {
-				return fmt.Errorf("SSL verification result - %s", res.TargetProbe.SSLResult)
-			}
-
-		}
 		return nil
 	}
 }
