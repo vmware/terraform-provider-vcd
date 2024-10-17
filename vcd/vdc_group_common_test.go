@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/vmware/go-vcloud-director/v2/util"
+	"github.com/vmware/go-vcloud-director/v3/util"
 )
 
 // testAccVcdVdcGroupNew is a helper definition to setup VDC Group for testing integration with other

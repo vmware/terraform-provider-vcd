@@ -3,7 +3,7 @@ package vcd
 import (
 	"fmt"
 
-	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v3/govcd"
 )
 
 // vdcOrVdcGroupHandler is an interface to access some common methods on VDC or VDC Group without

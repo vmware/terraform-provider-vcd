@@ -3,8 +3,8 @@ package vcd
 import (
 	"fmt"
 
-	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v3/govcd"
+	"github.com/vmware/go-vcloud-director/v3/types/v56"
 )
 
 // Functions in this file perform search by filter for all the data sources that support filters

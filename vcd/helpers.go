@@ -1,7 +1,7 @@
 package vcd
 
 import (
-	"github.com/vmware/go-vcloud-director/v2/util"
+	"github.com/vmware/go-vcloud-director/v3/util"
 	"log"
 	"os"
 

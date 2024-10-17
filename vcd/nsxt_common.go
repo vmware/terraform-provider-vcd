@@ -3,7 +3,7 @@ package vcd
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v3/govcd"
 )
 
 // getParentEdgeGatewayOwnerIdAndNsxtEdgeGateway returns VDC or VDC group ID and NSX-T Edge Gateway type

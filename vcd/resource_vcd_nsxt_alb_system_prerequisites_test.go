@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v3/govcd"
+	"github.com/vmware/go-vcloud-director/v3/types/v56"
 )
 
 // albOrgUserPrerequisites helps to facilitate prerequisite buildup and teardown so that Org user can test NSX-T

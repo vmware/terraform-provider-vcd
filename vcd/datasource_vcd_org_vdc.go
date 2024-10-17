@@ -2,7 +2,7 @@ package vcd
 
 import (
 	"context"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v3/govcd"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
