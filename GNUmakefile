@@ -9,11 +9,11 @@ default: build
 
 # builds the plugin injecting output of `git describe` to BuildVersion variable
 build: fmtcheck
-	go install -ldflags="-X 'github.com/vmware/terraform-provider-vcd/v3/vcd.BuildVersion=$(GIT_DESCRIBE)'"
+	go install -ldflags="-X 'github.com/vmware/terraform-provider-vcd/v4/vcd.BuildVersion=$(GIT_DESCRIBE)'"
 
 # builds the plugin with race detector enabled and injecting output of `git describe` to BuildVersion variable
 buildrace: fmtcheck
-	go install --race -ldflags="-X 'github.com/vmware/terraform-provider-vcd/v3/vcd.BuildVersion=$(GIT_DESCRIBE)'"
+	go install --race -ldflags="-X 'github.com/vmware/terraform-provider-vcd/v4/vcd.BuildVersion=$(GIT_DESCRIBE)'"
 
 # creates a .zip archive of the code
 dist:
