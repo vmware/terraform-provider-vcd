@@ -1,4 +1,4 @@
-//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || uiPlugin || providerVdc || cse || slz || multisite || ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || certificate || vdcGroup || ldap || rde || uiPlugin || providerVdc || cse || slz || multisite || tm || ALL
 
 package vcd
 
@@ -107,6 +107,12 @@ type TestConfig struct {
 		UseVcdConnectionCache    bool   `json:"useVcdConnectionCache"`
 		MaxRetryTimeout          int    `json:"maxRetryTimeout"`
 	} `json:"provider"`
+	Tm struct {
+		Org                 string `json:"org"` // temporary field to make skipIfNotTm work
+		Region              string `json:"region"`
+		RegionStoragePolicy string `json:"regionStoragePolicy"`
+		Vdc                 string `json:"vdc"`
+	} `json:"tm,omitempty"`
 	VCD struct {
 		Org         string `json:"org"`
 		Vdc         string `json:"vdc"`
@@ -413,6 +419,12 @@ func usingSysAdmin() bool {
 func skipIfNotSysAdmin(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
+	}
+}
+
+func skipIfNotTm(t *testing.T) {
+	if testConfig.Tm.Org == "" {
+		t.Skip(t.Name() + " requires 'tm' branch filled in")
 	}
 }
 
