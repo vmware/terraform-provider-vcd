@@ -58,7 +58,7 @@ type schemaHook func(*VCDClient, *schema.ResourceData) error
 func createResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema.ResourceData, meta interface{}, c crudConfig[O, I]) diag.Diagnostics {
 	t, err := c.getTypeFunc(d)
 	if err != nil {
-		return diag.Errorf("error getting %s type: %s", c.entityLabel, err)
+		return diag.Errorf("error getting %s type on create: %s", c.entityLabel, err)
 	}
 
 	vcdClient := meta.(*VCDClient)
@@ -88,12 +88,12 @@ func updateResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema
 
 	retrievedEntity, err := c.getEntityFunc(d.Id())
 	if err != nil {
-		return diag.Errorf("error getting %s: %s", c.entityLabel, err)
+		return diag.Errorf("error getting %s for update: %s", c.entityLabel, err)
 	}
 
 	_, err = retrievedEntity.Update(t)
 	if err != nil {
-		return diag.Errorf("error storing %s to state: %s", c.entityLabel, err)
+		return diag.Errorf("error updating %s with ID: %s", c.entityLabel, err)
 	}
 
 	return c.resourceReadFunc(ctx, d, meta)
@@ -149,7 +149,7 @@ func deleteResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.R
 
 	err = retrievedEntity.Delete()
 	if err != nil {
-		return diag.Errorf("error storing %s to state: %s", c.entityLabel, err)
+		return diag.Errorf("error deleting %s with ID '%s': %s", c.entityLabel, d.Id(), err)
 	}
 
 	return nil
