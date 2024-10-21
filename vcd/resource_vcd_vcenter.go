@@ -41,7 +41,7 @@ func resourceVcdVcenter() *schema.Resource {
 				ForceNew:    true,
 				Description: fmt.Sprintf("Defines if the %s certificate should automatically be trusted", labelVirtualCenter),
 			},
-			"refresh_on_read": {
+			"refresh_vcenter_on_read": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: fmt.Sprintf("Defines if the %s should be refreshed on every read operation", labelVirtualCenter),
@@ -161,7 +161,7 @@ func resourceVcdVcenterCreate(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceVcdVcenterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if !d.HasChangeExcept("refresh_on_read") {
+	if !d.HasChangeExcept("refresh_vcenter_on_read") {
 		return nil
 	}
 
@@ -192,7 +192,7 @@ func resourceVcdVcenterRead(ctx context.Context, d *schema.ResourceData, meta in
 		return vcdClient.GetVCenterByName(vc.VSphereVCenter.Name)
 	}
 
-	shouldRefresh := d.Get("refresh_on_read").(bool)
+	shouldRefresh := d.Get("refresh_vcenter_on_read").(bool)
 	c := crudConfig[*govcd.VCenter, types.VSphereVirtualCenter]{
 		entityLabel: labelVirtualCenter,
 		// getEntityFunc:  vcdClient.GetVCenterById,// TODO: TM: use this function

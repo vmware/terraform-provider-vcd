@@ -16,13 +16,13 @@ Provides a resource to manage vCenters.
 
 ```hcl
 resource "vcd_vcenter" "test" {
-  name                   = "TestAccVcdTmVcenter-rename"
-  url                    = "https://host:443"
-  auto_trust_certificate = true
-  refresh_on_read        = true
-  username               = "admim@vsphere.local"
-  password               = "CHANGE-ME"
-  is_enabled             = true
+  name                    = "TestAccVcdTmVcenter-rename"
+  url                     = "https://host:443"
+  auto_trust_certificate  = true
+  refresh_vcenter_on_read = true
+  username                = "admim@vsphere.local"
+  password                = "CHANGE-ME"
+  is_enabled              = true
 }
 ```
 
@@ -34,9 +34,9 @@ The following arguments are supported:
 * `description` - (Optional) An optional description for vCenter server
 * `username` - (Required) A username for authenticating to vCenter server
 * `password` - (Required) A password for authenticating to vCenter server
-* `refresh_on_read` - (Optional) An optional flag to trigger refresh operation on every read. This
-  might take some time, but can help to load up new artifacts from vCenter (e.g. Supervisors).
-  Update is a no-op. Default `false`.
+* `refresh_vcenter_on_read` - (Optional) An optional flag to trigger refresh operation on the
+  underlying vCenter on every read. This might take some time, but can help to load up new artifacts
+  from vCenter (e.g. Supervisors). Update is a no-op. Default `false`.
 * `url` - (Required) An URL of vCenter server
 * `auto_trust_certificate` - (Required) Defines if the certificate of a given vCenter server should
   automatically be added to trusted certificate store. **Note:** not having the certificate trusted
