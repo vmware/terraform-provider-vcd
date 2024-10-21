@@ -82,7 +82,7 @@ func resourceVcdNsxtManagerCreate(ctx context.Context, d *schema.ResourceData, m
 		stateStoreFunc:   setNsxtManagerData,
 		createFunc:       vcdClient.CreateNsxtManagerOpenApi,
 		resourceReadFunc: resourceVcdNsxtManagerRead,
-		preCreateHooks:   []schemaHook{trustHostCertificate("url", "auto_trust_certificate")},
+		preCreateHooks:   []schemaHook{autoTrustHostCertificate("url", "auto_trust_certificate")},
 	}
 	return createResource(ctx, d, meta, c)
 }
@@ -125,7 +125,7 @@ func resourceVcdNsxtManagerImport(ctx context.Context, d *schema.ResourceData, m
 
 	nsxtManager, err := vcdClient.GetNsxtManagerOpenApiByName(d.Id())
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving NSX-T Manager '%s': %s", d.Id(), err)
+		return nil, fmt.Errorf("error retrieving %s '%s': %s", labelNsxtManager, d.Id(), err)
 	}
 	d.SetId(nsxtManager.NsxtManagerOpenApi.ID)
 	return []*schema.ResourceData{d}, nil

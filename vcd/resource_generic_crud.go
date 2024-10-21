@@ -10,16 +10,9 @@ import (
 	"github.com/vmware/go-vcloud-director/v3/util"
 )
 
-// updateDeleter is a type constraint to match only entities that have Update and Delete methods
-type updateDeleter[O any, I any] interface {
-	Update(*I) (O, error)
-	Delete() error
-}
-
-type outerEntityHook[O any] func(O) error
-type schemaHook func(*VCDClient, *schema.ResourceData) error
-
-// crudConfig
+// crudConfig defines a generic approach for managing Terraform resources where the parent entity is
+// a standard OpenAPI entity and the outer entity should satisfy 'updateDeleter' type constraint
+// (have 'Update' and 'Delete' pointer receiver methods)
 type crudConfig[O updateDeleter[O, I], I any] struct {
 	// entityLabel to use
 	entityLabel string
@@ -49,6 +42,18 @@ type crudConfig[O updateDeleter[O, I], I any] struct {
 	// readHooks that will be executed after the entity is read, but before it is stored in state
 	readHooks []outerEntityHook[O]
 }
+
+// updateDeleter is a type constraint to match only entities that have Update and Delete methods
+type updateDeleter[O any, I any] interface {
+	Update(*I) (O, error)
+	Delete() error
+}
+
+// outerEntityHook defines a type for hook that can be fed into generic CRUD operations
+type outerEntityHook[O any] func(O) error
+
+// schemaHook defines a type for hook that can be fed into generic CRUD operations
+type schemaHook func(*VCDClient, *schema.ResourceData) error
 
 func createResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema.ResourceData, meta interface{}, c crudConfig[O, I]) diag.Diagnostics {
 	t, err := c.getTypeFunc(d)

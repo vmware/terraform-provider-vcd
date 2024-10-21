@@ -155,7 +155,7 @@ func resourceVcdVcenterCreate(ctx context.Context, d *schema.ResourceData, meta 
 		createFunc:       vcdClient.CreateVcenter,
 		resourceReadFunc: resourceVcdVcenterRead,
 		// certificate should be trusted for the vCenter to work
-		preCreateHooks: []schemaHook{trustHostCertificate("url", "auto_trust_certificate")},
+		preCreateHooks: []schemaHook{autoTrustHostCertificate("url", "auto_trust_certificate")},
 	}
 	return createResource(ctx, d, meta, c)
 }
@@ -179,8 +179,9 @@ func resourceVcdVcenterUpdate(ctx context.Context, d *schema.ResourceData, meta 
 func resourceVcdVcenterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// TODO: TM: remove this block and use the commented one above
-	// endpoints by Name and by ID return differently formated url. Using the same getByName to
+	// TODO: TM: remove this block and use the commented one within crudConfig below.
+	// Retrieval endpoints by Name and by ID return differently formated url (the by Id one returns
+	// URL with port http://host:443, while the one by name - doesn't). Using the same getByName to
 	// match format everywhere
 	fakeGetById := func(id string) (*govcd.VCenter, error) {
 		vc, err := vcdClient.GetVCenterById(id)
@@ -197,7 +198,7 @@ func resourceVcdVcenterRead(ctx context.Context, d *schema.ResourceData, meta in
 		// getEntityFunc:  vcdClient.GetVCenterById,// TODO: TM: use this function
 		getEntityFunc:  fakeGetById, // TODO: TM: remove this function
 		stateStoreFunc: setTmVcenterData,
-		readHooks:      []outerEntityHook[*govcd.VCenter]{refreshVcenter(shouldRefresh)}, // vCenter must be disabled before deletion,
+		readHooks:      []outerEntityHook[*govcd.VCenter]{refreshVcenter(shouldRefresh)}, // vCenter read can optionally trigger "refresh" operation
 	}
 	return readResource(ctx, d, meta, c)
 }
@@ -246,11 +247,11 @@ func refreshVcenter(execute bool) outerEntityHook[*govcd.VCenter] {
 	}
 }
 
-// trustHostCertificate can automatically add host certificate to trusted ones
+// autoTrustHostCertificate can automatically add host certificate to trusted ones
 // * urlSchemaFieldName - Terraform schema field (TypeString) name that contains URL of entity
 // * trustSchemaFieldName - Terraform schema field (TypeBool) name that defines if the certificate should be trusted
 // Note. It will not add new entry if the certificate is already trusted
-func trustHostCertificate(urlSchemaFieldName, trustSchemaFieldName string) schemaHook {
+func autoTrustHostCertificate(urlSchemaFieldName, trustSchemaFieldName string) schemaHook {
 	return func(vcdClient *VCDClient, d *schema.ResourceData) error {
 		shouldExecute := d.Get(trustSchemaFieldName).(bool)
 		if !shouldExecute {
