@@ -35,7 +35,8 @@ The following arguments are supported:
 * `username` - (Required) A username for authenticating to vCenter server
 * `password` - (Required) A password for authenticating to vCenter server
 * `refresh_on_read` - (Optional) An optional flag to trigger refresh operation on every read. This
-  might take some time, but can help to load up new artifacts. Update is a no-op. Default `false`.
+  might take some time, but can help to load up new artifacts from vCenter (e.g. Supervisors).
+  Update is a no-op. Default `false`.
 * `url` - (Required) An URL of vCenter server
 * `auto_trust_certificate` - (Required) Defines if the certificate of a given vCenter server should
   automatically be added to trusted certificate store. **Note:** not having the certificate trusted
