@@ -44,7 +44,7 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceName, "description", t.Name()),
 					resource.TestCheckResourceAttr(resourceName, "storage_policy_ids.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "auto_attach.#", "true"), // TODO: TM: Test with false
+					resource.TestCheckResourceAttr(resourceName, "auto_attach", "true"), // TODO: TM: Test with false
 					resource.TestCheckResourceAttrSet(resourceName, "creation_date"),
 					resource.TestCheckResourceAttr(resourceName, "is_shared", "true"),        // TODO: TM: Test with false
 					resource.TestCheckResourceAttr(resourceName, "is_subscribed", "false"),   // TODO: TM: Test with true

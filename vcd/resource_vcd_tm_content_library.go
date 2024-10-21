@@ -23,13 +23,13 @@ func resourceVcdTmContentLibrary() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true, // TODO: Update not supported
+				ForceNew:    true, // TODO: TM: Update not supported
 				Description: "The name of the Content Library",
 			},
 			"storage_policy_ids": {
 				Type:        schema.TypeSet,
 				Required:    true,
-				ForceNew:    true, // TODO: Update not supported
+				ForceNew:    true, // TODO: TM: Update not supported
 				Description: "A set of Region Storage Policy IDs or VDC Storage Policy IDs used by this Content Library",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -55,7 +55,7 @@ func resourceVcdTmContentLibrary() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true, // TODO: Update not supported
+				ForceNew:    true, // TODO: TM: Update not supported
 				Description: "The description of the Content Library",
 			},
 			"is_shared": {
@@ -89,19 +89,20 @@ func resourceVcdTmContentLibrary() *schema.Resource {
 						"subscription_url": {
 							Type:        schema.TypeString,
 							Required:    true,
-							ForceNew:    true, // TODO: Update not supported
+							ForceNew:    true, // TODO: TM: Update not supported
 							Description: "Subscription url of this Content Library",
 						},
 						"password": {
 							Type:        schema.TypeString,
 							Optional:    true, // Required at Runtime as cannot be Required + Computed in schema. (It is computed as password cannot be recovered)
 							Computed:    true,
+							ForceNew:    true, // TODO: TM: Update not supported
 							Description: "Password to use to authenticate with the publisher",
 						},
 						"need_local_copy": {
 							Type:        schema.TypeBool,
 							Optional:    true,
-							ForceNew:    true, // TODO: Update not supported
+							ForceNew:    true, // TODO: TM: Update not supported
 							Description: "Whether to eagerly download content from publisher and store it locally",
 						},
 					},

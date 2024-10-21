@@ -16,15 +16,15 @@ This resource is exclusive to **VMware Cloud Foundation Tenant Manager**. Suppor
 
 ```hcl
 data "vcd_tm_region_storage_policy" "sp" {
-   name = "vSAN Default Storage Policy"
+  name = "vSAN Default Storage Policy"
 }
 
 resource "vcd_tm_content_library" "cl" {
-   name = "My Library"
-   description = "A simple library"
-   storage_policy_ids = [
-      data.vcd_tm_region_storage_policy.sp.id
-   ]
+  name        = "My Library"
+  description = "A simple library"
+  storage_policy_ids = [
+    data.vcd_tm_region_storage_policy.sp.id
+  ]
 }
 ```
 
@@ -69,7 +69,7 @@ For example, using this structure, representing an existing Content Library that
 
 ```hcl
 resource "vcd_tm_content_library" "cl" {
-   name = "My Already Existing Library"
+  name = "My Already Existing Library"
 }
 ```
 

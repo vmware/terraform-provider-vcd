@@ -6,7 +6,7 @@ description: |-
   Provides a VMware Cloud Foundation Tenant Manager Content Library data source. This can be used to read Content Libraries.
 ---
 
-# vcd\_independent\_disk
+# vcd\_content\_library
 
 Provides a VMware Cloud Foundation Tenant Manager Content Library data source. This can be used to read Content Libraries.
 
