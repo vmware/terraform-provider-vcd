@@ -10,17 +10,9 @@ import (
 	"github.com/vmware/go-vcloud-director/v3/util"
 )
 
-// updateDeleter is a type constraint to match only entities that have Update and Delete methods
-type updateDeleter[O any, I any] interface {
-	Update(*I) (O, error)
-	Delete() error
-}
-
-type outerEntityHook[O any] func(O) error
-type outerEntityHookInnerEntityType[O, I any] func(O, I) error
-type schemaHook func(*VCDClient, *schema.ResourceData) error
-
-// crudConfig
+// crudConfig defines a generic approach for managing Terraform resources where the parent entity is
+// a standard OpenAPI entity and the outer entity should satisfy 'updateDeleter' type constraint
+// (have 'Update' and 'Delete' pointer receiver methods)
 type crudConfig[O updateDeleter[O, I], I any] struct {
 	// entityLabel to use
 	entityLabel string
@@ -54,10 +46,26 @@ type crudConfig[O updateDeleter[O, I], I any] struct {
 	readHooks []outerEntityHook[O]
 }
 
+// updateDeleter is a type constraint to match only entities that have Update and Delete methods
+type updateDeleter[O any, I any] interface {
+	Update(*I) (O, error)
+	Delete() error
+}
+
+// outerEntityHook defines a type for hook that can be fed into generic CRUD operations
+type outerEntityHook[O any] func(O) error
+
+// schemaHook defines a type for hook that can be fed into generic CRUD operations
+type schemaHook func(*VCDClient, *schema.ResourceData) error
+
+// outerEntityHookInnerEntityType defines a type for hook that will provide retrieved outer entity
+// with a newly computed inner entity type (useful for modifying update body before submitting it)
+type outerEntityHookInnerEntityType[O, I any] func(O, I) error
+
 func createResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema.ResourceData, meta interface{}, c crudConfig[O, I]) diag.Diagnostics {
 	t, err := c.getTypeFunc(d)
 	if err != nil {
-		return diag.Errorf("error getting %s type: %s", c.entityLabel, err)
+		return diag.Errorf("error getting %s type on create: %s", c.entityLabel, err)
 	}
 
 	vcdClient := meta.(*VCDClient)
@@ -73,7 +81,7 @@ func createResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema
 
 	err = c.stateStoreFunc(d, createdEntity)
 	if err != nil {
-		return diag.Errorf("error storing %s to state: %s", c.entityLabel, err)
+		return diag.Errorf("error storing %s to state during create: %s", c.entityLabel, err)
 	}
 
 	return c.resourceReadFunc(ctx, d, meta)
@@ -82,22 +90,17 @@ func createResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema
 func updateResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema.ResourceData, meta interface{}, c crudConfig[O, I]) diag.Diagnostics {
 	t, err := c.getTypeFunc(d)
 	if err != nil {
-		return diag.Errorf("error getting %s type: %s", c.entityLabel, err)
+		return diag.Errorf("error getting %s type on update: %s", c.entityLabel, err)
 	}
 
 	retrievedEntity, err := c.getEntityFunc(d.Id())
 	if err != nil {
-		return diag.Errorf("error getting %s: %s", c.entityLabel, err)
-	}
-
-	err = execUpdateEntityHookWithNewInnerType(retrievedEntity, t, c.preUpdateHooks)
-	if err != nil {
-		return diag.Errorf("error executing pre-update %s hooks: %s", c.entityLabel, err)
+		return diag.Errorf("error getting %s for update: %s", c.entityLabel, err)
 	}
 
 	_, err = retrievedEntity.Update(t)
 	if err != nil {
-		return diag.Errorf("error storing %s to state: %s", c.entityLabel, err)
+		return diag.Errorf("error updating %s with ID: %s", c.entityLabel, err)
 	}
 
 	return c.resourceReadFunc(ctx, d, meta)
@@ -119,12 +122,13 @@ func readResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.Res
 
 	err = c.stateStoreFunc(d, retrievedEntity)
 	if err != nil {
-		return diag.Errorf("error storing %s to state: %s", c.entityLabel, err)
+		return diag.Errorf("error storing %s to state during resource read: %s", c.entityLabel, err)
 	}
 
 	return nil
 }
 
+// readDatasource will read a data source by a 'name' field in Terraform schema
 func readDatasource[O updateDeleter[O, I], I any](_ context.Context, d *schema.ResourceData, _ interface{}, c crudConfig[O, I]) diag.Diagnostics {
 	entityName := d.Get("name").(string)
 	retrievedEntity, err := c.getEntityFunc(entityName)
@@ -134,7 +138,7 @@ func readDatasource[O updateDeleter[O, I], I any](_ context.Context, d *schema.R
 
 	err = c.stateStoreFunc(d, retrievedEntity)
 	if err != nil {
-		return diag.Errorf("error storing %s to state: %s", c.entityLabel, err)
+		return diag.Errorf("error storing %s to state during data source read: %s", c.entityLabel, err)
 	}
 
 	return nil
@@ -143,7 +147,7 @@ func readDatasource[O updateDeleter[O, I], I any](_ context.Context, d *schema.R
 func deleteResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.ResourceData, _ interface{}, c crudConfig[O, I]) diag.Diagnostics {
 	retrievedEntity, err := c.getEntityFunc(d.Id())
 	if err != nil {
-		return diag.Errorf("error getting %s: %s", c.entityLabel, err)
+		return diag.Errorf("error getting %s for delete: %s", c.entityLabel, err)
 	}
 
 	err = execEntityHook(retrievedEntity, c.preDeleteHooks)
@@ -153,7 +157,7 @@ func deleteResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.R
 
 	err = retrievedEntity.Delete()
 	if err != nil {
-		return diag.Errorf("error storing %s to state: %s", c.entityLabel, err)
+		return diag.Errorf("error deleting %s with ID '%s': %s", c.entityLabel, d.Id(), err)
 	}
 
 	return nil
@@ -186,24 +190,6 @@ func execEntityHook[O any](outerEntity O, runList []outerEntityHook[O]) error {
 	var err error
 	for i := range runList {
 		err = runList[i](outerEntity)
-		if err != nil {
-			return fmt.Errorf("error executing hook: %s", err)
-		}
-
-	}
-
-	return nil
-}
-
-func execUpdateEntityHookWithNewInnerType[O, I any](outerEntity O, newInnerEntity I, runList []outerEntityHookInnerEntityType[O, I]) error {
-	if len(runList) == 0 {
-		util.Logger.Printf("[DEBUG] No hooks to execute")
-		return nil
-	}
-
-	var err error
-	for i := range runList {
-		err = runList[i](outerEntity, newInnerEntity)
 		if err != nil {
 			return fmt.Errorf("error executing hook: %s", err)
 		}
