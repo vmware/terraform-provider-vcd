@@ -98,6 +98,11 @@ func updateResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema
 		return diag.Errorf("error getting %s for update: %s", c.entityLabel, err)
 	}
 
+	err = execUpdateEntityHookWithNewInnerType(retrievedEntity, t, c.preUpdateHooks)
+	if err != nil {
+		return diag.Errorf("error executing pre-update %s hooks: %s", c.entityLabel, err)
+	}
+
 	_, err = retrievedEntity.Update(t)
 	if err != nil {
 		return diag.Errorf("error updating %s with ID: %s", c.entityLabel, err)
@@ -190,6 +195,24 @@ func execEntityHook[O any](outerEntity O, runList []outerEntityHook[O]) error {
 	var err error
 	for i := range runList {
 		err = runList[i](outerEntity)
+		if err != nil {
+			return fmt.Errorf("error executing hook: %s", err)
+		}
+
+	}
+
+	return nil
+}
+
+func execUpdateEntityHookWithNewInnerType[O, I any](outerEntity O, newInnerEntity I, runList []outerEntityHookInnerEntityType[O, I]) error {
+	if len(runList) == 0 {
+		util.Logger.Printf("[DEBUG] No hooks to execute")
+		return nil
+	}
+
+	var err error
+	for i := range runList {
+		err = runList[i](outerEntity, newInnerEntity)
 		if err != nil {
 			return fmt.Errorf("error executing hook: %s", err)
 		}

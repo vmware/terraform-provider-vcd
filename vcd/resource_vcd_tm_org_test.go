@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -45,6 +46,8 @@ func TestAccVcdTmOrg(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_tm_org.test", "description", "terraform test"),
 					resource.TestCheckResourceAttr("vcd_tm_org.test", "is_enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_tm_org.test", "is_subprovider", "false"),
+					resource.TestMatchResourceAttr("vcd_tm_org.test", "managed_by_id", regexp.MustCompile("^urn:vcloud:org:")),
+					resource.TestCheckResourceAttr("vcd_tm_org.test", "managed_by_name", "System"),
 				),
 			},
 			{
@@ -55,6 +58,8 @@ func TestAccVcdTmOrg(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_tm_org.test", "description", ""),
 					resource.TestCheckResourceAttr("vcd_tm_org.test", "is_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_tm_org.test", "is_subprovider", "false"),
+					resource.TestMatchResourceAttr("vcd_tm_org.test", "managed_by_id", regexp.MustCompile("^urn:vcloud:org:")),
+					resource.TestCheckResourceAttr("vcd_tm_org.test", "managed_by_name", "System"),
 				),
 			},
 			{
@@ -134,6 +139,8 @@ func TestAccVcdTmOrgSubProvider(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_tm_org.test", "description", "terraform test"),
 					resource.TestCheckResourceAttr("vcd_tm_org.test", "is_enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_tm_org.test", "is_subprovider", "true"),
+					resource.TestMatchResourceAttr("vcd_tm_org.test", "managed_by_id", regexp.MustCompile("^urn:vcloud:org:")),
+					resource.TestCheckResourceAttr("vcd_tm_org.test", "managed_by_name", "System"),
 				),
 			},
 			{
