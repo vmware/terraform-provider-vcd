@@ -46,6 +46,7 @@ vcd/*-out-*.txt
 
 # Go workspace
 go.work
+go.work.sum
 
 # File cache directory
 test-resources/cache/*
