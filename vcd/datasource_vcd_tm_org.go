@@ -35,7 +35,7 @@ func datasourceVcdTmOrg() *schema.Resource {
 				Computed:    true,
 				Description: fmt.Sprintf("Defines if the %s enabled", labelTmOrg),
 			},
-			"is_subprovider": { /// Can it be read?
+			"is_subprovider": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: fmt.Sprintf("Defines if this can manage other %ss", labelTmOrg),

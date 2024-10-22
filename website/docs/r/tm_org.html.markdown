@@ -6,7 +6,7 @@ description: |-
   Provides a resource to manage VMware Cloud Foundation Tenant Manager Organization.
 ---
 
-# vcd\_nsxt\_tm\_org
+# vcd\_tm\_org
 
 Provides a resource to manage VMware Cloud Foundation Tenant Manager Organization.
 
@@ -37,7 +37,8 @@ resource "vcd_tm_org" "test" {
 
 The following arguments are supported:
 
-* `name` - (Required) A name for Organization with which users log in to this organization
+* `name` - (Required) A name for Organization with which users log in to it as it will be used in
+  the URL
 * `display_name` - (Required) A human readable name for Organization
 * `description` - (Optional) An optional description for Organization
 * `is_enabled` - (Optional) Defines if Organization is enabled. Default `true`. **Note:**
@@ -59,7 +60,7 @@ The following arguments are supported:
 The following attributes are exported on this resource:
 
 * `managed_by_id` - ID of Org that owns this Org
-* `managed_by_name` - name of Org that owns this Org
+* `managed_by_name` - Name of Org that owns this Org
 * `org_vdc_count` - Number of VDCs belonging to this Organization
 * `catalog_count` - Number of catalogs belonging to this Organization
 * `vapp_count` - Number of vApps belonging to this Organization
@@ -72,8 +73,9 @@ The following attributes are exported on this resource:
 
 ## Importing
 
-~> The current implementation of Terraform import can only import resources into the state. It does
-not generate configuration. [More information.](https://www.terraform.io/docs/import/)
+~> **Note:** The current implementation of Terraform import can only import resources into the
+state. It does not generate configuration. However, an experimental feature in Terraform 1.5+ allows
+also code generation. See [Importing resources][importing-resources] for more information.
 
 An existing Org configuration can be [imported][docs-import] into this resource via supplying path
 for it. An example is below:

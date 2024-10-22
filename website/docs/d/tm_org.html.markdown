@@ -6,7 +6,7 @@ description: |-
   Provides a data source to read VMware Cloud Foundation Tenant Manager Organization.
 ---
 
-# vcd\_nsxt\_tm\_org
+# vcd\_tm\_org
 
 Provides a data source to read VMware Cloud Foundation Tenant Manager Organization.
 
