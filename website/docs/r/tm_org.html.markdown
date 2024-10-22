@@ -41,10 +41,11 @@ The following arguments are supported:
 * `display_name` - (Required) A human readable name for Organization
 * `description` - (Optional) An optional description for Organization
 * `is_enabled` - (Optional) Defines if Organization is enabled. Default `true`. **Note:**
-  Organization has to be disabled before removal and this resource will automatically perform it
+  Organization has to be disabled before removal and this resource will automatically disable it if
+  the resource is destroyed.
 * `is_subprovider` - (Optional) Enables this Organization to manage other Organizations. **Note**:
   This value cannot updated as there may be any number of Rights Bundles granting sub-provider rights
-  to this Org. Instead, unpublish any rights bundles that have the Org Traverse right from this org.
+  to this Org. Instead, unpublish any rights bundles that have the `Org Traverse` right from this Org.
   This can be toggled to true to automatically perform the following steps:
  * Publish the Default Sub-Provider Entitlement Rights Bundle to the Organization
  * Publish the Sub-Provider Administrator global role (if it exists) to the Organization
