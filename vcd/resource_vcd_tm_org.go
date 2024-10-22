@@ -50,6 +50,16 @@ func resourceVcdTmOrg() *schema.Resource {
 				Optional:    true,
 				Description: fmt.Sprintf("Enables this organization to manage other %ss", labelTmOrg),
 			},
+			"managed_by_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: fmt.Sprintf("%s owner ID", labelTmOrg),
+			},
+			"managed_by_name": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: fmt.Sprintf("%s owner Name", labelTmOrg),
+			},
 			// TODO: TM: validate if all of these computed attributes are effective
 			"org_vdc_count": {
 				Type:        schema.TypeInt,
@@ -202,6 +212,14 @@ func setTmOrgData(d *schema.ResourceData, org *govcd.TmOrg) error {
 	dSet(d, "is_subprovider", org.TmOrg.CanManageOrgs)
 
 	// Computed in resource
+	var managedById string
+	var managedByName string
+	if org.TmOrg.ManagedBy != nil {
+		managedById = org.TmOrg.ManagedBy.ID
+		managedByName = org.TmOrg.ManagedBy.Name
+	}
+	dSet(d, "managed_by_id", managedById)
+	dSet(d, "managed_by_name", managedByName)
 	dSet(d, "org_vdc_count", org.TmOrg.OrgVdcCount)
 	dSet(d, "catalog_count", org.TmOrg.CatalogCount)
 	dSet(d, "vapp_count", org.TmOrg.VappCount)
