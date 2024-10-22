@@ -30,7 +30,37 @@ resource "vcd_vm_internal_disk" "disk1" {
   unit_number     = 1
   storage_profile = "Development"
   allow_vm_reboot = true
-  depends_on      = ["vcd_vapp_vm.web1"]
+  depends_on      = [vcd_vapp_vm.web1]
+}
+```
+
+## Example Usage (using depends_on to ensure correct disk order)
+
+~> **Note:** The bus and unit numbers __do not guarantee disk order__ as it is detected by operating
+system. To ensure correct order of disk presentation to OS, one can use `depends_on` clauses between
+disk resources to ensure Terraform attaches these disks to VM in the right order.
+
+```hcl
+resource "vcd_vm_internal_disk" "data" {
+  vapp_name       = "my-vapp"
+  vm_name         = "my-vm1"
+  bus_type        = "paravirtual"
+  size_in_mb      = 1024 * 2
+  bus_number      = 0
+  unit_number     = 1
+  allow_vm_reboot = true
+  depends_on      = [vcd_vapp_vm.web1]
+}
+
+resource "vcd_vm_internal_disk" "data2" {
+  vapp_name       = "my-vapp"
+  vm_name         = "my-vm1"
+  bus_type        = "paravirtual"
+  size_in_mb      = 1024 * 10
+  bus_number      = 0
+  unit_number     = 2
+  allow_vm_reboot = true
+  depends_on      = [vcd_vapp_vm.web1, vcd_vm_internal_disk.data]
 }
 ```
 
