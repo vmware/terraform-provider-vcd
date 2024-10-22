@@ -114,6 +114,11 @@ func removeLeftovers(govcdClient *govcd.VCDClient, verbose bool) error {
 		fmt.Printf("Start leftovers removal\n")
 	}
 
+	if govcdClient.Client.IsTm() {
+		fmt.Printf("Skipping leftover removal for TM\n")
+		return nil
+	}
+
 	// NSX-T ALB configuration Hierarchical cleanup is separate from main hierarchy as even if the
 	// Org is going to be deleted - NSX-T ALB configuration must be cleaned up first
 	// Only System user can control ALB resources
