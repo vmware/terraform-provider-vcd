@@ -74,7 +74,7 @@ func createResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema
 
 	err = c.stateStoreFunc(d, createdEntity)
 	if err != nil {
-		return diag.Errorf("error storing %s to state: %s", c.entityLabel, err)
+		return diag.Errorf("error storing %s to state during create: %s", c.entityLabel, err)
 	}
 
 	return c.resourceReadFunc(ctx, d, meta)
@@ -83,7 +83,7 @@ func createResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema
 func updateResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema.ResourceData, meta interface{}, c crudConfig[O, I]) diag.Diagnostics {
 	t, err := c.getTypeFunc(d)
 	if err != nil {
-		return diag.Errorf("error getting %s type: %s", c.entityLabel, err)
+		return diag.Errorf("error getting %s type on update: %s", c.entityLabel, err)
 	}
 
 	retrievedEntity, err := c.getEntityFunc(d.Id())
@@ -115,7 +115,7 @@ func readResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.Res
 
 	err = c.stateStoreFunc(d, retrievedEntity)
 	if err != nil {
-		return diag.Errorf("error storing %s to state: %s", c.entityLabel, err)
+		return diag.Errorf("error storing %s to state during resource read: %s", c.entityLabel, err)
 	}
 
 	return nil
@@ -131,7 +131,7 @@ func readDatasource[O updateDeleter[O, I], I any](_ context.Context, d *schema.R
 
 	err = c.stateStoreFunc(d, retrievedEntity)
 	if err != nil {
-		return diag.Errorf("error storing %s to state: %s", c.entityLabel, err)
+		return diag.Errorf("error storing %s to state during data source read: %s", c.entityLabel, err)
 	}
 
 	return nil
@@ -140,7 +140,7 @@ func readDatasource[O updateDeleter[O, I], I any](_ context.Context, d *schema.R
 func deleteResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.ResourceData, _ interface{}, c crudConfig[O, I]) diag.Diagnostics {
 	retrievedEntity, err := c.getEntityFunc(d.Id())
 	if err != nil {
-		return diag.Errorf("error getting %s: %s", c.entityLabel, err)
+		return diag.Errorf("error getting %s for delete: %s", c.entityLabel, err)
 	}
 
 	err = execEntityHook(retrievedEntity, c.preDeleteHooks)

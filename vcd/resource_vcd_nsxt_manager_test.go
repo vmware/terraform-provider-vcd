@@ -35,7 +35,7 @@ func TestAccVcdNsxtManager(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step3"
 	configText3 := templateFill(testAccVcdNsxtManagerStep3DS, params)
 
-	debugPrintf("#[DEBUG] CONFIGURATION step1: %s\n", configText3)
+	debugPrintf("#[DEBUG] CONFIGURATION step1: %s\n", configText1)
 	debugPrintf("#[DEBUG] CONFIGURATION step2: %s\n", configText2)
 	debugPrintf("#[DEBUG] CONFIGURATION step3: %s\n", configText3)
 	if vcdShortTest {

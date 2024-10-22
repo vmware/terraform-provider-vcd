@@ -25,7 +25,7 @@ func datasourceVcdVcenter() *schema.Resource {
 			"url": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: fmt.Sprintf("URL including port of %s", labelVirtualCenter),
+				Description: fmt.Sprintf("URL of %s", labelVirtualCenter),
 			},
 			"username": {
 				Type:        schema.TypeString,
