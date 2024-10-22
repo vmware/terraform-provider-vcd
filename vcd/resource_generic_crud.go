@@ -121,6 +121,7 @@ func readResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.Res
 	return nil
 }
 
+// readDatasource will read a data source by a 'name' field in Terraform schema
 func readDatasource[O updateDeleter[O, I], I any](_ context.Context, d *schema.ResourceData, _ interface{}, c crudConfig[O, I]) diag.Diagnostics {
 	entityName := d.Get("name").(string)
 	retrievedEntity, err := c.getEntityFunc(entityName)
