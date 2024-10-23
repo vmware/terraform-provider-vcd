@@ -53,7 +53,7 @@ func TestAccVcdTmOrg(t *testing.T) {
 			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("vcd_tm_org.test", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_tm_org.test", "name", t.Name()+"-updated"),
 					resource.TestCheckResourceAttr("vcd_tm_org.test", "display_name", "terraform-test"),
 					resource.TestCheckResourceAttr("vcd_tm_org.test", "description", ""),
 					resource.TestCheckResourceAttr("vcd_tm_org.test", "is_enabled", "false"),
@@ -91,7 +91,7 @@ resource "vcd_tm_org" "test" {
 
 const testAccVcdTmOrgStep2 = `
 resource "vcd_tm_org" "test" {
-  name         = "{{.Testname}}"
+  name         = "{{.Testname}}-updated"
   display_name = "terraform-test"
   description  = ""
   is_enabled   = false
@@ -121,8 +121,8 @@ func TestAccVcdTmOrgSubProvider(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step2"
 	configText2 := templateFill(testAccVcdTmOrgSubproviderStep2, params)
 
-	debugPrintf("#[DEBUG] CONFIGURATION step2: %s\n", configText1)
-	debugPrintf("#[DEBUG] CONFIGURATION step1: %s\n", configText2)
+	debugPrintf("#[DEBUG] CONFIGURATION step1: %s\n", configText1)
+	debugPrintf("#[DEBUG] CONFIGURATION step2: %s\n", configText2)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return

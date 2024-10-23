@@ -128,8 +128,11 @@ func resourceVcdTmOrgUpdate(ctx context.Context, d *schema.ResourceData, meta in
 		getTypeFunc:      getTmOrgType,
 		getEntityFunc:    vcdClient.GetTmOrgById,
 		resourceReadFunc: resourceVcdTmOrgRead,
-		// TODO: TM: review if ID and ManagedBy should always be submitted on update
-		preUpdateHooks: []outerEntityHookInnerEntityType[*govcd.TmOrg, *types.TmOrg]{resubmitIdAndManagedByFields},
+
+		preUpdateHooks: []outerEntityHookInnerEntityType[*govcd.TmOrg, *types.TmOrg]{
+			validateRenameOrgDisabled,    // 'name' can only be changed when 'is_enabled=false'
+			resubmitIdAndManagedByFields, // TODO: TM: review if ID and ManagedBy should always be submitted on update
+		},
 	}
 
 	return updateResource(ctx, d, meta, c)
@@ -166,11 +169,24 @@ func disableTmOrg(t *govcd.TmOrg) error {
 	return nil
 }
 
-func resubmitIdAndManagedByFields(o *govcd.TmOrg, i *types.TmOrg) error {
+func resubmitIdAndManagedByFields(d *schema.ResourceData, o *govcd.TmOrg, i *types.TmOrg) error {
 	// TODO: TM: review if ManagedBy should always be submitted
 	i.ID = o.TmOrg.ID
 
 	i.ManagedBy = o.TmOrg.ManagedBy // It is optional in docs, but API rejects update without it
+	return nil
+}
+
+// validateRenameOrgDisabled is and update hook that checks Org can be renamed. It can be renamed if
+// * it is going to be disabled with the same API call
+// * if it was previously disabled and is being enabled together with new name
+func validateRenameOrgDisabled(d *schema.ResourceData, oldCfg *govcd.TmOrg, newCfg *types.TmOrg) error {
+	if d.HasChange("name") &&
+		// this condition is a negative xor - it will be matched if Org is not transitioning from or to disabled state
+		((!newCfg.IsEnabled && !oldCfg.TmOrg.IsEnabled) || newCfg.IsEnabled && oldCfg.TmOrg.IsEnabled) {
+		return fmt.Errorf("%s must be disabled (is_enabled=false) to change name", labelTmOrg)
+	}
+
 	return nil
 }
 
