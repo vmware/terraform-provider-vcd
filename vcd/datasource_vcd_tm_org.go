@@ -50,7 +50,6 @@ func datasourceVcdTmOrg() *schema.Resource {
 				Computed:    true,
 				Description: fmt.Sprintf("%s owner Name", labelTmOrg),
 			},
-			// TODO: TM: validate if all of these computed attributes are effective
 			"org_vdc_count": {
 				Type:        schema.TypeInt,
 				Computed:    true,
