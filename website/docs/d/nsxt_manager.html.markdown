@@ -35,3 +35,7 @@ The following arguments are supported:
 
 * `id` - ID of the manager
 * `href` - Full URL of the manager
+
+All attributes defined in
+[`vcd_nsxt_manager`](/providers/vmware/vcd/latest/docs/resources/nsxt_manager#attribute-reference)
+are supported.

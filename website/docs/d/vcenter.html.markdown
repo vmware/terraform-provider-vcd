@@ -29,8 +29,6 @@ The following arguments are supported:
 
 ## Attribute reference
 
-* `connection_status` -  vCenter connection status (e.g. `CONNECTED`). 
-* `is_enabled` -  Boolean value if vCenter is enabled.
-* `status` -  vCenter status (e.g. `READY`).
-* `vcenter_host` -  Hostname of configured vCenter.
-* `vcenter_version` -  vCenter version (e.g. `6.7.0`)
+All attributes defined in
+[`vcd_vcenter`](/providers/vmware/vcd/latest/docs/resources/vcenter#attribute-reference) are
+supported.
