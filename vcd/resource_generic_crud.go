@@ -36,6 +36,9 @@ type crudConfig[O updateDeleter[O, I], I any] struct {
 	// preCreateHooks will be executed before the entity is created
 	preCreateHooks []schemaHook
 
+	// preUpdateHooks will be executed before submitting the data for update
+	preUpdateHooks []outerEntityHookInnerEntityType[O, *I]
+
 	// preDeleteHooks will be executed before the entity is deleted
 	preDeleteHooks []outerEntityHook[O]
 
@@ -54,6 +57,10 @@ type outerEntityHook[O any] func(O) error
 
 // schemaHook defines a type for hook that can be fed into generic CRUD operations
 type schemaHook func(*VCDClient, *schema.ResourceData) error
+
+// outerEntityHookInnerEntityType defines a type for hook that will provide retrieved outer entity
+// with a newly computed inner entity type (useful for modifying update body before submitting it)
+type outerEntityHookInnerEntityType[O, I any] func(*schema.ResourceData, O, I) error
 
 func createResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema.ResourceData, meta interface{}, c crudConfig[O, I]) diag.Diagnostics {
 	t, err := c.getTypeFunc(d)
@@ -89,6 +96,11 @@ func updateResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema
 	retrievedEntity, err := c.getEntityFunc(d.Id())
 	if err != nil {
 		return diag.Errorf("error getting %s for update: %s", c.entityLabel, err)
+	}
+
+	err = execUpdateEntityHookWithNewInnerType(d, retrievedEntity, t, c.preUpdateHooks)
+	if err != nil {
+		return diag.Errorf("error executing pre-update %s hooks: %s", c.entityLabel, err)
 	}
 
 	_, err = retrievedEntity.Update(t)
@@ -183,6 +195,24 @@ func execEntityHook[O any](outerEntity O, runList []outerEntityHook[O]) error {
 	var err error
 	for i := range runList {
 		err = runList[i](outerEntity)
+		if err != nil {
+			return fmt.Errorf("error executing hook: %s", err)
+		}
+
+	}
+
+	return nil
+}
+
+func execUpdateEntityHookWithNewInnerType[O, I any](d *schema.ResourceData, outerEntity O, newInnerEntity I, runList []outerEntityHookInnerEntityType[O, I]) error {
+	if len(runList) == 0 {
+		util.Logger.Printf("[DEBUG] No hooks to execute")
+		return nil
+	}
+
+	var err error
+	for i := range runList {
+		err = runList[i](d, outerEntity, newInnerEntity)
 		if err != nil {
 			return fmt.Errorf("error executing hook: %s", err)
 		}

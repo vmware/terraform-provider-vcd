@@ -433,8 +433,8 @@ func skipIfNotSysAdmin(t *testing.T) {
 }
 
 func skipIfNotTm(t *testing.T) {
-	if testConfig.Tm.Org == "" {
-		t.Skip(t.Name() + " requires 'tm' branch filled in")
+	if checkVersion(testConfig.Provider.ApiVersion, "< 40.0") {
+		t.Skip(t.Name() + " requires 'tm'")
 	}
 }
 
