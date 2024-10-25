@@ -60,7 +60,7 @@ type schemaHook func(*VCDClient, *schema.ResourceData) error
 
 // outerEntityHookInnerEntityType defines a type for hook that will provide retrieved outer entity
 // with a newly computed inner entity type (useful for modifying update body before submitting it)
-type outerEntityHookInnerEntityType[O, I any] func(O, I) error
+type outerEntityHookInnerEntityType[O, I any] func(*schema.ResourceData, O, I) error
 
 func createResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema.ResourceData, meta interface{}, c crudConfig[O, I]) diag.Diagnostics {
 	t, err := c.getTypeFunc(d)
@@ -98,7 +98,7 @@ func updateResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema
 		return diag.Errorf("error getting %s for update: %s", c.entityLabel, err)
 	}
 
-	err = execUpdateEntityHookWithNewInnerType(retrievedEntity, t, c.preUpdateHooks)
+	err = execUpdateEntityHookWithNewInnerType(d, retrievedEntity, t, c.preUpdateHooks)
 	if err != nil {
 		return diag.Errorf("error executing pre-update %s hooks: %s", c.entityLabel, err)
 	}
@@ -204,7 +204,7 @@ func execEntityHook[O any](outerEntity O, runList []outerEntityHook[O]) error {
 	return nil
 }
 
-func execUpdateEntityHookWithNewInnerType[O, I any](outerEntity O, newInnerEntity I, runList []outerEntityHookInnerEntityType[O, I]) error {
+func execUpdateEntityHookWithNewInnerType[O, I any](d *schema.ResourceData, outerEntity O, newInnerEntity I, runList []outerEntityHookInnerEntityType[O, I]) error {
 	if len(runList) == 0 {
 		util.Logger.Printf("[DEBUG] No hooks to execute")
 		return nil
@@ -212,7 +212,7 @@ func execUpdateEntityHookWithNewInnerType[O, I any](outerEntity O, newInnerEntit
 
 	var err error
 	for i := range runList {
-		err = runList[i](outerEntity, newInnerEntity)
+		err = runList[i](d, outerEntity, newInnerEntity)
 		if err != nil {
 			return fmt.Errorf("error executing hook: %s", err)
 		}
