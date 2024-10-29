@@ -178,6 +178,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 
 	"vcd_tm_region_storage_policy": datasourceVcdTmRegionStoragePolicy(), // 4.0
 	"vcd_tm_content_library":       datasourceVcdTmContentLibrary(),      // 4.0
+	"vcd_tm_content_libnary_item":  datasourceVcdTmContentLibraryItem(),  // 4.0
 }
 
 var globalResourceMap = map[string]*schema.Resource{
