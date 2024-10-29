@@ -108,10 +108,20 @@ type TestConfig struct {
 		MaxRetryTimeout          int    `json:"maxRetryTimeout"`
 	} `json:"provider"`
 	Tm struct {
-		Org                 string `json:"org"` // temporary field to make skipIfNotTm work
-		Region              string `json:"region"`
-		RegionStoragePolicy string `json:"regionStoragePolicy"`
-		Vdc                 string `json:"vdc"`
+		Org                 string `json:"org"`                 // temporary field to make skipIfNotTm work
+		Region              string `json:"region"`              //
+		RegionStoragePolicy string `json:"regionStoragePolicy"` //
+		Vdc                 string `json:"vdc"`                 //
+
+		CreateNsxtManager   bool   `json:"createNsxtManager"`
+		NsxtManagerUsername string `json:"nsxtManagerUsername"`
+		NsxtManagerPassword string `json:"nsxtManagerPassword"`
+		NsxtManagerUrl      string `json:"nsxtManagerUrl"`
+
+		CreateVcenter   bool   `json:"createVcenter"`
+		VcenterUsername string `json:"vcenterUsername"`
+		VcenterPassword string `json:"vcenterPassword"`
+		VcenterUrl      string `json:"vcenterUrl"`
 	} `json:"tm,omitempty"`
 	VCD struct {
 		Org         string `json:"org"`
@@ -423,8 +433,8 @@ func skipIfNotSysAdmin(t *testing.T) {
 }
 
 func skipIfNotTm(t *testing.T) {
-	if testConfig.Tm.Org == "" {
-		t.Skip(t.Name() + " requires 'tm' branch filled in")
+	if checkVersion(testConfig.Provider.ApiVersion, "< 40.0") {
+		t.Skip(t.Name() + " requires 'tm'")
 	}
 }
 
