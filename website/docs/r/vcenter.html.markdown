@@ -37,6 +37,9 @@ The following arguments are supported:
 * `refresh_vcenter_on_read` - (Optional) An optional flag to trigger refresh operation on the
   underlying vCenter on every read. This might take some time, but can help to load up new artifacts
   from vCenter (e.g. Supervisors). Update is a no-op. Default `false`.
+* `refresh_policies_on_read` - (Optional) An optional flag to trigger policy refresh operation on
+  the underlying vCenter on every read. This might take some time, but can help to load up new
+  artifacts from vCenter (e.g. Storage Policies). Update is a no-op. Default `false`.
 * `url` - (Required) An URL of vCenter server
 * `auto_trust_certificate` - (Required) Defines if the certificate of a given vCenter server should
   automatically be added to trusted certificate store. **Note:** not having the certificate trusted

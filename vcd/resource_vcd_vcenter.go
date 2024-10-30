@@ -46,6 +46,11 @@ func resourceVcdVcenter() *schema.Resource {
 				Optional:    true,
 				Description: fmt.Sprintf("Defines if the %s should be refreshed on every read operation", labelVirtualCenter),
 			},
+			"refresh_policies_on_read": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: fmt.Sprintf("Defines if the %s should refresh Policies on every read operation", labelVirtualCenter),
+			},
 			"username": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -107,7 +112,7 @@ func resourceVcdVcenter() *schema.Resource {
 	}
 }
 
-func getTmVcenterType(d *schema.ResourceData) (*types.VSphereVirtualCenter, error) {
+func getTmVcenterType(_ *VCDClient, d *schema.ResourceData) (*types.VSphereVirtualCenter, error) {
 	t := &types.VSphereVirtualCenter{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
@@ -161,7 +166,8 @@ func resourceVcdVcenterCreate(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func resourceVcdVcenterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if !d.HasChangeExcept("refresh_vcenter_on_read") {
+	// return immediately if only flags are updated
+	if !d.HasChangesExcept("refresh_vcenter_on_read", "refresh_policies_on_read") {
 		return nil
 	}
 
@@ -193,12 +199,16 @@ func resourceVcdVcenterRead(ctx context.Context, d *schema.ResourceData, meta in
 	}
 
 	shouldRefresh := d.Get("refresh_vcenter_on_read").(bool)
+	shouldRefreshStoragePolicies := d.Get("refresh_policies_on_read").(bool)
 	c := crudConfig[*govcd.VCenter, types.VSphereVirtualCenter]{
 		entityLabel: labelVirtualCenter,
 		// getEntityFunc:  vcdClient.GetVCenterById,// TODO: TM: use this function
 		getEntityFunc:  fakeGetById, // TODO: TM: remove this function
 		stateStoreFunc: setTmVcenterData,
-		readHooks:      []outerEntityHook[*govcd.VCenter]{refreshVcenter(shouldRefresh)}, // vCenter read can optionally trigger "refresh" operation
+		readHooks: []outerEntityHook[*govcd.VCenter]{
+			refreshVcenter(shouldRefresh),                             // vCenter read can optionally trigger "refresh" operation
+			refreshVcenterStoragePolicy(shouldRefreshStoragePolicies), // vCenter read can optionally trigger "refresh storage policies" operation
+		},
 	}
 	return readResource(ctx, d, meta, c)
 }
@@ -236,12 +246,29 @@ func disableVcenter(v *govcd.VCenter) error {
 	return nil
 }
 
-// refreshVcenter triggers refresh os vCenter which is useful for reloading some of the vCenter
-// components
+// refreshVcenter triggers refresh on vCenter which is useful for reloading some of the vCenter
+// components like Supervisors
 func refreshVcenter(execute bool) outerEntityHook[*govcd.VCenter] {
 	return func(v *govcd.VCenter) error {
 		if execute {
-			return v.Refresh()
+			err := v.Refresh()
+			if err != nil {
+				return fmt.Errorf("error refreshing vCenter: %s", err)
+			}
+		}
+		return nil
+	}
+}
+
+// refreshVcenterStoragePolicy triggers refresh on vCenter which is useful for reloading some of the
+// vCenter components like Supervisors
+func refreshVcenterStoragePolicy(execute bool) outerEntityHook[*govcd.VCenter] {
+	return func(v *govcd.VCenter) error {
+		if execute {
+			err := v.RefreshStorageProfiles()
+			if err != nil {
+				return fmt.Errorf("error refreshing Storage Policies: %s", err)
+			}
 		}
 		return nil
 	}

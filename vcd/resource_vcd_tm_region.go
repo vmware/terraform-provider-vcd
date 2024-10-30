@@ -16,7 +16,7 @@ func resourceVcdTmRegion() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdTmRegionCreate,
 		ReadContext:   resourceVcdTmRegionRead,
-		UpdateContext: resourceVcdTmRegionUpdate,
+		// UpdateContext: resourceVcdTmRegionUpdate, // TODO: TM: Update is not yet supported
 		DeleteContext: resourceVcdTmRegionDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdTmRegionImport,
@@ -44,6 +44,22 @@ func resourceVcdTmRegion() *schema.Resource {
 				Required:    true,
 				Description: "NSX Manager ID",
 			},
+			"supervisor_ids": {
+				Type:        schema.TypeSet,
+				Required:    true,
+				Description: fmt.Sprintf("A set of supervisor IDs used in this %s", labelTmRegion),
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"storage_policy_names": {
+				Type:        schema.TypeSet,
+				Required:    true,
+				Description: "A set of storage policy names",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"cpu_capacity_mhz": {
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -67,23 +83,7 @@ func resourceVcdTmRegion() *schema.Resource {
 			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Status of the region",
-			},
-			"supervisors": {
-				Type:        schema.TypeSet,
-				Computed:    true,
-				Description: fmt.Sprintf("A set of supervisor IDs used in this %s", labelTmRegion),
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
-			"storage_policies": {
-				Type:        schema.TypeSet,
-				Computed:    true,
-				Description: "A set of storage policies",
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+				Description: fmt.Sprintf("Status of the %s", labelTmRegion),
 			},
 		},
 	}
@@ -108,7 +108,6 @@ func resourceVcdTmRegionUpdate(ctx context.Context, d *schema.ResourceData, meta
 		getTypeFunc:      getRegionType,
 		getEntityFunc:    vcdClient.GetRegionById,
 		resourceReadFunc: resourceVcdTmRegionRead,
-		// preUpdateHooks: []outerEntityHookInnerEntityType[*govcd.Region, *types.Region]{},
 	}
 	return updateResource(ctx, d, meta, c)
 }
@@ -129,7 +128,6 @@ func resourceVcdTmRegionDelete(ctx context.Context, d *schema.ResourceData, meta
 	c := crudConfig[*govcd.Region, types.Region]{
 		entityLabel:   labelTmRegion,
 		getEntityFunc: vcdClient.GetRegionById,
-		// preDeleteHooks: []outerEntityHook[*govcd.Region]{},
 	}
 
 	return deleteResource(ctx, d, meta, c)
@@ -148,12 +146,24 @@ func resourceVcdTmRegionImport(ctx context.Context, d *schema.ResourceData, meta
 	return []*schema.ResourceData{d}, nil
 }
 
-func getRegionType(d *schema.ResourceData) (*types.Region, error) {
+func getRegionType(_ *VCDClient, d *schema.ResourceData) (*types.Region, error) {
 	t := &types.Region{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		NsxManager:  &types.OpenApiReference{ID: d.Get("nsx_manager_id").(string)},
+		IsEnabled:   d.Get("is_enabled").(bool),
 	}
+
+	supervisors := convertSchemaSetToSliceOfStrings(d.Get("supervisor_ids").(*schema.Set))
+	supervisorIds := convertSliceOfStringsToOpenApiReferenceIds(supervisors)
+	t.Supervisors = supervisorIds
+	// TODO name must be sent
+	t.Supervisors[0].Name = "vcfcons-mgmt-vc03-wcp"
+
+	// supervisors
+
+	storagePolicyNames := convertSchemaSetToSliceOfStrings(d.Get("storage_policy_names").(*schema.Set))
+	t.StoragePolicies = storagePolicyNames
 
 	return t, nil
 }
@@ -167,7 +177,7 @@ func setRegionData(d *schema.ResourceData, r *govcd.Region) error {
 	d.SetId(r.Region.ID)
 	dSet(d, "name", r.Region.Name)
 	dSet(d, "description", r.Region.Description)
-	dSet(d, "is_enabled", r.Region.IsEnabled)
+	// dSet(d, "is_enabled", r.Region.IsEnabled) // TODO: TM: region is reported as false even when sending true
 	dSet(d, "nsx_manager_id", r.Region.NsxManager.ID)
 
 	dSet(d, "cpu_capacity_mhz", r.Region.CPUCapacityMHz)
@@ -176,15 +186,16 @@ func setRegionData(d *schema.ResourceData, r *govcd.Region) error {
 	dSet(d, "memory_reservation_capacity_mib", r.Region.MemoryReservationCapacityMiB)
 	dSet(d, "status", r.Region.Status)
 
-	err := d.Set("supervisors", extractIdsFromOpenApiReferences(r.Region.Supervisors))
+	err := d.Set("supervisor_ids", extractIdsFromOpenApiReferences(r.Region.Supervisors))
 	if err != nil {
 		return fmt.Errorf("error storing 'supervisors': %s", err)
 	}
 
-	err = d.Set("storage_policies", r.Region.StoragePolicies)
-	if err != nil {
-		return fmt.Errorf("error storing 'storage_policies': %s", err)
-	}
+	// TODO: TM: storage policies are not returned on read
+	// err = d.Set("storage_policy_names", r.Region.StoragePolicies)
+	// if err != nil {
+	// 	return fmt.Errorf("error storing 'storage_policy_names': %s", err)
+	// }
 
 	return nil
 }

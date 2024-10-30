@@ -118,10 +118,12 @@ type TestConfig struct {
 		NsxtManagerPassword string `json:"nsxtManagerPassword"`
 		NsxtManagerUrl      string `json:"nsxtManagerUrl"`
 
-		CreateVcenter   bool   `json:"createVcenter"`
-		VcenterUsername string `json:"vcenterUsername"`
-		VcenterPassword string `json:"vcenterPassword"`
-		VcenterUrl      string `json:"vcenterUrl"`
+		CreateVcenter         bool   `json:"createVcenter"`
+		VcenterUsername       string `json:"vcenterUsername"`
+		VcenterPassword       string `json:"vcenterPassword"`
+		VcenterUrl            string `json:"vcenterUrl"`
+		VcenterStorageProfile string `json:"vcenterStorageProfile"`
+		VcenterSupervisor     string `json:"vcenterSupervisor"`
 	} `json:"tm,omitempty"`
 	VCD struct {
 		Org         string `json:"org"`
