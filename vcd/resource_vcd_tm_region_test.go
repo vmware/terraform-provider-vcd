@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
+// TODO: TM: adjust the test for testing update operation once available
 func TestAccVcdTmRegion(t *testing.T) {
 	preTestChecks(t)
 
@@ -30,20 +31,20 @@ func TestAccVcdTmRegion(t *testing.T) {
 		"VcenterUrl":            testConfig.Tm.VcenterUrl,
 		"VcenterStorageProfile": testConfig.Tm.VcenterStorageProfile,
 		"VcenterSupervisor":     testConfig.Tm.VcenterSupervisor,
+		"VcenterSupervisorZone": testConfig.Tm.VcenterSupervisorZone,
 
 		"Tags": "tm",
 	}
 	testParamsNotEmpty(t, params)
 
 	configText1 := templateFill(testAccVcdRegionStep1, params)
+	params["FuncName"] = t.Name() + "-step1"
+	configText2 := templateFill(testAccVcdRegionStep2DS, params)
 	params["FuncName"] = t.Name() + "-step2"
-	// configText2 := templateFill(testAccVcdNsxtManagerStep2, params)
-	// params["FuncName"] = t.Name() + "-step3"
-	// configText3 := templateFill(testAccVcdNsxtManagerStep3DS, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION step1: %s\n", configText1)
-	// debugPrintf("#[DEBUG] CONFIGURATION step2: %s\n", configText2)
-	// debugPrintf("#[DEBUG] CONFIGURATION step3: %s\n", configText3)
+	debugPrintf("#[DEBUG] CONFIGURATION step2: %s\n", configText2)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -57,30 +58,33 @@ func TestAccVcdTmRegion(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_manager.test", "id", regexp.MustCompile(`^urn:vcloud:nsxtmanager:`)),
 					resource.TestCheckResourceAttrSet("vcd_vcenter.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_tm_region.test", "id"),
+
+					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor.test", "id"),
+					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor_zone.test", "id"),
 				),
 			},
-			// {
-			// 	Config: configText2,
-			// 	Check: resource.ComposeTestCheckFunc(
-			// 		resource.TestMatchResourceAttr("vcd_nsxt_manager.test", "id", regexp.MustCompile(`^urn:vcloud:nsxtmanager:`)),
-			// 		resource.TestMatchResourceAttr("vcd_nsxt_manager.test", "href", regexp.MustCompile(`api/admin/extension/nsxtManagers/`)),
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_manager.test", "name", params["Testname"].(string)),
-			// 		resource.TestCheckResourceAttr("vcd_nsxt_manager.test", "description", ""),
-			// 	),
-			// },
-			// {
-			// 	Config: configText3,
-			// 	Check: resource.ComposeTestCheckFunc(
-			// 		resourceFieldsEqual("vcd_nsxt_manager.test", "data.vcd_nsxt_manager.test", []string{"%", "auto_trust_certificate", "password"}),
-			// 	),
-			// },
-			// {
-			// 	ResourceName:            "vcd_nsxt_manager.test",
-			// 	ImportState:             true,
-			// 	ImportStateVerify:       true,
-			// 	ImportStateId:           params["Testname"].(string),
-			// 	ImportStateVerifyIgnore: []string{"auto_trust_certificate", "password"},
-			// },
+			{
+				Config: configText2,
+				Check: resource.ComposeTestCheckFunc(
+					resourceFieldsEqual("vcd_tm_region.test", "data.vcd_tm_region.test", []string{
+						"storage_policy_names.#", // TODO: TM: field is not populated on read
+						"storage_policy_names.0", // TODO: TM: field is not populated on read
+						"is_enabled",             // TODO: TM: field is not populated on read
+					}),
+				),
+			},
+			{
+				ResourceName:      "vcd_tm_region.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     params["Testname"].(string),
+				ImportStateVerifyIgnore: []string{
+					"storage_policy_names.#", // TODO: TM: field is not populated on read
+					"storage_policy_names.0", // TODO: TM: field is not populated on read
+					"is_enabled",             // TODO: TM: field is not populated on read
+				},
+			},
 		},
 	})
 
@@ -115,11 +119,22 @@ data "vcd_tm_supervisor" "test" {
   depends_on = [vcd_vcenter.test]
 }
 
+data "vcd_tm_supervisor_zone" "test" {
+  supervisor_id = data.vcd_tm_supervisor.test.id
+  name          = "{{.VcenterSupervisorZone}}"
+}
+
 resource "vcd_tm_region" "test" {
   name                 = "{{.Testname}}"
   is_enabled           = true
   nsx_manager_id       = vcd_nsxt_manager.test.id
   supervisor_ids       = [data.vcd_tm_supervisor.test.id]
   storage_policy_names = ["{{.VcenterStorageProfile}}"]
+}
+`
+
+const testAccVcdRegionStep2DS = testAccVcdRegionStep1 + `
+data "vcd_tm_region" "test" {
+  name = vcd_tm_region.test.name
 }
 `

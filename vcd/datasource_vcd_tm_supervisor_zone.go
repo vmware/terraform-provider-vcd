@@ -41,20 +41,20 @@ func datasourceVcdTmSupervisorZone() *schema.Resource {
 				Computed:    true,
 				Description: "CPU Capacity in MHz",
 			},
-			"cpu_reservation_capacity_mhz": {
+			"cpu_used_mhz": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "CPU reservation in MHz",
+				Description: "CPU used in MHz",
 			},
 			"memory_capacity_mib": {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Memory capacity in MiB",
 			},
-			"memory_reservation_capacity_mib": {
+			"memory_used_mib": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Memory reservation in MiB",
+				Description: "Memory used in MiB",
 			},
 		},
 	}

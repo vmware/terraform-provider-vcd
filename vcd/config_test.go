@@ -124,6 +124,7 @@ type TestConfig struct {
 		VcenterUrl            string `json:"vcenterUrl"`
 		VcenterStorageProfile string `json:"vcenterStorageProfile"`
 		VcenterSupervisor     string `json:"vcenterSupervisor"`
+		VcenterSupervisorZone string `json:"vcenterSupervisorZone"`
 	} `json:"tm,omitempty"`
 	VCD struct {
 		Org         string `json:"org"`

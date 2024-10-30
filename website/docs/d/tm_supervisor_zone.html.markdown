@@ -21,7 +21,7 @@ data "vcd_tm_supervisor" "one" {
 
 data "vcd_tm_supervisor_zone" "one" {
   supervisor_id = data.vcd_tm_supervisor.one.id
-  name = "domain-c8"
+  name          = "domain-c8"
 }
 ```
 
