@@ -52,17 +52,16 @@ func datasourceVcdTmSupervisorRead(ctx context.Context, d *schema.ResourceData, 
 
 func setSupervisorData(d *schema.ResourceData, s *types.Supervisor) error {
 	vCenterId := ""
-	regionId := ""
-
 	if s.VirtualCenter != nil {
 		vCenterId = s.VirtualCenter.ID
 	}
+	dSet(d, "vcenter_id", vCenterId)
 
+	regionId := ""
 	if s.Region != nil {
 		regionId = s.Region.ID
 	}
 
-	dSet(d, "vcenter_id", vCenterId)
 	dSet(d, "region_id", regionId)
 
 	return nil

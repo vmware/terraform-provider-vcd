@@ -59,9 +59,22 @@ func TestAccVcdTmRegion(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_manager.test", "id", regexp.MustCompile(`^urn:vcloud:nsxtmanager:`)),
 					resource.TestCheckResourceAttrSet("vcd_vcenter.test", "id"),
 					resource.TestCheckResourceAttrSet("vcd_tm_region.test", "id"),
+					resource.TestCheckResourceAttr("vcd_tm_region.test", "is_enabled", "true"),
+					resource.TestCheckResourceAttrSet("vcd_tm_region.test", "cpu_capacity_mhz"),
+					resource.TestCheckResourceAttrSet("vcd_tm_region.test", "cpu_reservation_capacity_mhz"),
+					resource.TestCheckResourceAttrSet("vcd_tm_region.test", "memory_capacity_mib"),
+					resource.TestCheckResourceAttrSet("vcd_tm_region.test", "memory_reservation_capacity_mib"),
+					resource.TestCheckResourceAttr("vcd_tm_region.test", "status", "READY"),
 
 					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor.test", "id"),
+					resource.TestCheckResourceAttrPair("data.vcd_tm_supervisor.test", "vcenter_id", "vcd_vcenter.test", "id"),
+
 					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor_zone.test", "id"),
+					resource.TestCheckResourceAttrPair("data.vcd_tm_supervisor_zone.test", "vcenter_id", "vcd_vcenter.test", "id"),
+					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor_zone.test", "cpu_capacity_mhz"),
+					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor_zone.test", "cpu_used_mhz"),
+					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor_zone.test", "memory_capacity_mib"),
+					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor_zone.test", "memory_used_mib"),
 				),
 			},
 			{

@@ -153,7 +153,7 @@ func resourceVcdTmRegionImport(ctx context.Context, d *schema.ResourceData, meta
 	return []*schema.ResourceData{d}, nil
 }
 
-func getRegionType(_ *VCDClient, d *schema.ResourceData) (*types.Region, error) {
+func getRegionType(vcdClient *VCDClient, d *schema.ResourceData) (*types.Region, error) {
 	t := &types.Region{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
@@ -161,13 +161,22 @@ func getRegionType(_ *VCDClient, d *schema.ResourceData) (*types.Region, error) 
 		IsEnabled:   d.Get("is_enabled").(bool),
 	}
 
-	supervisors := convertSchemaSetToSliceOfStrings(d.Get("supervisor_ids").(*schema.Set))
-	supervisorIds := convertSliceOfStringsToOpenApiReferenceIds(supervisors)
-	t.Supervisors = supervisorIds
-	// TODO name must be sent
-	t.Supervisors[0].Name = "vcfcons-mgmt-vc03-wcp"
+	// API requires Names to be sent with IDs, but Terraform native approach is to use IDs only
+	// therefore names need to be looked up for IDs
+	supervisorIds := convertSchemaSetToSliceOfStrings(d.Get("supervisor_ids").(*schema.Set))
+	superVisorReferences := make([]types.OpenApiReference, 0)
+	for _, singleSupervisorId := range supervisorIds {
+		supervisor, err := vcdClient.GetSupervisorById(singleSupervisorId)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving Supervisor with ID %s: %s", singleSupervisorId, err)
+		}
 
-	// supervisors
+		superVisorReferences = append(superVisorReferences, types.OpenApiReference{
+			ID:   supervisor.Supervisor.SupervisorID,
+			Name: supervisor.Supervisor.Name,
+		})
+	}
+	t.Supervisors = superVisorReferences
 
 	storagePolicyNames := convertSchemaSetToSliceOfStrings(d.Get("storage_policy_names").(*schema.Set))
 	t.StoragePolicies = storagePolicyNames
@@ -177,8 +186,7 @@ func getRegionType(_ *VCDClient, d *schema.ResourceData) (*types.Region, error) 
 
 func setRegionData(d *schema.ResourceData, r *govcd.Region) error {
 	if r == nil || r.Region == nil {
-		return fmt.Errorf("nil entity")
-
+		return fmt.Errorf("nil Region entity")
 	}
 
 	d.SetId(r.Region.ID)
