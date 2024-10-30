@@ -99,14 +99,14 @@ resource "vcd_nsxt_manager" "test" {
 }
 
 resource "vcd_vcenter" "test" {
-  name                             = "{{.Testname}}"
-  url                              = "{{.VcenterUrl}}"
-  auto_trust_certificate           = true
-  refresh_vcenter_on_read          = true
+  name                     = "{{.Testname}}"
+  url                      = "{{.VcenterUrl}}"
+  auto_trust_certificate   = true
+  refresh_vcenter_on_read  = true
   refresh_policies_on_read = true
-  username                         = "{{.VcenterUsername}}"
-  password                         = "{{.VcenterPassword}}"
-  is_enabled                       = true
+  username                 = "{{.VcenterUsername}}"
+  password                 = "{{.VcenterPassword}}"
+  is_enabled               = true
 }
 
 data "vcd_tm_supervisor" "test" {

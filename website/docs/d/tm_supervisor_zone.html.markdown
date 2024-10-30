@@ -1,32 +1,27 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_nsxt_alb_settings"
-sidebar_current: "docs-vcd-datasource-nsxt-alb-settings"
+page_title: "VMware Cloud Director: vcd_tm_supervisor_zone"
+sidebar_current: "docs-vcd-datasource-tm-supervisor-zone"
 description: |-
-  Provides a data source to read NSX-T ALB General Settings for particular NSX-T Edge Gateway.
+  Provides a data source to read Supervisor Zone.
 ---
 
-# vcd\_nsxt\_alb\_settings
+# vcd\_tm\_supervisor\_zone
 
-Supported in provider *v3.5+* and VCD 10.2+ with NSX-T and ALB.
-
-Provides a data source to read NSX-T ALB General Settings for particular NSX-T Edge Gateway.
+Provides a data source to read Supervisor Zone.
 
 ## Example Usage
 
 ```hcl
-data "vcd_nsxt_edgegateway" "existing" {
-  org  = "my-org"
-  vdc  = "nsxt-vdc"
+data "vcd_tm_supervisor" "one" {
+  name = "my-supervisor-name"
 
-  name = "nsxt-gw"
+  depends_on = [vcd_vcenter.one]
 }
 
-data "vcd_nsxt_alb_settings" "test" {
-  org  = "my-org"
-  vdc  = "nsxt-vdc"
-
-  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+data "vcd_tm_supervisor_zone" "one" {
+  supervisor_id = data.vcd_tm_supervisor.one.id
+  name = "domain-c8"
 }
 ```
 
@@ -34,10 +29,16 @@ data "vcd_nsxt_alb_settings" "test" {
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to which the edge gateway belongs. Optional if defined at provider level.
-* `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level.
-* `edge_gateway_id` - (Required) An ID of NSX-T Edge Gateway. Can be lookup up using
-  [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edgegateway) data source
+* `supervisor_id` - (Required) ID of parent Supervisor
+* `name` - (Required) The name of Supervisor Zone
 
 ## Attribute Reference
 
+* `vcenter_id` - vCenter server ID that contains this Supervisor
+* `region_id` - Region ID that consumes this Supervisor
+* `cpu_capacity_mhz` - The CPU capacity (in MHz) in this zone. Total CPU consumption in this zone
+  cannot cross this limit.
+* `cpu_used_mhz` - Total CPU used (in MHz) in this zone.
+* `memory_capacity_mib` - The memory capacity (in mebibytes) in this zone. Total memory consumption
+  in this zone cannot cross this limit.
+* `memory_used_mib` - Total memory used (in mebibytes) in this zone.

@@ -26,27 +26,32 @@ func resourceVcdTmRegion() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true, // TODO: TM: remove once update works
 				Description: fmt.Sprintf("%s name", labelTmRegion),
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				ForceNew:    true, // TODO: TM: remove once update works
 				Description: fmt.Sprintf("%s description", labelTmRegion),
 			},
 			"is_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
+				ForceNew:    true, // TODO: TM: remove once update works
 				Default:     true,
 				Description: fmt.Sprintf("Defines whether the %s is enabled or not", labelTmRegion),
 			},
 			"nsx_manager_id": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "NSX Manager ID",
 			},
 			"supervisor_ids": {
 				Type:        schema.TypeSet,
 				Required:    true,
+				ForceNew:    true, // TODO: TM: remove once update works
 				Description: fmt.Sprintf("A set of supervisor IDs used in this %s", labelTmRegion),
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -55,6 +60,7 @@ func resourceVcdTmRegion() *schema.Resource {
 			"storage_policy_names": {
 				Type:        schema.TypeSet,
 				Required:    true,
+				ForceNew:    true, // TODO: TM: remove once update works
 				Description: "A set of storage policy names",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,

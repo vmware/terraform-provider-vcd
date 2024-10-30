@@ -199,15 +199,15 @@ func resourceVcdVcenterRead(ctx context.Context, d *schema.ResourceData, meta in
 	}
 
 	shouldRefresh := d.Get("refresh_vcenter_on_read").(bool)
-	shouldRefreshStoragePolicies := d.Get("refresh_policies_on_read").(bool)
+	shouldRefreshPolicies := d.Get("refresh_policies_on_read").(bool)
 	c := crudConfig[*govcd.VCenter, types.VSphereVirtualCenter]{
 		entityLabel: labelVirtualCenter,
 		// getEntityFunc:  vcdClient.GetVCenterById,// TODO: TM: use this function
 		getEntityFunc:  fakeGetById, // TODO: TM: remove this function
 		stateStoreFunc: setTmVcenterData,
 		readHooks: []outerEntityHook[*govcd.VCenter]{
-			refreshVcenter(shouldRefresh),                             // vCenter read can optionally trigger "refresh" operation
-			refreshVcenterStoragePolicy(shouldRefreshStoragePolicies), // vCenter read can optionally trigger "refresh storage policies" operation
+			refreshVcenter(shouldRefresh),               // vCenter read can optionally trigger "refresh" operation
+			refreshVcenterPolicy(shouldRefreshPolicies), // vCenter read can optionally trigger "refresh policies" operation
 		},
 	}
 	return readResource(ctx, d, meta, c)
@@ -260,9 +260,9 @@ func refreshVcenter(execute bool) outerEntityHook[*govcd.VCenter] {
 	}
 }
 
-// refreshVcenterStoragePolicy triggers refresh on vCenter which is useful for reloading some of the
+// refreshVcenterPolicy triggers refresh on vCenter which is useful for reloading some of the
 // vCenter components like Supervisors
-func refreshVcenterStoragePolicy(execute bool) outerEntityHook[*govcd.VCenter] {
+func refreshVcenterPolicy(execute bool) outerEntityHook[*govcd.VCenter] {
 	return func(v *govcd.VCenter) error {
 		if execute {
 			err := v.RefreshStorageProfiles()

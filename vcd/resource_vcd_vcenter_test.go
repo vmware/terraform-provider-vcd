@@ -124,14 +124,14 @@ func TestAccVcdVcenter(t *testing.T) {
 
 const testAccVcdVcenterStep1 = `
 resource "vcd_vcenter" "test" {
-  name                             = "{{.Testname}}"
-  url                              = "{{.VcenterUrl}}"
-  auto_trust_certificate           = true
-  refresh_vcenter_on_read          = true
+  name                     = "{{.Testname}}"
+  url                      = "{{.VcenterUrl}}"
+  auto_trust_certificate   = true
+  refresh_vcenter_on_read  = true
   refresh_policies_on_read = true
-  username                         = "{{.VcenterUsername}}"
-  password                         = "{{.VcenterPassword}}"
-  is_enabled                       = true
+  username                 = "{{.VcenterUsername}}"
+  password                 = "{{.VcenterPassword}}"
+  is_enabled               = true
 }
 `
 
