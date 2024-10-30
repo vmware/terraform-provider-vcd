@@ -24,7 +24,7 @@ func datasourceVcdTmSupervisorZone() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of the Supervisor Zone",
+				Description: fmt.Sprintf("Name of the %s", labelSupervisorZone),
 			},
 			"vcenter_id": {
 				Type:        schema.TypeString,
@@ -101,13 +101,13 @@ func setSupervisorZoneData(d *schema.ResourceData, s *govcd.SupervisorZone) erro
 
 	regionId := ""
 	if s.SupervisorZone.Region != nil {
-		supervisorId = s.SupervisorZone.Region.ID
+		regionId = s.SupervisorZone.Region.ID
 	}
 	dSet(d, "region_id", regionId)
 	dSet(d, "cpu_capacity_mhz", s.SupervisorZone.TotalCPUCapacityMHz)
-	dSet(d, "cpu_reservation_capacity_mhz", s.SupervisorZone.CpuUsedMHz)
+	dSet(d, "cpu_used_mhz", s.SupervisorZone.CpuUsedMHz)
 	dSet(d, "memory_capacity_mib", s.SupervisorZone.TotalMemoryCapacityMiB)
-	dSet(d, "memory_reservation_capacity_mib", s.SupervisorZone.MemoryUsedMiB)
+	dSet(d, "memory_used_mib", s.SupervisorZone.MemoryUsedMiB)
 
 	return nil
 }

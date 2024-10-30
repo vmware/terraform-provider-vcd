@@ -107,16 +107,17 @@ func resourceVcdTmRegionCreate(ctx context.Context, d *schema.ResourceData, meta
 	return createResource(ctx, d, meta, c)
 }
 
-func resourceVcdTmRegionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	vcdClient := meta.(*VCDClient)
-	c := crudConfig[*govcd.Region, types.Region]{
-		entityLabel:      labelTmRegion,
-		getTypeFunc:      getRegionType,
-		getEntityFunc:    vcdClient.GetRegionById,
-		resourceReadFunc: resourceVcdTmRegionRead,
-	}
-	return updateResource(ctx, d, meta, c)
-}
+// TODO: TM: Update is not yet supported
+// func resourceVcdTmRegionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// 	vcdClient := meta.(*VCDClient)
+// 	c := crudConfig[*govcd.Region, types.Region]{
+// 		entityLabel:      labelTmRegion,
+// 		getTypeFunc:      getRegionType,
+// 		getEntityFunc:    vcdClient.GetRegionById,
+// 		resourceReadFunc: resourceVcdTmRegionRead,
+// 	}
+// 	return updateResource(ctx, d, meta, c)
+// }
 
 func resourceVcdTmRegionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
