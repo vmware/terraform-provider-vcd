@@ -30,20 +30,20 @@ resource "vcd_tm_content_library_item" "cli" {
 
 The following arguments are supported:
 
-* `name` - (Required) The name of the Content Library
-* `content_library_id` - (Required) ID of the Content Library that this item belongs to
+* `name` - (Required) The name of the Content Library Item
+* `content_library_id` - (Required) ID of the Content Library that this Content Library Item belongs to
 * `description` - (Optional) The description of the Content Library Item
 
 ## Attribute Reference
 
-* `creation_date` - The ISO-8601 timestamp representing when this item was created
-* `image_identifier` - Virtual Machine Identifier (VMI) of the item. This is a ReadOnly field
-* `is_published` - Whether this item is published
-* `is_subscribed` - Whether this item is subscribed
-* `last_successful_sync` - The ISO-8601 timestamp representing when this item was last synced if subscribed
-* `owner_org_id` - The reference to the organization that the item belongs to
+* `creation_date` - The ISO-8601 timestamp representing when this Content Library Item was created
+* `image_identifier` - Virtual Machine Identifier (VMI) of the Content Library Item. This is a ReadOnly field
+* `is_published` - Whether this Content Library Item is published
+* `is_subscribed` - Whether this Content Library Item is subscribed
+* `last_successful_sync` - The ISO-8601 timestamp representing when this Content Library Item was last synced if subscribed
+* `owner_org_id` - The reference to the organization that the Content Library Item belongs to
 * `status` - Status of this Content Library Item
-* `version` - The version of this item. For a subscribed library, this version is same as in publisher library 
+* `version` - The version of this Content Library Item. For a subscribed library, this version is same as in publisher library 
 
 ## Importing
 
