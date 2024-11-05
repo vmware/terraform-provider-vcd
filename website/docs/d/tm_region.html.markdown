@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_tm_region"
 sidebar_current: "docs-vcd-datasource-tm-region"
 description: |-
-  Provides a data source to read Regions.
+  Provides a data source to read Regions in VMware Cloud Foundation Tenant Manager.
 ---
 
 # vcd\_tm\_region
 
-Provides a data source to read Regions.
+Provides a data source to read Regions in VMware Cloud Foundation Tenant Manager.
 
 ## Example Usage
 

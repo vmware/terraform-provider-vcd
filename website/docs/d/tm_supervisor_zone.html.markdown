@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_tm_supervisor_zone"
 sidebar_current: "docs-vcd-datasource-tm-supervisor-zone"
 description: |-
-  Provides a data source to read Supervisor Zone.
+  Provides a data source to read Supervisor Zones in VMware Cloud Foundation Tenant Manager.
 ---
 
 # vcd\_tm\_supervisor\_zone
 
-Provides a data source to read Supervisor Zone.
+Provides a data source to read Supervisor Zones in VMware Cloud Foundation Tenant Manager.
 
 ## Example Usage
 

@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -17,17 +18,17 @@ func datasourceVcdTmRegion() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Region name",
+				Description: fmt.Sprintf("%s name", labelTmRegion),
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Region description",
+				Description: fmt.Sprintf("%s description", labelTmRegion),
 			},
 			"is_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Defines whether the Region is enabled or not",
+				Description: fmt.Sprintf("Defines whether the %s is enabled or not", labelTmRegion),
 			},
 			"nsx_manager_id": {
 				Type:        schema.TypeString,
@@ -57,12 +58,12 @@ func datasourceVcdTmRegion() *schema.Resource {
 			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Status of the region",
+				Description: fmt.Sprintf("Status of the region", labelTmRegion),
 			},
 			"supervisor_ids": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "A set of supervisor IDs used in this Region",
+				Description: fmt.Sprintf("A set of supervisor IDs used in this Region", labelTmRegion),
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
