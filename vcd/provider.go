@@ -313,6 +313,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_vcenter":                                      resourceVcdVcenter(),                                 // 4.0
 	"vcd_tm_org":                                       resourceVcdTmOrg(),                                   // 4.0
 	"vcd_tm_region":                                    resourceVcdTmRegion(),                                // 4.0
+	"vcd_tm_vdc":                                       resourceTmVdc(),                                      // 4.0
 }
 
 // Provider returns a terraform.ResourceProvider.

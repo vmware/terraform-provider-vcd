@@ -2,10 +2,10 @@ package vcd
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/go-vcloud-director/v3/govcd"
 	"github.com/vmware/go-vcloud-director/v3/types/v56"
 )
 
@@ -97,66 +97,10 @@ var tmVdcDsZoneResourceAllocation = &schema.Resource{
 
 func datasourceVcdTmVdcRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-
-	v, err := vcdClient.GetTmVdcByName(d.Get("name").(string))
-	if err != nil {
-		return diag.Errorf("error getting VDC: %s", err)
+	c := crudConfig[*govcd.TmVdc, types.TmVdc]{
+		entityLabel:    labelTmVdc,
+		getEntityFunc:  vcdClient.GetTmVdcByName,
+		stateStoreFunc: setTmVdcData,
 	}
-
-	err = setTmVdcData(d, v.TmVdc)
-	if err != nil {
-		return diag.Errorf("error storing Org data: %s", err)
-	}
-
-	d.SetId(v.TmVdc.ID)
-
-	return nil
-}
-
-func setTmVdcData(d *schema.ResourceData, vdc *types.TmVdc) error {
-	dSet(d, "name", vdc.Name)
-	dSet(d, "description", vdc.Description)
-	dSet(d, "is_enabled", vdc.IsEnabled)
-	dSet(d, "status", vdc.Status)
-
-	orgId := ""
-	if vdc.Org != nil {
-		orgId = vdc.Org.ID
-	}
-	dSet(d, "org_id", orgId)
-
-	regionId := ""
-	if vdc.Region != nil {
-		regionId = vdc.Region.ID
-	}
-	dSet(d, "region_id", regionId)
-
-	supervisors := extractIdsFromOpenApiReferences(vdc.Supervisors)
-	err := d.Set("supervisor_ids", supervisors)
-	if err != nil {
-		return fmt.Errorf("error storing 'supervisor_ids': %s", err)
-	}
-
-	zoneCompute := make([]interface{}, 1)
-	for _, zone := range vdc.ZoneResourceAllocation {
-		oneZone := make(map[string]interface{})
-
-		oneZone["zone_name"] = zone.Zone.Name
-		oneZone["zone_id"] = zone.Zone.ID
-
-		oneZone["memory_limit_mib"] = zone.ResourceAllocation.MemoryLimitMiB
-		oneZone["memory_reservation_mib"] = zone.ResourceAllocation.MemoryReservationMiB
-		oneZone["cpu_limit_mhz"] = zone.ResourceAllocation.CPULimitMHz
-		oneZone["cpu_reservation_mhz"] = zone.ResourceAllocation.CPUReservationMHz
-
-		zoneCompute = append(zoneCompute, oneZone)
-	}
-
-	autoAllocatedSubnetSet := schema.NewSet(schema.HashResource(tmVdcDsZoneResourceAllocation), zoneCompute)
-	err = d.Set("zone_resource_allocations", autoAllocatedSubnetSet)
-	if err != nil {
-		return fmt.Errorf("error setting 'zone_resource_allocations' after read: %s", err)
-	}
-
-	return nil
+	return readDatasource(ctx, d, meta, c)
 }

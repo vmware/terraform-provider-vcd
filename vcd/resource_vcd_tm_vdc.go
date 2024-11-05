@@ -10,25 +10,6 @@ import (
 	"github.com/vmware/go-vcloud-director/v3/types/v56"
 )
 
-// This is a template of how a "standard" resource can look using generic CRUD functions. It might
-// not cover all scenarios, but is a skeleton for quicker bootstraping of a new entity.
-//
-// "Search and replace the following entries"
-//
-// TmVdc - constant name for entity label (the lower case prefix 'label' prefix is hardcoded)
-// The 'label' prefix is hardcoded in the example so that we have autocompletion working for all labelXXXX. (e.g. TmOrg)
-//
-// TM Vdc - text for entity label (e.g. TM Organization)
-// This will be the entity label (used for logging purposes in generic functions)
-//
-// TmVdc - outer type (e.g. TmOrg)
-// This should be a non existing new type to create in 'govcd' package
-//
-// types.TmVdc - inner type (e.g. types.TmOrg)
-// This should be an already existing inner type in `types` package
-//
-// TmVdc (e.g. VcdTmOrg)
-
 const labelTmVdc = "TM Vdc"
 
 func resourceTmVdc() *schema.Resource {
@@ -45,7 +26,45 @@ func resourceTmVdc() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: fmt.Sprintf(" %s", labelTmVdc),
+				Description: fmt.Sprintf("Name of the %s", labelTmVdc),
+			},
+			"description": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: fmt.Sprintf("Description of the %s", labelTmVdc),
+			},
+			"is_enabled": {
+				Type:        schema.TypeBool,
+				Required:    true,
+				Default:     true,
+				Description: fmt.Sprintf("Defines if the %s is enabled", labelTmVdc),
+			},
+			"org_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Parent Organization ID",
+			},
+			"region_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Parent Region ID",
+			},
+			"supervisor_ids": {
+				Type:        schema.TypeSet,
+				Required:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: fmt.Sprintf("A set of Supervisor IDs that back this %s", labelTmVdc),
+			},
+			"zone_resource_allocations": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        tmVdcDsZoneResourceAllocation,
+				Description: "A set of Supervisor Zones and their resource allocations",
+			},
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: fmt.Sprintf("%s status", labelTmVdc),
 			},
 		},
 	}
@@ -100,18 +119,76 @@ func resourceTmVdcDelete(ctx context.Context, d *schema.ResourceData, meta inter
 
 func resourceTmVdcImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
+	vdc, err := vcdClient.GetTmVdcByName(d.Id())
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving %s: %s", labelTmVdc, err)
+	}
 
-	d.SetId("???")
+	d.SetId(vdc.TmVdc.ID)
 	return []*schema.ResourceData{d}, nil
 }
 
 func getTmVdcType(_ *VCDClient, d *schema.ResourceData) (*types.TmVdc, error) {
-	t := &types.TmVdc{}
+	t := &types.TmVdc{
+		Name:        d.Get("name").(string),
+		Description: d.Get("description").(string),
+		IsEnabled:   d.Get("is_enabled").(bool),
+	}
+
+	supervisorIds := convertSchemaSetToSliceOfStrings(d.Get("supervisor_ids").(*schema.Set))
+	t.Supervisors = convertSliceOfStringsToOpenApiReferenceIds(supervisorIds)
 
 	return t, nil
 }
 
-func setTmVdcData2(d *schema.ResourceData, org *govcd.TmVdc) error {
-	// IMPLEMENT
+func setTmVdcData(d *schema.ResourceData, vdc *govcd.TmVdc) error {
+	if vdc == nil {
+		return fmt.Errorf("provided VDC is nil")
+	}
+
+	dSet(d, "name", vdc.TmVdc.Name)
+	dSet(d, "description", vdc.TmVdc.Description)
+	dSet(d, "is_enabled", vdc.TmVdc.IsEnabled)
+	dSet(d, "status", vdc.TmVdc.Status)
+
+	orgId := ""
+	if vdc.TmVdc.Org != nil {
+		orgId = vdc.TmVdc.Org.ID
+	}
+	dSet(d, "org_id", orgId)
+
+	regionId := ""
+	if vdc.TmVdc.Region != nil {
+		regionId = vdc.TmVdc.Region.ID
+	}
+	dSet(d, "region_id", regionId)
+
+	supervisors := extractIdsFromOpenApiReferences(vdc.TmVdc.Supervisors)
+	err := d.Set("supervisor_ids", supervisors)
+	if err != nil {
+		return fmt.Errorf("error storing 'supervisor_ids': %s", err)
+	}
+
+	zoneCompute := make([]interface{}, 1)
+	for _, zone := range vdc.TmVdc.ZoneResourceAllocation {
+		oneZone := make(map[string]interface{})
+
+		oneZone["zone_name"] = zone.Zone.Name
+		oneZone["zone_id"] = zone.Zone.ID
+
+		oneZone["memory_limit_mib"] = zone.ResourceAllocation.MemoryLimitMiB
+		oneZone["memory_reservation_mib"] = zone.ResourceAllocation.MemoryReservationMiB
+		oneZone["cpu_limit_mhz"] = zone.ResourceAllocation.CPULimitMHz
+		oneZone["cpu_reservation_mhz"] = zone.ResourceAllocation.CPUReservationMHz
+
+		zoneCompute = append(zoneCompute, oneZone)
+	}
+
+	autoAllocatedSubnetSet := schema.NewSet(schema.HashResource(tmVdcDsZoneResourceAllocation), zoneCompute)
+	err = d.Set("zone_resource_allocations", autoAllocatedSubnetSet)
+	if err != nil {
+		return fmt.Errorf("error setting 'zone_resource_allocations' after read: %s", err)
+	}
+
 	return nil
 }
