@@ -58,12 +58,12 @@ func datasourceVcdTmRegion() *schema.Resource {
 			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: fmt.Sprintf("Status of the region", labelTmRegion),
+				Description: fmt.Sprintf("Status of the %s", labelTmRegion),
 			},
 			"supervisor_ids": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: fmt.Sprintf("A set of supervisor IDs used in this Region", labelTmRegion),
+				Description: fmt.Sprintf("A set of supervisor IDs used in this %s", labelTmRegion),
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
