@@ -15,10 +15,10 @@ func datasourceVcdTmContentLibrary() *schema.Resource {
 				Required:    true,
 				Description: "The name of the Content Library",
 			},
-			"storage_policy_ids": {
+			"storage_class_ids": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "A set of Region Storage Policy or VDC Storage Policy IDs used by this Content Library",
+				Description: "A set of storage class IDs used by this Content Library",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},

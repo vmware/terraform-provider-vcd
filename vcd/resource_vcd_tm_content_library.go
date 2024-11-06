@@ -26,11 +26,11 @@ func resourceVcdTmContentLibrary() *schema.Resource {
 				ForceNew:    true, // TODO: TM: Update not supported
 				Description: "The name of the Content Library",
 			},
-			"storage_policy_ids": {
+			"storage_class_ids": {
 				Type:        schema.TypeSet,
 				Required:    true,
 				ForceNew:    true, // TODO: TM: Update not supported
-				Description: "A set of Region Storage Policy IDs or VDC Storage Policy IDs used by this Content Library",
+				Description: "A set of storage class IDs used by this Content Library",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -217,7 +217,7 @@ func getContentLibraryType(d *schema.ResourceData) (*types.ContentLibrary, error
 		Name:           d.Get("name").(string),
 		Description:    d.Get("description").(string),
 		AutoAttach:     d.Get("auto_attach").(bool),
-		StorageClasses: convertSliceOfStringsToOpenApiReferenceIds(convertTypeListToSliceOfStrings(d.Get("storage_policy_ids").(*schema.Set).List())),
+		StorageClasses: convertSliceOfStringsToOpenApiReferenceIds(convertTypeListToSliceOfStrings(d.Get("storage_class_ids").(*schema.Set).List())),
 	}
 	if v, ok := d.GetOk("subscription_config"); ok {
 		subsConfig := v.([]interface{})[0].(map[string]interface{})
@@ -243,11 +243,11 @@ func setTmContentLibraryData(d *schema.ResourceData, cl *types.ContentLibrary) e
 		dSet(d, "owner_org_id", cl.Org.ID)
 	}
 
-	sps := make([]string, len(cl.StorageClasses))
-	for i, sp := range cl.StorageClasses {
-		sps[i] = sp.ID
+	scs := make([]string, len(cl.StorageClasses))
+	for i, sc := range cl.StorageClasses {
+		scs[i] = sc.ID
 	}
-	err := d.Set("storage_policy_ids", sps)
+	err := d.Set("storage_class_ids", scs)
 	if err != nil {
 		return err
 	}
