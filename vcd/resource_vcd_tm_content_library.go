@@ -130,7 +130,7 @@ func resourceVcdTmContentLibraryCreate(ctx context.Context, d *schema.ResourceDa
 		return diag.Errorf("error creating Content Library: %s", err)
 	}
 
-	d.SetId(cl.ContentLibrary.Id)
+	d.SetId(cl.ContentLibrary.ID)
 
 	return resourceVcdTmContentLibraryRead(ctx, d, meta)
 }
@@ -181,7 +181,7 @@ func genericVcdTmContentLibraryRead(_ context.Context, d *schema.ResourceData, m
 		return diag.Errorf("error saving Content Library data into state: %s", err)
 	}
 
-	d.SetId(cl.ContentLibrary.Id)
+	d.SetId(cl.ContentLibrary.ID)
 	return nil
 }
 
@@ -207,17 +207,17 @@ func resourceVcdTmContentLibraryImport(_ context.Context, d *schema.ResourceData
 		return nil, fmt.Errorf("error retrieving Content Library with name '%s': %s", d.Id(), err)
 	}
 
-	d.SetId(rsp.ContentLibrary.Id)
+	d.SetId(rsp.ContentLibrary.ID)
 	dSet(d, "name", rsp.ContentLibrary.Name)
 	return []*schema.ResourceData{d}, nil
 }
 
 func getContentLibraryType(d *schema.ResourceData) (*types.ContentLibrary, error) {
 	t := &types.ContentLibrary{
-		Name:            d.Get("name").(string),
-		Description:     d.Get("description").(string),
-		AutoAttach:      d.Get("auto_attach").(bool),
-		StoragePolicies: convertSliceOfStringsToOpenApiReferenceIds(convertTypeListToSliceOfStrings(d.Get("storage_policy_ids").(*schema.Set).List())),
+		Name:           d.Get("name").(string),
+		Description:    d.Get("description").(string),
+		AutoAttach:     d.Get("auto_attach").(bool),
+		StorageClasses: convertSliceOfStringsToOpenApiReferenceIds(convertTypeListToSliceOfStrings(d.Get("storage_policy_ids").(*schema.Set).List())),
 	}
 	if v, ok := d.GetOk("subscription_config"); ok {
 		subsConfig := v.([]interface{})[0].(map[string]interface{})
@@ -243,8 +243,8 @@ func setTmContentLibraryData(d *schema.ResourceData, cl *types.ContentLibrary) e
 		dSet(d, "owner_org_id", cl.Org.ID)
 	}
 
-	sps := make([]string, len(cl.StoragePolicies))
-	for i, sp := range cl.StoragePolicies {
+	sps := make([]string, len(cl.StorageClasses))
+	for i, sp := range cl.StorageClasses {
 		sps[i] = sp.ID
 	}
 	err := d.Set("storage_policy_ids", sps)
