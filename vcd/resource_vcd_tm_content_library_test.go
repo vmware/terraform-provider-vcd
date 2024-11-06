@@ -17,6 +17,7 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 
 	var params = StringMap{
 		"Name":                t.Name(),
+		"Region":              testConfig.Tm.Region,
 		"RegionStoragePolicy": testConfig.Tm.RegionStoragePolicy,
 		"Tags":                "tm",
 	}
@@ -73,8 +74,13 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 }
 
 const testAccVcdTmContentLibraryStep1 = `
+data "vcd_tm_region" "region" {
+  name = "{{.Region}}"
+}
+
 data "vcd_tm_region_storage_policy" "sp" {
-  name = "{{.RegionStoragePolicy}}"
+  region_id = data.vcd_tm_region.region.id
+  name      = "{{.RegionStoragePolicy}}"
 }
 
 resource "vcd_tm_content_library" "cl" {
