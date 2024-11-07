@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_tm_supervisor"
 sidebar_current: "docs-vcd-datasource-tm-supervisor"
 description: |-
-  Provides a data source to read Supervisors.
+  Provides a data source to read Supervisors in VMware Cloud Foundation Tenant Manager.
 ---
 
 # vcd\_tm\_supervisor
 
-Provides a data source to read Supervisors.
+Provides a data source to read Supervisors in VMware Cloud Foundation Tenant Manager.
 
 ## Example Usage
 

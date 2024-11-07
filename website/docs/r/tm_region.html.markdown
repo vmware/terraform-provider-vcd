@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_tm_region"
 sidebar_current: "docs-vcd-resource-tm-region"
 description: |-
-  Provides a resource to manage Regions.
+  Provides a resource to manage Regions in VMware Cloud Foundation Tenant Manager.
 ---
 
 # vcd\_tm\_region
 
-Provides a resource to manage Regions.
+Provides a resource to manage Regions in VMware Cloud Foundation Tenant Manager.
 
 ~> Only `System Administrator` can create this resource.
 

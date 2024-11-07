@@ -30,12 +30,12 @@ func resourceTmVdc() *schema.Resource {
 			},
 			"description": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: fmt.Sprintf("Description of the %s", labelTmVdc),
 			},
 			"is_enabled": {
 				Type:        schema.TypeBool,
-				Required:    true,
+				Optional:    true,
 				Default:     true,
 				Description: fmt.Sprintf("Defines if the %s is enabled", labelTmVdc),
 			},
@@ -57,8 +57,8 @@ func resourceTmVdc() *schema.Resource {
 			},
 			"zone_resource_allocations": {
 				Type:        schema.TypeSet,
-				Computed:    true,
-				Elem:        tmVdcDsZoneResourceAllocation,
+				Required:    true,
+				Elem:        vdcDsZoneResourceAllocation,
 				Description: "A set of Supervisor Zones and their resource allocations",
 			},
 			"status": {
@@ -68,6 +68,41 @@ func resourceTmVdc() *schema.Resource {
 			},
 		},
 	}
+}
+
+var vdcDsZoneResourceAllocation = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"zone_name": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: "Supervisor Zone Name",
+		},
+		"zone_id": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "Supervisor Zone ID",
+		},
+		"memory_limit_mib": {
+			Type:        schema.TypeInt,
+			Required:    true,
+			Description: "Memory limit in MiB",
+		},
+		"memory_reservation_mib": {
+			Type:        schema.TypeInt,
+			Required:    true,
+			Description: "Memory reservation in MiB",
+		},
+		"cpu_limit_mhz": {
+			Type:        schema.TypeInt,
+			Required:    true,
+			Description: "CPU limit in MHz",
+		},
+		"cpu_reservation_mhz": {
+			Type:        schema.TypeInt,
+			Required:    true,
+			Description: "CPU reservation in MHz",
+		},
+	},
 }
 
 func resourceTmVdcCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -132,11 +167,32 @@ func getTmVdcType(_ *VCDClient, d *schema.ResourceData) (*types.TmVdc, error) {
 	t := &types.TmVdc{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		IsEnabled:   d.Get("is_enabled").(bool),
+		// IsEnabled:   d.Get("is_enabled").(bool),
+		Org:    &types.OpenApiReference{ID: d.Get("org_id").(string)},
+		Region: &types.OpenApiReference{ID: d.Get("region_id").(string)},
 	}
 
 	supervisorIds := convertSchemaSetToSliceOfStrings(d.Get("supervisor_ids").(*schema.Set))
 	t.Supervisors = convertSliceOfStringsToOpenApiReferenceIds(supervisorIds)
+
+	zra := d.Get("zone_resource_allocations").(*schema.Set)
+	r := make([]*types.TmVdcZoneResourceAllocation, zra.Len())
+	for zoneIndex, singleZone := range zra.List() {
+		aaaa := singleZone.(map[string]interface{})
+		asdR := &types.TmVdcZoneResourceAllocation{
+			Zone: &types.OpenApiReference{
+				ID: aaaa["zone_id"].(string),
+			},
+			ResourceAllocation: types.TmVdcResourceAllocation{
+				CPULimitMHz:          aaaa["cpu_limit_mhz"].(int),
+				CPUReservationMHz:    aaaa["cpu_reservation_mhz"].(int),
+				MemoryLimitMiB:       aaaa["memory_limit_mib"].(int),
+				MemoryReservationMiB: aaaa["memory_reservation_mib"].(int),
+			},
+		}
+		r[zoneIndex] = asdR
+	}
+	t.ZoneResourceAllocation = r
 
 	return t, nil
 }
@@ -146,9 +202,10 @@ func setTmVdcData(d *schema.ResourceData, vdc *govcd.TmVdc) error {
 		return fmt.Errorf("provided VDC is nil")
 	}
 
+	d.SetId(vdc.TmVdc.ID)
 	dSet(d, "name", vdc.TmVdc.Name)
 	dSet(d, "description", vdc.TmVdc.Description)
-	dSet(d, "is_enabled", vdc.TmVdc.IsEnabled)
+	// dSet(d, "is_enabled", vdc.TmVdc.IsEnabled) TODO: TM: the field is ineffective and always returns false
 	dSet(d, "status", vdc.TmVdc.Status)
 
 	orgId := ""
@@ -184,7 +241,7 @@ func setTmVdcData(d *schema.ResourceData, vdc *govcd.TmVdc) error {
 		zoneCompute = append(zoneCompute, oneZone)
 	}
 
-	autoAllocatedSubnetSet := schema.NewSet(schema.HashResource(tmVdcDsZoneResourceAllocation), zoneCompute)
+	autoAllocatedSubnetSet := schema.NewSet(schema.HashResource(vdcDsZoneResourceAllocation), zoneCompute)
 	err = d.Set("zone_resource_allocations", autoAllocatedSubnetSet)
 	if err != nil {
 		return fmt.Errorf("error setting 'zone_resource_allocations' after read: %s", err)

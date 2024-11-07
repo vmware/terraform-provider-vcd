@@ -57,7 +57,7 @@ func resourceVcdTmRegion() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"storage_policy_names": {
+			"storage_policy_names": { // TODO: TM: check if the API accepts IDs and if it should use
 				Type:        schema.TypeSet,
 				Required:    true,
 				ForceNew:    true, // TODO: TM: remove once update works
