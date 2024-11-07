@@ -72,6 +72,34 @@ func (c *testCachedFieldValue) testCheckCachedResourceFieldValue(resource, field
 	}
 }
 
+// testCheckCachedResourceFieldValueChanged is the reverse of testCheckCachedResourceFieldValue and
+// it will fail if the values remain the same
+// It is useful for checking if the resource was recreated (id field values should differ)
+func (c *testCachedFieldValue) testCheckCachedResourceFieldValueChanged(resource, field string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resource]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", resource)
+		}
+
+		value, exists := rs.Primary.Attributes[field]
+		if !exists {
+			return fmt.Errorf("field %s in resource %s does not exist", field, resource)
+		}
+
+		if vcdTestVerbose {
+			fmt.Printf("# Comparing field '%s' '%s!=%s' in resource '%s'\n", field, value, c.fieldValue, resource)
+		}
+
+		if value == c.fieldValue {
+			return fmt.Errorf("got '%s - %s' field value %s, expected a different one",
+				resource, field, value)
+		}
+
+		return nil
+	}
+}
+
 // String satisfies stringer interface (supports fmt.Printf...)
 func (c *testCachedFieldValue) String() string {
 	return c.fieldValue
