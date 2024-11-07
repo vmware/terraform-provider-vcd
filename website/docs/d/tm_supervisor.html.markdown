@@ -13,8 +13,13 @@ Provides a data source to read Supervisors in VMware Cloud Foundation Tenant Man
 ## Example Usage
 
 ```hcl
+data "vcd_vcenter" "one" {
+  name = "vcenter-one"
+}
+
 data "vcd_tm_supervisor" "one" {
-  name = "my-supervisor-name"
+  name       = "my-supervisor-name"
+  vcenter_id = data.vcd_vcenter.one.id
 
   depends_on = [vcd_vcenter.one]
 }

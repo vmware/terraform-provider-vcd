@@ -160,7 +160,8 @@ resource "vcd_vcenter" "test" {
 }
 
 data "vcd_tm_supervisor" "test" {
-  name = "{{.VcenterSupervisor}}"
+  name       = "{{.VcenterSupervisor}}"
+  vcenter_id = vcd_vcenter.test.id
 
   depends_on = [vcd_vcenter.test]
 }
