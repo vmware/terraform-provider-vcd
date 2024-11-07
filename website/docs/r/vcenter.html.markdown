@@ -35,11 +35,15 @@ The following arguments are supported:
 * `username` - (Required) A username for authenticating to vCenter server
 * `password` - (Required) A password for authenticating to vCenter server
 * `refresh_vcenter_on_read` - (Optional) An optional flag to trigger refresh operation on the
-  underlying vCenter on every read. This might take some time, but can help to load up new artifacts
-  from vCenter (e.g. Supervisors). Update is a no-op. Default `false`.
+  underlying vCenter (that is visible as a separate task in UI) on every read. This might take some
+  time, but can help to load up new artifacts from vCenter (e.g. Supervisors). Update is a no-op.
+  Default `false`. It may be useful after adding vCenter or if new infrastructure is added to
+  vCenter.
 * `refresh_policies_on_read` - (Optional) An optional flag to trigger policy refresh operation on
-  the underlying vCenter on every read. This might take some time, but can help to load up new
-  artifacts from vCenter (e.g. Storage Policies). Update is a no-op. Default `false`.
+  the underlying vCenter (that is visible as a separate task in UI) on every read. This might take
+  some time, but can help to load up new artifacts from vCenter (e.g. Storage Policies). Update is a
+  no-op. Default `false`. It may be useful after adding vCenter or if new infrastructure is
+  added to vCenter.
 * `url` - (Required) An URL of vCenter server
 * `auto_trust_certificate` - (Required) Defines if the certificate of a given vCenter server should
   automatically be added to trusted certificate store. **Note:** not having the certificate trusted
