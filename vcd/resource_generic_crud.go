@@ -118,6 +118,8 @@ func readResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.Res
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
 			util.Logger.Printf("[DEBUG] entity '%s' with ID '%s' not found. Removing from state", c.entityLabel, d.Id())
+			d.SetId("")
+			return nil
 		}
 		return diag.Errorf("error getting %s: %s", c.entityLabel, err)
 	}

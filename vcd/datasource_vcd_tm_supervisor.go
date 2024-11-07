@@ -20,7 +20,7 @@ func datasourceVcdTmSupervisor() *schema.Resource {
 			},
 			"vcenter_id": {
 				Type:        schema.TypeString,
-				Computed:    true,
+				Required:    true,
 				Description: "Parent vCenter ID",
 			},
 			"region_id": {
@@ -35,7 +35,7 @@ func datasourceVcdTmSupervisor() *schema.Resource {
 func datasourceVcdTmSupervisorRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	s, err := vcdClient.GetSupervisorByName(d.Get("name").(string))
+	s, err := vcdClient.GetSupervisorByNameAndVcenterId(d.Get("name").(string), d.Get("vcenter_id").(string))
 	if err != nil {
 		return diag.Errorf("error getting Supervisor: %s", err)
 	}
