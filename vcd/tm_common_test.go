@@ -7,6 +7,9 @@ import (
 	"testing"
 )
 
+// getVCenterHcl gets a vCenter data source as first returned parameter and its HCL reference as second one,
+// only if a vCenter is already configured in TM. Otherwise, it returns a vCenter resource HCL as first returned parameter
+// and its HCL reference as second one, only if "createVCenter=true" in the testing configuration
 func getVCenterHcl(t *testing.T) (string, string) {
 	vcdClient := createTemporaryVCDConnection(false)
 	vc, err := vcdClient.GetVCenterByUrl(testConfig.Tm.VcenterUrl)
@@ -39,6 +42,9 @@ resource "vcd_vcenter" "vc" {
 `, "vcd_vcenter.vc"
 }
 
+// getNsxManagerHcl gets a NSX Manager data source as first returned parameter and its HCL reference as second one,
+// only if a NSX Manager is already configured in TM. Otherwise, it returns a NSX Manager resource HCL as first returned parameter
+// and its HCL reference as second one, only if "createNsxManager=true" in the testing configuration
 func getNsxManagerHcl(t *testing.T) (string, string) {
 	vcdClient := createTemporaryVCDConnection(false)
 	nsxtManager, err := vcdClient.GetNsxtManagerOpenApiByUrl(testConfig.Tm.NsxtManagerUrl)
@@ -71,6 +77,9 @@ resource "vcd_nsxt_manager" "nsx_manager" {
 `, "vcd_nsxt_manager.nsx_manager"
 }
 
+// getRegionHcl gets a Region data source as first returned parameter and its HCL reference as second one,
+// only if a Region is already configured in TM. Otherwise, it returns a Region resource HCL as first returned parameter
+// and its HCL reference as second one, only if "createRegion=true" in the testing configuration
 func getRegionHcl(t *testing.T, vCenterHclRef, nsxManagerHclRef string) (string, string) {
 	vcdClient := createTemporaryVCDConnection(false)
 	region, err := vcdClient.GetRegionByName(testConfig.Tm.Region)
