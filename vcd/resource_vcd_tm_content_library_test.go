@@ -16,13 +16,13 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 	skipIfNotSysAdmin(t)
 	skipIfNotTm(t)
 
-	vCenterHcl, vCenterName := getVCenterHcl(t)
-	nsxManagerHcl, nsxManagerName := getNsxManagerHcl(t)
-	regionHcl, regionName := getRegionHcl(t, vCenterName, nsxManagerName)
+	vCenterHcl, vCenterHclRef := getVCenterHcl(t)
+	nsxManagerHcl, nsxManagerHclRef := getNsxManagerHcl(t)
+	regionHcl, regionHclRef := getRegionHcl(t, vCenterHclRef, nsxManagerHclRef)
 
 	var params = StringMap{
 		"Name":                t.Name(),
-		"RegionId":            fmt.Sprintf("%s.id", regionName),
+		"RegionId":            fmt.Sprintf("%s.id", regionHclRef),
 		"RegionStoragePolicy": testConfig.Tm.RegionStoragePolicy,
 		"Tags":                "tm",
 	}

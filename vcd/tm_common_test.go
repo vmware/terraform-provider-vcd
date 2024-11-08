@@ -71,7 +71,7 @@ resource "vcd_nsxt_manager" "nsx_manager" {
 `, "vcd_nsxt_manager.nsx_manager"
 }
 
-func getRegionHcl(t *testing.T, vCenterName, nsxManagerName string) (string, string) {
+func getRegionHcl(t *testing.T, vCenterHclRef, nsxManagerHclRef string) (string, string) {
 	vcdClient := createTemporaryVCDConnection(false)
 	region, err := vcdClient.GetRegionByName(testConfig.Tm.Region)
 	if err == nil {
@@ -92,15 +92,15 @@ data "vcd_tm_region" "region" {
 	return `
 data "vcd_tm_supervisor" "supervisor" {
   name       = "` + testConfig.Tm.VcenterSupervisor + `"
-  vcenter_id = ` + vCenterName + `.id
-  depends_on = [` + vCenterName + `]
+  vcenter_id = ` + vCenterHclRef + `.id
+  depends_on = [` + vCenterHclRef + `]
 }
 
 resource "vcd_tm_region" "region" {
   name                 = "` + t.Name() + `"
   description          = "` + t.Name() + `"
   is_enabled           = true
-  nsx_manager_id       = ` + nsxManagerName + `.id
+  nsx_manager_id       = ` + nsxManagerHclRef + `.id
   supervisor_ids       = [data.vcd_tm_supervisor.supervisor.id]
   storage_policy_names = ["` + testConfig.Tm.VcenterStorageProfile + `"]
 }
