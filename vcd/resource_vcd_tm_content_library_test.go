@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
@@ -15,16 +16,23 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 	skipIfNotSysAdmin(t)
 	skipIfNotTm(t)
 
+	vCenterHcl, vCenterHclRef := getVCenterHcl(t)
+	nsxManagerHcl, nsxManagerHclRef := getNsxManagerHcl(t)
+	regionHcl, regionHclRef := getRegionHcl(t, vCenterHclRef, nsxManagerHclRef)
+
 	var params = StringMap{
 		"Name":                t.Name(),
+		"RegionId":            fmt.Sprintf("%s.id", regionHclRef),
 		"RegionStoragePolicy": testConfig.Tm.RegionStoragePolicy,
 		"Tags":                "tm",
 	}
 	testParamsNotEmpty(t, params)
 
-	configText1 := templateFill(testAccVcdTmContentLibraryStep1, params)
+	preRequisites := vCenterHcl + nsxManagerHcl + regionHcl
+
+	configText1 := templateFill(preRequisites+testAccVcdTmContentLibraryStep1, params)
 	params["FuncName"] = t.Name() + "-step2"
-	configText2 := templateFill(testAccVcdTmContentLibraryStep2, params)
+	configText2 := templateFill(preRequisites+testAccVcdTmContentLibraryStep2, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION step1: %s\n", configText1)
 	debugPrintf("#[DEBUG] CONFIGURATION step2: %s\n", configText2)
@@ -43,7 +51,7 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceName, "description", t.Name()),
-					resource.TestCheckResourceAttr(resourceName, "storage_policy_ids.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "storage_class_ids.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "auto_attach", "true"), // TODO: TM: Test with false
 					resource.TestCheckResourceAttrSet(resourceName, "creation_date"),
 					resource.TestCheckResourceAttr(resourceName, "is_shared", "true"),        // TODO: TM: Test with false
@@ -74,13 +82,14 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 
 const testAccVcdTmContentLibraryStep1 = `
 data "vcd_tm_region_storage_policy" "sp" {
-  name = "{{.RegionStoragePolicy}}"
+  region_id = {{.RegionId}}
+  name      = "{{.RegionStoragePolicy}}"
 }
 
 resource "vcd_tm_content_library" "cl" {
   name = "{{.Name}}"
   description = "{{.Name}}"
-  storage_policy_ids = [
+  storage_class_ids = [
     data.vcd_tm_region_storage_policy.sp.id
   ]
 }
