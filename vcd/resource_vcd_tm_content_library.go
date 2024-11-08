@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -245,7 +246,8 @@ func setTmContentLibraryData(d *schema.ResourceData, cl *types.ContentLibrary) e
 
 	scs := make([]string, len(cl.StorageClasses))
 	for i, sc := range cl.StorageClasses {
-		scs[i] = sc.ID
+		// TODO: TM: When vcd_region_storage_policy data source starts using :storageClass: UUID, we can get rid of this
+		scs[i] = strings.ReplaceAll(sc.ID, "storageClass", "regionStoragePolicy")
 	}
 	err := d.Set("storage_class_ids", scs)
 	if err != nil {
