@@ -22,7 +22,7 @@ data "vcd_tm_region_storage_policy" "sp" {
 resource "vcd_tm_content_library" "cl" {
   name        = "My Library"
   description = "A simple library"
-  storage_policy_ids = [
+  storage_class_ids = [
     data.vcd_tm_region_storage_policy.sp.id
   ]
 }
@@ -37,7 +37,7 @@ resource "vcd_tm_content_library" "cl" {
 The following arguments are supported:
 
 * `name` - (Required) The name of the Content Library
-* `storage_policy_ids` - (Required) A set of [Region Storage Policy](/providers/vmware/vcd/latest/docs/resources/tm_region_storage_policy) IDs or VDC Storage Policy IDs used by this Content Library
+* `storage_class_ids` - (Required) A set of [Region Storage Policy](/providers/vmware/vcd/latest/docs/resources/tm_region_storage_policy) IDs or VDC Storage Policy IDs used by this Content Library
 * `auto_attach` - (Optional) Defaults to `true`. For Tenant Content Libraries this field represents whether this Content Library should be
   automatically attached to all current and future namespaces in the tenant organization. If a value of `false` is supplied, then this
   Tenant Content Library will only be attached to namespaces that explicitly request it. For Provider Content Libraries this field is not needed
