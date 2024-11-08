@@ -131,7 +131,7 @@ func resourceVcdNsxtManagerImport(ctx context.Context, d *schema.ResourceData, m
 	return []*schema.ResourceData{d}, nil
 }
 
-func getNsxtManagerType(d *schema.ResourceData) (*types.NsxtManagerOpenApi, error) {
+func getNsxtManagerType(_ *VCDClient, d *schema.ResourceData) (*types.NsxtManagerOpenApi, error) {
 	t := &types.NsxtManagerOpenApi{
 		Name:                 d.Get("name").(string),
 		Description:          d.Get("description").(string),

@@ -18,7 +18,7 @@ type crudConfig[O updateDeleter[O, I], I any] struct {
 	entityLabel string
 
 	// getTypeFunc is responsible for converting schema fields to inner type
-	getTypeFunc func(d *schema.ResourceData) (*I, error)
+	getTypeFunc func(*VCDClient, *schema.ResourceData) (*I, error)
 	// stateStoreFunc is responsible for storing state
 	stateStoreFunc func(d *schema.ResourceData, outerType O) error
 
@@ -63,12 +63,13 @@ type schemaHook func(*VCDClient, *schema.ResourceData) error
 type outerEntityHookInnerEntityType[O, I any] func(*schema.ResourceData, O, I) error
 
 func createResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema.ResourceData, meta interface{}, c crudConfig[O, I]) diag.Diagnostics {
-	t, err := c.getTypeFunc(d)
+	vcdClient := meta.(*VCDClient)
+
+	t, err := c.getTypeFunc(vcdClient, d)
 	if err != nil {
 		return diag.Errorf("error getting %s type on create: %s", c.entityLabel, err)
 	}
 
-	vcdClient := meta.(*VCDClient)
 	err = execSchemaHook(vcdClient, d, c.preCreateHooks)
 	if err != nil {
 		return diag.Errorf("error executing pre-create %s hooks: %s", c.entityLabel, err)
@@ -88,7 +89,8 @@ func createResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema
 }
 
 func updateResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema.ResourceData, meta interface{}, c crudConfig[O, I]) diag.Diagnostics {
-	t, err := c.getTypeFunc(d)
+	vcdClient := meta.(*VCDClient)
+	t, err := c.getTypeFunc(vcdClient, d)
 	if err != nil {
 		return diag.Errorf("error getting %s type on update: %s", c.entityLabel, err)
 	}
@@ -116,6 +118,8 @@ func readResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.Res
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
 			util.Logger.Printf("[DEBUG] entity '%s' with ID '%s' not found. Removing from state", c.entityLabel, d.Id())
+			d.SetId("")
+			return nil
 		}
 		return diag.Errorf("error getting %s: %s", c.entityLabel, err)
 	}

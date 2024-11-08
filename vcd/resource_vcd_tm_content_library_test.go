@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
@@ -15,17 +16,23 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 	skipIfNotSysAdmin(t)
 	skipIfNotTm(t)
 
+	vCenterHcl, vCenterName := getVCenterHcl(t)
+	nsxManagerHcl, nsxManagerName := getNsxManagerHcl(t)
+	regionHcl, regionName := getRegionHcl(t, vCenterName, nsxManagerName)
+
 	var params = StringMap{
 		"Name":                t.Name(),
-		"Region":              testConfig.Tm.Region,
+		"RegionId":            fmt.Sprintf("%s.id", regionName),
 		"RegionStoragePolicy": testConfig.Tm.RegionStoragePolicy,
 		"Tags":                "tm",
 	}
 	testParamsNotEmpty(t, params)
 
-	configText1 := templateFill(testAccVcdTmContentLibraryStep1, params)
+	preRequisites := vCenterHcl + nsxManagerHcl + regionHcl
+
+	configText1 := templateFill(preRequisites+testAccVcdTmContentLibraryStep1, params)
 	params["FuncName"] = t.Name() + "-step2"
-	configText2 := templateFill(testAccVcdTmContentLibraryStep2, params)
+	configText2 := templateFill(preRequisites+testAccVcdTmContentLibraryStep2, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION step1: %s\n", configText1)
 	debugPrintf("#[DEBUG] CONFIGURATION step2: %s\n", configText2)
@@ -74,12 +81,8 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 }
 
 const testAccVcdTmContentLibraryStep1 = `
-data "vcd_tm_region" "region" {
-  name = "{{.Region}}"
-}
-
 data "vcd_tm_region_storage_policy" "sp" {
-  region_id = data.vcd_tm_region.region.id
+  region_id = {{.RegionId}}
   name      = "{{.RegionStoragePolicy}}"
 }
 

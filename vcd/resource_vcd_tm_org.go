@@ -202,7 +202,7 @@ func resourceVcdTmOrgImport(ctx context.Context, d *schema.ResourceData, meta in
 	return []*schema.ResourceData{d}, nil
 }
 
-func getTmOrgType(d *schema.ResourceData) (*types.TmOrg, error) {
+func getTmOrgType(_ *VCDClient, d *schema.ResourceData) (*types.TmOrg, error) {
 	t := &types.TmOrg{
 		Name:          d.Get("name").(string),
 		DisplayName:   d.Get("display_name").(string),
