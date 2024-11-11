@@ -108,7 +108,8 @@ type TestConfig struct {
 		MaxRetryTimeout          int    `json:"maxRetryTimeout"`
 	} `json:"provider"`
 	Tm struct {
-		Org                 string `json:"org"`                 // temporary field to make skipIfNotTm work
+		Org                 string `json:"org"` // temporary field to make skipIfNotTm work
+		CreateRegion        bool   `json:"createRegion"`
 		Region              string `json:"region"`              //
 		RegionStoragePolicy string `json:"regionStoragePolicy"` //
 		Vdc                 string `json:"vdc"`                 //
