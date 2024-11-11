@@ -58,7 +58,7 @@ func resourceTmVdc() *schema.Resource {
 			"zone_resource_allocations": {
 				Type:        schema.TypeSet,
 				Required:    true,
-				Elem:        vdcDsZoneResourceAllocation,
+				Elem:        tmVdcZoneResourceAllocation,
 				Description: "A set of Supervisor Zones and their resource allocations",
 			},
 			"status": {
@@ -70,7 +70,7 @@ func resourceTmVdc() *schema.Resource {
 	}
 }
 
-var vdcDsZoneResourceAllocation = &schema.Resource{
+var tmVdcZoneResourceAllocation = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"zone_name": {
 			Type:        schema.TypeString,
@@ -178,19 +178,19 @@ func getTmVdcType(_ *VCDClient, d *schema.ResourceData) (*types.TmVdc, error) {
 	zra := d.Get("zone_resource_allocations").(*schema.Set)
 	r := make([]*types.TmVdcZoneResourceAllocation, zra.Len())
 	for zoneIndex, singleZone := range zra.List() {
-		aaaa := singleZone.(map[string]interface{})
-		asdR := &types.TmVdcZoneResourceAllocation{
+		singleZoneMap := singleZone.(map[string]interface{})
+		singleZoneType := &types.TmVdcZoneResourceAllocation{
 			Zone: &types.OpenApiReference{
-				ID: aaaa["zone_id"].(string),
+				ID: singleZoneMap["zone_id"].(string),
 			},
 			ResourceAllocation: types.TmVdcResourceAllocation{
-				CPULimitMHz:          aaaa["cpu_limit_mhz"].(int),
-				CPUReservationMHz:    aaaa["cpu_reservation_mhz"].(int),
-				MemoryLimitMiB:       aaaa["memory_limit_mib"].(int),
-				MemoryReservationMiB: aaaa["memory_reservation_mib"].(int),
+				CPULimitMHz:          singleZoneMap["cpu_limit_mhz"].(int),
+				CPUReservationMHz:    singleZoneMap["cpu_reservation_mhz"].(int),
+				MemoryLimitMiB:       singleZoneMap["memory_limit_mib"].(int),
+				MemoryReservationMiB: singleZoneMap["memory_reservation_mib"].(int),
 			},
 		}
-		r[zoneIndex] = asdR
+		r[zoneIndex] = singleZoneType
 	}
 	t.ZoneResourceAllocation = r
 
@@ -226,8 +226,8 @@ func setTmVdcData(d *schema.ResourceData, vdc *govcd.TmVdc) error {
 		return fmt.Errorf("error storing 'supervisor_ids': %s", err)
 	}
 
-	zoneCompute := make([]interface{}, 1)
-	for _, zone := range vdc.TmVdc.ZoneResourceAllocation {
+	zoneCompute := make([]interface{}, len(vdc.TmVdc.ZoneResourceAllocation))
+	for zoneIndex, zone := range vdc.TmVdc.ZoneResourceAllocation {
 		oneZone := make(map[string]interface{})
 
 		oneZone["zone_name"] = zone.Zone.Name
@@ -238,10 +238,10 @@ func setTmVdcData(d *schema.ResourceData, vdc *govcd.TmVdc) error {
 		oneZone["cpu_limit_mhz"] = zone.ResourceAllocation.CPULimitMHz
 		oneZone["cpu_reservation_mhz"] = zone.ResourceAllocation.CPUReservationMHz
 
-		zoneCompute = append(zoneCompute, oneZone)
+		zoneCompute[zoneIndex] = oneZone
 	}
 
-	autoAllocatedSubnetSet := schema.NewSet(schema.HashResource(vdcDsZoneResourceAllocation), zoneCompute)
+	autoAllocatedSubnetSet := schema.NewSet(schema.HashResource(tmVdcZoneResourceAllocation), zoneCompute)
 	err = d.Set("zone_resource_allocations", autoAllocatedSubnetSet)
 	if err != nil {
 		return fmt.Errorf("error setting 'zone_resource_allocations' after read: %s", err)
