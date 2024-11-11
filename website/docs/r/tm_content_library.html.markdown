@@ -37,6 +37,8 @@ resource "vcd_tm_content_library" "cl" {
 The following arguments are supported:
 
 * `name` - (Required) The name of the Content Library
+
+// TODO: TM: Check whether this finally changes to Region Storage Class:
 * `storage_class_ids` - (Required) A set of [Storage Class IDs](/providers/vmware/vcd/latest/docs/data-sources/tm_region_storage_policy) used by this Content Library
 * `auto_attach` - (Optional) Defaults to `true`. For Tenant Content Libraries this field represents whether this Content Library should be
   automatically attached to all current and future namespaces in the tenant organization. If a value of `false` is supplied, then this

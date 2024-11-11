@@ -8,6 +8,8 @@ description: |-
 
 # vcd\_tm\_region\_storage\_policy
 
+// TODO: TM: Check whether this finally changes to Region Storage Class
+
 Provides a VMware Cloud Foundation Tenant Manager Region Storage Policy data source. This can be used to read Region Storage Policies.
 
 This data source is exclusive to **VMware Cloud Foundation Tenant Manager**. Supported in provider *v4.0+*
