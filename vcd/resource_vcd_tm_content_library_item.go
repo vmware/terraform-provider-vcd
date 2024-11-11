@@ -92,11 +92,15 @@ func resourceVcdTmContentLibraryItemCreate(ctx context.Context, d *schema.Resour
 		return diag.Errorf("could not retrieve Content Library with ID '%s': %s", clId, err)
 	}
 
+	filePath := d.Get("file_path").(string)
+
 	c := crudConfig[*govcd.ContentLibraryItem, types.ContentLibraryItem]{
-		entityLabel:      labelTmContentLibraryItem,
-		getTypeFunc:      getContentLibraryItemType,
-		stateStoreFunc:   setContentLibraryItemData,
-		createFunc:       cl.CreateContentLibraryItem,
+		entityLabel:    labelTmContentLibraryItem,
+		getTypeFunc:    getContentLibraryItemType,
+		stateStoreFunc: setContentLibraryItemData,
+		createFunc: func(config *types.ContentLibraryItem) (*govcd.ContentLibraryItem, error) {
+			return cl.CreateContentLibraryItem(config, filePath)
+		},
 		resourceReadFunc: resourceVcdTmContentLibraryItemRead,
 	}
 	return createResource(ctx, d, meta, c)
@@ -173,12 +177,12 @@ func resourceVcdTmContentLibraryItemImport(ctx context.Context, d *schema.Resour
 		return nil, fmt.Errorf("error getting Content Library Item with name '%s': %s", id[1], err)
 	}
 
-	d.SetId(cli.ContentLibraryItem.Id)
-	dSet(d, "content_library_id", cl.ContentLibrary.Id)
+	d.SetId(cli.ContentLibraryItem.ID)
+	dSet(d, "content_library_id", cl.ContentLibrary.ID)
 	return []*schema.ResourceData{d}, nil
 }
 
-func getContentLibraryItemType(d *schema.ResourceData) (*types.ContentLibraryItem, error) {
+func getContentLibraryItemType(vcdClient *VCDClient, d *schema.ResourceData) (*types.ContentLibraryItem, error) {
 	t := &types.ContentLibraryItem{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
@@ -192,7 +196,7 @@ func setContentLibraryItemData(d *schema.ResourceData, cli *govcd.ContentLibrary
 		return fmt.Errorf("cannot save state for nil Content Library Item")
 	}
 
-	d.SetId(cli.ContentLibraryItem.Id)
+	d.SetId(cli.ContentLibraryItem.ID)
 	dSet(d, "name", cli.ContentLibraryItem.Name)
 
 	return nil

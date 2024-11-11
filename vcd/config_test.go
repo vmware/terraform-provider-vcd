@@ -108,7 +108,8 @@ type TestConfig struct {
 		MaxRetryTimeout          int    `json:"maxRetryTimeout"`
 	} `json:"provider"`
 	Tm struct {
-		Org                 string `json:"org"`                 // temporary field to make skipIfNotTm work
+		Org                 string `json:"org"` // temporary field to make skipIfNotTm work
+		CreateRegion        bool   `json:"createRegion"`
 		Region              string `json:"region"`              //
 		RegionStoragePolicy string `json:"regionStoragePolicy"` //
 		Vdc                 string `json:"vdc"`                 //
@@ -118,10 +119,13 @@ type TestConfig struct {
 		NsxtManagerPassword string `json:"nsxtManagerPassword"`
 		NsxtManagerUrl      string `json:"nsxtManagerUrl"`
 
-		CreateVcenter   bool   `json:"createVcenter"`
-		VcenterUsername string `json:"vcenterUsername"`
-		VcenterPassword string `json:"vcenterPassword"`
-		VcenterUrl      string `json:"vcenterUrl"`
+		CreateVcenter         bool   `json:"createVcenter"`
+		VcenterUsername       string `json:"vcenterUsername"`
+		VcenterPassword       string `json:"vcenterPassword"`
+		VcenterUrl            string `json:"vcenterUrl"`
+		VcenterStorageProfile string `json:"vcenterStorageProfile"`
+		VcenterSupervisor     string `json:"vcenterSupervisor"`
+		VcenterSupervisorZone string `json:"vcenterSupervisorZone"`
 	} `json:"tm,omitempty"`
 	VCD struct {
 		Org         string `json:"org"`

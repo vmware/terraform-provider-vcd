@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -26,11 +27,11 @@ func resourceVcdTmContentLibrary() *schema.Resource {
 				ForceNew:    true, // TODO: TM: Update not supported
 				Description: "The name of the Content Library",
 			},
-			"storage_policy_ids": {
+			"storage_class_ids": {
 				Type:        schema.TypeSet,
 				Required:    true,
 				ForceNew:    true, // TODO: TM: Update not supported
-				Description: "A set of Region Storage Policy IDs or VDC Storage Policy IDs used by this Content Library",
+				Description: "A set of storage class IDs used by this Content Library",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -130,7 +131,7 @@ func resourceVcdTmContentLibraryCreate(ctx context.Context, d *schema.ResourceDa
 		return diag.Errorf("error creating Content Library: %s", err)
 	}
 
-	d.SetId(cl.ContentLibrary.Id)
+	d.SetId(cl.ContentLibrary.ID)
 
 	return resourceVcdTmContentLibraryRead(ctx, d, meta)
 }
@@ -181,7 +182,7 @@ func genericVcdTmContentLibraryRead(_ context.Context, d *schema.ResourceData, m
 		return diag.Errorf("error saving Content Library data into state: %s", err)
 	}
 
-	d.SetId(cl.ContentLibrary.Id)
+	d.SetId(cl.ContentLibrary.ID)
 	return nil
 }
 
@@ -207,17 +208,17 @@ func resourceVcdTmContentLibraryImport(_ context.Context, d *schema.ResourceData
 		return nil, fmt.Errorf("error retrieving Content Library with name '%s': %s", d.Id(), err)
 	}
 
-	d.SetId(rsp.ContentLibrary.Id)
+	d.SetId(rsp.ContentLibrary.ID)
 	dSet(d, "name", rsp.ContentLibrary.Name)
 	return []*schema.ResourceData{d}, nil
 }
 
 func getContentLibraryType(d *schema.ResourceData) (*types.ContentLibrary, error) {
 	t := &types.ContentLibrary{
-		Name:            d.Get("name").(string),
-		Description:     d.Get("description").(string),
-		AutoAttach:      d.Get("auto_attach").(bool),
-		StoragePolicies: convertSliceOfStringsToOpenApiReferenceIds(convertTypeListToSliceOfStrings(d.Get("storage_policy_ids").(*schema.Set).List())),
+		Name:           d.Get("name").(string),
+		Description:    d.Get("description").(string),
+		AutoAttach:     d.Get("auto_attach").(bool),
+		StorageClasses: convertSliceOfStringsToOpenApiReferenceIds(convertTypeListToSliceOfStrings(d.Get("storage_class_ids").(*schema.Set).List())),
 	}
 	if v, ok := d.GetOk("subscription_config"); ok {
 		subsConfig := v.([]interface{})[0].(map[string]interface{})
@@ -243,11 +244,12 @@ func setTmContentLibraryData(d *schema.ResourceData, cl *types.ContentLibrary) e
 		dSet(d, "owner_org_id", cl.Org.ID)
 	}
 
-	sps := make([]string, len(cl.StoragePolicies))
-	for i, sp := range cl.StoragePolicies {
-		sps[i] = sp.ID
+	scs := make([]string, len(cl.StorageClasses))
+	for i, sc := range cl.StorageClasses {
+		// TODO: TM: When vcd_region_storage_policy data source starts using :storageClass: UUID, we can get rid of this
+		scs[i] = strings.ReplaceAll(sc.ID, "storageClass", "regionStoragePolicy")
 	}
-	err := d.Set("storage_policy_ids", sps)
+	err := d.Set("storage_class_ids", scs)
 	if err != nil {
 		return err
 	}

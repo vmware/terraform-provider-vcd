@@ -103,5 +103,5 @@ func setTmContentLibraryItemData(d *schema.ResourceData, cli *types.ContentLibra
 	}
 	dSet(d, "status", cli.Status)
 	dSet(d, "version", cli.Version)
-	d.SetId(cli.Id)
+	d.SetId(cli.ID)
 }

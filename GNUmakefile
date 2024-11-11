@@ -140,6 +140,9 @@ testextnetwork: fmtcheck
 testtm: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' tm"
 
+testtm-binary-prepare: install
+	cd vcd && go test -tags tm -vcd-add-provider -vcd-short -v .
+
 # vets all .go files
 vet:
 	@echo "go vet ."
