@@ -3,8 +3,9 @@
 package vcd
 
 import (
-	"github.com/vmware/go-vcloud-director/v3/govcd"
 	"testing"
+
+	"github.com/vmware/go-vcloud-director/v3/govcd"
 )
 
 // getVCenterHcl gets a vCenter data source as first returned parameter and its HCL reference as second one,

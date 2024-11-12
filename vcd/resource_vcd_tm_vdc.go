@@ -167,7 +167,7 @@ func getTmVdcType(_ *VCDClient, d *schema.ResourceData) (*types.TmVdc, error) {
 	t := &types.TmVdc{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		// IsEnabled:   d.Get("is_enabled").(bool),
+		// IsEnabled:   d.Get("is_enabled").(bool), // TODO: TM: is_enabled is always returned as false
 		Org:    &types.OpenApiReference{ID: d.Get("org_id").(string)},
 		Region: &types.OpenApiReference{ID: d.Get("region_id").(string)},
 	}
