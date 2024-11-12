@@ -10,7 +10,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v3/types/v56"
 )
 
-const labelTmVdc = "TM Vdc"
+const labelTmVdc = "TM Org Vdc"
 
 func resourceTmVdc() *schema.Resource {
 	return &schema.Resource{
@@ -75,12 +75,12 @@ var tmVdcZoneResourceAllocation = &schema.Resource{
 		"zone_name": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Supervisor Zone Name",
+			Description: "Region Zone Name",
 		},
 		"zone_id": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "Supervisor Zone ID",
+			Description: "Region Zone ID",
 		},
 		"memory_limit_mib": {
 			Type:        schema.TypeInt,

@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -17,17 +18,17 @@ func datasourceVcdTmVdc() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of the VDC",
+				Description: fmt.Sprintf("Name of the %s", labelTmVdc),
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Description of the VDC",
+				Description: fmt.Sprintf("Description of the %s", labelTmVdc),
 			},
 			"is_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Defines if the VDC is enabled",
+				Description: fmt.Sprintf("Defines if the %s is enabled", labelTmVdc),
 			},
 			"org_id": {
 				Type:        schema.TypeString,
@@ -43,7 +44,7 @@ func datasourceVcdTmVdc() *schema.Resource {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "A set of Supervisor IDs that back this VDC",
+				Description: fmt.Sprintf("A set of Supervisor IDs that back this %s", labelTmVdc),
 			},
 			"zone_resource_allocations": {
 				Type:        schema.TypeSet,
@@ -54,7 +55,7 @@ func datasourceVcdTmVdc() *schema.Resource {
 			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "VDC status",
+				Description: fmt.Sprintf("%s status", labelTmVdc),
 			},
 		},
 	}
@@ -65,12 +66,12 @@ var tmVdcDsZoneResourceAllocation = &schema.Resource{
 		"zone_name": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Supervisor Zone Name",
+			Description: "Region Zone Name",
 		},
 		"zone_id": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Supervisor Zone ID",
+			Description: "Region Zone ID",
 		},
 		"memory_limit_mib": {
 			Type:        schema.TypeInt,
