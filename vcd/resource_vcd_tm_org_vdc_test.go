@@ -51,7 +51,7 @@ func TestAccVcdTmOrgVdc(t *testing.T) {
 			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet("vcd_tm_vdc.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_tm_org_vdc.test", "id"),
 				// resource.TestCheckResourceAttr("vcd_tm_org.test", "display_name", "terraform-test"),
 				// resource.TestCheckResourceAttr("vcd_tm_org.test", "description", "terraform test"),
 				// resource.TestCheckResourceAttr("vcd_tm_org.test", "is_enabled", "true"),
@@ -63,7 +63,7 @@ func TestAccVcdTmOrgVdc(t *testing.T) {
 			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet("vcd_tm_vdc.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_tm_org_vdc.test", "id"),
 				// resource.TestCheckResourceAttr("vcd_tm_org.test", "display_name", "terraform-test"),
 				// resource.TestCheckResourceAttr("vcd_tm_org.test", "description", "terraform test"),
 				// resource.TestCheckResourceAttr("vcd_tm_org.test", "is_enabled", "true"),
@@ -75,13 +75,13 @@ func TestAccVcdTmOrgVdc(t *testing.T) {
 			{
 				Config: configText3,
 				Check: resource.ComposeTestCheckFunc(
-					resourceFieldsEqual("vcd_tm_vdc.test", "data.vcd_tm_vdc.test", []string{
+					resourceFieldsEqual("vcd_tm_org_vdc.test", "data.vcd_tm_org_vdc.test", []string{
 						"is_enabled", // TODO: TM: is_enabled is always returned as false
 					}),
 				),
 			},
 			{
-				ResourceName:      "vcd_tm_vdc.test",
+				ResourceName:      "vcd_tm_org_vdc.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateId:     params["Testname"].(string) + "-updated",
@@ -107,7 +107,7 @@ data "vcd_tm_region_zone" "test" {
   name      = "{{.SupervisorZoneName}}"
 }
 
-resource "vcd_tm_vdc" "test" {
+resource "vcd_tm_org_vdc" "test" {
   name           = "{{.Testname}}"
   org_id         = vcd_tm_org.test.id
   region_id      = {{.RegionId}}
@@ -141,7 +141,7 @@ data "vcd_tm_region_zone" "test" {
   name      = "{{.SupervisorZoneName}}"
 }
 
-resource "vcd_tm_vdc" "test" {
+resource "vcd_tm_org_vdc" "test" {
   name           = "{{.Testname}}-updated"
   org_id         = vcd_tm_org.test.id
   region_id      = {{.RegionId}}
@@ -164,7 +164,7 @@ resource "vcd_tm_org" "test" {
 `
 
 const testAccVcdTmOrgVdcStep3DS = testAccVcdTmOrgVdcStep2 + `
-data "vcd_tm_vdc" "test" {
-  name = vcd_tm_vdc.test.name
+data "vcd_tm_org_vdc" "test" {
+  name = vcd_tm_org_vdc.test.name
 }
 `

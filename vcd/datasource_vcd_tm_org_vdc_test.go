@@ -35,14 +35,14 @@ func TestAccVcdTmVdcDs(t *testing.T) {
 			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.vcd_tm_vdc.test", "name", params["Vdc"].(string)),
-					resource.TestCheckResourceAttr("data.vcd_tm_vdc.test", "description", ""),
-					resource.TestCheckResourceAttrSet("data.vcd_tm_vdc.test", "is_enabled"),
-					resource.TestCheckResourceAttrSet("data.vcd_tm_vdc.test", "org_id"),
-					resource.TestCheckResourceAttrSet("data.vcd_tm_vdc.test", "region_id"),
-					resource.TestCheckResourceAttrSet("data.vcd_tm_vdc.test", "status"),
-					resource.TestCheckResourceAttrSet("data.vcd_tm_vdc.test", "supervisor_ids.#"),
-					resource.TestCheckResourceAttrSet("data.vcd_tm_vdc.test", "zone_resource_allocations.#"),
+					resource.TestCheckResourceAttr("data.vcd_tm_org_vdc.test", "name", params["Vdc"].(string)),
+					resource.TestCheckResourceAttr("data.vcd_tm_org_vdc.test", "description", ""),
+					resource.TestCheckResourceAttrSet("data.vcd_tm_org_vdc.test", "is_enabled"),
+					resource.TestCheckResourceAttrSet("data.vcd_tm_org_vdc.test", "org_id"),
+					resource.TestCheckResourceAttrSet("data.vcd_tm_org_vdc.test", "region_id"),
+					resource.TestCheckResourceAttrSet("data.vcd_tm_org_vdc.test", "status"),
+					resource.TestCheckResourceAttrSet("data.vcd_tm_org_vdc.test", "supervisor_ids.#"),
+					resource.TestCheckResourceAttrSet("data.vcd_tm_org_vdc.test", "zone_resource_allocations.#"),
 				),
 			},
 		},
@@ -52,7 +52,7 @@ func TestAccVcdTmVdcDs(t *testing.T) {
 }
 
 const TestAccVcdTmVdcDsStep1 = `
-data "vcd_tm_vdc" "test" {
+data "vcd_tm_org_vdc" "test" {
   name = "{{.Vdc}}"
 }
 `
