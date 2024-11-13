@@ -34,6 +34,11 @@ func resourceVcdTmContentLibraryItem() *schema.Resource {
 				Required:    true,
 				Description: fmt.Sprintf("ID of the Content Library that this %s belongs to", labelTmContentLibraryItem),
 			},
+			"file_path": {
+				Type:        schema.TypeString,
+				Optional:    true, // Not needed when Importing
+				Description: fmt.Sprintf("Path to the OVA/ISO to create the %s", labelTmContentLibraryItem),
+			},
 			"creation_date": {
 				Type:        schema.TypeString,
 				Computed:    true,

@@ -23,6 +23,7 @@ resource "vcd_tm_content_library_item" "cli" {
   name               = "My OVA"
   description        = "My uploaded OVA"
   content_library_id = data.vcd_tm_content_library.cl.id
+  file_path          = "./photon.ova"
 }
 ```
 
@@ -32,6 +33,7 @@ The following arguments are supported:
 
 * `name` - (Required) The name of the Content Library Item
 * `content_library_id` - (Required) ID of the Content Library that this Content Library Item belongs to
+* `file_path` - (Required) Path to the OVA/ISO to create the Content Library Item
 * `description` - (Optional) The description of the Content Library Item
 
 ## Attribute Reference
