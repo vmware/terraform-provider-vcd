@@ -98,7 +98,7 @@ var tmVdcDsZoneResourceAllocation = &schema.Resource{
 
 func datasourceVcdTmVdcRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	c := crudConfig[*govcd.TmVdc, types.TmVdc]{
+	c := dsCrudConfig[*govcd.TmVdc, types.TmVdc]{
 		entityLabel:    labelTmVdc,
 		getEntityFunc:  vcdClient.GetTmVdcByName,
 		stateStoreFunc: setTmVdcData,

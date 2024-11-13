@@ -82,7 +82,7 @@ func datasourceVcdTmRegion() *schema.Resource {
 
 func datasourceVcdTmRegionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	c := crudConfig[*govcd.Region, types.Region]{
+	c := dsCrudConfig[*govcd.Region, types.Region]{
 		entityLabel:    labelTmRegion,
 		getEntityFunc:  vcdClient.GetRegionByName,
 		stateStoreFunc: setRegionData,

@@ -58,7 +58,7 @@ func datasourceVcdNsxtManager() *schema.Resource {
 
 func datasourceVcdNsxtManagerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	c := crudConfig[*govcd.NsxtManagerOpenApi, types.NsxtManagerOpenApi]{
+	c := dsCrudConfig[*govcd.NsxtManagerOpenApi, types.NsxtManagerOpenApi]{
 		entityLabel:    labelNsxtManager,
 		getEntityFunc:  vcdClient.GetNsxtManagerOpenApiByName,
 		stateStoreFunc: setNsxtManagerData,

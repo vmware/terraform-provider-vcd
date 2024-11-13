@@ -83,7 +83,7 @@ func datasourceVcdVcenter() *schema.Resource {
 
 func datasourceVcdVcenterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	c := crudConfig[*govcd.VCenter, types.VSphereVirtualCenter]{
+	c := dsCrudConfig[*govcd.VCenter, types.VSphereVirtualCenter]{
 		entityLabel:    labelVirtualCenter,
 		getEntityFunc:  vcdClient.GetVCenterByName,
 		stateStoreFunc: setTmVcenterData,

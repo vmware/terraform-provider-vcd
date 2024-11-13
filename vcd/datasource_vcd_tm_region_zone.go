@@ -45,7 +45,7 @@ func resourceVcdTmRegionZoneRead(ctx context.Context, d *schema.ResourceData, me
 		}
 	}()
 
-	c := crudConfig[*govcd.Zone, types.Zone]{
+	c := dsCrudConfig[*govcd.Zone, types.Zone]{
 		entityLabel:    labelTmRegionZone,
 		getEntityFunc:  getZone,
 		stateStoreFunc: setZoneData,
