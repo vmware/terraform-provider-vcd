@@ -27,6 +27,36 @@ func datasourceVcdTmRegionZone() *schema.Resource {
 				Required:    true,
 				Description: fmt.Sprintf("Name of %s", labelTmRegionZone),
 			},
+			"memory_limit_mib": {
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Memory limit in MiB",
+			},
+			"memory_reservation_used_mib": {
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Memory reservation in MiB",
+			},
+			"memory_reservation_mib": {
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "Memory reservation in MiB",
+			},
+			"cpu_limit_mhz": {
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "CPU limit in MHz",
+			},
+			"cpu_reservation_mhz": {
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "CPU reservation in MHz",
+			},
+			"cpu_reservation_used_mhz": {
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "CPU reservation in MHz",
+			},
 		},
 	}
 }
@@ -55,9 +85,10 @@ func resourceVcdTmRegionZoneRead(ctx context.Context, d *schema.ResourceData, me
 
 func setZoneData(d *schema.ResourceData, z *govcd.Zone) error {
 	if z == nil {
-		return fmt.Errorf("nil Zone ")
+		return fmt.Errorf("nil Zone")
 	}
 	d.SetId(z.Zone.ID)
+
 	// IMPLEMENT
 	return nil
 }
