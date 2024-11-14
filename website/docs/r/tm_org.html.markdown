@@ -39,7 +39,7 @@ The following arguments are supported:
 
 * `name` - (Required) A name for Organization with which users log in to it as it will be used in
   the URL. The Org must be disabled to or transition from previous disabled state
-  (`is_enabled=false`) to change a name because it changes tenant login URL.
+  (`is_enabled=false`) to change a name because it changes tenant login URL
 * `display_name` - (Required) A human readable name for Organization
 * `description` - (Optional) An optional description for Organization
 * `is_enabled` - (Optional) Defines if Organization is enabled. Default `true`. **Note:**
