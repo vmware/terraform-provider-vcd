@@ -29,32 +29,32 @@ func datasourceVcdTmRegionZone() *schema.Resource {
 			},
 			"memory_limit_mib": {
 				Type:        schema.TypeInt,
-				Required:    true,
+				Computed:    true,
 				Description: "Memory limit in MiB",
 			},
 			"memory_reservation_used_mib": {
 				Type:        schema.TypeInt,
-				Required:    true,
+				Computed:    true,
 				Description: "Memory reservation in MiB",
 			},
 			"memory_reservation_mib": {
 				Type:        schema.TypeInt,
-				Required:    true,
+				Computed:    true,
 				Description: "Memory reservation in MiB",
 			},
 			"cpu_limit_mhz": {
 				Type:        schema.TypeInt,
-				Required:    true,
+				Computed:    true,
 				Description: "CPU limit in MHz",
 			},
 			"cpu_reservation_mhz": {
 				Type:        schema.TypeInt,
-				Required:    true,
+				Computed:    true,
 				Description: "CPU reservation in MHz",
 			},
 			"cpu_reservation_used_mhz": {
 				Type:        schema.TypeInt,
-				Required:    true,
+				Computed:    true,
 				Description: "CPU reservation in MHz",
 			},
 		},
@@ -68,8 +68,7 @@ func resourceVcdTmRegionZoneRead(ctx context.Context, d *schema.ResourceData, me
 	if err != nil {
 		return diag.Errorf("error retrieving %s: %s", labelTmRegion, err)
 	}
-
-	getZone := func() func(name string) (*govcd.Zone, error) {
+	getRegionZone := func() func(name string) (*govcd.Zone, error) {
 		return func(name string) (*govcd.Zone, error) {
 			return region.GetZoneByName(name)
 		}
@@ -77,7 +76,7 @@ func resourceVcdTmRegionZoneRead(ctx context.Context, d *schema.ResourceData, me
 
 	c := dsCrudConfig[*govcd.Zone, types.Zone]{
 		entityLabel:    labelTmRegionZone,
-		getEntityFunc:  getZone,
+		getEntityFunc:  getRegionZone,
 		stateStoreFunc: setZoneData,
 	}
 	return readDatasource(ctx, d, meta, c)
@@ -85,10 +84,15 @@ func resourceVcdTmRegionZoneRead(ctx context.Context, d *schema.ResourceData, me
 
 func setZoneData(d *schema.ResourceData, z *govcd.Zone) error {
 	if z == nil {
-		return fmt.Errorf("nil Zone")
+		return fmt.Errorf("nil %s", labelTmRegionZone)
 	}
 	d.SetId(z.Zone.ID)
+	dSet(d, "memory_limit_mib", z.Zone.MemoryLimitMiB)
+	dSet(d, "memory_reservation_used_mib", z.Zone.MemoryReservationUsedMiB)
+	dSet(d, "memory_reservation_mib", z.Zone.MemoryReservationMiB)
+	dSet(d, "cpu_limit_mhz", z.Zone.CPULimitMhz)
+	dSet(d, "cpu_reservation_mhz", z.Zone.CPUReservationMhz)
+	dSet(d, "cpu_reservation_used_mhz", z.Zone.CPUReservationUsedMhz)
 
-	// IMPLEMENT
 	return nil
 }

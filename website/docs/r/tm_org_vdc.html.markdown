@@ -10,9 +10,18 @@ description: |-
 
 Provides a resource to manage VMware Cloud Foundation Tenant Manager Organization VDC.
 
-## Example Usage ()
+## Example Usage
 
 ```hcl
+data "vcd_vcenter" "vc" {
+  name = "my-vcenter"
+}
+
+data "vcd_tm_supervisor" "supervisor" {
+  name       = "my-supervisor"
+  vcenter_id = vcd_vcenter.vc.id
+}
+
 data "vcd_tm_region_zone" "test" {
   region_id = vcd_tm_region.region.id
   name      = "my-zone"

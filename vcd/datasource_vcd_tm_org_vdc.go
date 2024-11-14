@@ -66,12 +66,12 @@ var tmVdcDsZoneResourceAllocation = &schema.Resource{
 		"zone_name": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Region Zone Name",
+			Description: fmt.Sprintf("%s Name", labelTmRegionZone),
 		},
 		"zone_id": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Region Zone ID",
+			Description: fmt.Sprintf("%s ID", labelTmRegionZone),
 		},
 		"memory_limit_mib": {
 			Type:        schema.TypeInt,

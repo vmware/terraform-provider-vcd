@@ -99,7 +99,6 @@ const testAccVcdTmOrgVdcStep1 = `
 data "vcd_tm_supervisor" "test" {
   name       = "{{.SupervisorName}}"
   vcenter_id = {{.VcenterRef}}.id
-  depends_on = [{{.VcenterRef}}]
 }
 
 data "vcd_tm_region_zone" "test" {
