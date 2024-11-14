@@ -63,12 +63,12 @@ func datasourceVcdTmVdc() *schema.Resource {
 
 var tmVdcDsZoneResourceAllocation = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"zone_name": {
+		"region_zone_name": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: fmt.Sprintf("%s Name", labelTmRegionZone),
 		},
-		"zone_id": {
+		"region_zone_id": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: fmt.Sprintf("%s ID", labelTmRegionZone),

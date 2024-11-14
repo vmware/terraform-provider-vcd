@@ -33,7 +33,7 @@ resource "vcd_tm_org_vdc" "test" {
   region_id      = vcd_tm_region.region.id
   supervisor_ids = [data.vcd_tm_supervisor.test.id]
   zone_resource_allocations {
-    zone_id                = data.vcd_tm_region_zone.test.id
+    region_zone_id                = data.vcd_tm_region_zone.test.id
     cpu_limit_mhz          = 2000
     cpu_reservation_mhz    = 100
     memory_limit_mib       = 1024
@@ -50,20 +50,20 @@ The following arguments are supported:
 * `org_id` - (Required) An Org ID for this Org VDC to be assigned to
 * `region_id` - (Required) A Region ID that this Org VDC should be backed by
 * `supervisor_ids` - (Required) A set of Supervisor IDs that back this Org VDC. Can be looked up
-  using [`vcd_tm_supervisor`](/providers/vmware/vcd/latest/docs/data-sources/tm_supervisor) data source.
+  using [`vcd_tm_supervisor`](/providers/vmware/vcd/latest/docs/data-sources/tm_supervisor) data source
 * `zone_resource_allocations` - (Required) A set of Zone Resource Allocation definitions. See [Zone Resource Allocations](#zone-resource-allocations-block)
 
 <a id="zone-resource-allocations-block"></a>
 ## Zone Resource Allocations
 
-* `zone_id` - Can be looked up
-  using [`vcd_tm_region_zone`](/providers/vmware/vcd/latest/docs/data-sources/tm_region_zone) data source.
-* `cpu_limit_mhz`
-* `cpu_reservation_mhz`
-* `memory_limit_mib`
-* `memory_reservation_mib`
+* `region_zone_id` - (Required) Can be looked up using
+  [`vcd_tm_region_zone`](/providers/vmware/vcd/latest/docs/data-sources/tm_region_zone) data source
+* `cpu_limit_mhz` - (Required) Maximum CPU consumption limit in MHz
+* `cpu_reservation_mhz` - (Required) Defines reserved CPU capacity in MHz
+* `memory_limit_mib` - (Required) Maximum memory consumption limit in MiB
+* `memory_reservation_mib` - (Required) Defines reserved memory capacity in Mib
 
-A computed attribute `zone_name` will be set in each `zone_resource_allocations` block.
+A computed attribute `region_zone_name` will be set in each `zone_resource_allocations` block.
 
 
 ## Attribute Reference

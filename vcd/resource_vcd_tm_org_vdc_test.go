@@ -31,6 +31,12 @@ func TestAccVcdTmOrgVdc(t *testing.T) {
 
 	preRequisites := vCenterHcl + nsxManagerHcl + regionHcl
 
+	// TODO: TM: There shouldn't be a need to create `preRequisites` separatelly, but region
+	// creation fails if it is spawned instantly after adding vCenter, therefore this extra step
+	// give time (with additional 'refresh' and 'refresh storage policies' operations on vCenter)
+	configText0 := templateFill(preRequisites, params)
+	params["FuncName"] = t.Name() + "-step0"
+
 	configText1 := templateFill(preRequisites+testAccVcdTmOrgVdcStep1, params)
 	params["FuncName"] = t.Name() + "-step2"
 	configText2 := templateFill(preRequisites+testAccVcdTmOrgVdcStep2, params)
@@ -45,31 +51,54 @@ func TestAccVcdTmOrgVdc(t *testing.T) {
 		return
 	}
 
+	cachedRegionZoneId := &testCachedFieldValue{}
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			{
+				Config: configText0,
+			},
+			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
+					cachedRegionZoneId.cacheTestResourceFieldValue("vcd_tm_region_zone.test", "id"),
 					resource.TestCheckResourceAttrSet("vcd_tm_org_vdc.test", "id"),
-				// resource.TestCheckResourceAttr("vcd_tm_org.test", "display_name", "terraform-test"),
-				// resource.TestCheckResourceAttr("vcd_tm_org.test", "description", "terraform test"),
-				// resource.TestCheckResourceAttr("vcd_tm_org.test", "is_enabled", "true"),
-				// resource.TestCheckResourceAttr("vcd_tm_org.test", "is_subprovider", "false"),
-				// resource.TestMatchResourceAttr("vcd_tm_org.test", "managed_by_id", regexp.MustCompile("^urn:vcloud:org:")),
-				// resource.TestCheckResourceAttr("vcd_tm_org.test", "managed_by_name", "System"),
+					resource.TestCheckResourceAttr("vcd_tm_org_vdc.test", "is_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_tm_org_vdc.test", "status", "READY"),
+					resource.TestCheckResourceAttrPair("vcd_tm_org_vdc.test", "org_id", "vcd_tm_org.test", "id"),
+					resource.TestCheckResourceAttrPair("vcd_tm_org_vdc.test", "region_id", "vcd_tm_region.region", "id"),
+					resource.TestCheckResourceAttr("vcd_tm_org_vdc.test", "supervisor_ids.#", "1"),
+					resource.TestCheckTypeSetElemAttrPair("vcd_tm_org_vdc.test", "supervisor_ids.*", "data.vcd_tm_supervisor.test", "id"),
+					resource.TestCheckResourceAttr("vcd_tm_org_vdc.test", "zone_resource_allocations.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_tm_org_vdc.test", "zone_resource_allocations.*", map[string]string{
+						"region_zone_name":       "{{.SupervisorZoneName}}",
+						"cpu_limit_mhz":          "2000",
+						"cpu_reservation_mhz":    "100",
+						"memory_limit_mib":       "1024",
+						"memory_reservation_mib": "512",
+					}),
 				),
 			},
 			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_tm_org_vdc.test", "id"),
-				// resource.TestCheckResourceAttr("vcd_tm_org.test", "display_name", "terraform-test"),
-				// resource.TestCheckResourceAttr("vcd_tm_org.test", "description", "terraform test"),
-				// resource.TestCheckResourceAttr("vcd_tm_org.test", "is_enabled", "true"),
-				// resource.TestCheckResourceAttr("vcd_tm_org.test", "is_subprovider", "false"),
-				// resource.TestMatchResourceAttr("vcd_tm_org.test", "managed_by_id", regexp.MustCompile("^urn:vcloud:org:")),
-				// resource.TestCheckResourceAttr("vcd_tm_org.test", "managed_by_name", "System"),
+					resource.TestCheckResourceAttr("vcd_tm_org_vdc.test", "is_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_tm_org_vdc.test", "status", "READY"),
+					resource.TestCheckResourceAttrPair("vcd_tm_org_vdc.test", "org_id", "vcd_tm_org.test", "id"),
+					resource.TestCheckResourceAttrPair("vcd_tm_org_vdc.test", "region_id", "vcd_tm_region.region", "id"),
+					resource.TestCheckResourceAttr("vcd_tm_org_vdc.test", "supervisor_ids.#", "1"),
+					resource.TestCheckTypeSetElemAttrPair("vcd_tm_org_vdc.test", "supervisor_ids.*", "data.vcd_tm_supervisor.test", "id"),
+					resource.TestCheckResourceAttr("vcd_tm_org_vdc.test", "zone_resource_allocations.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_tm_org_vdc.test", "zone_resource_allocations.*", map[string]string{
+						"region_zone_name":       "{{.SupervisorZoneName}}",
+						"region_zone_id":         cachedRegionZoneId.fieldValue,
+						"cpu_limit_mhz":          "1900",
+						"cpu_reservation_mhz":    "100",
+						"memory_limit_mib":       "1024",
+						"memory_reservation_mib": "512",
+					}),
 				),
 			},
 			{
@@ -112,7 +141,7 @@ resource "vcd_tm_org_vdc" "test" {
   region_id      = {{.RegionId}}
   supervisor_ids = [data.vcd_tm_supervisor.test.id]
   zone_resource_allocations {
-    zone_id                = data.vcd_tm_region_zone.test.id
+    region_zone_id         = data.vcd_tm_region_zone.test.id
     cpu_limit_mhz          = 2000
     cpu_reservation_mhz    = 100
     memory_limit_mib       = 1024
@@ -146,7 +175,7 @@ resource "vcd_tm_org_vdc" "test" {
   region_id      = {{.RegionId}}
   supervisor_ids = [data.vcd_tm_supervisor.test.id]
   zone_resource_allocations {
-    zone_id                = data.vcd_tm_region_zone.test.id
+    region_zone_id         = data.vcd_tm_region_zone.test.id
     cpu_limit_mhz          = 1900
     cpu_reservation_mhz    = 90
     memory_limit_mib       = 500

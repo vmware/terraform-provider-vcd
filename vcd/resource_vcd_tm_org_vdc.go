@@ -72,12 +72,12 @@ func resourceTmVdc() *schema.Resource {
 
 var tmVdcZoneResourceAllocation = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"zone_name": {
+		"region_zone_name": {
 			Type:        schema.TypeString,
 			Computed:    true,
 			Description: "Region Zone Name",
 		},
-		"zone_id": {
+		"region_zone_id": {
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "Region Zone ID",
@@ -181,7 +181,7 @@ func getTmVdcType(_ *VCDClient, d *schema.ResourceData) (*types.TmVdc, error) {
 		singleZoneMap := singleZone.(map[string]interface{})
 		singleZoneType := &types.TmVdcZoneResourceAllocation{
 			Zone: &types.OpenApiReference{
-				ID: singleZoneMap["zone_id"].(string),
+				ID: singleZoneMap["region_zone_id"].(string),
 			},
 			ResourceAllocation: types.TmVdcResourceAllocation{
 				CPULimitMHz:          singleZoneMap["cpu_limit_mhz"].(int),
@@ -230,8 +230,8 @@ func setTmVdcData(d *schema.ResourceData, vdc *govcd.TmVdc) error {
 	for zoneIndex, zone := range vdc.TmVdc.ZoneResourceAllocation {
 		oneZone := make(map[string]interface{})
 
-		oneZone["zone_name"] = zone.Zone.Name
-		oneZone["zone_id"] = zone.Zone.ID
+		oneZone["region_zone_name"] = zone.Zone.Name
+		oneZone["region_zone_id"] = zone.Zone.ID
 
 		oneZone["memory_limit_mib"] = zone.ResourceAllocation.MemoryLimitMiB
 		oneZone["memory_reservation_mib"] = zone.ResourceAllocation.MemoryReservationMiB
