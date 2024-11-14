@@ -29,14 +29,13 @@ func TestAccVcdTmOrgVdc(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	preRequisites := vCenterHcl + nsxManagerHcl + regionHcl
-
 	// TODO: TM: There shouldn't be a need to create `preRequisites` separatelly, but region
 	// creation fails if it is spawned instantly after adding vCenter, therefore this extra step
 	// give time (with additional 'refresh' and 'refresh storage policies' operations on vCenter)
-	configText0 := templateFill(preRequisites, params)
+	configText0 := templateFill(vCenterHcl+nsxManagerHcl, params)
 	params["FuncName"] = t.Name() + "-step0"
 
+	preRequisites := vCenterHcl + nsxManagerHcl + regionHcl
 	configText1 := templateFill(preRequisites+testAccVcdTmOrgVdcStep1, params)
 	params["FuncName"] = t.Name() + "-step2"
 	configText2 := templateFill(preRequisites+testAccVcdTmOrgVdcStep2, params)
@@ -51,8 +50,6 @@ func TestAccVcdTmOrgVdc(t *testing.T) {
 		return
 	}
 
-	cachedRegionZoneId := &testCachedFieldValue{}
-
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
@@ -62,7 +59,6 @@ func TestAccVcdTmOrgVdc(t *testing.T) {
 			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
-					cachedRegionZoneId.cacheTestResourceFieldValue("vcd_tm_region_zone.test", "id"),
 					resource.TestCheckResourceAttrSet("vcd_tm_org_vdc.test", "id"),
 					resource.TestCheckResourceAttr("vcd_tm_org_vdc.test", "is_enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_tm_org_vdc.test", "status", "READY"),
@@ -72,7 +68,7 @@ func TestAccVcdTmOrgVdc(t *testing.T) {
 					resource.TestCheckTypeSetElemAttrPair("vcd_tm_org_vdc.test", "supervisor_ids.*", "data.vcd_tm_supervisor.test", "id"),
 					resource.TestCheckResourceAttr("vcd_tm_org_vdc.test", "zone_resource_allocations.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_tm_org_vdc.test", "zone_resource_allocations.*", map[string]string{
-						"region_zone_name":       "{{.SupervisorZoneName}}",
+						"region_zone_name":       testConfig.Tm.VcenterSupervisorZone,
 						"cpu_limit_mhz":          "2000",
 						"cpu_reservation_mhz":    "100",
 						"memory_limit_mib":       "1024",
@@ -92,12 +88,11 @@ func TestAccVcdTmOrgVdc(t *testing.T) {
 					resource.TestCheckTypeSetElemAttrPair("vcd_tm_org_vdc.test", "supervisor_ids.*", "data.vcd_tm_supervisor.test", "id"),
 					resource.TestCheckResourceAttr("vcd_tm_org_vdc.test", "zone_resource_allocations.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_tm_org_vdc.test", "zone_resource_allocations.*", map[string]string{
-						"region_zone_name":       "{{.SupervisorZoneName}}",
-						"region_zone_id":         cachedRegionZoneId.fieldValue,
+						"region_zone_name":       testConfig.Tm.VcenterSupervisorZone,
 						"cpu_limit_mhz":          "1900",
-						"cpu_reservation_mhz":    "100",
-						"memory_limit_mib":       "1024",
-						"memory_reservation_mib": "512",
+						"cpu_reservation_mhz":    "90",
+						"memory_limit_mib":       "500",
+						"memory_reservation_mib": "200",
 					}),
 				),
 			},
