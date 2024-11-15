@@ -12,13 +12,13 @@ import (
 
 func datasourceVcdTmOrgVdc() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdTmVdcRead,
+		ReadContext: datasourceVcdTmOrgVdcRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: fmt.Sprintf("Name of the %s", labelTmVdc),
+				Description: fmt.Sprintf("Name of the %s", labelTmOrgVdc),
 			},
 			"org_id": {
 				Type:        schema.TypeString,
@@ -28,12 +28,12 @@ func datasourceVcdTmOrgVdc() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: fmt.Sprintf("Description of the %s", labelTmVdc),
+				Description: fmt.Sprintf("Description of the %s", labelTmOrgVdc),
 			},
 			"is_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: fmt.Sprintf("Defines if the %s is enabled", labelTmVdc),
+				Description: fmt.Sprintf("Defines if the %s is enabled", labelTmOrgVdc),
 			},
 			"region_id": {
 				Type:        schema.TypeString,
@@ -44,24 +44,24 @@ func datasourceVcdTmOrgVdc() *schema.Resource {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: fmt.Sprintf("A set of Supervisor IDs that back this %s", labelTmVdc),
+				Description: fmt.Sprintf("A set of Supervisor IDs that back this %s", labelTmOrgVdc),
 			},
 			"zone_resource_allocations": {
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Elem:        tmVdcDsZoneResourceAllocation,
+				Elem:        tmOrgVdcDsZoneResourceAllocation,
 				Description: "A set of Region Zones and their resource allocations",
 			},
 			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: fmt.Sprintf("%s status", labelTmVdc),
+				Description: fmt.Sprintf("%s status", labelTmOrgVdc),
 			},
 		},
 	}
 }
 
-var tmVdcDsZoneResourceAllocation = &schema.Resource{
+var tmOrgVdcDsZoneResourceAllocation = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"region_zone_name": {
 			Type:        schema.TypeString,
@@ -96,10 +96,10 @@ var tmVdcDsZoneResourceAllocation = &schema.Resource{
 	},
 }
 
-func datasourceVcdTmVdcRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdTmOrgVdcRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	c := dsCrudConfig[*govcd.TmVdc, types.TmVdc]{
-		entityLabel:    labelTmVdc,
+		entityLabel:    labelTmOrgVdc,
 		getEntityFunc:  vcdClient.GetTmVdcByName,
 		stateStoreFunc: setTmVdcData,
 	}

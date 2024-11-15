@@ -10,16 +10,16 @@ import (
 	"github.com/vmware/go-vcloud-director/v3/types/v56"
 )
 
-const labelTmVdc = "TM Org Vdc"
+const labelTmOrgVdc = "TM Org Vdc"
 
 func resourceTmOrgVdc() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceTmVdcCreate,
-		ReadContext:   resourceTmVdcRead,
-		UpdateContext: resourceTmVdcUpdate,
-		DeleteContext: resourceTmVdcDelete,
+		CreateContext: resourceTmOrgVdcCreate,
+		ReadContext:   resourceTmOrgVdcRead,
+		UpdateContext: resourceTmOrgVdcUpdate,
+		DeleteContext: resourceTmOrgVdcDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceTmVdcImport,
+			StateContext: resourceTmOrgVdcImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -31,18 +31,18 @@ func resourceTmOrgVdc() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: fmt.Sprintf("Name of the %s", labelTmVdc),
+				Description: fmt.Sprintf("Name of the %s", labelTmOrgVdc),
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: fmt.Sprintf("Description of the %s", labelTmVdc),
+				Description: fmt.Sprintf("Description of the %s", labelTmOrgVdc),
 			},
 			"is_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: fmt.Sprintf("Defines if the %s is enabled", labelTmVdc),
+				Description: fmt.Sprintf("Defines if the %s is enabled", labelTmOrgVdc),
 			},
 			"region_id": {
 				Type:        schema.TypeString,
@@ -53,24 +53,24 @@ func resourceTmOrgVdc() *schema.Resource {
 				Type:        schema.TypeSet,
 				Required:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: fmt.Sprintf("A set of Supervisor IDs that back this %s", labelTmVdc),
+				Description: fmt.Sprintf("A set of Supervisor IDs that back this %s", labelTmOrgVdc),
 			},
 			"zone_resource_allocations": {
 				Type:        schema.TypeSet,
 				Required:    true,
-				Elem:        tmVdcZoneResourceAllocation,
+				Elem:        tmOrgVdcZoneResourceAllocation,
 				Description: "A set of Region Zones and their resource allocations",
 			},
 			"status": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: fmt.Sprintf("%s status", labelTmVdc),
+				Description: fmt.Sprintf("%s status", labelTmOrgVdc),
 			},
 		},
 	}
 }
 
-var tmVdcZoneResourceAllocation = &schema.Resource{
+var tmOrgVdcZoneResourceAllocation = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"region_zone_name": {
 			Type:        schema.TypeString,
@@ -105,58 +105,56 @@ var tmVdcZoneResourceAllocation = &schema.Resource{
 	},
 }
 
-func resourceTmVdcCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceTmOrgVdcCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	c := crudConfig[*govcd.TmVdc, types.TmVdc]{
-		entityLabel:      labelTmVdc,
+		entityLabel:      labelTmOrgVdc,
 		getTypeFunc:      getTmVdcType,
 		stateStoreFunc:   setTmVdcData,
 		createFunc:       vcdClient.CreateTmVdc,
-		resourceReadFunc: resourceTmVdcRead,
+		resourceReadFunc: resourceTmOrgVdcRead,
 	}
 	return createResource(ctx, d, meta, c)
 }
 
-func resourceTmVdcUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceTmOrgVdcUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	c := crudConfig[*govcd.TmVdc, types.TmVdc]{
-		entityLabel:      labelTmVdc,
+		entityLabel:      labelTmOrgVdc,
 		getTypeFunc:      getTmVdcType,
 		getEntityFunc:    vcdClient.GetTmVdcById,
-		resourceReadFunc: resourceTmVdcRead,
-		// preUpdateHooks: []outerEntityHookInnerEntityType[*govcd.TmVdc, *types.TmVdc]{},
+		resourceReadFunc: resourceTmOrgVdcRead,
 	}
 
 	return updateResource(ctx, d, meta, c)
 }
 
-func resourceTmVdcRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceTmOrgVdcRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	c := crudConfig[*govcd.TmVdc, types.TmVdc]{
-		entityLabel:    labelTmVdc,
+		entityLabel:    labelTmOrgVdc,
 		getEntityFunc:  vcdClient.GetTmVdcById,
 		stateStoreFunc: setTmVdcData,
 	}
 	return readResource(ctx, d, meta, c)
 }
 
-func resourceTmVdcDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceTmOrgVdcDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	c := crudConfig[*govcd.TmVdc, types.TmVdc]{
-		entityLabel:   labelTmVdc,
+		entityLabel:   labelTmOrgVdc,
 		getEntityFunc: vcdClient.GetTmVdcById,
-		// preDeleteHooks: []outerEntityHook[*govcd.TmVdc]{},
 	}
 
 	return deleteResource(ctx, d, meta, c)
 }
 
-func resourceTmVdcImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceTmOrgVdcImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 	vdc, err := vcdClient.GetTmVdcByName(d.Id())
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving %s: %s", labelTmVdc, err)
+		return nil, fmt.Errorf("error retrieving %s: %s", labelTmOrgVdc, err)
 	}
 
 	d.SetId(vdc.TmVdc.ID)
@@ -167,9 +165,9 @@ func getTmVdcType(_ *VCDClient, d *schema.ResourceData) (*types.TmVdc, error) {
 	t := &types.TmVdc{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		// IsEnabled:   d.Get("is_enabled").(bool), // TODO: TM: is_enabled is always returned as false
-		Org:    &types.OpenApiReference{ID: d.Get("org_id").(string)},
-		Region: &types.OpenApiReference{ID: d.Get("region_id").(string)},
+		IsEnabled:   addrOf(d.Get("is_enabled").(bool)),
+		Org:         &types.OpenApiReference{ID: d.Get("org_id").(string)},
+		Region:      &types.OpenApiReference{ID: d.Get("region_id").(string)},
 	}
 
 	supervisorIds := convertSchemaSetToSliceOfStrings(d.Get("supervisor_ids").(*schema.Set))
@@ -205,7 +203,7 @@ func setTmVdcData(d *schema.ResourceData, vdc *govcd.TmVdc) error {
 	d.SetId(vdc.TmVdc.ID)
 	dSet(d, "name", vdc.TmVdc.Name)
 	dSet(d, "description", vdc.TmVdc.Description)
-	// dSet(d, "is_enabled", vdc.TmVdc.IsEnabled) TODO: TM: the field is ineffective and always returns false
+	dSet(d, "is_enabled", vdc.TmVdc.IsEnabled)
 	dSet(d, "status", vdc.TmVdc.Status)
 
 	orgId := ""
@@ -241,7 +239,7 @@ func setTmVdcData(d *schema.ResourceData, vdc *govcd.TmVdc) error {
 		zoneCompute[zoneIndex] = oneZone
 	}
 
-	autoAllocatedSubnetSet := schema.NewSet(schema.HashResource(tmVdcZoneResourceAllocation), zoneCompute)
+	autoAllocatedSubnetSet := schema.NewSet(schema.HashResource(tmOrgVdcZoneResourceAllocation), zoneCompute)
 	err = d.Set("zone_resource_allocations", autoAllocatedSubnetSet)
 	if err != nil {
 		return fmt.Errorf("error setting 'zone_resource_allocations' after read: %s", err)
