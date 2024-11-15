@@ -99,11 +99,11 @@ function short_test {
     fi
     if [ -n "$VERBOSE" ]
     then
-        echo "VCD_SHORT_TEST=1 go test -race -tags 'functional $MORE_TAGS' -v -timeout 5m"
+        echo "VCD_SHORT_TEST=1 go test -race -tags '$MORE_TAGS' -v -timeout 5m"
     fi
     if [ -z "$DRY_RUN" ]
     then
-        VCD_SHORT_TEST=1 go test -race -tags "functional $MORE_TAGS" -v -timeout 5m
+        VCD_SHORT_TEST=1 go test -race -tags "$MORE_TAGS" -v -timeout 5m
         check_exit_code
     fi
     if [ -n "$VCD_TEST_ORG_USER" ]
@@ -351,19 +351,26 @@ case $wanted in
         ;;
     short)
         export VCD_SKIP_TEMPLATE_WRITING=1
+        export MORE_TAGS="functional"
         short_test
         ;;
     short-provider-orguser)
         unset VCD_SKIP_TEMPLATE_WRITING
         export VCD_TEST_ORG_USER=1
         export VCD_ADD_PROVIDER=1
-        export MORE_TAGS=binary
+        export MORE_TAGS="functional binary"
         short_test
         ;;
      short-provider)
         unset VCD_SKIP_TEMPLATE_WRITING
         export VCD_ADD_PROVIDER=1
-        export MORE_TAGS=binary
+        export MORE_TAGS="functional binary"
+        short_test
+        ;;
+     short-provider-tm)
+        unset VCD_SKIP_TEMPLATE_WRITING
+        export VCD_ADD_PROVIDER=1
+        export MORE_TAGS="tm binary"
         short_test
         ;;
     acceptance-orguser)

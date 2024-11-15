@@ -140,8 +140,15 @@ testextnetwork: fmtcheck
 testtm: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' tm"
 
+# runs test using Terraform binary as system administrator using binary with race detection enabled
+testtm-binary: installrace
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider-tm"
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary"
+
+# makes .tf files from test templates
 testtm-binary-prepare: install
-	cd vcd && go test -tags tm -vcd-add-provider -vcd-short -v .
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider-tm"
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary-prepare"
 
 # vets all .go files
 vet:
