@@ -188,6 +188,7 @@ resource "vcd_tm_org" "test" {
 
 const testAccVcdTmOrgVdcStep3DS = testAccVcdTmOrgVdcStep2 + `
 data "vcd_tm_org_vdc" "test" {
-  name = vcd_tm_org_vdc.test.name
+  org_id = vcd_tm_org.test.id
+  name   = vcd_tm_org_vdc.test.name
 }
 `

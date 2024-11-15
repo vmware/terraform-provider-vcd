@@ -10,7 +10,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v3/types/v56"
 )
 
-func datasourceVcdTmVdc() *schema.Resource {
+func datasourceVcdTmOrgVdc() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdTmVdcRead,
 
@@ -19,6 +19,11 @@ func datasourceVcdTmVdc() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: fmt.Sprintf("Name of the %s", labelTmVdc),
+			},
+			"org_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Parent Organization ID",
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -29,11 +34,6 @@ func datasourceVcdTmVdc() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: fmt.Sprintf("Defines if the %s is enabled", labelTmVdc),
-			},
-			"org_id": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Parent Organization ID",
 			},
 			"region_id": {
 				Type:        schema.TypeString,

@@ -12,7 +12,7 @@ import (
 
 const labelTmVdc = "TM Org Vdc"
 
-func resourceTmVdc() *schema.Resource {
+func resourceTmOrgVdc() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceTmVdcCreate,
 		ReadContext:   resourceTmVdcRead,
@@ -23,6 +23,11 @@ func resourceTmVdc() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
+			"org_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Parent Organization ID",
+			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -38,11 +43,6 @@ func resourceTmVdc() *schema.Resource {
 				Optional:    true,
 				Default:     true,
 				Description: fmt.Sprintf("Defines if the %s is enabled", labelTmVdc),
-			},
-			"org_id": {
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Parent Organization ID",
 			},
 			"region_id": {
 				Type:        schema.TypeString,

@@ -23,6 +23,7 @@ data "vcd_tm_org_vdc" "test" {
 The following arguments are supported:
 
 * `name` - (Required) A name for the existing Org VDC
+* `org_id` - (Required) An ID for the parent Org
 
 ## Attribute Reference
 
