@@ -88,6 +88,10 @@ testacc-orguser: testunit
 testacc: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
 
+# Runs the acceptance test for tm
+testtmacc: fmtcheck testunit
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' tmacc"
+
 # Runs the acceptance test as system administrator for search label
 test-search: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' search"
@@ -136,16 +140,13 @@ testnetwork: fmtcheck
 testextnetwork: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' extnetwork"
 
-# Runs the acceptance test for tm
-testtm: fmtcheck
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' tm"
 
-# runs test using Terraform binary as system administrator using binary with race detection enabled
+# runs Tenant Manager test using Terraform binary as system administrator using binary with race detection enabled
 testtm-binary: installrace
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider-tm"
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary"
 
-# makes .tf files from test templates
+# generates  Tenant Manager testing scripts in 'vcd/test-artifacts'test using Terraform binary as system administrator
 testtm-binary-prepare: install
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider-tm"
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary-prepare"

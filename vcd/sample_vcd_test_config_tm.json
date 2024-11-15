@@ -1,0 +1,61 @@
+{
+  "//": "Rename this file to vcd_test_config.json and change the values to suit your system",
+  "//": "You can safely remove the comments or leave them. The parser will ignore them.",
+  "provider": {
+    "//"  : "This section contains credentials related to the vCD connection of Sys or Org user",
+    "user": "root",
+    "password": "somePassword",
+    "token": "Access token to be used instead of username/password",
+
+    "//": "If useSamlAdfs is true - client will try to authenticate against ADFS using SAML.",
+    "useSamlAdfs": false,
+    "//": "customAdfsRptId allows to specify custom Relaying Party Trust Identifier. By default",
+    "//": "client will use vCD SAML Entity ID",
+    "customAdfsRptId": "rpt-id",
+    
+    "//": "The 3 fields below allow to set SAML credentials for tests that specifically use it.",
+    "//": "May be useful when local user credentials are used by default.",
+    "//": "These credentials will authenticate to the Org specified in vcd.org parameter.",
+    "samlUser": "",
+    "samlPassword": "",
+    "samlCustomRptId": "",
+
+    "url": "https://10.13.21.20/api",
+    "//": "allowInsecure will skip the check on self-signed certificates",
+    "allowInsecure": true,
+    "//": "tfAcceptanceTests is needed to allow the whole test suite to run",
+    "//": "Warning: it may cost time (up to a few hours) and possibly money",
+    "tfAcceptanceTests": true,
+    "//": "If enabled, the test suite will cache the provider connection for up to 20 minutes",
+    "//": "and then renew it automatically. This will save some heavy network traffic.",
+    "//": "Disabled by default if useVcdConnectionCache is not set",
+    "useVcdConnectionCache": true,
+    "//": "The Terraform provider default for max retry timeout is 60, which often leads to premature test termination",
+    "//": "This value changes the default for the test suite. If no value is provided, it will set to 300",
+    "maxRetryTimeout": 300
+  },
+  "vcd": {
+    "//": "This default admin Org",
+    "org": "System"
+  },
+  "tm": {
+    "org": "tf-test",
+    "createRegion": true,
+    "region": "one-region",
+    "regionStoragePolicy": "vSAN Default Storage Policy",
+    "vdc": "one-vdc",
+
+    "createVcenter": true,
+    "vcenterUsername": "user@vsphere.local",
+    "vcenterPassword": "",
+    "vcenterUrl": "https://vcenter.my-company.com",
+    "vcenterStorageProfile": "vSAN Default Storage Policy",
+    "vcenterSupervisor": "supervisor1",
+    "vcenterSupervisorZone": "zone1",
+
+    "createNsxtManager": true,
+    "nsxtManagerUsername": "admin",
+    "nsxtManagerPassword": "",
+    "nsxtManagerUrl": "https://nsxmanager.my-company.com"
+  }
+}
