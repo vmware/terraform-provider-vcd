@@ -59,7 +59,7 @@ func resourceTmOrgVdc() *schema.Resource {
 				Type:        schema.TypeSet,
 				Required:    true,
 				Elem:        tmVdcZoneResourceAllocation,
-				Description: "A set of Supervisor Zones and their resource allocations",
+				Description: "A set of Region Zones and their resource allocations",
 			},
 			"status": {
 				Type:        schema.TypeString,
@@ -75,12 +75,12 @@ var tmVdcZoneResourceAllocation = &schema.Resource{
 		"region_zone_name": {
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Region Zone Name",
+			Description: fmt.Sprintf("%s Name", labelTmRegionZone),
 		},
 		"region_zone_id": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "Region Zone ID",
+			Description: fmt.Sprintf("%s ID", labelTmRegionZone),
 		},
 		"memory_limit_mib": {
 			Type:        schema.TypeInt,

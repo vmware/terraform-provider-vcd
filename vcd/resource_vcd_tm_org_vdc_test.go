@@ -23,7 +23,6 @@ func TestAccVcdTmOrgVdc(t *testing.T) {
 		"SupervisorZoneName": testConfig.Tm.VcenterSupervisorZone,
 		"VcenterRef":         vCenterHclRef,
 		"RegionId":           fmt.Sprintf("%s.id", regionHclRef),
-		// "RegionStoragePolicy": testConfig.Tm.RegionStoragePolicy,
 
 		"Tags": "tm",
 	}

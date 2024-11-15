@@ -50,7 +50,7 @@ func datasourceVcdTmOrgVdc() *schema.Resource {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Elem:        tmVdcDsZoneResourceAllocation,
-				Description: "A set of Supervisor Zones and their resource allocations",
+				Description: "A set of Region Zones and their resource allocations",
 			},
 			"status": {
 				Type:        schema.TypeString,
