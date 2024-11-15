@@ -211,9 +211,9 @@ func execUpdateEntityHookWithNewInnerType[O, I any](d *schema.ResourceData, oute
 }
 
 // dsCrudConfig is a generic type that can be used for data sources. It differs from `crudConfig` in
-// the sense that it does not have `updateDeleter` type constraint. This is needed for such data
-// source where there is on API to Update and/or Delete an entity, but instead it is a read-only
-// entity.
+// the sense that it does not have `updateDeleter` type parameter constraint. This is needed for
+// such data sources that have no API to Update and/or Delete an entity, but instead are read-only
+// entities.
 type dsCrudConfig[O any, I any] struct {
 	// entityLabel to use
 	entityLabel string

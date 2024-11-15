@@ -24,7 +24,6 @@ The following arguments are supported:
 
 * `name` - (Required) A name for the existing Org VDC
 
-
 ## Attribute Reference
 
 All the arguments and attributes defined in

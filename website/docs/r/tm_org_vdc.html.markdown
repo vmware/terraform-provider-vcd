@@ -22,18 +22,18 @@ data "vcd_tm_supervisor" "supervisor" {
   vcenter_id = vcd_vcenter.vc.id
 }
 
-data "vcd_tm_region_zone" "test" {
+data "vcd_tm_region_zone" "one" {
   region_id = vcd_tm_region.region.id
   name      = "my-zone"
 }
 
-resource "vcd_tm_org_vdc" "test" {
+resource "vcd_tm_org_vdc" "first" {
   name           = "my-org-vdc"
   org_id         = vcd_tm_org.test.id
   region_id      = vcd_tm_region.region.id
   supervisor_ids = [data.vcd_tm_supervisor.test.id]
   zone_resource_allocations {
-    region_zone_id         = data.vcd_tm_region_zone.test.id
+    region_zone_id         = data.vcd_tm_region_zone.one.id
     cpu_limit_mhz          = 2000
     cpu_reservation_mhz    = 100
     memory_limit_mib       = 1024
