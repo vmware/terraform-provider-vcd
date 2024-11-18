@@ -227,10 +227,8 @@ func setTmVdcData(d *schema.ResourceData, vdc *govcd.TmVdc) error {
 	zoneCompute := make([]interface{}, len(vdc.TmVdc.ZoneResourceAllocation))
 	for zoneIndex, zone := range vdc.TmVdc.ZoneResourceAllocation {
 		oneZone := make(map[string]interface{})
-
 		oneZone["region_zone_name"] = zone.Zone.Name
 		oneZone["region_zone_id"] = zone.Zone.ID
-
 		oneZone["memory_limit_mib"] = zone.ResourceAllocation.MemoryLimitMiB
 		oneZone["memory_reservation_mib"] = zone.ResourceAllocation.MemoryReservationMiB
 		oneZone["cpu_limit_mhz"] = zone.ResourceAllocation.CPULimitMHz

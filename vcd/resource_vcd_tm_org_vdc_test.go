@@ -31,7 +31,8 @@ func TestAccVcdTmOrgVdc(t *testing.T) {
 	// TODO: TM: There shouldn't be a need to create `preRequisites` separatelly, but region
 	// creation fails if it is spawned instantly after adding vCenter, therefore this extra step
 	// give time (with additional 'refresh' and 'refresh storage policies' operations on vCenter)
-	configText0 := templateFill(vCenterHcl+nsxManagerHcl, params)
+	skipBinaryTest := "# skip-binary-test: prerequisite buildup for acceptance tests"
+	configText0 := templateFill(vCenterHcl+nsxManagerHcl+skipBinaryTest, params)
 	params["FuncName"] = t.Name() + "-step0"
 
 	preRequisites := vCenterHcl + nsxManagerHcl + regionHcl

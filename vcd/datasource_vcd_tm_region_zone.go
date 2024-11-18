@@ -63,7 +63,6 @@ func datasourceVcdTmRegionZone() *schema.Resource {
 
 func resourceVcdTmRegionZoneRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-
 	region, err := vcdClient.GetRegionById(d.Get("region_id").(string))
 	if err != nil {
 		return diag.Errorf("error retrieving %s: %s", labelTmRegion, err)
