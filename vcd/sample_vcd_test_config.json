@@ -251,6 +251,7 @@
     "createRegion": true,
     "region": "three-zone-region",
     "regionStoragePolicy": "vSAN Default Storage Policy",
+    "contentLibrary": "content-library-one",
     "vdc": "three-zone-vdc",
     "createVcenter": true,
     "vcenterUsername": "user@vsphere.local",
