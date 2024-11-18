@@ -102,7 +102,7 @@ func datasourceVcdTmOrgVdcRead(ctx context.Context, d *schema.ResourceData, meta
 		return vcdClient.GetTmVdcByNameAndOrgId(name, d.Get("org_id").(string))
 	}
 
-	c := dsCrudConfig[*govcd.TmVdc, types.TmVdc]{
+	c := dsReadConfig[*govcd.TmVdc, types.TmVdc]{
 		entityLabel:    labelTmOrgVdc,
 		getEntityFunc:  getByNameAndOrgId,
 		stateStoreFunc: setTmVdcData,

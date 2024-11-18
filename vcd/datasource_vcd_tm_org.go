@@ -101,7 +101,7 @@ func datasourceVcdTmOrg() *schema.Resource {
 
 func datasourceVcdTmOrgRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	c := dsCrudConfig[*govcd.TmOrg, types.TmOrg]{
+	c := dsReadConfig[*govcd.TmOrg, types.TmOrg]{
 		entityLabel:    labelTmOrg,
 		getEntityFunc:  vcdClient.GetTmOrgByName,
 		stateStoreFunc: setTmOrgData,

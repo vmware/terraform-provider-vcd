@@ -210,11 +210,11 @@ func execUpdateEntityHookWithNewInnerType[O, I any](d *schema.ResourceData, oute
 	return nil
 }
 
-// dsCrudConfig is a generic type that can be used for data sources. It differs from `crudConfig` in
+// dsReadConfig is a generic type that can be used for data sources. It differs from `crudConfig` in
 // the sense that it does not have `updateDeleter` type parameter constraint. This is needed for
 // such data sources that have no API to Update and/or Delete an entity, but instead are read-only
 // entities.
-type dsCrudConfig[O any, I any] struct {
+type dsReadConfig[O any, I any] struct {
 	// entityLabel to use
 	entityLabel string
 
@@ -227,7 +227,7 @@ type dsCrudConfig[O any, I any] struct {
 }
 
 // readDatasource will read a data source by a 'name' field in Terraform schema
-func readDatasource[O any, I any](_ context.Context, d *schema.ResourceData, _ interface{}, c dsCrudConfig[O, I]) diag.Diagnostics {
+func readDatasource[O any, I any](_ context.Context, d *schema.ResourceData, _ interface{}, c dsReadConfig[O, I]) diag.Diagnostics {
 	entityName := d.Get("name").(string)
 	retrievedEntity, err := c.getEntityFunc(entityName)
 	if err != nil {
