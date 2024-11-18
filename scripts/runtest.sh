@@ -413,6 +413,9 @@ case $wanted in
     tm-acceptance)
         acceptance_test tm
         ;;
+    tm-coverage)
+        acceptance_test tm "-coverprofile=tm.cover"
+        ;;
     network)
         acceptance_test network
         ;;

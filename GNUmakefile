@@ -92,6 +92,10 @@ testacc: testunit
 testtm-acc: fmtcheck testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' tm-acceptance"
 
+# Runs the acceptance test for tm with coverage
+testtm-acc-coverage: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' tm-coverage"
+
 # Runs the acceptance test as system administrator for search label
 test-search: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' search"

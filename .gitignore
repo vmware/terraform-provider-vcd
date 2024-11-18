@@ -25,6 +25,9 @@ website/node_modules
 *.test
 *.iml
 
+# Ignore test coverage files
+*.cover
+
 vcd/vcd_test_config*.json
 vcd/go-vcloud-director.log
 vcd/test-artifacts
