@@ -114,9 +114,7 @@ func TestAccVcdTmRegion(t *testing.T) {
 				Config: configText3,
 				Check: resource.ComposeTestCheckFunc(
 					resourceFieldsEqual("vcd_tm_region.test", "data.vcd_tm_region.test", []string{
-						"storage_policy_names.#", // TODO: TM: field is not populated on read
-						"storage_policy_names.0", // TODO: TM: field is not populated on read
-						"is_enabled",             // TODO: TM: field is not populated on read
+						"is_enabled", // TODO: TM: field is not populated on read
 					}),
 				),
 			},
@@ -126,9 +124,7 @@ func TestAccVcdTmRegion(t *testing.T) {
 				ImportStateVerify: true,
 				ImportStateId:     params["Testname"].(string),
 				ImportStateVerifyIgnore: []string{
-					"storage_policy_names.#", // TODO: TM: field is not populated on read
-					"storage_policy_names.0", // TODO: TM: field is not populated on read
-					"is_enabled",             // TODO: TM: field is not populated on read
+					"is_enabled", // TODO: TM: field is not populated on read
 				},
 			},
 		},
