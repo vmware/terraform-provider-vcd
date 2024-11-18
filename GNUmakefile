@@ -139,6 +139,10 @@ testextnetwork: fmtcheck
 # Runs the acceptance test for tm
 testtm: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' tm"
+# Runs the acceptance test for tm with coverage
+testtm-coverage: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' tm-coverage"
+
 
 testtm-binary-prepare: install
 	cd vcd && go test -tags tm -vcd-add-provider -vcd-short -v .
