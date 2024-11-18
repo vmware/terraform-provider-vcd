@@ -89,8 +89,8 @@ testacc: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
 
 # Runs the acceptance test for tm
-testtmacc: fmtcheck testunit
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' tmacc"
+testtm-acc: fmtcheck testunit
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' tm-acceptance"
 
 # Runs the acceptance test as system administrator for search label
 test-search: testunit

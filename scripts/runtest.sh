@@ -410,7 +410,7 @@ case $wanted in
     vm)
         acceptance_test vm
         ;;
-    tmacc)
+    tm-acceptance)
         acceptance_test tm
         ;;
     network)
