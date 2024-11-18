@@ -162,7 +162,7 @@ In order to run the full suite of Acceptance tests for **Cloud Director**, run `
 $ make testacc
 ```
 
-To run full suite of **Tenant Manager** acceptance tests, run `make testtmacc`.
+To run full suite of **Tenant Manager** acceptance tests, run `make make testtm-acc`.
 
 The acceptance tests will run against your own vCloud Director setup, using the configuration in your file `./vcd/vcd_test_config.json`
 See the file `./vcd/sample_vcd_test_config.json` for an example of which variables need to be defined.
@@ -335,13 +335,23 @@ make testtm-binary
 All the tests run unattended, stopping only if there is an error.
 
 It is possible to customise running of the binary tests by preparing them and then running the test
-script from the `tests-artifacts` directory. For **Cloud Director** the first command is `make
-test-binary-prepare`, while for **Tenant Manager**, it is `testtm-binary-prepare`:
+script from the `tests-artifacts` directory. 
 
-```bash
-make test-binary-prepare # or make testtm-binary-prepare for Tenant Manager
-[...]
+For **Cloud Director** the first command to prepare binary test snippets is:
 
+```
+make test-binary-prepare
+```
+
+Alternatively, for **Tenant Manager** the command is 
+
+```
+make testtm-binary-prepare
+```
+
+The following commands can be used to run tests with the generated binary test snippets:
+
+```
 cd ./vcd/test-artifacts
 ./test-binary.sh help
 
