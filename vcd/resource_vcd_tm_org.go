@@ -184,7 +184,7 @@ func validateRenameOrgDisabled(d *schema.ResourceData, oldCfg *govcd.TmOrg, newC
 	if d.HasChange("name") &&
 		// this condition is a negative xor - it will be matched if Org is not transitioning from or to disabled state
 		((!newCfg.IsEnabled && !oldCfg.TmOrg.IsEnabled) || newCfg.IsEnabled && oldCfg.TmOrg.IsEnabled) {
-		return fmt.Errorf("%s must be disabled (is_enabled=false) to change name", labelTmOrg)
+		return fmt.Errorf("%s must be disabled (is_enabled=false) to change name because it changes tenant login URL", labelTmOrg)
 	}
 
 	return nil

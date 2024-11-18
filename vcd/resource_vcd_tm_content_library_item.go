@@ -27,27 +27,31 @@ func resourceVcdTmContentLibraryItem() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true, // TODO: TM: Update not supported yet
 				Description: fmt.Sprintf("Name of the %s", labelTmContentLibraryItem),
+			},
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true, // TODO: TM: Update not supported yet
+				Description: fmt.Sprintf("The description of the %s", labelTmContentLibraryItem),
 			},
 			"content_library_id": {
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true, // TODO: TM: Update not supported yet
 				Description: fmt.Sprintf("ID of the Content Library that this %s belongs to", labelTmContentLibraryItem),
 			},
 			"file_path": {
 				Type:        schema.TypeString,
 				Optional:    true, // Not needed when Importing
+				ForceNew:    true, // TODO: TM: Update not supported yet
 				Description: fmt.Sprintf("Path to the OVA/ISO to create the %s", labelTmContentLibraryItem),
 			},
 			"creation_date": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: fmt.Sprintf("The ISO-8601 timestamp representing when this %s was created", labelTmContentLibraryItem),
-			},
-			"description": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: fmt.Sprintf("The description of the %s", labelTmContentLibraryItem),
 			},
 			"image_identifier": {
 				Type:        schema.TypeString,
@@ -111,8 +115,10 @@ func resourceVcdTmContentLibraryItemCreate(ctx context.Context, d *schema.Resour
 	return createResource(ctx, d, meta, c)
 }
 
-func resourceVcdTmContentLibraryItemUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	vcdClient := meta.(*VCDClient)
+func resourceVcdTmContentLibraryItemUpdate(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	// TODO: TM: Update is not supported yet
+	return diag.Errorf("update not supported")
+	/*vcdClient := meta.(*VCDClient)
 
 	clId := d.Get("content_library_id").(string)
 	cl, err := vcdClient.GetContentLibraryById(clId)
@@ -127,7 +133,7 @@ func resourceVcdTmContentLibraryItemUpdate(ctx context.Context, d *schema.Resour
 		resourceReadFunc: resourceVcdTmContentLibraryItemRead,
 	}
 
-	return updateResource(ctx, d, meta, c)
+	return updateResource(ctx, d, meta, c)*/
 }
 
 func resourceVcdTmContentLibraryItemRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
@@ -164,7 +170,7 @@ func resourceVcdTmContentLibraryItemDelete(ctx context.Context, d *schema.Resour
 	return deleteResource(ctx, d, meta, c)
 }
 
-func resourceVcdTmContentLibraryItemImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdTmContentLibraryItemImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
 	id := strings.Split(d.Id(), ImportSeparator)
@@ -187,7 +193,7 @@ func resourceVcdTmContentLibraryItemImport(ctx context.Context, d *schema.Resour
 	return []*schema.ResourceData{d}, nil
 }
 
-func getContentLibraryItemType(vcdClient *VCDClient, d *schema.ResourceData) (*types.ContentLibraryItem, error) {
+func getContentLibraryItemType(_ *VCDClient, d *schema.ResourceData) (*types.ContentLibraryItem, error) {
 	t := &types.ContentLibraryItem{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
