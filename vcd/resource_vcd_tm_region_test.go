@@ -72,10 +72,11 @@ func TestAccVcdTmRegion(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_tm_region.test", "memory_capacity_mib"),
 					resource.TestCheckResourceAttrSet("vcd_tm_region.test", "memory_reservation_capacity_mib"),
 					resource.TestCheckResourceAttr("vcd_tm_region.test", "status", "READY"),
+					resource.TestCheckResourceAttr("vcd_tm_region.test", "storage_policy_names.#", "1"),
+					resource.TestCheckTypeSetElemAttr("vcd_tm_region.test", "storage_policy_names.*", testConfig.Tm.VcenterStorageProfile),
 
 					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor.test", "id"),
 					resource.TestCheckResourceAttrPair("data.vcd_tm_supervisor.test", "vcenter_id", "vcd_vcenter.test", "id"),
-
 					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor_zone.test", "id"),
 					resource.TestCheckResourceAttrPair("data.vcd_tm_supervisor_zone.test", "vcenter_id", "vcd_vcenter.test", "id"),
 					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor_zone.test", "cpu_capacity_mhz"),
@@ -98,6 +99,8 @@ func TestAccVcdTmRegion(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_tm_region.test", "memory_capacity_mib"),
 					resource.TestCheckResourceAttrSet("vcd_tm_region.test", "memory_reservation_capacity_mib"),
 					resource.TestCheckResourceAttr("vcd_tm_region.test", "status", "READY"),
+					resource.TestCheckResourceAttr("vcd_tm_region.test", "storage_policy_names.#", "1"),
+					resource.TestCheckTypeSetElemAttr("vcd_tm_region.test", "storage_policy_names.*", testConfig.Tm.VcenterStorageProfile),
 
 					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor.test", "id"),
 					resource.TestCheckResourceAttrPair("data.vcd_tm_supervisor.test", "vcenter_id", "vcd_vcenter.test", "id"),
