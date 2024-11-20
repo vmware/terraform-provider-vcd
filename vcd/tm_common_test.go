@@ -3,8 +3,9 @@
 package vcd
 
 import (
-	"github.com/vmware/go-vcloud-director/v3/govcd"
 	"testing"
+
+	"github.com/vmware/go-vcloud-director/v3/govcd"
 )
 
 // getVCenterHcl gets a vCenter data source as first returned parameter and its HCL reference as second one,
@@ -50,10 +51,10 @@ func getNsxManagerHcl(t *testing.T) (string, string) {
 	nsxtManager, err := vcdClient.GetNsxtManagerOpenApiByUrl(testConfig.Tm.NsxtManagerUrl)
 	if err == nil {
 		return `
-data "vcd_nsxt_manager" "nsx_manager" {
+data "vcd_tm_nsxt_manager" "nsx_manager" {
   name = "` + nsxtManager.NsxtManagerOpenApi.Name + `"
 }
-`, "data.vcd_nsxt_manager.nsx_manager"
+`, "data.vcd_tm_nsxt_manager.nsx_manager"
 	}
 	if !govcd.ContainsNotFound(err) {
 		t.Fatal(err)
@@ -64,7 +65,7 @@ data "vcd_nsxt_manager" "nsx_manager" {
 		return "", ""
 	}
 	return `
-resource "vcd_nsxt_manager" "nsx_manager" {
+resource "vcd_tm_nsxt_manager" "nsx_manager" {
   name                   = "` + t.Name() + `"
   description            = "` + t.Name() + `"
   username               = "` + testConfig.Tm.NsxtManagerUsername + `"
@@ -74,7 +75,7 @@ resource "vcd_nsxt_manager" "nsx_manager" {
   auto_trust_certificate = true
 }
 
-`, "vcd_nsxt_manager.nsx_manager"
+`, "vcd_tm_nsxt_manager.nsx_manager"
 }
 
 // getRegionHcl gets a Region data source as first returned parameter and its HCL reference as second one,

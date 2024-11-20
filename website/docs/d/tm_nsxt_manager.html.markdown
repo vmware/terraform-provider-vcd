@@ -19,7 +19,7 @@ requires at least VCD *10.1.1+* and NSX-T *3.0+*.
 ## Example Usage 
 
 ```hcl
-data "vcd_nsxt_manager" "main" {
+data "vcd_tm_nsxt_manager" "main" {
   name = "nsxt-manager-one"
 }
 ```
@@ -37,5 +37,5 @@ The following arguments are supported:
 * `href` - Full URL of the manager
 
 All attributes defined in
-[`vcd_nsxt_manager`](/providers/vmware/vcd/latest/docs/resources/nsxt_manager#attribute-reference)
+[`vcd_tm_nsxt_manager`](/providers/vmware/vcd/latest/docs/resources/tm_nsxt_manager#attribute-reference)
 are supported.

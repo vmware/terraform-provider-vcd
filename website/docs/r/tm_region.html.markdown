@@ -24,7 +24,7 @@ data "vcd_tm_supervisor" "one" {
 resource "vcd_tm_region" "one" {
   name                 = "region-one"
   is_enabled           = true
-  nsx_manager_id       = data.vcd_nsxt_manager.test.id
+  nsx_manager_id       = data.vcd_tm_nsxt_manager.test.id
   supervisor_ids       = [data.vcd_tm_supervisor.test.id]
   storage_policy_names = ["vSAN Default Storage Policy"]
 }
@@ -38,7 +38,7 @@ The following arguments are supported:
 * `description` - (Optional) An optional description for Region
 * `is_enabled` - (Optional) Defines if the Region is enabled. Default is `true`
 * `nsx_manager_id` - (Required) NSX-T Manager assigned to this region. Can be looked up using
-  [`vcd_nsxt_manager`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_manager)
+  [`vcd_tm_nsxt_manager`](/providers/vmware/vcd/latest/docs/data-sources/tm_nsxt_manager)
 * `supervisor_ids` - (Required) A set of Supervisor IDs. At least one is required. Can be looked up
   using [`vcd_tm_supervisor`](/providers/vmware/vcd/latest/docs/data-sources/tm_supervisor)
 * `storage_policy_names` - (Required) A set of Storage Policy names to be used for this region. At

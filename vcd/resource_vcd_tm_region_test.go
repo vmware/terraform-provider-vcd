@@ -61,7 +61,7 @@ func TestAccVcdTmRegion(t *testing.T) {
 			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxt_manager.test", "id", regexp.MustCompile(`^urn:vcloud:nsxtmanager:`)),
+					resource.TestMatchResourceAttr("vcd_tm_nsxt_manager.test", "id", regexp.MustCompile(`^urn:vcloud:nsxtmanager:`)),
 					resource.TestCheckResourceAttrSet("vcd_vcenter.test", "id"),
 					resource.TestCheckResourceAttrSet("vcd_tm_region.test", "id"),
 					cachedRegionId.cacheTestResourceFieldValue("vcd_tm_region.test", "id"),
@@ -88,7 +88,7 @@ func TestAccVcdTmRegion(t *testing.T) {
 			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxt_manager.test", "id", regexp.MustCompile(`^urn:vcloud:nsxtmanager:`)),
+					resource.TestMatchResourceAttr("vcd_tm_nsxt_manager.test", "id", regexp.MustCompile(`^urn:vcloud:nsxtmanager:`)),
 					resource.TestCheckResourceAttrSet("vcd_vcenter.test", "id"),
 					resource.TestCheckResourceAttrSet("vcd_tm_region.test", "id"),
 					cachedRegionId.testCheckCachedResourceFieldValueChanged("vcd_tm_region.test", "id"),
@@ -137,7 +137,7 @@ func TestAccVcdTmRegion(t *testing.T) {
 }
 
 const testAccVcdRegionPrerequisites = `
-resource "vcd_nsxt_manager" "test" {
+resource "vcd_tm_nsxt_manager" "test" {
   name                   = "{{.Testname}}"
   description            = "terraform test"
   username               = "{{.NsxtManagerUsername}}"
@@ -176,7 +176,7 @@ resource "vcd_tm_region" "test" {
   name                 = "{{.Testname}}"
   description          = "Terraform description"
   is_enabled           = true
-  nsx_manager_id       = vcd_nsxt_manager.test.id
+  nsx_manager_id       = vcd_tm_nsxt_manager.test.id
   supervisor_ids       = [data.vcd_tm_supervisor.test.id]
   storage_policy_names = ["{{.VcenterStorageProfile}}"]
 }
@@ -188,7 +188,7 @@ resource "vcd_tm_region" "test" {
   name                 = "{{.Testname}}"
   description          = "Terraform description updated"
   is_enabled           = true
-  nsx_manager_id       = vcd_nsxt_manager.test.id
+  nsx_manager_id       = vcd_tm_nsxt_manager.test.id
   supervisor_ids       = [data.vcd_tm_supervisor.test.id]
   storage_policy_names = ["{{.VcenterStorageProfile}}"]
 }
