@@ -88,6 +88,10 @@ testacc-orguser: testunit
 testacc: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
 
+# Runs the full acceptance test as system administrator
+testacc-coverage: testunit
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
+
 # Runs the acceptance test as system administrator for search label
 test-search: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' search"

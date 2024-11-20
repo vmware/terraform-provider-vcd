@@ -373,6 +373,9 @@ case $wanted in
     acceptance)
         acceptance_test functional
         ;;
+    acceptance-coverage)
+        acceptance_test functional "-coverprofile testacc.cover"
+        ;;
     sequential-acceptance)
         acceptance_test functional "-race --parallel=1"
         ;;
