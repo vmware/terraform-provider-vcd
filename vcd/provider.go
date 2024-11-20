@@ -181,6 +181,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_tm_supervisor":                                datasourceVcdTmSupervisor(),                            // 4.0
 	"vcd_tm_supervisor_zone":                           datasourceVcdTmSupervisorZone(),                        // 4.0
 	"vcd_tm_region":                                    datasourceVcdTmRegion(),                                // 4.0
+	"vcd_tm_nsxt_manager":                              datasourceVcdTmNsxtManager(),                           // 4.0
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -308,7 +309,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_alb_virtual_service_http_resp_rules":     resourceVcdAlbVirtualServiceRespRules(),              // 3.14
 	"vcd_nsxt_alb_virtual_service_http_sec_rules":      resourceVcdAlbVirtualServiceSecRules(),               // 3.14
 	"vcd_tm_content_library":                           resourceVcdTmContentLibrary(),                        // 4.0
-	"vcd_nsxt_manager":                                 resourceVcdNsxtManager(),                             // 4.0
+	"vcd_tm_nsxt_manager":                              resourceVcdTmNsxtManager(),                           // 4.0
 	"vcd_vcenter":                                      resourceVcdVcenter(),                                 // 4.0
 	"vcd_tm_org":                                       resourceVcdTmOrg(),                                   // 4.0
 	"vcd_tm_region":                                    resourceVcdTmRegion(),                                // 4.0

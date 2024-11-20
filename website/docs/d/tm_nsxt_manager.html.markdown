@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_nsxt_manager"
-sidebar_current: "docs-vcd-data-source-nsxt-manager"
+page_title: "VMware Cloud Director: vcd_tm_nsxt_manager"
+sidebar_current: "docs-vcd-data-source-tm-nsxt-manager"
 description: |-
-  Provides a data source for available NSX-T manager.
+  Provides a data source for available Tenant Manager NSX-T manager.
 ---
 
-# vcd\_nsxt\_manager
+# vcd\_tm\_nsxt\_manager
 
-Provides a data source for NSX-T manager.
+Provides a data source for available Tenant Manager NSX-T manager.
 
 Supported in provider *v3.0+*
 
@@ -35,3 +35,7 @@ The following arguments are supported:
 
 * `id` - ID of the manager
 * `href` - Full URL of the manager
+
+All attributes defined in
+[`vcd_nsxt_manager`](/providers/vmware/vcd/latest/docs/resources/nsxt_manager#attribute-reference)
+are supported.
