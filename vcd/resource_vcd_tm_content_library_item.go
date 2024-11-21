@@ -17,7 +17,7 @@ func resourceVcdTmContentLibraryItem() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdTmContentLibraryItemCreate,
 		ReadContext:   resourceVcdTmContentLibraryItemRead,
-		UpdateContext: resourceVcdTmContentLibraryItemUpdate,
+		//UpdateContext: resourceVcdTmContentLibraryItemUpdate,
 		DeleteContext: resourceVcdTmContentLibraryItemDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdTmContentLibraryItemImport,
@@ -84,7 +84,7 @@ func resourceVcdTmContentLibraryItem() *schema.Resource {
 				Description: fmt.Sprintf("Status of this %s", labelTmContentLibraryItem),
 			},
 			"version": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: fmt.Sprintf("The version of this %s. For a subscribed library, this version is same as in publisher library", labelTmContentLibraryItem),
 			},
@@ -115,26 +115,26 @@ func resourceVcdTmContentLibraryItemCreate(ctx context.Context, d *schema.Resour
 	return createResource(ctx, d, meta, c)
 }
 
-func resourceVcdTmContentLibraryItemUpdate(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	// TODO: TM: Update is not supported yet
-	return diag.Errorf("update not supported")
-	/*vcdClient := meta.(*VCDClient)
-
-	clId := d.Get("content_library_id").(string)
-	cl, err := vcdClient.GetContentLibraryById(clId)
-	if err != nil {
-		return diag.Errorf("could not retrieve Content Library with ID '%s': %s", clId, err)
-	}
-
-	c := crudConfig[*govcd.ContentLibraryItem, types.ContentLibraryItem]{
-		entityLabel:      labelTmContentLibraryItem,
-		getTypeFunc:      getContentLibraryItemType,
-		getEntityFunc:    cl.GetContentLibraryItemById,
-		resourceReadFunc: resourceVcdTmContentLibraryItemRead,
-	}
-
-	return updateResource(ctx, d, meta, c)*/
-}
+//func resourceVcdTmContentLibraryItemUpdate(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+//	// TODO: TM: Update is not supported yet
+//	return diag.Errorf("update not supported")
+//	vcdClient := meta.(*VCDClient)
+//
+//	clId := d.Get("content_library_id").(string)
+//	cl, err := vcdClient.GetContentLibraryById(clId)
+//	if err != nil {
+//		return diag.Errorf("could not retrieve Content Library with ID '%s': %s", clId, err)
+//	}
+//
+//	c := crudConfig[*govcd.ContentLibraryItem, types.ContentLibraryItem]{
+//		entityLabel:      labelTmContentLibraryItem,
+//		getTypeFunc:      getContentLibraryItemType,
+//		getEntityFunc:    cl.GetContentLibraryItemById,
+//		resourceReadFunc: resourceVcdTmContentLibraryItemRead,
+//	}
+//
+//	return updateResource(ctx, d, meta, c)
+//}
 
 func resourceVcdTmContentLibraryItemRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
@@ -207,8 +207,20 @@ func setContentLibraryItemData(d *schema.ResourceData, cli *govcd.ContentLibrary
 		return fmt.Errorf("cannot save state for nil Content Library Item")
 	}
 
-	d.SetId(cli.ContentLibraryItem.ID)
+	dSet(d, "content_library_id", cli.ContentLibraryItem.ContentLibrary.ID)
 	dSet(d, "name", cli.ContentLibraryItem.Name)
+	dSet(d, "description", cli.ContentLibraryItem.Description)
+	dSet(d, "creation_date", cli.ContentLibraryItem.CreationDate)
+	dSet(d, "image_identifier", cli.ContentLibraryItem.ImageIdentifier)
+	dSet(d, "is_published", cli.ContentLibraryItem.IsPublished)
+	dSet(d, "is_subscribed", cli.ContentLibraryItem.IsSubscribed)
+	dSet(d, "last_successful_sync", cli.ContentLibraryItem.LastSuccessfulSync)
+	if cli.ContentLibraryItem.Org != nil {
+		dSet(d, "owner_org_id", cli.ContentLibraryItem.Org.ID)
+	}
+	dSet(d, "status", cli.ContentLibraryItem.Status)
+	dSet(d, "version", cli.ContentLibraryItem.Version)
+	d.SetId(cli.ContentLibraryItem.ID)
 
 	return nil
 }

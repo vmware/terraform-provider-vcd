@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/vmware/go-vcloud-director/v3/types/v56"
 )
 
 func datasourceVcdTmContentLibraryItem() *schema.Resource {
@@ -63,7 +62,7 @@ func datasourceVcdTmContentLibraryItem() *schema.Resource {
 				Description: fmt.Sprintf("Status of this %s", labelTmContentLibraryItem),
 			},
 			"version": {
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: fmt.Sprintf("The version of this %s. For a subscribed library, this version is same as in publisher library", labelTmContentLibraryItem),
 			},
@@ -84,24 +83,10 @@ func datasourceTmContentLibraryItemRead(_ context.Context, d *schema.ResourceDat
 		return diag.Errorf("error retrieving Content Library Item: %s", err)
 	}
 
-	setTmContentLibraryItemData(d, cli.ContentLibraryItem)
+	err = setContentLibraryItemData(d, cli)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 
 	return nil
-}
-
-func setTmContentLibraryItemData(d *schema.ResourceData, cli *types.ContentLibraryItem) {
-	dSet(d, "content_library_id", cli.ContentLibrary.ID) // Cannot be nil
-	dSet(d, "name", cli.Name)
-	dSet(d, "description", cli.Description)
-	dSet(d, "creation_date", cli.CreationDate)
-	dSet(d, "image_identifier", cli.ImageIdentifier)
-	dSet(d, "is_published", cli.IsPublished)
-	dSet(d, "is_subscribed", cli.IsSubscribed)
-	dSet(d, "last_successful_sync", cli.LastSuccessfulSync)
-	if cli.Org != nil {
-		dSet(d, "owner_org_id", cli.Org.ID)
-	}
-	dSet(d, "status", cli.Status)
-	dSet(d, "version", cli.Version)
-	d.SetId(cli.ID)
 }

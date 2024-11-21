@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -21,9 +22,9 @@ func TestAccVcdTmContentLibraryItem(t *testing.T) {
 	contentLibraryHcl, contentLibraryHclRef := getContentLibraryHcl(t, regionHclRef)
 
 	var params = StringMap{
-		"Name":              t.Name(),
+		"Name":              t.Name() + "5",
 		"ContentLibraryRef": fmt.Sprintf("%s.id", contentLibraryHclRef),
-		"OvaPath":           "",
+		"OvaPath":           "../test-resources/test_vapp_template.ova",
 		"Tags":              "tm",
 	}
 	testParamsNotEmpty(t, params)
@@ -41,7 +42,7 @@ func TestAccVcdTmContentLibraryItem(t *testing.T) {
 		return
 	}
 
-	resourceName := "vcd_tm_content_library.cl"
+	resourceName := "vcd_tm_content_library_item.cli"
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -49,9 +50,17 @@ func TestAccVcdTmContentLibraryItem(t *testing.T) {
 			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
-					resource.TestCheckResourceAttr(resourceName, "description", t.Name()),
+					resource.TestCheckResourceAttr(resourceName, "name", params["Name"].(string)),
+					resource.TestCheckResourceAttr(resourceName, "description", params["Name"].(string)),
 					resource.TestCheckResourceAttrPair(resourceName, "content_library_id", contentLibraryHclRef, "id"),
+					resource.TestCheckResourceAttrSet(resourceName, "creation_date"),
+					resource.TestCheckResourceAttr(resourceName, "is_subscribed", "false"),
+					resource.TestCheckResourceAttr(resourceName, "is_published", "false"),
+					resource.TestCheckResourceAttrSet(resourceName, "image_identifier"),
+					resource.TestMatchResourceAttr(resourceName, "owner_org_id", regexp.MustCompile("urn:vcloud:org:")),
+					resource.TestCheckResourceAttr(resourceName, "status", ""),
+					resource.TestCheckNoResourceAttr(resourceName, "last_successful_sync"),
+					resource.TestCheckResourceAttr(resourceName, "version", "1"),
 				),
 			},
 			{
@@ -76,13 +85,14 @@ const testAccVcdTmContentLibraryItemStep1 = `
 resource "vcd_tm_content_library_item" "cli" {
   name               = "{{.Name}}"
   description        = "{{.Name}}"
-  content_library_id = "{{.ContentLibraryRef}}"
+  content_library_id = {{.ContentLibraryRef}}
   file_path          = "{{.OvaPath}}"
 }
 `
 
-const testAccVcdTmContentLibraryItemStep2 = testAccVcdTmContentLibraryStep1 + `
+const testAccVcdTmContentLibraryItemStep2 = testAccVcdTmContentLibraryItemStep1 + `
 data "vcd_tm_content_library_item" "cli_ds" {
-  name = vcd_tm_content_library_item.cli.name
+  name               = vcd_tm_content_library_item.cli.name
+  content_library_id = vcd_tm_content_library_item.cli.content_library_id
 }
 `

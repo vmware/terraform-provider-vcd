@@ -144,15 +144,14 @@ data "vcd_tm_content_library" "content_library" {
 	}
 	return `
 data "vcd_tm_region_storage_policy" "region_storage_policy" {
-  name = "` + testConfig.Tm.RegionStoragePolicy + `"
+  region_id = ` + regionHclRef + `.id 
+  name      = "` + testConfig.Tm.RegionStoragePolicy + `"
 }
 
 resource "vcd_tm_content_library" "content_library" {
   name                 = "` + testConfig.Tm.ContentLibrary + `"
   description          = "` + testConfig.Tm.ContentLibrary + `"
   storage_class_ids    = [data.vcd_tm_region_storage_policy.region_storage_policy.id]
-
-  depends_on           = [` + regionHclRef + `]
 }
 `, "vcd_tm_content_library.content_library"
 }
