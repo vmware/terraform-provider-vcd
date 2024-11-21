@@ -206,11 +206,10 @@ func setRegionData(d *schema.ResourceData, r *govcd.Region) error {
 		return fmt.Errorf("error storing 'supervisors': %s", err)
 	}
 
-	// TODO: TM: storage policies are not returned on read
-	// err = d.Set("storage_policy_names", r.Region.StoragePolicies)
-	// if err != nil {
-	// 	return fmt.Errorf("error storing 'storage_policy_names': %s", err)
-	// }
+	err = d.Set("storage_policy_names", r.Region.StoragePolicies)
+	if err != nil {
+		return fmt.Errorf("error storing 'storage_policy_names': %s", err)
+	}
 
 	return nil
 }
