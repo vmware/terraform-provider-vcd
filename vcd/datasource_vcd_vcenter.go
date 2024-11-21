@@ -128,7 +128,7 @@ func classicVcdVcenterReadStatus(vcdClient *VCDClient, d *schema.ResourceData) d
 			len(vcs), vCenterName)
 	}
 
-	d.Set("status", vcs[0].Status)
+	dSet(d, "status", vcs[0].Status)
 
 	return nil
 }
