@@ -90,7 +90,7 @@ testacc: testunit
 
 # Runs the full acceptance test as system administrator
 testacc-coverage: testunit
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance-coverage"
 
 # Runs the acceptance test as system administrator for search label
 test-search: testunit
