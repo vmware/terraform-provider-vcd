@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -57,7 +58,7 @@ func datasourceVcdVcenter() *schema.Resource {
 				Computed:    true,
 				Description: fmt.Sprintf("Mode of %s", labelVirtualCenter),
 			},
-			"listener_state": {
+			"connection_status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: fmt.Sprintf("Listener state of %s", labelVirtualCenter),
@@ -67,7 +68,7 @@ func datasourceVcdVcenter() *schema.Resource {
 				Computed:    true,
 				Description: fmt.Sprintf("Mode of %s", labelVirtualCenter),
 			},
-			"version": {
+			"vcenter_version": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: fmt.Sprintf("Version of %s", labelVirtualCenter),
@@ -77,16 +78,57 @@ func datasourceVcdVcenter() *schema.Resource {
 				Computed:    true,
 				Description: fmt.Sprintf("%s UUID", labelVirtualCenter),
 			},
+			"vcenter_host": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: fmt.Sprintf("%s hostname", labelVirtualCenter),
+			},
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "vCenter status",
+			},
 		},
 	}
 }
 
 func datasourceVcdVcenterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+	if err := classicVcdVcenterReadStatus(vcdClient, d); err != nil {
+		return err
+	}
+
 	c := crudConfig[*govcd.VCenter, types.VSphereVirtualCenter]{
 		entityLabel:    labelVirtualCenter,
 		getEntityFunc:  vcdClient.GetVCenterByName,
 		stateStoreFunc: setTmVcenterData,
 	}
 	return readDatasource(ctx, d, meta, c)
+}
+
+// classicVcdVcenterReadStatus
+func classicVcdVcenterReadStatus(vcdClient *VCDClient, d *schema.ResourceData) diag.Diagnostics {
+	if vcdClient.Client.IsTm() {
+		return nil
+	}
+	vCenterName := d.Get("name").(string)
+
+	vcs, err := govcd.QueryVirtualCenters(vcdClient.VCDClient, "name=="+url.QueryEscape(vCenterName))
+	if err != nil {
+		return diag.Errorf("error occurred while querying vCenters: %s", err)
+	}
+
+	if len(vcs) == 0 {
+		return diag.Errorf("%s: could not identify single vCenter. Got %d with name '%s'",
+			govcd.ErrorEntityNotFound, len(vcs), vCenterName)
+	}
+
+	if len(vcs) > 1 {
+		return diag.Errorf("could not identify single vCenter. Got %d with name '%s'",
+			len(vcs), vCenterName)
+	}
+
+	d.Set("status", vcs[0].Status)
+
+	return nil
 }

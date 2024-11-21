@@ -61,11 +61,12 @@ The following attributes are exported on this resource:
 * `is_connected` - Defines if the vCenter server is connected.
 * `mode` - One of `NONE`, `IAAS` (scoped to the provider), `SDDC` (scoped to tenants), `MIXED` (both
   uses are possible)
-* `listener_state` - `INITIAL`, `INVALID_SETTINGS`, `UNSUPPORTED`, `DISCONNECTED`, `CONNECTING`,
+* `connection_status` - `INITIAL`, `INVALID_SETTINGS`, `UNSUPPORTED`, `DISCONNECTED`, `CONNECTING`,
   `CONNECTED_SYNCING`, `CONNECTED`, `STOP_REQ`, `STOP_AND_PURGE_REQ`, `STOP_ACK`
 * `cluster_health_status` - Cluster health status. One of `GRAY` , `RED` , `YELLOW` , `GREEN`
 * `version` - vCenter version
 * `uuid` - UUID of vCenter
+* `vcenter_host` - Host of Vcenter server
 
 ## Importing
 

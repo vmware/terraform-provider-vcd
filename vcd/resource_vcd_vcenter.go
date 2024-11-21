@@ -88,7 +88,7 @@ func resourceVcdVcenter() *schema.Resource {
 				Computed:    true,
 				Description: fmt.Sprintf("Mode of %s", labelVirtualCenter),
 			},
-			"listener_state": {
+			"connection_status": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: fmt.Sprintf("Listener state of %s", labelVirtualCenter),
@@ -98,7 +98,7 @@ func resourceVcdVcenter() *schema.Resource {
 				Computed:    true,
 				Description: fmt.Sprintf("Mode of %s", labelVirtualCenter),
 			},
-			"version": {
+			"vcenter_version": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: fmt.Sprintf("Version of %s", labelVirtualCenter),
@@ -107,6 +107,16 @@ func resourceVcdVcenter() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: fmt.Sprintf("%s UUID", labelVirtualCenter),
+			},
+			"vcenter_host": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: fmt.Sprintf("%s hostname", labelVirtualCenter),
+			},
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "vCenter status",
 			},
 		},
 	}
@@ -140,10 +150,15 @@ func setTmVcenterData(d *schema.ResourceData, v *govcd.VCenter) error {
 	dSet(d, "has_proxy", v.VSphereVCenter.HasProxy)
 	dSet(d, "is_connected", v.VSphereVCenter.IsConnected)
 	dSet(d, "mode", v.VSphereVCenter.Mode)
-	dSet(d, "listener_state", v.VSphereVCenter.ListenerState)
+	dSet(d, "connection_status", v.VSphereVCenter.ListenerState)
 	dSet(d, "cluster_health_status", v.VSphereVCenter.ClusterHealthStatus)
-	dSet(d, "version", v.VSphereVCenter.VcVersion)
+	dSet(d, "vcenter_version", v.VSphereVCenter.VcVersion)
 	dSet(d, "uuid", v.VSphereVCenter.Uuid)
+	host, err := url.Parse(v.VSphereVCenter.Url)
+	if err != nil {
+		return fmt.Errorf("error parsing URL for storing 'vcenter_host': %s", err)
+	}
+	dSet(d, "vcenter_host", host.Host)
 
 	d.SetId(v.VSphereVCenter.VcId)
 
