@@ -65,7 +65,7 @@ resource "vcd_tm_content_library" "cl" {
 You can import such Content Library Item into terraform state using the **Content Library name** and the **Item name**, with this command
 
 ```
-terraform import vcd_tm_content_library_item.cli "My Already Existing Catalog"."My Already Existing OVA"
+terraform import vcd_tm_content_library_item.cli "My Already Existing Library"."My Already Existing OVA"
 ```
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
