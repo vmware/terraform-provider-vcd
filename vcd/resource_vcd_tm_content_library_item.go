@@ -17,7 +17,8 @@ func resourceVcdTmContentLibraryItem() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdTmContentLibraryItemCreate,
 		ReadContext:   resourceVcdTmContentLibraryItemRead,
-		//UpdateContext: resourceVcdTmContentLibraryItemUpdate,
+		// TODO: TM: Update not supported yet
+		// UpdateContext: resourceVcdTmContentLibraryItemUpdate,
 		DeleteContext: resourceVcdTmContentLibraryItemDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdTmContentLibraryItemImport,
