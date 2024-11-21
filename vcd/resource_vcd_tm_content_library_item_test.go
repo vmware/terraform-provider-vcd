@@ -22,7 +22,7 @@ func TestAccVcdTmContentLibraryItem(t *testing.T) {
 	contentLibraryHcl, contentLibraryHclRef := getContentLibraryHcl(t, regionHclRef)
 
 	var params = StringMap{
-		"Name":              t.Name() + "5",
+		"Name":              t.Name() + "6",
 		"ContentLibraryRef": fmt.Sprintf("%s.id", contentLibraryHclRef),
 		"OvaPath":           "../test-resources/test_vapp_template.ova",
 		"Tags":              "tm",
@@ -59,21 +59,23 @@ func TestAccVcdTmContentLibraryItem(t *testing.T) {
 					resource.TestCheckResourceAttrSet(resourceName, "image_identifier"),
 					resource.TestMatchResourceAttr(resourceName, "owner_org_id", regexp.MustCompile("urn:vcloud:org:")),
 					resource.TestCheckResourceAttr(resourceName, "status", ""),
-					resource.TestCheckNoResourceAttr(resourceName, "last_successful_sync"),
+					resource.TestCheckResourceAttr(resourceName, "last_successful_sync", ""),
 					resource.TestCheckResourceAttr(resourceName, "version", "1"),
 				),
 			},
 			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
-					resourceFieldsEqual(resourceName, "data.vcd_tm_content_library_item.cli_ds", []string{"file_path"}),
+					// file_path cannot be obtained during reads, that's why it does not appear in data source schema
+					resourceFieldsEqual(resourceName, "data.vcd_tm_content_library_item.cli_ds", []string{"file_path", "%"}),
 				),
 			},
 			{
-				ResourceName:      "vcd_tm_content_library_item.cli",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateId:     params["Name"].(string),
+				ResourceName:            "vcd_tm_content_library_item.cli",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateId:           fmt.Sprintf("%s%s%s", testConfig.Tm.ContentLibrary, ImportSeparator, params["Name"].(string)),
+				ImportStateVerifyIgnore: []string{"file_path"}, // file_path cannot be obtained during imports, that's why it's Optional
 			},
 		},
 	})
