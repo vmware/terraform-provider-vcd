@@ -371,10 +371,10 @@ case $wanted in
         acceptance_test functional
         ;;
     acceptance)
-        acceptance_test "functional unit"
+        acceptance_test "unit functional"
         ;;
     acceptance-coverage)
-        acceptance_test "functional unit" "-coverprofile testacc.cover"
+        acceptance_test "unit functional" "-coverprofile testacc.cover"
         ;;
     sequential-acceptance)
         acceptance_test functional "-race --parallel=1"
