@@ -15,11 +15,11 @@ Supported in provider *v3.12+*
 Supports the following **Container Service Extension** versions:
 
 * [4.1.0](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1/rn/vmware-cloud-director-container-service-extension-41-release-notes/index.html) (Terraform Provider v3.12+)
-* [4.1.1 / 4.1.1a](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1.1/rn/vmware-cloud-director-container-service-extension-411-release-notes/index.html) (Terraform Provider v3.12+)
-* [4.2.0](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.2/rn/vmware-cloud-director-container-service-extension-42-release-notes/index.html) (Terraform Provider v3.12+)
-* [4.2.1](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.2.1/rn/vmware-cloud-director-container-service-extension-421-release-notes/index.html) (Terraform Provider v3.12+)
-* [4.2.2](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.2.2/rn/vmware-cloud-director-container-service-extension-422-release-notes/index.html) (Terraform Provider v4.0+)
-* [4.2.3](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.2.3/rn/vmware-cloud-director-container-service-extension-423-release-notes/index.html) (Terraform Provider v4.0+)
+* [4.1.1 / 4.1.1a](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1.1/rn/vmware-cloud-director-container-service-extension-411-release-notes/index.html) (Terraform Provider v3.12 or above)
+* [4.2.0](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.2/rn/vmware-cloud-director-container-service-extension-42-release-notes/index.html) (Terraform Provider v3.12 or above)
+* [4.2.1](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.2.1/rn/vmware-cloud-director-container-service-extension-421-release-notes/index.html) (Terraform Provider v3.12 or above)
+* [4.2.2](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.2.2/rn/vmware-cloud-director-container-service-extension-422-release-notes/index.html) (Terraform Provider v3.14.1 or above)
+* [4.2.3](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.2.3/rn/vmware-cloud-director-container-service-extension-423-release-notes/index.html) (Terraform Provider v3.14.1 or above)
 
 -> To install CSE in VMware Cloud Director, please follow [this guide](/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install)
 

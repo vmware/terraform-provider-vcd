@@ -20,8 +20,8 @@ This guide can be used to install the following **Container Service Extension** 
 
 * 4.2.0 (VCD Terraform Provider v3.12 or above)
 * 4.2.1 (VCD Terraform Provider v3.12 or above)
-* 4.2.2 (VCD Terraform Provider v4.0 or above)
-* 4.2.3 (VCD Terraform Provider v4.0 or above)
+* 4.2.2 (VCD Terraform Provider v3.14.1 or above)
+* 4.2.3 (VCD Terraform Provider v3.14.1 or above)
 
 ## Pre-requisites
 
