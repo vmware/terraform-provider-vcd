@@ -16,15 +16,21 @@ will allow tenant users to deploy **Tanzu Kubernetes Grid Multi-cloud (TKGm)** c
 To know more about CSE [4.2](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.2/rn/vmware-cloud-director-container-service-extension-42-release-notes/index.html),
 you can visit [the documentation][cse_docs].
 
+This guide can be used to install the following **Container Service Extension** versions:
+
+* 4.2.0 (VCD Terraform Provider v3.12 or above)
+* 4.2.1 (VCD Terraform Provider v3.12 or above)
+* 4.2.2 (VCD Terraform Provider v4.0 or above)
+* 4.2.3 (VCD Terraform Provider v4.0 or above)
+
 ## Pre-requisites
 
 -> Please read also the pre-requisites section in the [CSE documentation][cse_docs].
 
 In order to complete the steps described in this guide, please be aware:
 
-* CSE 4.2 is supported from VCD v10.4.2 or above, as specified in the [Product Interoperability Matrix][product_matrix].
+* CSE 4.2.0 is supported from VCD 10.4.2 or above, but CSE 4.2.2 is supported on VCD 10.6.0, as specified in the [Product Interoperability Matrix][product_matrix].
   Please check that the target VCD appliance matches the criteria.
-* Terraform provider needs to be v3.12.0 or above.
 * Both CSE Server and the Bootstrap clusters require outbound Internet connectivity.
 * CSE 4.2 makes use of [ALB](/providers/vmware/vcd/latest/docs/guides/nsxt_alb) capabilities.
 
@@ -182,7 +188,7 @@ Then it will upload the required OVAs to them. The OVAs can be specified in `ter
 * `cse_ova_folder`: This will reference the path to the CSE OVA, as an absolute or relative path. It should **not** end with a trailing `/`.
 * `cse_ova_file`: This will reference the file name of the CSE OVA, like `VMware_Cloud_Director_Container_Service_Extension-4.2.1.ova`.
 
--> To download the required OVAs, please refer to the [CSE documentation][cse_docs]. 
+-> To download the required OVAs, please refer to the [CSE documentation][cse_docs].
 You can also check the [Product Interoperability Matrix][product_matrix] to confirm the appropriate version of TKGm.
 
 ~> Both CSE Server and TKGm OVAs are heavy. Please take into account that the upload process could take more than 30 minutes, depending
@@ -481,6 +487,26 @@ resource "vcd_global_role" "k8s_cluster_author" {
 After applying the changes with `terraform apply`, you also need to update the CSE Server OVA to 4.2.1 and restart,
 like it was done [in the previous section](#update-cse-server).
 
+## Upgrade from CSE 4.2.1 to 4.2.2 or 4.2.3
+
+In this case, you need to update the CSE Server Configuration, for example in 4.2.3:
+
+```hcl
+resource "vcd_rde" "vcdkeconfig_instance" {
+  # ...omitted
+  input_entity = templatefile(var.vcdkeconfig_template_filepath, {
+    # ...omitted
+    capvcd_version        = "1.3.2" # It was 1.3.0 in 4.2.1
+    cpi_version           = "1.6.1" # It was 1.6.0 in 4.2.1
+    csi_version           = "1.6.0"
+    rde_projector_version = "0.7.1" # It was 0.7.0 in 4.2.1
+  })
+}
+```
+
+After applying the changes with `terraform apply`, you also need to update the CSE Server OVA to 4.2.3 and restart,
+like it was done [in the previous section](#update-cse-server).
+
 ## Update CSE Server Configuration
 
 To make changes to the existing server configuration, you should be able to locate the [`vcd_rde`][rde] resource named `vcdkeconfig_instance`
@@ -516,7 +542,7 @@ This must be done as a 2-step operation.
 To upgrade the CSE Server appliance, first you need to upload a new CSE Server OVA to the CSE catalog and then replace
 the reference to the [vApp Template][catalog_vapp_template] in the CSE Server VM.
 
-In the [step 2 configuration][step2], you can find the `cse_ova` [vApp Template][catalog_vapp_template] and the 
+In the [step 2 configuration][step2], you can find the `cse_ova` [vApp Template][catalog_vapp_template] and the
 `cse_server_vm` [VM][vm] that were applied during the installation process.
 Then you can create a new `vcd_catalog_vapp_template` and modify `cse_server_vm` to reference it:
 
@@ -542,7 +568,7 @@ resource "vcd_vapp_vm" "cse_server_vm" {
 
 ## Working with Kubernetes clusters
 
-Please read the specific guide on that topic [here][cse_cluster_management_guide].
+Please use the `vcd_cse_kubernetes_cluster` resource that you can find [here][cse_cluster_resource].
 
 ## Uninstall CSE
 
@@ -554,7 +580,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [api_token]: /providers/vmware/vcd/latest/docs/resources/api_token
 [catalog]: /providers/vmware/vcd/latest/docs/resources/catalog
 [catalog_vapp_template_ds]: /providers/vmware/vcd/latest/docs/data-sources/catalog_vapp_template
-[cse_cluster_management_guide]: /providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_cluster_management
+[cse_cluster_resource]: /providers/vmware/vcd/latest/docs/resources/cse_kubernetes_cluster
 [cse_docs]: https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/index.html
 [edge_cluster]: /providers/vmware/vcd/latest/docs/data-sources/nsxt_edge_cluster
 [edge_gateway]: /providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway
@@ -564,7 +590,7 @@ Once all clusters are removed in the background by CSE Server, you may destroy t
 [nsxt_tier0_router]: /providers/vmware/vcd/latest/docs/data-sources/nsxt_tier0_router
 [org]: /providers/vmware/vcd/latest/docs/resources/org
 [org_d]: /providers/vmware/vcd/latest/docs/data-sources/org
-[product_matrix]: https://interopmatrix.vmware.com/Interoperability?col=659,&row=0
+[product_matrix]: https://interopmatrix.broadcom.com/Interoperability
 [provider_gateway]: /providers/vmware/vcd/latest/docs/resources/external_network_v2
 [provider_vdc]: /providers/vmware/vcd/latest/docs/data-sources/provider_vdc
 [rights_bundle]: /providers/vmware/vcd/latest/docs/resources/rights_bundle

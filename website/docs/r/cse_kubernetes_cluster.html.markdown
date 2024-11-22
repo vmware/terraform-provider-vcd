@@ -14,10 +14,12 @@ Supported in provider *v3.12+*
 
 Supports the following **Container Service Extension** versions:
 
-* [4.1.0](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1/rn/vmware-cloud-director-container-service-extension-41-release-notes/index.html)
-* [4.1.1 / 4.1.1a](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1.1/rn/vmware-cloud-director-container-service-extension-411-release-notes/index.html)
-* [4.2.0](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.2/rn/vmware-cloud-director-container-service-extension-42-release-notes/index.html)
-* [4.2.1](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.2.1/rn/vmware-cloud-director-container-service-extension-421-release-notes/index.html)
+* [4.1.0](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1/rn/vmware-cloud-director-container-service-extension-41-release-notes/index.html) (Terraform Provider v3.12+)
+* [4.1.1 / 4.1.1a](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.1.1/rn/vmware-cloud-director-container-service-extension-411-release-notes/index.html) (Terraform Provider v3.12+)
+* [4.2.0](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.2/rn/vmware-cloud-director-container-service-extension-42-release-notes/index.html) (Terraform Provider v3.12+)
+* [4.2.1](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.2.1/rn/vmware-cloud-director-container-service-extension-421-release-notes/index.html) (Terraform Provider v3.12+)
+* [4.2.2](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.2.2/rn/vmware-cloud-director-container-service-extension-422-release-notes/index.html) (Terraform Provider v4.0+)
+* [4.2.3](https://docs.vmware.com/en/VMware-Cloud-Director-Container-Service-Extension/4.2.3/rn/vmware-cloud-director-container-service-extension-423-release-notes/index.html) (Terraform Provider v4.0+)
 
 -> To install CSE in VMware Cloud Director, please follow [this guide](/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install)
 
@@ -33,7 +35,7 @@ data "vcd_catalog" "tkg_catalog" {
 data "vcd_catalog_vapp_template" "tkg_ova" {
   org        = data.vcd_catalog.tkg_catalog.org
   catalog_id = data.vcd_catalog.tkg_catalog.id
-  name       = "ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc"
+  name       = "ubuntu-2204-kube-v1.30.2+vmware.1-tkg.1-00b380629c7a9c10afaaa9df46ba2283"
 }
 
 data "vcd_org_vdc" "vdc" {
@@ -73,7 +75,7 @@ resource "vcd_api_token" "token" {
 }
 
 resource "vcd_cse_kubernetes_cluster" "my_cluster" {
-  cse_version            = "4.2.1"
+  cse_version            = "4.2.3"
   runtime                = "tkg"
   name                   = "test2"
   kubernetes_template_id = data.vcd_catalog_vapp_template.tkg_ova.id
@@ -120,7 +122,7 @@ output "kubeconfig" {
 
 The following arguments are supported:
 
-* `cse_version` - (Required) Specifies the CSE version to use. Accepted versions: `4.1.0`, `4.1.1` (also for *4.1.1a*), `4.2.0` and `4.2.1`
+* `cse_version` - (Required) Specifies the CSE version to use. Accepted versions: `4.1.0`, `4.1.1` (also for *4.1.1a*), `4.2.0`, `4.2.1`, `4.2.2` (*v4.0+*) and `4.2.3` (*v4.0+*)
 * `runtime` - (Optional) Specifies the Kubernetes runtime to use. Defaults to `tkg` (Tanzu Kubernetes Grid)
 * `name` - (Required) The name of the Kubernetes cluster. It must contain only lowercase alphanumeric characters or "-",
   start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters
@@ -200,7 +202,7 @@ This provider has two arguments for the `worker_pool` block since version v3.13.
 They allow to define the maximum and minimum amount of nodes of a pool, respectively. They specify the autoscaling
 capabilities of the given Worker Pool as defined [here](https://www.vmware.com/content/dam/digitalmarketing/vmware/en/pdf/docs/vmw-whitepaper-cluster-auto-scaler.pdf).
 
-If at least **one** `worker_pool` block has `autoscaler_max_replicas` and `autoscaler_min_replicas` defined (and subsequently, `machine_count=0`), 
+If at least **one** `worker_pool` block has `autoscaler_max_replicas` and `autoscaler_min_replicas` defined (and subsequently, `machine_count=0`),
 the provider will deploy the Kubernetes Autoscaler in the cluster `kube-system` namespace, with the following components:
 
 * A `Deployment`, this is the Autoscaler deployment definition
@@ -337,7 +339,7 @@ such as `terraform plan`. Each comment in the code gives some context about how 
 # None of the arguments are required during the Import phase, but they will be asked when operating it afterwards
 resource "vcd_cse_kubernetes_cluster" "imported_cluster" {
   name                   = "test2"                                   # The name of the existing cluster
-  cse_version            = "4.2.1"                                   # The CSE version installed in your VCD
+  cse_version            = "4.2.3"                                   # The CSE version installed in your VCD
   kubernetes_template_id = data.vcd_catalog_vapp_template.tkg_ova.id # See below data sources
   vdc_id                 = data.vcd_org_vdc.vdc.id                   # See below data sources
   network_id             = data.vcd_network_routed_v2.routed.id      # See below data sources
@@ -381,7 +383,7 @@ data "vcd_org_vdc" "vdc" {
 data "vcd_catalog_vapp_template" "tkg_ova" {
   org        = data.vcd_catalog.tkg_catalog.org
   catalog_id = data.vcd_catalog.tkg_catalog.id
-  name       = "ubuntu-2004-kube-v1.25.7+vmware.2-tkg.1-8a74b9f12e488c54605b3537acb683bc"
+  name       = "ubuntu-2204-kube-v1.30.2+vmware.1-tkg.1-00b380629c7a9c10afaaa9df46ba2283"
 }
 
 # The network that the existing cluster is using
@@ -429,7 +431,7 @@ at this stage will show the difference between the minimal configuration file an
 
 ~> Terraform warns that this procedure is considered **experimental**. Read more [here](/providers/vmware/vcd/latest/docs/guides/importing_resources)
 
-Given a Cluster ID, like `urn:vcloud:entity:vmware:capvcdCluster:f2d88194-3745-47ef-a6e1-5ee0bbce38f6`, you can write 
+Given a Cluster ID, like `urn:vcloud:entity:vmware:capvcdCluster:f2d88194-3745-47ef-a6e1-5ee0bbce38f6`, you can write
 the following HCL block in your Terraform configuration:
 
 ```hcl
