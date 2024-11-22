@@ -122,7 +122,8 @@ output "kubeconfig" {
 
 The following arguments are supported:
 
-* `cse_version` - (Required) Specifies the CSE version to use. Accepted versions: `4.1.0`, `4.1.1` (also for *4.1.1a*), `4.2.0`, `4.2.1`, `4.2.2` (*v4.0+*) and `4.2.3` (*v4.0+*)
+* `cse_version` - (Required) Specifies the CSE version to use. Accepted versions: `4.1.0`, `4.1.1` (also for *4.1.1a*),
+  `4.2.0`, `4.2.1`, `4.2.2` (VCD Provider *v3.14.1+*) and `4.2.3` (VCD Provider *v3.14.1+*)
 * `runtime` - (Optional) Specifies the Kubernetes runtime to use. Defaults to `tkg` (Tanzu Kubernetes Grid)
 * `name` - (Required) The name of the Kubernetes cluster. It must contain only lowercase alphanumeric characters or "-",
   start with an alphabetic character, end with an alphanumeric, and contain at most 31 characters

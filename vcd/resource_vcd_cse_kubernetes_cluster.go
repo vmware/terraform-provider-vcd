@@ -33,7 +33,6 @@ func resourceVcdCseKubernetesCluster() *schema.Resource {
 			"cse_version": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice([]string{"4.1.0", "4.1.1", "4.2.0", "4.2.1", "4.2.2", "4.2.3"}, false),
 				Description:  "The CSE version to use",
 				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
