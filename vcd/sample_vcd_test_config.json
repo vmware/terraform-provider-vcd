@@ -1,4 +1,5 @@
 {
+  "//": "Sample test configuration file for Cloud Director",
   "//": "Rename this file to vcd_test_config.json and change the values to suit your system",
   "//": "You can safely remove the comments or leave them. The parser will ignore them.",
   "provider": {
@@ -245,23 +246,5 @@
     "edgeGateway": "tenant_edgegateway",
     "ovaCatalog": "tkgm_catalog",
     "ovaName": ""
-  },
-  "tm": {
-    "org": "tf-test",
-    "createRegion": true,
-    "region": "three-zone-region",
-    "regionStoragePolicy": "vSAN Default Storage Policy",
-    "vdc": "three-zone-vdc",
-    "createVcenter": true,
-    "vcenterUsername": "user@vsphere.local",
-    "vcenterPassword": "",
-    "vcenterUrl": "https://vcenter.my-company.com",
-    "vcenterStorageProfile": "vSAN Default Storage Policy",
-    "vcenterSupervisor": "supervisor1",
-    "vcenterSupervisorZone": "zone1",
-    "createNsxtManager": true,
-    "nsxtManagerUsername": "admin",
-    "nsxtManagerPassword": "",
-    "nsxtManagerUrl": "https://nsxmanager.my-company.com"
   }
 }

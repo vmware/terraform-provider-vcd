@@ -1,4 +1,4 @@
-//go:build binary
+//go:build binary && !tm
 
 package vcd
 

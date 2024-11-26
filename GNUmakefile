@@ -88,6 +88,14 @@ testacc-orguser: testunit
 testacc: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
 
+# Runs the acceptance test for tm
+testtm-acc: fmtcheck testunit
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' tm-acceptance"
+
+# Runs the acceptance test for tm with coverage
+testtm-acc-coverage: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' tm-coverage"
+
 # Runs the acceptance test as system administrator for search label
 test-search: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' search"
@@ -136,16 +144,16 @@ testnetwork: fmtcheck
 testextnetwork: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' extnetwork"
 
-# Runs the acceptance test for tm
-testtm: fmtcheck
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' tm"
-# Runs the acceptance test for tm with coverage
-testtm-coverage: fmtcheck
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' tm-coverage"
 
+# runs Tenant Manager test using Terraform binary as system administrator using binary with race detection enabled
+testtm-binary: installrace
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider-tm"
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary"
 
+# generates  Tenant Manager testing scripts in 'vcd/test-artifacts'test using Terraform binary as system administrator
 testtm-binary-prepare: install
-	cd vcd && go test -tags tm -vcd-add-provider -vcd-short -v .
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider-tm"
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary-prepare"
 
 # vets all .go files
 vet:
