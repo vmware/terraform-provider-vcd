@@ -3,6 +3,7 @@
 ## Table of contents
 
 - [Meeting prerequisites: Building the test environment](#meeting-prerequisites-building-the-test-environment)
+- [Tenant Manager vs Cloud Director testing](#tenant-manager-vs-vcd-testing)
 - [Running tests](#running-tests)
 - [Tests split by feature set](#tests-split-by-feature-set)
 - [Adding new tests](#adding-new-tests)
@@ -138,6 +139,12 @@ string `test-ebv-build` + the name or IP of the vCD. For example, for vcd *10.17
 users to retrieve the build-up configuration files and run operations manually on them, even after different vCD were
 configured.
 
+## Tenant Manager vs Cloud Director testing
+
+**Tenant Manager** and **Cloud Director** support different infrastructure resources therefore tests
+must be isolated based on which environment they are being run. The configuration files also differ.
+Examples are `sample_vcd_test_config.json` and `sample_vcd_test_config_tm.json` for **Cloud
+Director** and **Tenant Manager** respectively.
 
 ## Running tests
 
@@ -147,13 +154,15 @@ In order to test the provider, you can simply run `make test`.
 $ make test
 ```
 
-In order to run the full suite of Acceptance tests, run `make testacc`.
+In order to run the full suite of Acceptance tests for **Cloud Director**, run `make testacc`.
 
 *Note:* Acceptance tests create real resources, and often cost money to run.
 
 ```sh
 $ make testacc
 ```
+
+To run full suite of **Tenant Manager** acceptance tests, run `make make testtm-acc`.
 
 The acceptance tests will run against your own vCloud Director setup, using the configuration in your file `./vcd/vcd_test_config.json`
 See the file `./vcd/sample_vcd_test_config.json` for an example of which variables need to be defined.
@@ -311,20 +320,38 @@ terraform tool through a shell script, and for every test we run
 * `terraform plan -detailed-exitcode` (for ensuring that `plan` is empty right after `apply`)
 * `terraform destroy -auto-approve`
 
-The test runs from GNUMakefile, using
+The test for Cloud Director runs from GNUMakefile, using:
 
 ```bash
 make test-binary
 ```
 
-All the tests run unattended, stopping only if there is an error.
-
-It is possible to customise running of the binary tests by preparing them and then running the test script from the `tests-artifacts` directory:
+Running **Tenant Manager** binary tests, using:
 
 ```bash
-make test-binary-prepare
-[...]
+make testtm-binary
+```
 
+All the tests run unattended, stopping only if there is an error.
+
+It is possible to customise running of the binary tests by preparing them and then running the test
+script from the `tests-artifacts` directory. 
+
+For **Cloud Director** the first command to prepare binary test snippets is:
+
+```
+make test-binary-prepare
+```
+
+Alternatively, for **Tenant Manager** the command is 
+
+```
+make testtm-binary-prepare
+```
+
+The following commands can be used to run tests with the generated binary test snippets:
+
+```
 cd ./vcd/test-artifacts
 ./test-binary.sh help
 
@@ -393,6 +420,8 @@ This test ensures that the resources created with the previous version don't hav
 performed with the next version.
 
 ## Custom terraform scripts
+
+**Note** Custom test scripts are not executed for Tenant Manager related binary tests
 
 The commands `make test-binary-prepare` and `make test-binary` have the added benefit of compiling custom Terraform scripts located in `./vcd/test-templates`.
 These tests are similar to the ones produced by the testing framework, but unlike the standard ones, they can be edited by users. And users can also remove and add files to suit their purposes.
