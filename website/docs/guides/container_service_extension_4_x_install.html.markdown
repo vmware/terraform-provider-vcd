@@ -484,7 +484,7 @@ resource "vcd_global_role" "k8s_cluster_author" {
 }
 ```
 
-After applying the changes with `terraform apply`, you also need to update the CSE Server OVA to 4.2.1 and restart,
+After applying the changes with `terraform apply`, you also need to update the CSE Server OVA to 4.2.1 and redeploy,
 like it was done [in the previous section](#update-cse-server).
 
 ## Upgrade from CSE 4.2.1 to 4.2.2 or 4.2.3
@@ -504,8 +504,8 @@ resource "vcd_rde" "vcdkeconfig_instance" {
 }
 ```
 
-After applying the changes with `terraform apply`, you also need to update the CSE Server OVA to 4.2.3 and restart,
-like it was done [in the previous section](#update-cse-server).
+After applying the changes with `terraform apply`, you *may* also need to update the CSE Server OVA to 4.2.2 (take into account that 
+CSE 4.2.3 reuses same OVA from 4.2.2) and redeploy, like it was done [in the previous section](#update-cse-server).
 
 ## Update CSE Server Configuration
 
