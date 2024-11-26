@@ -160,6 +160,17 @@ func setTmVcenterData(d *schema.ResourceData, v *govcd.VCenter) error {
 	}
 	dSet(d, "vcenter_host", host.Host)
 
+	// Status is a derivative value that was present in XML Query API, but is no longer maintained
+	// The value was derived from multiple fields based on a complex logic. Instead, evaluating if
+	// vCenter is ready for operations, would be to rely on `is_enabled`, `is_connected` and
+	// optionally `cluster_health_status` fields.
+	//
+	// The `status` is a rough approximation of this value
+	dSet(d, "status", "NOT_READY")
+	if v.VSphereVCenter.IsConnected && v.VSphereVCenter.ListenerState == "CONNECTED" {
+		dSet(d, "status", "READY")
+	}
+
 	d.SetId(v.VSphereVCenter.VcId)
 
 	return nil

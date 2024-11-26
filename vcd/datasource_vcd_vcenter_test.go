@@ -34,7 +34,7 @@ func TestAccVcdVcenterDS(t *testing.T) {
 					resource.TestMatchResourceAttr("data.vcd_vcenter.vc", "id", regexp.MustCompile("^urn:vcloud:vimserver:.*")),
 					resource.TestCheckResourceAttrSet("data.vcd_vcenter.vc", "vcenter_version"),
 					resource.TestCheckResourceAttrSet("data.vcd_vcenter.vc", "vcenter_host"),
-					resource.TestCheckResourceAttrSet("data.vcd_vcenter.vc", "status"),
+					resource.TestCheckResourceAttr("data.vcd_vcenter.vc", "status", "READY"),
 					resource.TestCheckResourceAttrSet("data.vcd_vcenter.vc", "is_enabled"),
 					resource.TestCheckResourceAttrSet("data.vcd_vcenter.vc", "connection_status"),
 				),

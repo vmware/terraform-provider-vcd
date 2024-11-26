@@ -84,6 +84,7 @@ func TestAccVcdVcenter(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_vcenter.test", "mode"),
 					resource.TestCheckResourceAttrSet("vcd_vcenter.test", "uuid"),
 					resource.TestCheckResourceAttrSet("vcd_vcenter.test", "vcenter_version"),
+					resource.TestCheckResourceAttr("vcd_vcenter.test", "status", "READY"),
 				),
 			},
 			{

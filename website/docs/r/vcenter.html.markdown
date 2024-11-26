@@ -67,6 +67,8 @@ The following attributes are exported on this resource:
 * `version` - vCenter version
 * `uuid` - UUID of vCenter
 * `vcenter_host` - Host of Vcenter server
+* `status` - Status can be `READY` or `NOT_READY`. It is a derivative field of `is_connected` and
+  `connection_status` so relying on those fields could be more precise.
 
 ## Importing
 
