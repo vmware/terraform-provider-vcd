@@ -24,7 +24,6 @@ data "vcd_tm_nsxt_manager" "main" {
 }
 ```
 
-
 ## Argument Reference
 
 The following arguments are supported:
