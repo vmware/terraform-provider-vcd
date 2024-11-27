@@ -66,8 +66,8 @@ func TestAccVcdTmContentLibraryItem(t *testing.T) {
 			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
-					// file_path cannot be obtained during reads, that's why it does not appear in data source schema
-					resourceFieldsEqual(resourceName, "data.vcd_tm_content_library_item.cli_ds", []string{"file_path", "%"}),
+					// file_path and upload_piece_size cannot be obtained during reads, that's why it does not appear in data source schema
+					resourceFieldsEqual(resourceName, "data.vcd_tm_content_library_item.cli_ds", []string{"file_path", "upload_piece_size", "%"}),
 				),
 			},
 			{
@@ -75,7 +75,7 @@ func TestAccVcdTmContentLibraryItem(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateId:           fmt.Sprintf("%s%s%s", testConfig.Tm.ContentLibrary, ImportSeparator, params["Name"].(string)),
-				ImportStateVerifyIgnore: []string{"file_path"}, // file_path cannot be obtained during imports, that's why it's Optional
+				ImportStateVerifyIgnore: []string{"file_path", "upload_piece_size"}, // file_path and upload_piece_size cannot be obtained during imports, that's why it's Optional
 			},
 		},
 	})

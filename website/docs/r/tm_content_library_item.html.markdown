@@ -23,6 +23,7 @@ resource "vcd_tm_content_library_item" "cli" {
   name               = "My OVA"
   description        = "My uploaded OVA"
   content_library_id = data.vcd_tm_content_library.cl.id
+  upload_piece_size  = 10
   file_path          = "./photon.ova"
 }
 ```
@@ -34,6 +35,8 @@ The following arguments are supported:
 * `name` - (Required) The name of the Content Library Item
 * `content_library_id` - (Required) ID of the Content Library that this Content Library Item belongs to
 * `file_path` - (Required) Path to the OVA/ISO to create the Content Library Item
+* `upload_piece_size` - (Optional) - When uploading the Content Library Item, this argument defines the size of the file chunks
+  in which it is split on every upload request. It can possibly impact upload performance. Default 1 MB.
 * `description` - (Optional) The description of the Content Library Item
 
 ## Attribute Reference

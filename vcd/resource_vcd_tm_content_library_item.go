@@ -49,6 +49,12 @@ func resourceVcdTmContentLibraryItem() *schema.Resource {
 				ForceNew:    true, // TODO: TM: Update not supported yet
 				Description: fmt.Sprintf("Path to the OVA/ISO to create the %s", labelTmContentLibraryItem),
 			},
+			"upload_piece_size": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     1,
+				Description: fmt.Sprintf("When uploading the %s, this argument defines the size of the file chunks in which it is split on every upload request. It can possibly impact upload performance. Default 1 MB", labelTmContentLibraryItem),
+			},
 			"creation_date": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -103,13 +109,17 @@ func resourceVcdTmContentLibraryItemCreate(ctx context.Context, d *schema.Resour
 	}
 
 	filePath := d.Get("file_path").(string)
+	uploadPieceSize := d.Get("upload_piece_size").(int)
 
 	c := crudConfig[*govcd.ContentLibraryItem, types.ContentLibraryItem]{
 		entityLabel:    labelTmContentLibraryItem,
 		getTypeFunc:    getContentLibraryItemType,
 		stateStoreFunc: setContentLibraryItemData,
 		createFunc: func(config *types.ContentLibraryItem) (*govcd.ContentLibraryItem, error) {
-			return cl.CreateContentLibraryItem(config, filePath)
+			return cl.CreateContentLibraryItem(config, govcd.ContentLibraryItemUploadArguments{
+				FilePath:        filePath,
+				UploadPieceSize: int64(uploadPieceSize) * 1024 * 1024,
+			})
 		},
 		resourceReadFunc: resourceVcdTmContentLibraryItemRead,
 	}
