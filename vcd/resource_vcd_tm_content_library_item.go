@@ -52,6 +52,7 @@ func resourceVcdTmContentLibraryItem() *schema.Resource {
 			"upload_piece_size": {
 				Type:        schema.TypeInt,
 				Optional:    true,
+				ForceNew:    true, // TODO: TM: Update not supported yet
 				Default:     1,
 				Description: fmt.Sprintf("When uploading the %s, this argument defines the size of the file chunks in which it is split on every upload request. It can possibly impact upload performance. Default 1 MB", labelTmContentLibraryItem),
 			},
