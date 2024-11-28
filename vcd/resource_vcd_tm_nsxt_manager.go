@@ -12,7 +12,7 @@ import (
 
 const labelNsxtManager = "NSX-T Manager"
 
-func resourceVcdNsxtManager() *schema.Resource {
+func resourceVcdTmNsxtManager() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdNsxtManagerCreate,
 		ReadContext:   resourceVcdNsxtManagerRead,
@@ -53,7 +53,7 @@ func resourceVcdNsxtManager() *schema.Resource {
 				Type:        schema.TypeBool,
 				Required:    true,
 				ForceNew:    true,
-				Description: fmt.Sprintf("Defines if the %s certificate should automatically be trusted", labelVirtualCenter),
+				Description: fmt.Sprintf("Defines if the %s certificate should automatically be trusted", labelNsxtManager),
 			},
 			"network_provider_scope": {
 				Type:        schema.TypeString,

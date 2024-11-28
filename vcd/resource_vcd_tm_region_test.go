@@ -61,8 +61,8 @@ func TestAccVcdTmRegion(t *testing.T) {
 			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxt_manager.test", "id", regexp.MustCompile(`^urn:vcloud:nsxtmanager:`)),
-					resource.TestCheckResourceAttrSet("vcd_vcenter.test", "id"),
+					resource.TestMatchResourceAttr("vcd_tm_nsxt_manager.test", "id", regexp.MustCompile(`^urn:vcloud:nsxtmanager:`)),
+					resource.TestCheckResourceAttrSet("vcd_tm_vcenter.test", "id"),
 					resource.TestCheckResourceAttrSet("vcd_tm_region.test", "id"),
 					cachedRegionId.cacheTestResourceFieldValue("vcd_tm_region.test", "id"),
 					resource.TestCheckResourceAttr("vcd_tm_region.test", "is_enabled", "true"),
@@ -76,9 +76,9 @@ func TestAccVcdTmRegion(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr("vcd_tm_region.test", "storage_policy_names.*", testConfig.Tm.VcenterStorageProfile),
 
 					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor.test", "id"),
-					resource.TestCheckResourceAttrPair("data.vcd_tm_supervisor.test", "vcenter_id", "vcd_vcenter.test", "id"),
+					resource.TestCheckResourceAttrPair("data.vcd_tm_supervisor.test", "vcenter_id", "vcd_tm_vcenter.test", "id"),
 					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor_zone.test", "id"),
-					resource.TestCheckResourceAttrPair("data.vcd_tm_supervisor_zone.test", "vcenter_id", "vcd_vcenter.test", "id"),
+					resource.TestCheckResourceAttrPair("data.vcd_tm_supervisor_zone.test", "vcenter_id", "vcd_tm_vcenter.test", "id"),
 					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor_zone.test", "cpu_capacity_mhz"),
 					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor_zone.test", "cpu_used_mhz"),
 					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor_zone.test", "memory_capacity_mib"),
@@ -88,8 +88,8 @@ func TestAccVcdTmRegion(t *testing.T) {
 			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxt_manager.test", "id", regexp.MustCompile(`^urn:vcloud:nsxtmanager:`)),
-					resource.TestCheckResourceAttrSet("vcd_vcenter.test", "id"),
+					resource.TestMatchResourceAttr("vcd_tm_nsxt_manager.test", "id", regexp.MustCompile(`^urn:vcloud:nsxtmanager:`)),
+					resource.TestCheckResourceAttrSet("vcd_tm_vcenter.test", "id"),
 					resource.TestCheckResourceAttrSet("vcd_tm_region.test", "id"),
 					cachedRegionId.testCheckCachedResourceFieldValueChanged("vcd_tm_region.test", "id"),
 					resource.TestCheckResourceAttr("vcd_tm_region.test", "is_enabled", "true"),
@@ -103,10 +103,10 @@ func TestAccVcdTmRegion(t *testing.T) {
 					resource.TestCheckTypeSetElemAttr("vcd_tm_region.test", "storage_policy_names.*", testConfig.Tm.VcenterStorageProfile),
 
 					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor.test", "id"),
-					resource.TestCheckResourceAttrPair("data.vcd_tm_supervisor.test", "vcenter_id", "vcd_vcenter.test", "id"),
+					resource.TestCheckResourceAttrPair("data.vcd_tm_supervisor.test", "vcenter_id", "vcd_tm_vcenter.test", "id"),
 
 					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor_zone.test", "id"),
-					resource.TestCheckResourceAttrPair("data.vcd_tm_supervisor_zone.test", "vcenter_id", "vcd_vcenter.test", "id"),
+					resource.TestCheckResourceAttrPair("data.vcd_tm_supervisor_zone.test", "vcenter_id", "vcd_tm_vcenter.test", "id"),
 					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor_zone.test", "cpu_capacity_mhz"),
 					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor_zone.test", "cpu_used_mhz"),
 					resource.TestCheckResourceAttrSet("data.vcd_tm_supervisor_zone.test", "memory_capacity_mib"),
@@ -137,7 +137,7 @@ func TestAccVcdTmRegion(t *testing.T) {
 }
 
 const testAccVcdRegionPrerequisites = `
-resource "vcd_nsxt_manager" "test" {
+resource "vcd_tm_nsxt_manager" "test" {
   name                   = "{{.Testname}}"
   description            = "terraform test"
   username               = "{{.NsxtManagerUsername}}"
@@ -147,7 +147,7 @@ resource "vcd_nsxt_manager" "test" {
   auto_trust_certificate = true
 }
 
-resource "vcd_vcenter" "test" {
+resource "vcd_tm_vcenter" "test" {
   name                     = "{{.Testname}}"
   url                      = "{{.VcenterUrl}}"
   auto_trust_certificate   = true
@@ -160,9 +160,9 @@ resource "vcd_vcenter" "test" {
 
 data "vcd_tm_supervisor" "test" {
   name       = "{{.VcenterSupervisor}}"
-  vcenter_id = vcd_vcenter.test.id
+  vcenter_id = vcd_tm_vcenter.test.id
 
-  depends_on = [vcd_vcenter.test]
+  depends_on = [vcd_tm_vcenter.test]
 }
 
 data "vcd_tm_supervisor_zone" "test" {
@@ -176,7 +176,7 @@ resource "vcd_tm_region" "test" {
   name                 = "{{.Testname}}"
   description          = "Terraform description"
   is_enabled           = true
-  nsx_manager_id       = vcd_nsxt_manager.test.id
+  nsx_manager_id       = vcd_tm_nsxt_manager.test.id
   supervisor_ids       = [data.vcd_tm_supervisor.test.id]
   storage_policy_names = ["{{.VcenterStorageProfile}}"]
 }
@@ -188,7 +188,7 @@ resource "vcd_tm_region" "test" {
   name                 = "{{.Testname}}"
   description          = "Terraform description updated"
   is_enabled           = true
-  nsx_manager_id       = vcd_nsxt_manager.test.id
+  nsx_manager_id       = vcd_tm_nsxt_manager.test.id
   supervisor_ids       = [data.vcd_tm_supervisor.test.id]
   storage_policy_names = ["{{.VcenterStorageProfile}}"]
 }

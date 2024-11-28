@@ -29,6 +29,7 @@ website/node_modules
 *.cover
 
 vcd/vcd_test_config*.json
+vcd_test_config*.json
 vcd/go-vcloud-director.log
 vcd/test-artifacts
 website/vendor
