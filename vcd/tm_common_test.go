@@ -16,10 +16,10 @@ func getVCenterHcl(t *testing.T) (string, string) {
 	vc, err := vcdClient.GetVCenterByUrl(testConfig.Tm.VcenterUrl)
 	if err == nil {
 		return `
-data "vcd_vcenter" "vc" {
+data "vcd_tm_vcenter" "vc" {
   name = "` + vc.VSphereVCenter.Name + `"
 }
-`, "data.vcd_vcenter.vc"
+`, "data.vcd_tm_vcenter.vc"
 	}
 	if !govcd.ContainsNotFound(err) {
 		t.Fatal(err)
@@ -30,7 +30,7 @@ data "vcd_vcenter" "vc" {
 		return "", ""
 	}
 	return `
-resource "vcd_vcenter" "vc" {
+resource "vcd_tm_vcenter" "vc" {
   name                     = "` + t.Name() + `"
   url                      = "` + testConfig.Tm.VcenterUrl + `"
   auto_trust_certificate   = true
@@ -40,7 +40,7 @@ resource "vcd_vcenter" "vc" {
   password                 = "` + testConfig.Tm.VcenterPassword + `"
   is_enabled               = true
 }
-`, "vcd_vcenter.vc"
+`, "vcd_tm_vcenter.vc"
 }
 
 // getNsxManagerHcl gets a NSX Manager data source as first returned parameter and its HCL reference as second one,
