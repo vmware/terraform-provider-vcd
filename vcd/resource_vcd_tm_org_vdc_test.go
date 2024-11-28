@@ -28,7 +28,7 @@ func TestAccVcdTmOrgVdc(t *testing.T) {
 	}
 	testParamsNotEmpty(t, params)
 
-	// TODO: TM: There shouldn't be a need to create `preRequisites` separatelly, but region
+	// TODO: TM: There shouldn't be a need to create `preRequisites` separately, but region
 	// creation fails if it is spawned instantly after adding vCenter, therefore this extra step
 	// give time (with additional 'refresh' and 'refresh storage policies' operations on vCenter)
 	skipBinaryTest := "# skip-binary-test: prerequisite buildup for acceptance tests"

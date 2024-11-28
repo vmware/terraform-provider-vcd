@@ -1,12 +1,12 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_nsxt_tm_org_vdc"
+page_title: "VMware Cloud Director: vcd_tm_org_vdc"
 sidebar_current: "docs-vcd-resource-tm-org-vdc"
 description: |-
   Provides a resource to manage VMware Cloud Foundation Tenant Manager Organization VDC.
 ---
 
-# vcd\_nsxt\_tm\_org\_vdc
+# vcd\_tm\_org\_vdc
 
 Provides a resource to manage VMware Cloud Foundation Tenant Manager Organization VDC.
 

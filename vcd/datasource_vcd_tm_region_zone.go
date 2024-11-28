@@ -67,11 +67,9 @@ func resourceVcdTmRegionZoneRead(ctx context.Context, d *schema.ResourceData, me
 	if err != nil {
 		return diag.Errorf("error retrieving %s: %s", labelTmRegion, err)
 	}
-	getRegionZone := func() func(name string) (*govcd.Zone, error) {
-		return func(name string) (*govcd.Zone, error) {
-			return region.GetZoneByName(name)
-		}
-	}()
+	getRegionZone := func(name string) (*govcd.Zone, error) {
+		return region.GetZoneByName(name)
+	}
 
 	c := dsReadConfig[*govcd.Zone, types.Zone]{
 		entityLabel:    labelTmRegionZone,
@@ -82,7 +80,7 @@ func resourceVcdTmRegionZoneRead(ctx context.Context, d *schema.ResourceData, me
 }
 
 func setZoneData(d *schema.ResourceData, z *govcd.Zone) error {
-	if z == nil {
+	if z == nil || z.Zone == nil {
 		return fmt.Errorf("nil %s", labelTmRegionZone)
 	}
 	d.SetId(z.Zone.ID)

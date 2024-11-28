@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v3/govcd"
 	"github.com/vmware/go-vcloud-director/v3/types/v56"
 )
@@ -83,24 +84,28 @@ var tmOrgVdcZoneResourceAllocation = &schema.Resource{
 			Description: fmt.Sprintf("%s ID", labelTmRegionZone),
 		},
 		"memory_limit_mib": {
-			Type:        schema.TypeInt,
-			Required:    true,
-			Description: "Memory limit in MiB",
+			Type:             schema.TypeInt,
+			Required:         true,
+			Description:      "Memory limit in MiB",
+			ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 		},
 		"memory_reservation_mib": {
-			Type:        schema.TypeInt,
-			Required:    true,
-			Description: "Memory reservation in MiB",
+			Type:             schema.TypeInt,
+			Required:         true,
+			Description:      "Memory reservation in MiB",
+			ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 		},
 		"cpu_limit_mhz": {
-			Type:        schema.TypeInt,
-			Required:    true,
-			Description: "CPU limit in MHz",
+			Type:             schema.TypeInt,
+			Required:         true,
+			Description:      "CPU limit in MHz",
+			ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 		},
 		"cpu_reservation_mhz": {
-			Type:        schema.TypeInt,
-			Required:    true,
-			Description: "CPU reservation in MHz",
+			Type:             schema.TypeInt,
+			Required:         true,
+			Description:      "CPU reservation in MHz",
+			ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
 		},
 	},
 }
