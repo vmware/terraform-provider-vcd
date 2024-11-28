@@ -1,12 +1,12 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_vcenter"
-sidebar_current: "docs-vcd-resource-vcenter"
+page_title: "VMware Cloud Director: vcd_tm_vcenter"
+sidebar_current: "docs-vcd-resource-tm-vcenter"
 description: |-
   Provides a resource to manage vCenters.
 ---
 
-# vcd\_nsxt\_vcenter
+# vcd\_tm\_vcenter
 
 Provides a resource to manage vCenters.
 
@@ -15,7 +15,7 @@ Provides a resource to manage vCenters.
 ## Example Usage
 
 ```hcl
-resource "vcd_vcenter" "test" {
+resource "vcd_tm_vcenter" "test" {
   name                    = "TestAccVcdTmVcenter-rename"
   url                     = "https://host:443"
   auto_trust_certificate  = true
@@ -82,7 +82,7 @@ path for it. An example is below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_vcenter.imported my-vcenter
+terraform import vcd_tm_vcenter.imported my-vcenter
 ```
 
 The above would import the `my-vcenter` vCenter settings that are defined at provider level.

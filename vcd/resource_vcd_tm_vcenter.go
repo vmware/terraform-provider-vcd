@@ -12,106 +12,106 @@ import (
 	"github.com/vmware/go-vcloud-director/v3/util"
 )
 
-const labelVirtualCenter = "vCenter Server"
+const labelTmVirtualCenter = "Tenant Manager vCenter Server"
 
-func resourceVcdVcenter() *schema.Resource {
+func resourceVcdTmVcenter() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdVcenterCreate,
-		ReadContext:   resourceVcdVcenterRead,
-		UpdateContext: resourceVcdVcenterUpdate,
-		DeleteContext: resourceVcdVcenterDelete,
+		CreateContext: resourceVcdTmVcenterCreate,
+		ReadContext:   resourceVcdTmVcenterRead,
+		UpdateContext: resourceVcdTmVcenterUpdate,
+		DeleteContext: resourceVcdTmVcenterDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdVcenterImport,
+			StateContext: resourceVcdTmVcenterImport,
 		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: fmt.Sprintf("Name of %s", labelVirtualCenter),
+				Description: fmt.Sprintf("Name of %s", labelTmVirtualCenter),
 			},
 			"url": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: fmt.Sprintf("URL including port of %s", labelVirtualCenter),
+				Description: fmt.Sprintf("URL including port of %s", labelTmVirtualCenter),
 			},
 			"auto_trust_certificate": {
 				Type:        schema.TypeBool,
 				Required:    true,
 				ForceNew:    true,
-				Description: fmt.Sprintf("Defines if the %s certificate should automatically be trusted", labelVirtualCenter),
+				Description: fmt.Sprintf("Defines if the %s certificate should automatically be trusted", labelTmVirtualCenter),
 			},
 			"refresh_vcenter_on_read": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: fmt.Sprintf("Defines if the %s should be refreshed on every read operation", labelVirtualCenter),
+				Description: fmt.Sprintf("Defines if the %s should be refreshed on every read operation", labelTmVirtualCenter),
 			},
 			"refresh_policies_on_read": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: fmt.Sprintf("Defines if the %s should refresh Policies on every read operation", labelVirtualCenter),
+				Description: fmt.Sprintf("Defines if the %s should refresh Policies on every read operation", labelTmVirtualCenter),
 			},
 			"username": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: fmt.Sprintf("Username of %s", labelVirtualCenter),
+				Description: fmt.Sprintf("Username of %s", labelTmVirtualCenter),
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
-				Description: fmt.Sprintf("Password of %s", labelVirtualCenter),
+				Description: fmt.Sprintf("Password of %s", labelTmVirtualCenter),
 			},
 			"is_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: fmt.Sprintf("Should the %s be enabled", labelVirtualCenter),
+				Description: fmt.Sprintf("Should the %s be enabled", labelTmVirtualCenter),
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: fmt.Sprintf("Description of %s", labelVirtualCenter),
+				Description: fmt.Sprintf("Description of %s", labelTmVirtualCenter),
 			},
 			"has_proxy": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: fmt.Sprintf("A flag that shows if %s has proxy defined", labelVirtualCenter),
+				Description: fmt.Sprintf("A flag that shows if %s has proxy defined", labelTmVirtualCenter),
 			},
 			"is_connected": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: fmt.Sprintf("A flag that shows if %s is connected", labelVirtualCenter),
+				Description: fmt.Sprintf("A flag that shows if %s is connected", labelTmVirtualCenter),
 			},
 			"mode": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: fmt.Sprintf("Mode of %s", labelVirtualCenter),
+				Description: fmt.Sprintf("Mode of %s", labelTmVirtualCenter),
 			},
 			"connection_status": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: fmt.Sprintf("Listener state of %s", labelVirtualCenter),
+				Description: fmt.Sprintf("Listener state of %s", labelTmVirtualCenter),
 			},
 			"cluster_health_status": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: fmt.Sprintf("Mode of %s", labelVirtualCenter),
+				Description: fmt.Sprintf("Mode of %s", labelTmVirtualCenter),
 			},
 			"vcenter_version": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: fmt.Sprintf("Version of %s", labelVirtualCenter),
+				Description: fmt.Sprintf("Version of %s", labelTmVirtualCenter),
 			},
 			"uuid": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: fmt.Sprintf("%s UUID", labelVirtualCenter),
+				Description: fmt.Sprintf("%s UUID", labelTmVirtualCenter),
 			},
 			"vcenter_host": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: fmt.Sprintf("%s hostname", labelVirtualCenter),
+				Description: fmt.Sprintf("%s hostname", labelTmVirtualCenter),
 			},
 			"status": {
 				Type:        schema.TypeString,
@@ -137,7 +137,7 @@ func getTmVcenterType(_ *VCDClient, d *schema.ResourceData) (*types.VSphereVirtu
 
 func setTmVcenterData(d *schema.ResourceData, v *govcd.VCenter) error {
 	if v == nil || v.VSphereVCenter == nil {
-		return fmt.Errorf("nil object for %s", labelVirtualCenter)
+		return fmt.Errorf("nil object for %s", labelTmVirtualCenter)
 	}
 
 	dSet(d, "name", v.VSphereVCenter.Name)
@@ -176,22 +176,22 @@ func setTmVcenterData(d *schema.ResourceData, v *govcd.VCenter) error {
 	return nil
 }
 
-func resourceVcdVcenterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdTmVcenterCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	c := crudConfig[*govcd.VCenter, types.VSphereVirtualCenter]{
-		entityLabel:      labelVirtualCenter,
+		entityLabel:      labelTmVirtualCenter,
 		getTypeFunc:      getTmVcenterType,
 		stateStoreFunc:   setTmVcenterData,
 		createFunc:       vcdClient.CreateVcenter,
-		resourceReadFunc: resourceVcdVcenterRead,
+		resourceReadFunc: resourceVcdTmVcenterRead,
 		// certificate should be trusted for the vCenter to work
 		preCreateHooks: []schemaHook{autoTrustHostCertificate("url", "auto_trust_certificate")},
 	}
 	return createResource(ctx, d, meta, c)
 }
 
-func resourceVcdVcenterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdTmVcenterUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// return immediately if only flags are updated
 	if !d.HasChangesExcept("refresh_vcenter_on_read", "refresh_policies_on_read") {
 		return nil
@@ -199,16 +199,16 @@ func resourceVcdVcenterUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 	vcdClient := meta.(*VCDClient)
 	c := crudConfig[*govcd.VCenter, types.VSphereVirtualCenter]{
-		entityLabel:      labelVirtualCenter,
+		entityLabel:      labelTmVirtualCenter,
 		getTypeFunc:      getTmVcenterType,
 		getEntityFunc:    vcdClient.GetVCenterById,
-		resourceReadFunc: resourceVcdVcenterRead,
+		resourceReadFunc: resourceVcdTmVcenterRead,
 	}
 
 	return updateResource(ctx, d, meta, c)
 }
 
-func resourceVcdVcenterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdTmVcenterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	// TODO: TM: remove this block and use the commented one within crudConfig below.
@@ -227,7 +227,7 @@ func resourceVcdVcenterRead(ctx context.Context, d *schema.ResourceData, meta in
 	shouldRefresh := d.Get("refresh_vcenter_on_read").(bool)
 	shouldRefreshPolicies := d.Get("refresh_policies_on_read").(bool)
 	c := crudConfig[*govcd.VCenter, types.VSphereVirtualCenter]{
-		entityLabel: labelVirtualCenter,
+		entityLabel: labelTmVirtualCenter,
 		// getEntityFunc:  vcdClient.GetVCenterById,// TODO: TM: use this function
 		getEntityFunc:  fakeGetById, // TODO: TM: remove this function
 		stateStoreFunc: setTmVcenterData,
@@ -239,11 +239,11 @@ func resourceVcdVcenterRead(ctx context.Context, d *schema.ResourceData, meta in
 	return readResource(ctx, d, meta, c)
 }
 
-func resourceVcdVcenterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdTmVcenterDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	c := crudConfig[*govcd.VCenter, types.VSphereVirtualCenter]{
-		entityLabel:    labelVirtualCenter,
+		entityLabel:    labelTmVirtualCenter,
 		getEntityFunc:  vcdClient.GetVCenterById,
 		preDeleteHooks: []outerEntityHook[*govcd.VCenter]{disableVcenter}, // vCenter must be disabled before deletion
 	}
@@ -251,12 +251,12 @@ func resourceVcdVcenterDelete(ctx context.Context, d *schema.ResourceData, meta 
 	return deleteResource(ctx, d, meta, c)
 }
 
-func resourceVcdVcenterImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdTmVcenterImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
 	v, err := vcdClient.GetVCenterByName(d.Id())
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving %s by name: %s", labelVirtualCenter, err)
+		return nil, fmt.Errorf("error retrieving %s by name: %s", labelTmVirtualCenter, err)
 	}
 
 	d.SetId(v.VSphereVCenter.VcId)
