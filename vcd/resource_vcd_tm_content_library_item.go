@@ -40,7 +40,7 @@ func resourceVcdTmContentLibraryItem() *schema.Resource {
 			"content_library_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true, // TODO: TM: Update not supported yet
+				ForceNew:    true,
 				Description: fmt.Sprintf("ID of the Content Library that this %s belongs to", labelTmContentLibraryItem),
 			},
 			"file_path": {

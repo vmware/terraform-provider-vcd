@@ -65,10 +65,10 @@ func resourceVcdNsxtEdgeGatewayStaticRoute() *schema.Resource {
 							Description: "IP Address of next hop",
 						},
 						"admin_distance": {
-							Type:         schema.TypeInt,
-							Required:     true,
-							Description:  "Admin distance of next hop",
-							ValidateFunc: validation.IntAtLeast(1),
+							Type:             schema.TypeInt,
+							Required:         true,
+							Description:      "Admin distance of next hop",
+							ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
 						},
 						"scope": {
 							Type:     schema.TypeList,

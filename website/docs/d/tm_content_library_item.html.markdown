@@ -6,7 +6,7 @@ description: |-
   Provides a VMware Cloud Foundation Tenant Manager Content Library Item data source. This can be used to read Content Library Items.
 ---
 
-# vcd\_content\_library\_item
+# vcd\_tm\_content\_library\_item
 
 Provides a VMware Cloud Foundation Tenant Manager Content Library Item data source. This can be used to read Content Library Items.
 
