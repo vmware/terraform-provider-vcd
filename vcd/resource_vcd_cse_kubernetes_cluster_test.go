@@ -33,6 +33,10 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	preTestChecks(t)
 	requireCseConfig(t, testConfig)
 
+	if testConfig.Cse.Version == "4.2.2" || testConfig.Cse.Version == "4.2.3" {
+		t.Skip("test does not work with System Administrator")
+	}
+
 	cseVersion, err := semver.NewVersion(testConfig.Cse.Version)
 	if err != nil {
 		t.Fatal(err)
@@ -597,6 +601,10 @@ func TestAccVcdCseKubernetesClusterCreationWithAutoscaler(t *testing.T) {
 	preTestChecks(t)
 	requireCseConfig(t, testConfig)
 
+	if testConfig.Cse.Version == "4.2.2" || testConfig.Cse.Version == "4.2.3" {
+		t.Skip("test does not work with System Administrator")
+	}
+
 	cseVersion, err := semver.NewVersion(testConfig.Cse.Version)
 	if err != nil {
 		t.Fatal(err)
@@ -745,6 +753,10 @@ func TestAccVcdCseKubernetesClusterCreationWithAutoscaler(t *testing.T) {
 func TestAccVcdCseKubernetesClusterFailure(t *testing.T) {
 	preTestChecks(t)
 	requireCseConfig(t, testConfig)
+
+	if testConfig.Cse.Version == "4.2.2" || testConfig.Cse.Version == "4.2.3" {
+		t.Skip("test does not work with System Administrator")
+	}
 
 	vcdClient := createSystemTemporaryVCDConnection()
 
