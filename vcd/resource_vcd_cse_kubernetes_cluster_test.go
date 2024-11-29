@@ -34,7 +34,7 @@ func TestAccVcdCseKubernetesCluster(t *testing.T) {
 	requireCseConfig(t, testConfig)
 
 	if testConfig.Cse.Version == "4.2.2" || testConfig.Cse.Version == "4.2.3" {
-		t.Skip("test does not work with System Administrator")
+		t.Skip("CSE versions 4.2.2 and 4.2.3 do not work with System Administrator")
 	}
 
 	cseVersion, err := semver.NewVersion(testConfig.Cse.Version)
