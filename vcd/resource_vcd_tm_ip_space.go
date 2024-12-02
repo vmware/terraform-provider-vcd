@@ -9,6 +9,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v3/govcd"
 	"github.com/vmware/go-vcloud-director/v3/types/v56"
 )
+
 // This is a template of how a "standard" resource can look using generic CRUD functions. It might
 // not cover all scenarios, but is a skeleton for quicker bootstraping of a new entity.
 //
@@ -52,10 +53,10 @@ func resourceVcdTmIpSpace() *schema.Resource {
 
 func resourceVcdTmIpSpaceCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	c := crudConfig[*govcd.TmIpSpace, types.types.TmIpSpace]{
+	c := crudConfig[*govcd.TmIpSpace, types.TmIpSpace]{
 		entityLabel:      labelTmIpSpace,
-		getTypeFunc:      gettypes.TmIpSpaceType,
-		stateStoreFunc:   settypes.TmIpSpaceData,
+		getTypeFunc:      getTmIpSpaceType,
+		stateStoreFunc:   setTmIpSpaceData,
 		createFunc:       vcdClient.CreateTmIpSpace,
 		resourceReadFunc: resourceVcdTmIpSpaceRead,
 	}
@@ -64,12 +65,12 @@ func resourceVcdTmIpSpaceCreate(ctx context.Context, d *schema.ResourceData, met
 
 func resourceVcdTmIpSpaceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	c := crudConfig[*govcd.TmIpSpace, types.types.TmIpSpace]{
+	c := crudConfig[*govcd.TmIpSpace, types.TmIpSpace]{
 		entityLabel:      labelTmIpSpace,
-		getTypeFunc:      gettypes.TmIpSpaceType,
+		getTypeFunc:      getTmIpSpaceType,
 		getEntityFunc:    vcdClient.GetTmIpSpaceById,
 		resourceReadFunc: resourceVcdTmIpSpaceRead,
-		// preUpdateHooks: []outerEntityHookInnerEntityType[*govcd.TmIpSpace, *types.types.TmIpSpace]{},
+		// preUpdateHooks: []outerEntityHookInnerEntityType[*govcd.TmIpSpace, *types.TmIpSpace]{},
 	}
 
 	return updateResource(ctx, d, meta, c)
@@ -77,10 +78,10 @@ func resourceVcdTmIpSpaceUpdate(ctx context.Context, d *schema.ResourceData, met
 
 func resourceVcdTmIpSpaceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	c := crudConfig[*govcd.TmIpSpace, types.types.TmIpSpace]{
+	c := crudConfig[*govcd.TmIpSpace, types.TmIpSpace]{
 		entityLabel:    labelTmIpSpace,
 		getEntityFunc:  vcdClient.GetTmIpSpaceById,
-		stateStoreFunc: settypes.TmIpSpaceData,
+		stateStoreFunc: setTmIpSpaceData,
 	}
 	return readResource(ctx, d, meta, c)
 }
@@ -88,9 +89,9 @@ func resourceVcdTmIpSpaceRead(ctx context.Context, d *schema.ResourceData, meta 
 func resourceVcdTmIpSpaceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	c := crudConfig[*govcd.TmIpSpace, types.types.TmIpSpace]{
-		entityLabel:    labelTmIpSpace,
-		getEntityFunc:  vcdClient.GetTmIpSpaceById,
+	c := crudConfig[*govcd.TmIpSpace, types.TmIpSpace]{
+		entityLabel:   labelTmIpSpace,
+		getEntityFunc: vcdClient.GetTmIpSpaceById,
 		// preDeleteHooks: []outerEntityHook[*govcd.TmIpSpace]{},
 	}
 
@@ -100,20 +101,17 @@ func resourceVcdTmIpSpaceDelete(ctx context.Context, d *schema.ResourceData, met
 func resourceVcdTmIpSpaceImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
-	
-
 	d.SetId("???")
 	return []*schema.ResourceData{d}, nil
 }
 
-func gettypes.TmIpSpaceType(d *schema.ResourceData) (*types.types.TmIpSpace, error) {
-	t := &types.types.TmIpSpace{
-	}
+func getTmIpSpaceType(d *schema.ResourceData) (*types.TmIpSpace, error) {
+	t := &types.TmIpSpace{}
 
 	return t, nil
 }
 
-func settypes.TmIpSpaceData(d *schema.ResourceData, org *govcd.TmIpSpace) error {
-	// IMPLEMENT 
+func setTmIpSpaceData(d *schema.ResourceData, org *govcd.TmIpSpace) error {
+	// IMPLEMENT
 	return nil
 }
