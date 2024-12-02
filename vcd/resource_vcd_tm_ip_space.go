@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v3/govcd"
 	"github.com/vmware/go-vcloud-director/v3/types/v56"
+	"github.com/vmware/go-vcloud-director/v3/util"
 )
 
 const labelTmIpSpace = "TM IP Space"
@@ -22,13 +23,13 @@ var tmIpSpaceInternalScopeSchema = &schema.Resource{
 		},
 		"name": {
 			Type:        schema.TypeString,
-			Required:    true,
+			Optional:    true,
+			Computed:    true,
 			Description: fmt.Sprintf("Name of internal scope within %s", labelTmIpSpace),
 		},
 		"cidr": {
 			Type:        schema.TypeString,
 			Required:    true,
-			ForceNew:    true,
 			Description: fmt.Sprintf("The CIDR that represents this IP block within %s", labelTmIpSpace),
 		},
 	},
@@ -68,19 +69,19 @@ func resourceVcdTmIpSpace() *schema.Resource {
 			},
 			"default_quota_max_subnet_size": {
 				Type:         schema.TypeString, // Values are 'ints', but
-				Optional:     true,
+				Required:     true,
 				Description:  fmt.Sprintf("Maximum subnet size represented as a prefix length (e.g. 24, 28) in %s", labelTmIpSpace),
 				ValidateFunc: IsIntAndAtLeast(-1),
 			},
 			"default_quota_max_cidr_count": {
 				Type:         schema.TypeString,
-				Optional:     true,
+				Required:     true,
 				Description:  fmt.Sprintf("Maximum number of subnets that can be allocated from internal scope in this %s. ('-1' for unlimited)", labelTmIpSpace),
 				ValidateFunc: IsIntAndAtLeast(-1),
 			},
 			"default_quota_max_ip_count": {
 				Type:         schema.TypeString,
-				Optional:     true,
+				Required:     true,
 				Description:  fmt.Sprintf("Maximum number of single floating IP addresses that can be allocated from internal scope in this %s. ('-1' for unlimited)", labelTmIpSpace),
 				ValidateFunc: IsIntAndAtLeast(-1),
 			},
@@ -183,9 +184,17 @@ func getTmIpSpaceType(vcdClient *VCDClient, d *schema.ResourceData) (*types.TmIp
 		for internalScopeIndex := range internalScopeSlice {
 			internalScopeBlockStrings := convertToStringMap(internalScopeSlice[internalScopeIndex].(map[string]interface{}))
 
-			isSlice[internalScopeIndex].ID = internalScopeBlockStrings["id"]
 			isSlice[internalScopeIndex].Name = internalScopeBlockStrings["name"]
 			isSlice[internalScopeIndex].Cidr = internalScopeBlockStrings["cidr"]
+
+			// ID of internal_scope is important for updates
+			// Terraform TypeSet cannot natively identify the ID between previous and new states
+			// To work around this, an attempt to retrieve ID from state and correlate it with new payload
+			// An important fact is that `cidr` field is not updatable, therefore one can be sure
+			// that ID from state can be looked up based on CIDR.
+			// If there was no such cidr in previous state - it means that this is a new 'internal_scope' block
+			// and it doesn't need an ID
+			isSlice[internalScopeIndex].ID = getInternalScopeIdFromFromPreviousState(d, internalScopeBlockStrings["name"], internalScopeBlockStrings["cidr"])
 
 		}
 		t.InternalScopeCidrBlocks = isSlice
@@ -199,6 +208,7 @@ func setTmIpSpaceData(d *schema.ResourceData, i *govcd.TmIpSpace) error {
 		return fmt.Errorf("nil %s received", labelTmIpSpace)
 	}
 
+	d.SetId(i.TmIpSpace.ID)
 	dSet(d, "name", i.TmIpSpace.Name)
 	dSet(d, "description", i.TmIpSpace.Description)
 	dSet(d, "region_id", i.TmIpSpace.RegionRef.ID)
@@ -228,4 +238,38 @@ func setTmIpSpaceData(d *schema.ResourceData, i *govcd.TmIpSpace) error {
 	}
 
 	return nil
+}
+
+func getInternalScopeIdFromFromPreviousState(d *schema.ResourceData, desiredName, desiredCidr string) string {
+	internalScopeOld, _ := d.GetChange("internal_scope")
+	internalScopeOldSchema := internalScopeOld.(*schema.Set)
+	internalScopeOldSlice := internalScopeOldSchema.List()
+
+	util.Logger.Printf("[TRACE] Looking for ID of 'internal_scope' with name '%s', cidr '%s'\n", desiredName, desiredCidr)
+	var foundPartialId string
+	for internalScopeIndex := range internalScopeOldSlice {
+		singleScopeOld := internalScopeOldSlice[internalScopeIndex]
+		singleScopeOldMap := convertToStringMap(singleScopeOld.(map[string]interface{}))
+
+		// exact match
+		if singleScopeOldMap["cidr"] == desiredCidr && singleScopeOldMap["name"] == desiredName {
+			util.Logger.Printf("[TRACE] Found exact match for ID '%s' of 'internal_scope' with name '%s', cidr '%s' \n", singleScopeOldMap["id"], desiredName, desiredCidr)
+			return singleScopeOldMap["id"]
+		}
+
+		// partial match based on cidr
+		if singleScopeOldMap["cidr"] == desiredCidr {
+			util.Logger.Printf("[TRACE] Found partial match for ID '%s' of 'internal_scope' with cidr '%s'. 'name' is ignored'\n", singleScopeOldMap["id"], desiredCidr)
+			foundPartialId = singleScopeOldMap["id"]
+		}
+	}
+
+	if foundPartialId != "" {
+		util.Logger.Printf("[TRACE] Returning partial match for ID '%s' of 'internal_scope' with cidr '%s'. 'name' are ignored'\n", desiredCidr, desiredName)
+		return foundPartialId
+	}
+
+	util.Logger.Printf("[TRACE] Not found 'internal_scope' ID with name '%s', cidr '%s'\n", desiredName, desiredCidr)
+	// No ID was found at all
+	return ""
 }

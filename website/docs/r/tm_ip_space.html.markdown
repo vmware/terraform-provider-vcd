@@ -8,39 +8,82 @@ description: |-
 
 # vcd\_tm\_ip\_space
 
-Supported in provider *v3.4+* and VCD 10.2+ with NSX-T and ALB.
-
 Provides a VMware Cloud Foundation Tenant Manager IP Space resource.
 
-~> Only `System Administrator` can create this resource.
 
-## Example Usage (Adding NSX-T ALB Service Engine Group)
+## Example Usage
 
 ```hcl
 
+data "vcd_tm_region" "demo" {
+  name = "demo-region"
+}
+
+resource "vcd_tm_ip_space" "demo" {
+  name                          = "demo-ip-space"
+  description                   = "description"
+  region_id                     = data.vcd_tm_region.demo.id
+  external_scope                = "12.12.0.0/30"
+  default_quota_max_subnet_size = 24
+  default_quota_max_cidr_count  = 1
+  default_quota_max_ip_count    = 1
+
+  internal_scope {
+    name = "scope1"
+    cidr = "10.0.0.0/24"
+  }
+
+  internal_scope {
+    name = "scope2"
+    cidr = "20.0.0.0/24"
+  }
+
+  internal_scope {
+    name = "scope3"
+    cidr = "30.0.0.0/24"
+  }
+}
 ```
 
 ## Argument Reference
 
 The following arguments are supported:
 
-* `name` - (Required) A name for NSX-T ALB Service Engine Group
-* `description` - (Optional) An optional description NSX-T ALB Service Engine Group
-* `alb_cloud_id` - (Required) A reference NSX-T ALB Cloud. Can be looked up using `vcd_nsxt_alb_cloud` resource or data
-  source
+* `name` - (Required) A tenant facing name for IP Space
+* `description` - (Optional) An optional description
+* `region_id` - (Required) A region ID. Can be looked up using [Storage Class
+  IDs](/providers/vmware/vcd/latest/docs/data-sources/tm_region) data source
+* `external_scope` - (Required) A CIDR (e.g. 10.0.0.0/8) for External Reachability. It represents
+  the IPs used outside the datacenter, north of the Provider Gateway.
+* `default_quota_max_subnet_size` - (Required) Maximum subnet size that can be allocated (e.g. 24)
+* `default_quota_max_cidr_count` - (Required) Maximum number of CIDRs that can be allocated (`-1`
+  for unlimited)
+* `default_quota_max_ip_count` - (Required) Maximum number of floating IPs that can be allocated
+  (`-1` for unlimited)
+* `internal_scope` - (Required) A set of IP Blocks that represent IPs used in this local datacenter,
+  south of the Provider Gateway. IPs within this scope are used for configuring services and
+  networks. [internal_scope](#internal-scope)
+
+
+<a id="internal-scope"></a>
+
+## internal_scope block
+
+* `cidr` - CIDR for IP block (e.g. 10.0.0.0/16)
+* `name` - An optional friendly name for this block
 
 
 ## Attribute Reference
 
 The following attributes are exported on this resource:
 
-* `max_virtual_services` - Maximum number of virtual services this NSX-T ALB Service Engine Group can run
-* `reserved_virtual_services` - Number of reserved virtual services
-* `deployed_virtual_services` - Number of deployed virtual services
-* `ha_mode` defines High Availability Mode for Service Engine Group. One off:
-  * ELASTIC_N_PLUS_M_BUFFER - Service Engines will scale out to N active nodes with M nodes as buffer.
-  * ELASTIC_ACTIVE_ACTIVE - Active-Active with scale out.
-  * LEGACY_ACTIVE_STANDBY - Traditional single Active-Standby configuration
+* `status` - One of:
+ * `PENDING` - Desired entity configuration has been received by system and is pending realization
+ * `CONFIGURING` - The system is in process of realizing the entity
+ * `REALIZED` - The entity is successfully realized in the system
+ * `REALIZATION_FAILED` - There are some issues and the system is not able to realize the entity
+ * `UNKNOWN` - Current state of entity is unknown
+
 
 ## Importing
 
