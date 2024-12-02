@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccVcdVcenterDS(t *testing.T) {
+func TestAccVcdVcenter(t *testing.T) {
 	preTestChecks(t)
 	skipIfNotSysAdmin(t)
 
@@ -47,5 +47,5 @@ func TestAccVcdVcenterDS(t *testing.T) {
 const datasourceTestVcenter = `
 data "vcd_vcenter" "vc" {
 	name = "{{.Vcenter}}"
-}
+  }
 `

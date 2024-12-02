@@ -2,66 +2,58 @@ package vcd
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v3/govcd"
-	"github.com/vmware/go-vcloud-director/v3/types/v56"
 )
-
-// TODO: TM: validate compatibility with old data source
 
 func datasourceVcdNsxtManager() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdNsxtManagerRead,
-
+		ReadContext: datasourceNsxtManagerRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: fmt.Sprintf("Name of %s", labelNsxtManager),
-			},
-			"description": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: fmt.Sprintf("Description of %s", labelNsxtManager),
-			},
-			"username": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: fmt.Sprintf("Username for authenticating to %s", labelNsxtManager),
-			},
-			"url": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: fmt.Sprintf("URL of %s", labelNsxtManager),
-			},
-			"network_provider_scope": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: fmt.Sprintf("Network Provider Scope for %s", labelNsxtManager),
-			},
-			"status": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: fmt.Sprintf("Status of %s", labelNsxtManager),
+				Description: "Name of NSX-T manager.",
 			},
 			"href": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: fmt.Sprintf("HREF of %s", labelNsxtManager),
+				Description: "HREF of NSX-T manager.",
 			},
 		},
 	}
 }
 
-func datasourceVcdNsxtManagerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceNsxtManagerRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	c := dsReadConfig[*govcd.NsxtManagerOpenApi, types.NsxtManagerOpenApi]{
-		entityLabel:    labelNsxtManager,
-		getEntityFunc:  vcdClient.GetNsxtManagerOpenApiByName,
-		stateStoreFunc: setNsxtManagerData,
+	nsxtManagerName := d.Get("name").(string)
+
+	nsxtManagers, err := vcdClient.QueryNsxtManagerByName(nsxtManagerName)
+	if err != nil {
+		return diag.Errorf("could not find NSX-T manager by name '%s': %s", nsxtManagerName, err)
 	}
-	return readDatasource(ctx, d, meta, c)
+
+	if len(nsxtManagers) == 0 {
+		return diag.Errorf("%s found %d NSX-T managers with name '%s'",
+			govcd.ErrorEntityNotFound, len(nsxtManagers), nsxtManagerName)
+	}
+
+	if len(nsxtManagers) > 1 {
+		return diag.Errorf("found %d NSX-T managers with name '%s'", len(nsxtManagers), nsxtManagerName)
+	}
+
+	// We try to keep IDs clean
+	id := extractUuid(nsxtManagers[0].HREF)
+	urn, err := govcd.BuildUrnWithUuid("urn:vcloud:nsxtmanager:", id)
+	if err != nil {
+		return diag.Errorf("could not construct URN from id '%s': %s", id, err)
+	}
+	dSet(d, "name", nsxtManagers[0].Name)
+	dSet(d, "href", nsxtManagers[0].HREF)
+	d.SetId(urn)
+
+	return nil
 }

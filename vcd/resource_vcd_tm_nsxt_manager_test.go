@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccVcdNsxtManager(t *testing.T) {
+func TestAccVcdTmNsxtManager(t *testing.T) {
 	preTestChecks(t)
 
 	skipIfNotSysAdmin(t)
@@ -49,31 +49,31 @@ func TestAccVcdNsxtManager(t *testing.T) {
 			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxt_manager.test", "id", regexp.MustCompile(`^urn:vcloud:nsxtmanager:`)),
-					resource.TestMatchResourceAttr("vcd_nsxt_manager.test", "href", regexp.MustCompile(`api/admin/extension/nsxtManagers/`)),
-					resource.TestCheckResourceAttr("vcd_nsxt_manager.test", "name", params["Testname"].(string)),
-					resource.TestCheckResourceAttr("vcd_nsxt_manager.test", "description", "terraform test"),
-					resource.TestCheckResourceAttrSet("vcd_nsxt_manager.test", "status"),
-					resource.TestCheckResourceAttr("vcd_nsxt_manager.test", "url", params["Url"].(string)),
+					resource.TestMatchResourceAttr("vcd_tm_nsxt_manager.test", "id", regexp.MustCompile(`^urn:vcloud:nsxtmanager:`)),
+					resource.TestMatchResourceAttr("vcd_tm_nsxt_manager.test", "href", regexp.MustCompile(`api/admin/extension/nsxtManagers/`)),
+					resource.TestCheckResourceAttr("vcd_tm_nsxt_manager.test", "name", params["Testname"].(string)),
+					resource.TestCheckResourceAttr("vcd_tm_nsxt_manager.test", "description", "terraform test"),
+					resource.TestCheckResourceAttrSet("vcd_tm_nsxt_manager.test", "status"),
+					resource.TestCheckResourceAttr("vcd_tm_nsxt_manager.test", "url", params["Url"].(string)),
 				),
 			},
 			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxt_manager.test", "id", regexp.MustCompile(`^urn:vcloud:nsxtmanager:`)),
-					resource.TestMatchResourceAttr("vcd_nsxt_manager.test", "href", regexp.MustCompile(`api/admin/extension/nsxtManagers/`)),
-					resource.TestCheckResourceAttr("vcd_nsxt_manager.test", "name", params["Testname"].(string)),
-					resource.TestCheckResourceAttr("vcd_nsxt_manager.test", "description", ""),
+					resource.TestMatchResourceAttr("vcd_tm_nsxt_manager.test", "id", regexp.MustCompile(`^urn:vcloud:nsxtmanager:`)),
+					resource.TestMatchResourceAttr("vcd_tm_nsxt_manager.test", "href", regexp.MustCompile(`api/admin/extension/nsxtManagers/`)),
+					resource.TestCheckResourceAttr("vcd_tm_nsxt_manager.test", "name", params["Testname"].(string)),
+					resource.TestCheckResourceAttr("vcd_tm_nsxt_manager.test", "description", ""),
 				),
 			},
 			{
 				Config: configText3,
 				Check: resource.ComposeTestCheckFunc(
-					resourceFieldsEqual("vcd_nsxt_manager.test", "data.vcd_nsxt_manager.test", []string{"%", "auto_trust_certificate", "password"}),
+					resourceFieldsEqual("vcd_tm_nsxt_manager.test", "data.vcd_tm_nsxt_manager.test", []string{"%", "auto_trust_certificate", "password"}),
 				),
 			},
 			{
-				ResourceName:            "vcd_nsxt_manager.test",
+				ResourceName:            "vcd_tm_nsxt_manager.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateId:           params["Testname"].(string),
@@ -86,7 +86,7 @@ func TestAccVcdNsxtManager(t *testing.T) {
 }
 
 const testAccVcdNsxtManagerStep1 = `
-resource "vcd_nsxt_manager" "test" {
+resource "vcd_tm_nsxt_manager" "test" {
   name                   = "{{.Testname}}"
   description            = "terraform test"
   username               = "{{.Username}}"
@@ -97,7 +97,7 @@ resource "vcd_nsxt_manager" "test" {
 }
 `
 const testAccVcdNsxtManagerStep2 = `
-resource "vcd_nsxt_manager" "test" {
+resource "vcd_tm_nsxt_manager" "test" {
   name                   = "{{.Testname}}"
   description            = ""
   username               = "{{.Username}}"
@@ -108,7 +108,7 @@ resource "vcd_nsxt_manager" "test" {
 `
 
 const testAccVcdNsxtManagerStep3DS = testAccVcdNsxtManagerStep1 + `
-data "vcd_nsxt_manager" "test" {
-  name = vcd_nsxt_manager.test.name
+data "vcd_tm_nsxt_manager" "test" {
+  name = vcd_tm_nsxt_manager.test.name
 }
 `

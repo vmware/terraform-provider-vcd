@@ -80,13 +80,13 @@ function check_for_config_file {
 function unit_test {
     if [ -n "$VERBOSE" ]
     then
-        echo "go test -race -tags unit ${TEST} || exit 1"
-        echo "go test -race -tags unit -v -timeout 5m"
+        echo "go test -tags unit ${TEST} || exit 1"
+        echo "go test -tags unit -v -timeout 5m"
     fi
     if [ -z "$DRY_RUN" ]
     then
-        go test -race -tags unit ${TEST} || exit 1
-        go test -race -tags unit -v -timeout 5m
+        go test -tags unit ${TEST} || exit 1
+        go test -tags unit -v -timeout 5m
     fi
 }
 
@@ -378,7 +378,10 @@ case $wanted in
         acceptance_test functional
         ;;
     acceptance)
-        acceptance_test functional
+        acceptance_test "unit functional"
+        ;;
+    acceptance-coverage)
+        acceptance_test "unit functional" "-coverprofile testacc.cover"
         ;;
     sequential-acceptance)
         acceptance_test functional "-race --parallel=1"

@@ -5,6 +5,7 @@ package vcd
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/vmware/go-vcloud-director/v3/govcd"
@@ -35,6 +36,10 @@ func TestAccDataSourceNotFound(t *testing.T) {
 
 func testSpecificDataSourceNotFound(dataSourceName string, vcdClient *VCDClient) func(*testing.T) {
 	return func(t *testing.T) {
+
+		if !vcdClient.Client.IsTm() && strings.HasPrefix(dataSourceName, "vcd_tm") {
+			t.Skipf("Skipping %s datasource not found test on VCD", dataSourceName)
+		}
 
 		type skipAlways struct {
 			dataSourceName string

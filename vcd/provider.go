@@ -66,8 +66,8 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_vm_sizing_policy":                             datasourceVcdVmSizingPolicy(),                          // 3.0
 	"vcd_nsxt_manager":                                 datasourceVcdNsxtManager(),                             // 3.0
 	"vcd_nsxt_tier0_router":                            datasourceVcdNsxtTier0Router(),                         // 3.0
-	"vcd_portgroup":                                    datasourceVcdPortgroup(),                               // 3.0
 	"vcd_vcenter":                                      datasourceVcdVcenter(),                                 // 3.0
+	"vcd_portgroup":                                    datasourceVcdPortgroup(),                               // 3.0
 	"vcd_resource_list":                                datasourceVcdResourceList(),                            // 3.1
 	"vcd_resource_schema":                              datasourceVcdResourceSchema(),                          // 3.1
 	"vcd_nsxt_edge_cluster":                            datasourceVcdNsxtEdgeCluster(),                         // 3.1
@@ -183,6 +183,8 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_tm_region":                                    datasourceVcdTmRegion(),                                // 4.0
 	"vcd_tm_org_vdc":                                   datasourceVcdTmOrgVdc(),                                // 4.0
 	"vcd_tm_region_zone":                               datasourceVcdTmRegionZone(),                            // 4.0
+	"vcd_tm_nsxt_manager":                              datasourceVcdTmNsxtManager(),                           // 4.0
+	"vcd_tm_vcenter":                                   datasourceVcdTmVcenter(),                               // 4.0
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -310,8 +312,8 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_alb_virtual_service_http_resp_rules":     resourceVcdAlbVirtualServiceRespRules(),              // 3.14
 	"vcd_nsxt_alb_virtual_service_http_sec_rules":      resourceVcdAlbVirtualServiceSecRules(),               // 3.14
 	"vcd_tm_content_library":                           resourceVcdTmContentLibrary(),                        // 4.0
-	"vcd_nsxt_manager":                                 resourceVcdNsxtManager(),                             // 4.0
-	"vcd_vcenter":                                      resourceVcdVcenter(),                                 // 4.0
+	"vcd_tm_nsxt_manager":                              resourceVcdTmNsxtManager(),                           // 4.0
+	"vcd_tm_vcenter":                                   resourceVcdTmVcenter(),                               // 4.0
 	"vcd_tm_org":                                       resourceVcdTmOrg(),                                   // 4.0
 	"vcd_tm_region":                                    resourceVcdTmRegion(),                                // 4.0
 	"vcd_tm_org_vdc":                                   resourceTmOrgVdc(),                                   // 4.0
