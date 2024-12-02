@@ -10,7 +10,6 @@ description: |-
 
 Provides a VMware Cloud Foundation Tenant Manager IP Space resource.
 
-
 ## Example Usage
 
 ```hcl
@@ -63,14 +62,12 @@ The following arguments are supported:
   south of the Provider Gateway. IPs within this scope are used for configuring services and
   networks. [internal_scope](#internal-scope)
 
-
 <a id="internal-scope"></a>
 
 ## internal_scope block
 
 * `cidr` - (Required) CIDR for IP block (e.g. 10.0.0.0/16)
 * `name` - (Optional) An optional friendly name for this block
-
 
 ## Attribute Reference
 
@@ -82,7 +79,6 @@ The following attributes are exported on this resource:
  * `REALIZED` - The entity is successfully realized in the system
  * `REALIZATION_FAILED` - There are some issues and the system is not able to realize the entity
  * `UNKNOWN` - Current state of entity is unknown
-
 
 ## Importing
 
