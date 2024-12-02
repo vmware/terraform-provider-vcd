@@ -1,21 +1,21 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_nsxt_manager"
-sidebar_current: "docs-vcd-resource-nsxt-manager"
+page_title: "VMware Cloud Director: vcd_tm_nsxt_manager"
+sidebar_current: "docs-vcd-resource-tm-nsxt-manager"
 description: |-
-  Provides a resource to manage NSX-T Managers.
+  Provides a resource to manage Tenant Manager NSX-T Managers.
 ---
 
-# vcd\_nsxt\_manager
+# vcd\_tm\_nsxt\_manager
 
-Provides a resource to manage NSX-T Managers.
+Provides a resource to manage Tenant Manager NSX-T Managers.
 
 ~> Only `System Administrator` can create this resource.
 
 ## Example Usage
 
 ```hcl
-resource "vcd_nsxt_manager" "test" {
+resource "vcd_tm_nsxt_manager" "test" {
   name                   = "TestAccVcdTmNsxtManager"
   description            = "terraform test"
   username               = "admin"
@@ -63,7 +63,7 @@ supplying path for it. An example is below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_manager.imported my-nsxt-manager
+terraform import vcd_tm_nsxt_manager.imported my-nsxt-manager
 ```
 
 The above would import the `my-nsxt-manager` NSX-T Manager settings that are defined at provider

@@ -1,12 +1,12 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_vcenter"
-sidebar_current: "docs-vcd-resource-vcenter"
+page_title: "VMware Cloud Director: vcd_tm_vcenter"
+sidebar_current: "docs-vcd-resource-tm-vcenter"
 description: |-
   Provides a resource to manage vCenters.
 ---
 
-# vcd\_nsxt\_vcenter
+# vcd\_tm\_vcenter
 
 Provides a resource to manage vCenters.
 
@@ -15,7 +15,7 @@ Provides a resource to manage vCenters.
 ## Example Usage
 
 ```hcl
-resource "vcd_vcenter" "test" {
+resource "vcd_tm_vcenter" "test" {
   name                    = "TestAccVcdTmVcenter-rename"
   url                     = "https://host:443"
   auto_trust_certificate  = true
@@ -61,11 +61,14 @@ The following attributes are exported on this resource:
 * `is_connected` - Defines if the vCenter server is connected.
 * `mode` - One of `NONE`, `IAAS` (scoped to the provider), `SDDC` (scoped to tenants), `MIXED` (both
   uses are possible)
-* `listener_state` - `INITIAL`, `INVALID_SETTINGS`, `UNSUPPORTED`, `DISCONNECTED`, `CONNECTING`,
+* `connection_status` - `INITIAL`, `INVALID_SETTINGS`, `UNSUPPORTED`, `DISCONNECTED`, `CONNECTING`,
   `CONNECTED_SYNCING`, `CONNECTED`, `STOP_REQ`, `STOP_AND_PURGE_REQ`, `STOP_ACK`
 * `cluster_health_status` - Cluster health status. One of `GRAY` , `RED` , `YELLOW` , `GREEN`
 * `version` - vCenter version
 * `uuid` - UUID of vCenter
+* `vcenter_host` - Host of vCenter server
+* `status` - Status can be `READY` or `NOT_READY`. It is a derivative field of `is_connected` and
+  `connection_status` so relying on those fields could be more precise.
 
 ## Importing
 
@@ -79,7 +82,7 @@ path for it. An example is below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_vcenter.imported my-vcenter
+terraform import vcd_tm_vcenter.imported my-vcenter
 ```
 
 The above would import the `my-vcenter` vCenter settings that are defined at provider level.

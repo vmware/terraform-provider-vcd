@@ -88,6 +88,10 @@ testacc-orguser: testunit
 testacc: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
 
+# Runs the full acceptance test as system administrator
+testacc-coverage: testunit
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance-coverage"
+	
 # Runs the acceptance test for tm
 testtm-acc: fmtcheck testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' tm-acceptance"
