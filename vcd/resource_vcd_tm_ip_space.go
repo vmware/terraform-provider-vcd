@@ -3,32 +3,36 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v3/govcd"
 	"github.com/vmware/go-vcloud-director/v3/types/v56"
 )
-// This is a template of how a "standard" resource can look using generic CRUD functions. It might
-// not cover all scenarios, but is a skeleton for quicker bootstraping of a new entity.
-//
-// "Search and replace the following entries"
-//
-// TmIpSpace - constant name for entity label (the lower case prefix 'label' prefix is hardcoded)
-// The 'label' prefix is hardcoded in the example so that we have autocompletion working for all labelXXXX. (e.g. TmOrg)
-//
-// TM IP Space - text for entity label (e.g. TM Organization)
-// This will be the entity label (used for logging purposes in generic functions)
-//
-// TmIpSpace - outer type (e.g. TmOrg)
-// This should be a non existing new type to create in 'govcd' package
-//
-// types.TmIpSpace - inner type without the 'types.' prefix (e.g. types.TmOrg)
-// This should be an already existing inner type in `types` package
-//
-// VcdTmIpSpace (e.g. VcdTmOrg)
 
 const labelTmIpSpace = "TM IP Space"
+
+var tmIpSpaceInternalScopeSchema = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"id": {
+			Type:        schema.TypeString,
+			Computed:    true,
+			Description: fmt.Sprintf("ID of internal scope within %s", labelTmIpSpace),
+		},
+		"name": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: fmt.Sprintf("Name of internal scope within %s", labelTmIpSpace),
+		},
+		"cidr": {
+			Type:        schema.TypeString,
+			Required:    true,
+			ForceNew:    true,
+			Description: fmt.Sprintf("The CIDR that represents this IP block within %s", labelTmIpSpace),
+		},
+	},
+}
 
 func resourceVcdTmIpSpace() *schema.Resource {
 	return &schema.Resource{
@@ -44,7 +48,52 @@ func resourceVcdTmIpSpace() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: fmt.Sprintf(" %s", labelTmIpSpace),
+				Description: fmt.Sprintf("Name of %s", labelTmIpSpace),
+			},
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: fmt.Sprintf("Description of %s", labelTmIpSpace),
+			},
+			"region_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: fmt.Sprintf("Region ID for this %s", labelTmIpSpace),
+			},
+			"external_scope": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "External scope in CIDR format",
+			},
+			"default_quota_max_subnet_size": {
+				Type:         schema.TypeString, // Values are 'ints', but
+				Optional:     true,
+				Description:  fmt.Sprintf("Maximum subnet size represented as a prefix length (e.g. 24, 28) in %s", labelTmIpSpace),
+				ValidateFunc: IsIntAndAtLeast(-1),
+			},
+			"default_quota_max_cidr_count": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  fmt.Sprintf("Maximum number of subnets that can be allocated from internal scope in this %s. ('-1' for unlimited)", labelTmIpSpace),
+				ValidateFunc: IsIntAndAtLeast(-1),
+			},
+			"default_quota_max_ip_count": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  fmt.Sprintf("Maximum number of single floating IP addresses that can be allocated from internal scope in this %s. ('-1' for unlimited)", labelTmIpSpace),
+				ValidateFunc: IsIntAndAtLeast(-1),
+			},
+			"internal_scope": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: fmt.Sprintf("Internal scope of %s", labelTmIpSpace),
+				Elem:        tmIpSpaceInternalScopeSchema,
+			},
+			"status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: fmt.Sprintf("Status of %s", labelTmIpSpace),
 			},
 		},
 	}
@@ -52,10 +101,10 @@ func resourceVcdTmIpSpace() *schema.Resource {
 
 func resourceVcdTmIpSpaceCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	c := crudConfig[*govcd.TmIpSpace, types.types.TmIpSpace]{
+	c := crudConfig[*govcd.TmIpSpace, types.TmIpSpace]{
 		entityLabel:      labelTmIpSpace,
-		getTypeFunc:      gettypes.TmIpSpaceType,
-		stateStoreFunc:   settypes.TmIpSpaceData,
+		getTypeFunc:      getTmIpSpaceType,
+		stateStoreFunc:   setTmIpSpaceData,
 		createFunc:       vcdClient.CreateTmIpSpace,
 		resourceReadFunc: resourceVcdTmIpSpaceRead,
 	}
@@ -64,12 +113,11 @@ func resourceVcdTmIpSpaceCreate(ctx context.Context, d *schema.ResourceData, met
 
 func resourceVcdTmIpSpaceUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	c := crudConfig[*govcd.TmIpSpace, types.types.TmIpSpace]{
+	c := crudConfig[*govcd.TmIpSpace, types.TmIpSpace]{
 		entityLabel:      labelTmIpSpace,
-		getTypeFunc:      gettypes.TmIpSpaceType,
+		getTypeFunc:      getTmIpSpaceType,
 		getEntityFunc:    vcdClient.GetTmIpSpaceById,
 		resourceReadFunc: resourceVcdTmIpSpaceRead,
-		// preUpdateHooks: []outerEntityHookInnerEntityType[*govcd.TmIpSpace, *types.types.TmIpSpace]{},
 	}
 
 	return updateResource(ctx, d, meta, c)
@@ -77,10 +125,10 @@ func resourceVcdTmIpSpaceUpdate(ctx context.Context, d *schema.ResourceData, met
 
 func resourceVcdTmIpSpaceRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	c := crudConfig[*govcd.TmIpSpace, types.types.TmIpSpace]{
+	c := crudConfig[*govcd.TmIpSpace, types.TmIpSpace]{
 		entityLabel:    labelTmIpSpace,
 		getEntityFunc:  vcdClient.GetTmIpSpaceById,
-		stateStoreFunc: settypes.TmIpSpaceData,
+		stateStoreFunc: setTmIpSpaceData,
 	}
 	return readResource(ctx, d, meta, c)
 }
@@ -88,9 +136,9 @@ func resourceVcdTmIpSpaceRead(ctx context.Context, d *schema.ResourceData, meta 
 func resourceVcdTmIpSpaceDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	c := crudConfig[*govcd.TmIpSpace, types.types.TmIpSpace]{
-		entityLabel:    labelTmIpSpace,
-		getEntityFunc:  vcdClient.GetTmIpSpaceById,
+	c := crudConfig[*govcd.TmIpSpace, types.TmIpSpace]{
+		entityLabel:   labelTmIpSpace,
+		getEntityFunc: vcdClient.GetTmIpSpaceById,
 		// preDeleteHooks: []outerEntityHook[*govcd.TmIpSpace]{},
 	}
 
@@ -100,20 +148,84 @@ func resourceVcdTmIpSpaceDelete(ctx context.Context, d *schema.ResourceData, met
 func resourceVcdTmIpSpaceImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
-	
+	ipSpace, err := vcdClient.GetTmIpSpaceByName(d.Id())
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving %s by given name '%s': %s", labelTmIpSpace, d.Id(), err)
+	}
 
-	d.SetId("???")
+	d.SetId(ipSpace.TmIpSpace.ID)
 	return []*schema.ResourceData{d}, nil
 }
 
-func gettypes.TmIpSpaceType(d *schema.ResourceData) (*types.types.TmIpSpace, error) {
-	t := &types.types.TmIpSpace{
+func getTmIpSpaceType(vcdClient *VCDClient, d *schema.ResourceData) (*types.TmIpSpace, error) {
+	t := &types.TmIpSpace{
+		Name:              d.Get("name").(string),
+		Description:       d.Get("description").(string),
+		RegionRef:         types.OpenApiReference{ID: d.Get("region_id").(string)},
+		ExternalScopeCidr: d.Get("external_scope").(string),
+	}
+
+	// error is ignored because validation is enforced in schema fields
+	maxCidrCountInt, _ := strconv.Atoi(d.Get("default_quota_max_cidr_count").(string))
+	maxIPCountInt, _ := strconv.Atoi(d.Get("default_quota_max_ip_count").(string))
+	maxSubnetSizeInt, _ := strconv.Atoi(d.Get("default_quota_max_subnet_size").(string))
+	t.DefaultQuota = types.TmIpSpaceDefaultQuota{
+		MaxCidrCount:  maxCidrCountInt,
+		MaxIPCount:    maxIPCountInt,
+		MaxSubnetSize: maxSubnetSizeInt,
+	}
+
+	// internal_scope
+	internalScope := d.Get("internal_scope").(*schema.Set)
+	internalScopeSlice := internalScope.List()
+	if len(internalScopeSlice) > 0 {
+		isSlice := make([]types.TmIpSpaceInternalScopeCidrBlocks, len(internalScopeSlice))
+		for internalScopeIndex := range internalScopeSlice {
+			internalScopeBlockStrings := convertToStringMap(internalScopeSlice[internalScopeIndex].(map[string]interface{}))
+
+			isSlice[internalScopeIndex].ID = internalScopeBlockStrings["id"]
+			isSlice[internalScopeIndex].Name = internalScopeBlockStrings["name"]
+			isSlice[internalScopeIndex].Cidr = internalScopeBlockStrings["cidr"]
+
+		}
+		t.InternalScopeCidrBlocks = isSlice
 	}
 
 	return t, nil
 }
 
-func settypes.TmIpSpaceData(d *schema.ResourceData, org *govcd.TmIpSpace) error {
-	// IMPLEMENT 
+func setTmIpSpaceData(d *schema.ResourceData, i *govcd.TmIpSpace) error {
+	if i == nil || i.TmIpSpace == nil {
+		return fmt.Errorf("nil %s received", labelTmIpSpace)
+	}
+
+	dSet(d, "name", i.TmIpSpace.Name)
+	dSet(d, "description", i.TmIpSpace.Description)
+	dSet(d, "region_id", i.TmIpSpace.RegionRef.ID)
+	dSet(d, "external_scope", i.TmIpSpace.ExternalScopeCidr)
+	dSet(d, "status", i.TmIpSpace.Status)
+
+	// maxSubnetSizeInt, _ := strconv.Atoi(i.TmIpSpace.DefaultQuota.MaxSubnetSize) // error is ignored because validation is enforced in schema
+
+	dSet(d, "default_quota_max_subnet_size", strconv.Itoa(i.TmIpSpace.DefaultQuota.MaxSubnetSize))
+	dSet(d, "default_quota_max_cidr_count", strconv.Itoa(i.TmIpSpace.DefaultQuota.MaxCidrCount))
+	dSet(d, "default_quota_max_ip_count", strconv.Itoa(i.TmIpSpace.DefaultQuota.MaxIPCount))
+
+	// internal_scope
+	internalScopeInterface := make([]interface{}, len(i.TmIpSpace.InternalScopeCidrBlocks))
+	for i, val := range i.TmIpSpace.InternalScopeCidrBlocks {
+		singleScope := make(map[string]interface{})
+
+		singleScope["id"] = val.ID
+		singleScope["name"] = val.Name
+		singleScope["cidr"] = val.Cidr
+
+		internalScopeInterface[i] = singleScope
+	}
+	err := d.Set("internal_scope", internalScopeInterface)
+	if err != nil {
+		return fmt.Errorf("error storing 'internal_scope': %s", err)
+	}
+
 	return nil
 }
