@@ -14,7 +14,6 @@ Provides a VMware Cloud Foundation Tenant Manager IP Space resource.
 ## Example Usage
 
 ```hcl
-
 data "vcd_tm_region" "demo" {
   name = "demo-region"
 }
@@ -51,10 +50,10 @@ The following arguments are supported:
 
 * `name` - (Required) A tenant facing name for IP Space
 * `description` - (Optional) An optional description
-* `region_id` - (Required) A region ID. Can be looked up using [Storage Class
-  IDs](/providers/vmware/vcd/latest/docs/data-sources/tm_region) data source
+* `region_id` - (Required) A region ID. Can be looked up using
+  [region data source](/providers/vmware/vcd/latest/docs/data-sources/tm_region)
 * `external_scope` - (Required) A CIDR (e.g. 10.0.0.0/8) for External Reachability. It represents
-  the IPs used outside the datacenter, north of the Provider Gateway.
+  the IPs used outside the datacenter, north of the Provider Gateway
 * `default_quota_max_subnet_size` - (Required) Maximum subnet size that can be allocated (e.g. 24)
 * `default_quota_max_cidr_count` - (Required) Maximum number of CIDRs that can be allocated (`-1`
   for unlimited)
@@ -69,8 +68,8 @@ The following arguments are supported:
 
 ## internal_scope block
 
-* `cidr` - CIDR for IP block (e.g. 10.0.0.0/16)
-* `name` - An optional friendly name for this block
+* `cidr` - (Required) CIDR for IP block (e.g. 10.0.0.0/16)
+* `name` - (Optional) An optional friendly name for this block
 
 
 ## Attribute Reference

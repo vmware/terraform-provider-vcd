@@ -129,17 +129,17 @@ resource "vcd_tm_ip_space" "test" {
   default_quota_max_ip_count    = 1
 
   internal_scope {
-     name = "scope1"
-	 cidr = "10.0.0.0/24"
+    name = "scope1"
+    cidr = "10.0.0.0/24"
   }
 
   internal_scope {
-	 cidr = "11.0.0.0/26"
+    cidr = "11.0.0.0/26"
   }
 
   internal_scope {
-     name = "scope3"
-	 cidr = "12.0.0.0/27"
+    name = "scope3"
+    cidr = "12.0.0.0/27"
   }
 }
 `
