@@ -1,0 +1,61 @@
+# Change configuration to your needs and rename to 'terraform.tfvars'
+# For more details about the variables specified here, please read the guide first:
+# https://registry.terraform.io/providers/vmware/vcd/latest/docs/guides/container_service_extension_4_x_install
+
+# ------------------------------------------------
+# VCD Provider config
+# ------------------------------------------------
+
+vcd_url                = "https://vcd.my-awesome-corp.com"
+administrator_user     = "administrator"
+administrator_password = "change-me"
+administrator_org      = "System"
+insecure_login         = "false"
+
+# ------------------------------------------------
+# CSE Server Pre-requisites
+# ------------------------------------------------
+
+# This user will be created by the Terraform configuration, so you can
+# customise what its username and password will be.
+# This user will have an API token that must be consumed by the CSE Server.
+cse_admin_username = "cse_admin"
+cse_admin_password = "change-me"
+
+# ------------------------------------------------
+# CSE Server Settings
+# ------------------------------------------------
+
+# These are required to create the Runtime Defined Entity that will contain the CSE Server configuration (vcdKeConfig)
+# To know more about the specific versions, please refer to the CSE documentation.
+# The values set here correspond to CSE 4.2.2:
+vcdkeconfig_template_filepath = "../../entities/vcdkeconfig.json.template"
+capvcd_version                = "1.3.0" # 4.2.2
+cpi_version                   = "1.6.0" # 4.2.2
+csi_version                   = "1.6.0" # 4.2.2
+rde_projector_version         = "0.7.1" # 4.2.2
+
+# Optional but recommended to avoid rate limiting when configuring the TKGm clusters.
+# Create this one in https://github.com/settings/tokens
+github_personal_access_token = ""
+
+# Node will be considered unhealthy and remediated if joining the cluster takes longer than this timeout (seconds)
+node_startup_timeout = "900"
+# A newly joined node will be considered unhealthy and remediated if it cannot host workloads for longer than this timeout (seconds)
+node_not_ready_timeout = "300"
+# A healthy node will be considered unhealthy and remediated if it is unreachable for longer than this timeout (seconds)
+node_unknown_timeout = "300"
+# Remediation will be suspended when the number of unhealthy nodes exceeds this percentage.
+# (100% means that unhealthy nodes will always be remediated, while 0% means that unhealthy nodes will never be remediated)
+max_unhealthy_node_percentage = 100
+
+# URL from where TKG clusters will fetch container images
+container_registry_url = "projects.registry.vmware.com"
+
+# Certificate(s) to allow the ephemeral VM (created during cluster creation) to authenticate with.
+# For example, when pulling images from a container registry. (Copy and paste .cert file contents)
+k8s_cluster_certificates = []
+
+# Certificate(s) to allow clusters to authenticate with.
+# For example, when pulling images from a container registry. (Copy and paste .cert file contents)
+bootstrap_vm_certificates = []
