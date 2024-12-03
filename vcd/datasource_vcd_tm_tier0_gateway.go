@@ -48,12 +48,12 @@ func resourceVcdTmTier0Gateway() *schema.Resource {
 
 func resourceVcdTmTier0GatewayRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	c := crudConfig[*govcd.TmTier0Gateway, types.TmTier0Gateway]{
+	c := dsReadConfig[*govcd.TmTier0Gateway, types.TmTier0Gateway]{
 		entityLabel:    labelTmTier0Gateway,
 		getEntityFunc:  vcdClient.GetTmTier0GatewayById,
 		stateStoreFunc: setTmTier0GatewayData,
 	}
-	return readResource(ctx, d, meta, c)
+	return readDatasource(ctx, d, meta, c)
 }
 
 func setTmTier0GatewayData(d *schema.ResourceData, org *govcd.TmTier0Gateway) error {

@@ -82,11 +82,11 @@ func resourceTVcdTmProviderGatewayDelete(ctx context.Context, d *schema.Resource
 func resourceTVcdTmProviderGatewayImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
-	d.SetId("???")
+	d.SetId(vcdClient.Org)
 	return []*schema.ResourceData{d}, nil
 }
 
-func getTmProviderGatewayType(d *schema.ResourceData) (*govcd.TmProviderGateway, error) {
+func getTmProviderGatewayType(vcdClient *VCDClient, d *schema.ResourceData) (*types.TmProviderGateway, error) {
 	t := &types.TmProviderGateway{}
 
 	return t, nil
