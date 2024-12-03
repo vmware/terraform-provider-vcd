@@ -28,7 +28,7 @@ data "vcd_tm_ip_space" "demo" {
 The following arguments are supported:
 
 * `name` - (Required) The name of IP Space
-* `region_id` - (Optional) The Region ID that has this IP Space definition. Can be looked up using
+* `region_id` - (Required) The Region ID that has this IP Space definition. Can be looked up using
   [`vcd_tm_region`](/providers/vmware/vcd/latest/docs/data-sources/tm_region)
 
 ## Attribute Reference
