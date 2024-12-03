@@ -15,8 +15,13 @@ This resource is exclusive to **VMware Cloud Foundation Tenant Manager**. Suppor
 ## Example Usage for a Provider Content Library
 
 ```hcl
+data "vcd_tm_region" "region" {
+  name = "My Region"
+}
+
 data "vcd_tm_region_storage_policy" "sp" {
-  name = "vSAN Default Storage Policy"
+  region_id = data.vcd_tm_region.region.id
+  name      = "vSAN Default Storage Policy"
 }
 
 resource "vcd_tm_content_library" "cl" {
