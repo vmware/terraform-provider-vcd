@@ -21,6 +21,7 @@ func TestAccVcdTmIpSpace(t *testing.T) {
 		"Testname":   t.Name(),
 		"VcenterRef": vCenterHclRef,
 		"RegionId":   fmt.Sprintf("%s.id", regionHclRef),
+		"RegionName": t.Name(),
 
 		"Tags": "tm",
 	}
@@ -110,7 +111,7 @@ func TestAccVcdTmIpSpace(t *testing.T) {
 				ResourceName:      "vcd_tm_ip_space.test",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateId:     params["Testname"].(string) + "-updated",
+				ImportStateId:     params["RegionName"].(string) + ImportSeparator + params["Testname"].(string) + "-updated",
 			},
 		},
 	})
@@ -168,4 +169,4 @@ data "vcd_tm_ip_space" "test" {
 
   depends_on = [ vcd_tm_ip_space.test ]
 }
-	`
+`

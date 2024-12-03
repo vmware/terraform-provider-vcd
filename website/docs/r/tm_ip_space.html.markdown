@@ -92,7 +92,7 @@ path for it. An example is below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_tm_ip_space.imported my-ip-space-name
+terraform import vcd_tm_ip_space.imported my-region-name.my-ip-space-name
 ```
 
-The above would import the `my-ip-space-name` IP Space.
+The above would import the `my-ip-space-name` IP Space that is assigned to `my-region-name` Region.

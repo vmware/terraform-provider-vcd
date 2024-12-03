@@ -43,7 +43,6 @@ func datasourceVcdTmIpSpace() *schema.Resource {
 			"region_id": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: fmt.Sprintf("Region ID for this %s", labelTmIpSpace),
 			},
 			"description": {
@@ -57,7 +56,7 @@ func datasourceVcdTmIpSpace() *schema.Resource {
 				Description: "External scope in CIDR format",
 			},
 			"default_quota_max_subnet_size": {
-				Type:        schema.TypeString, // Values are 'ints', but
+				Type:        schema.TypeString,
 				Computed:    true,
 				Description: fmt.Sprintf("Maximum subnet size represented as a prefix length (e.g. 24, 28) in %s", labelTmIpSpace),
 			},

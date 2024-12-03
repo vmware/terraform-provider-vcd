@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -68,26 +69,26 @@ func resourceVcdTmIpSpace() *schema.Resource {
 				Description: "External scope in CIDR format",
 			},
 			"default_quota_max_subnet_size": {
-				Type:         schema.TypeString, // Values are 'ints', but
+				Type:         schema.TypeString, // Values are 'ints', TypeString + validation is used to handle 0
 				Required:     true,
 				Description:  fmt.Sprintf("Maximum subnet size represented as a prefix length (e.g. 24, 28) in %s", labelTmIpSpace),
 				ValidateFunc: IsIntAndAtLeast(-1),
 			},
 			"default_quota_max_cidr_count": {
-				Type:         schema.TypeString,
+				Type:         schema.TypeString, // Values are 'ints', TypeString + validation is used to handle 0
 				Required:     true,
 				Description:  fmt.Sprintf("Maximum number of subnets that can be allocated from internal scope in this %s. ('-1' for unlimited)", labelTmIpSpace),
 				ValidateFunc: IsIntAndAtLeast(-1),
 			},
 			"default_quota_max_ip_count": {
-				Type:         schema.TypeString,
+				Type:         schema.TypeString, // Values are 'ints', TypeString + validation is used to handle 0
 				Required:     true,
 				Description:  fmt.Sprintf("Maximum number of single floating IP addresses that can be allocated from internal scope in this %s. ('-1' for unlimited)", labelTmIpSpace),
 				ValidateFunc: IsIntAndAtLeast(-1),
 			},
 			"internal_scope": {
 				Type:        schema.TypeSet,
-				Optional:    true,
+				Required:    true,
 				Description: fmt.Sprintf("Internal scope of %s", labelTmIpSpace),
 				Elem:        tmIpSpaceInternalScopeSchema,
 			},
@@ -140,20 +141,30 @@ func resourceVcdTmIpSpaceDelete(ctx context.Context, d *schema.ResourceData, met
 	c := crudConfig[*govcd.TmIpSpace, types.TmIpSpace]{
 		entityLabel:   labelTmIpSpace,
 		getEntityFunc: vcdClient.GetTmIpSpaceById,
-		// preDeleteHooks: []outerEntityHook[*govcd.TmIpSpace]{},
 	}
 
 	return deleteResource(ctx, d, meta, c)
 }
 
 func resourceVcdTmIpSpaceImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	vcdClient := meta.(*VCDClient)
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 2 {
+		return nil, fmt.Errorf("resource name must be specified as region-name.ip-space-name")
+	}
+	regionName, ipSpaceName := resourceURI[0], resourceURI[1]
 
-	ipSpace, err := vcdClient.GetTmIpSpaceByName(d.Id())
+	vcdClient := meta.(*VCDClient)
+	region, err := vcdClient.GetRegionByName(regionName)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving %s by name '%s': %s", labelTmRegion, regionName, err)
+	}
+
+	ipSpace, err := vcdClient.GetTmIpSpaceByNameAndRegionId(ipSpaceName, region.Region.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving %s by given name '%s': %s", labelTmIpSpace, d.Id(), err)
 	}
 
+	dSet(d, "region_id", region.Region.ID)
 	d.SetId(ipSpace.TmIpSpace.ID)
 	return []*schema.ResourceData{d}, nil
 }
@@ -189,7 +200,7 @@ func getTmIpSpaceType(vcdClient *VCDClient, d *schema.ResourceData) (*types.TmIp
 
 			// ID of internal_scope is important for updates
 			// Terraform TypeSet cannot natively identify the ID between previous and new states
-			// To work around this, an attempt to retrieve ID from state and correlate it with new payload
+			// To work around this, an attempt to retrieve ID from state and correlate it with new payload is done
 			// An important fact is that `cidr` field is not updatable, therefore one can be sure
 			// that ID from state can be looked up based on CIDR.
 			// If there was no such cidr in previous state - it means that this is a new 'internal_scope' block

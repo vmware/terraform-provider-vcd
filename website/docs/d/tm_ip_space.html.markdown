@@ -31,7 +31,6 @@ The following arguments are supported:
 * `region_id` - (Optional) The Region ID that has this IP Space definition. Can be looked up using
   [`vcd_tm_region`](/providers/vmware/vcd/latest/docs/data-sources/tm_region)
 
-
 ## Attribute Reference
 
 All the arguments and attributes defined in
