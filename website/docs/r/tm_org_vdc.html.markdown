@@ -10,6 +10,9 @@ description: |-
 
 Provides a resource to manage VMware Cloud Foundation Tenant Manager Organization VDC.
 
+This resource is exclusive to **VMware Cloud Foundation Tenant Manager**. Supported in provider
+*v4.0+*
+
 ## Example Usage
 
 ```hcl
@@ -22,15 +25,19 @@ data "vcd_tm_supervisor" "supervisor" {
   vcenter_id = vcd_vcenter.vc.id
 }
 
+data "vcd_tm_region" "one" {
+  name = "region-one"
+}
+
 data "vcd_tm_region_zone" "one" {
-  region_id = vcd_tm_region.region.id
+  region_id = data.vcd_tm_region.one.id
   name      = "my-zone"
 }
 
 resource "vcd_tm_org_vdc" "first" {
   name           = "my-org-vdc"
   org_id         = vcd_tm_org.test.id
-  region_id      = vcd_tm_region.region.id
+  region_id      = data.vcd_tm_region.one.id
   supervisor_ids = [data.vcd_tm_supervisor.test.id]
   zone_resource_allocations {
     region_zone_id         = data.vcd_tm_region_zone.one.id
@@ -61,7 +68,7 @@ The following arguments are supported:
 * `cpu_limit_mhz` - (Required) Maximum CPU consumption limit in MHz
 * `cpu_reservation_mhz` - (Required) Defines reserved CPU capacity in MHz
 * `memory_limit_mib` - (Required) Maximum memory consumption limit in MiB
-* `memory_reservation_mib` - (Required) Defines reserved memory capacity in Mib
+* `memory_reservation_mib` - (Required) Defines reserved memory capacity in MiB
 
 A computed attribute `region_zone_name` will be set in each `zone_resource_allocations` block.
 
