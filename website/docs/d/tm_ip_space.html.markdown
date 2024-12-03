@@ -13,17 +13,23 @@ Provides a VMware Cloud Foundation Tenant Manager IP Space data source.
 ## Example Usage
 
 ```hcl
+data "vcd_tm_region" "demo" {
+  name = "demo-region"
+}
 
+data "vcd_tm_ip_space" "demo" {
+  name      = "demo-ip-space"
+  region_id = data.vcd_tm_region.region.id
+}
 ```
 
 ## Argument Reference
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to which the edge gateway belongs. Optional if defined at provider level.
-* `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level.
-* `edge_gateway_id` - (Required) An ID of NSX-T Edge Gateway. Can be lookup up using
-  [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edgegateway) data source
+* `name` - (Required) The name of IP Space
+* `region_id` - (Optional) The Region ID that has this IP Space definition. Can be looked up using
+  [`vcd_tm_region`](/providers/vmware/vcd/latest/docs/data-sources/tm_region)
 
 ## Attribute Reference
 
