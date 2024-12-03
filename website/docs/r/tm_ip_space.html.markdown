@@ -60,7 +60,7 @@ The following arguments are supported:
   (`-1` for unlimited)
 * `internal_scope` - (Required) A set of IP Blocks that represent IPs used in this local datacenter,
   south of the Provider Gateway. IPs within this scope are used for configuring services and
-  networks. [internal_scope](#internal-scope)
+  networks. See [internal_scope](#internal-scope) for more details.
 
 <a id="internal-scope"></a>
 
