@@ -184,6 +184,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_tm_nsxt_manager":                              datasourceVcdTmNsxtManager(),                           // 4.0
 	"vcd_tm_vcenter":                                   datasourceVcdTmVcenter(),                               // 4.0
 	"vcd_tm_ip_space":                                  datasourceVcdTmIpSpace(),                               // 4.0
+	"vcd_tm_tier0_gateway":                             datasourceVcdTmTier0Gateway(),                          // 4.0
 }
 
 var globalResourceMap = map[string]*schema.Resource{

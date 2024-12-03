@@ -10,29 +10,9 @@ import (
 	"github.com/vmware/go-vcloud-director/v3/types/v56"
 )
 
-// This is a template of how a "standard" resource can look using generic CRUD functions. It might
-// not cover all scenarios, but is a skeleton for quicker bootstraping of a new entity.
-//
-// "Search and replace the following entries"
-//
-// TmTier0Gateway - constant name for entity label (the lower case prefix 'label' prefix is hardcoded)
-// The 'label' prefix is hardcoded in the example so that we have autocompletion working for all labelXXXX. (e.g. TmOrg)
-//
-// ENTITY-LABELTEXT-PLACEHOLDER - text for entity label (e.g. TM Organization)
-// Must already be defined in resource skeleton
-// This will be the entity label (used for logging purposes in generic functions)
-//
-// TmTier0Gateway - outer type (e.g. TmOrg)
-// This should be a non existing new type to create in 'govcd' package
-//
-// TmTier0Gateway - inner type without the 'types.' prefix (e.g. types.TmOrg)
-// This should be an already existing inner type in `types` package
-//
-// VcdTmTier0Gateway (e.g. VcdTmOrg)
-
 const labelTmTier0Gateway = "TM Tier 0 Gateway"
 
-func resourceVcdTmTier0Gateway() *schema.Resource {
+func datasourceVcdTmTier0Gateway() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: resourceVcdTmTier0GatewayRead,
 
@@ -40,7 +20,27 @@ func resourceVcdTmTier0Gateway() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: fmt.Sprintf(" %s", labelTmTier0Gateway),
+				Description: fmt.Sprintf("Display Name of %s", labelTmTier0Gateway),
+			},
+			"region_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: fmt.Sprintf("Parent %s ID", labelTmRegion),
+			},
+			"description": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: fmt.Sprintf("Description of %s", labelTmTier0Gateway),
+			},
+			"parent_tier_0_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: fmt.Sprintf("Parent Tier 0  of %s", labelTmTier0Gateway),
+			},
+			"already_imported": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: fmt.Sprintf("Defines if the T0 is already imported of %s", labelTmTier0Gateway),
 			},
 		},
 	}
@@ -48,15 +48,24 @@ func resourceVcdTmTier0Gateway() *schema.Resource {
 
 func resourceVcdTmTier0GatewayRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+	getT0ByName := func(name string) (*govcd.TmTier0Gateway, error) {
+		return vcdClient.GetTmTier0GatewayInRegionByName(name, d.Get("region_id").(string), true)
+	}
+
 	c := dsReadConfig[*govcd.TmTier0Gateway, types.TmTier0Gateway]{
 		entityLabel:    labelTmTier0Gateway,
-		getEntityFunc:  vcdClient.GetTmTier0GatewayById,
+		getEntityFunc:  getT0ByName,
 		stateStoreFunc: setTmTier0GatewayData,
 	}
 	return readDatasource(ctx, d, meta, c)
 }
 
-func setTmTier0GatewayData(d *schema.ResourceData, org *govcd.TmTier0Gateway) error {
-	// IMPLEMENT
+func setTmTier0GatewayData(d *schema.ResourceData, t *govcd.TmTier0Gateway) error {
+	d.SetId(t.TmTier0Gateway.ID)
+	dSet(d, "name", t.TmTier0Gateway.DisplayName)
+	dSet(d, "description", t.TmTier0Gateway.Description)
+	dSet(d, "parent_tier_0_id", t.TmTier0Gateway.ParentTier0ID)
+	dSet(d, "already_imported", t.TmTier0Gateway.AlreadyImported)
+
 	return nil
 }
