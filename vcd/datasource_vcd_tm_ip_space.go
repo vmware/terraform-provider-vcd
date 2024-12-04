@@ -92,7 +92,7 @@ func datasourceVcdTmIpSpaceRead(ctx context.Context, d *schema.ResourceData, met
 		return vcdClient.GetTmIpSpaceByNameAndRegionId(name, d.Get("region_id").(string))
 	}
 
-	c := crudConfig[*govcd.TmIpSpace, types.TmIpSpace]{
+	c := dsReadConfig[*govcd.TmIpSpace, types.TmIpSpace]{
 		entityLabel:    labelTmIpSpace,
 		getEntityFunc:  getTmIpSpaceByName,
 		stateStoreFunc: setTmIpSpaceData,
