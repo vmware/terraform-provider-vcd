@@ -137,22 +137,6 @@ func readResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.Res
 	return nil
 }
 
-// readDatasource will read a data source by a 'name' field in Terraform schema
-func readDatasource[O updateDeleter[O, I], I any](_ context.Context, d *schema.ResourceData, _ interface{}, c crudConfig[O, I]) diag.Diagnostics {
-	entityName := d.Get("name").(string)
-	retrievedEntity, err := c.getEntityFunc(entityName)
-	if err != nil {
-		return diag.Errorf("error getting %s by Name '%s': %s", c.entityLabel, entityName, err)
-	}
-
-	err = c.stateStoreFunc(d, retrievedEntity)
-	if err != nil {
-		return diag.Errorf("error storing %s to state during data source read: %s", c.entityLabel, err)
-	}
-
-	return nil
-}
-
 func deleteResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.ResourceData, _ interface{}, c crudConfig[O, I]) diag.Diagnostics {
 	retrievedEntity, err := c.getEntityFunc(d.Id())
 	if err != nil {
@@ -221,6 +205,38 @@ func execUpdateEntityHookWithNewInnerType[O, I any](d *schema.ResourceData, oute
 			return fmt.Errorf("error executing hook: %s", err)
 		}
 
+	}
+
+	return nil
+}
+
+// dsReadConfig is a generic type that can be used for data sources. It differs from `crudConfig` in
+// the sense that it does not have `updateDeleter` type parameter constraint. This is needed for
+// such data sources that have no API to Update and/or Delete an entity, but instead are read-only
+// entities.
+type dsReadConfig[O any, I any] struct {
+	// entityLabel to use
+	entityLabel string
+
+	// stateStoreFunc is responsible for storing state
+	stateStoreFunc func(d *schema.ResourceData, outerType O) error
+
+	// getEntityFunc is a function that retrieves the entity
+	// It will use ID for resources and Name for data sources
+	getEntityFunc func(idOrName string) (O, error)
+}
+
+// readDatasource will read a data source by a 'name' field in Terraform schema
+func readDatasource[O any, I any](_ context.Context, d *schema.ResourceData, _ interface{}, c dsReadConfig[O, I]) diag.Diagnostics {
+	entityName := d.Get("name").(string)
+	retrievedEntity, err := c.getEntityFunc(entityName)
+	if err != nil {
+		return diag.Errorf("error getting %s by Name '%s': %s", c.entityLabel, entityName, err)
+	}
+
+	err = c.stateStoreFunc(d, retrievedEntity)
+	if err != nil {
+		return diag.Errorf("error storing %s to state during data source read: %s", c.entityLabel, err)
 	}
 
 	return nil
