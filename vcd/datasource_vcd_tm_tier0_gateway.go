@@ -49,7 +49,7 @@ func datasourceVcdTmTier0Gateway() *schema.Resource {
 func resourceVcdTmTier0GatewayRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	getT0ByName := func(name string) (*govcd.TmTier0Gateway, error) {
-		return vcdClient.GetTmTier0GatewayInRegionByName(name, d.Get("region_id").(string), true)
+		return vcdClient.GetTmTier0GatewayWithContextByName(name, d.Get("region_id").(string), true)
 	}
 
 	c := dsReadConfig[*govcd.TmTier0Gateway, types.TmTier0Gateway]{
