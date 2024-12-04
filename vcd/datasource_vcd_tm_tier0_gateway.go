@@ -35,7 +35,7 @@ func datasourceVcdTmTier0Gateway() *schema.Resource {
 			"parent_tier_0_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: fmt.Sprintf("Parent Tier 0  of %s", labelTmTier0Gateway),
+				Description: fmt.Sprintf("Parent Tier 0 Gateway of %s", labelTmTier0Gateway),
 			},
 			"already_imported": {
 				Type:        schema.TypeBool,
@@ -61,7 +61,7 @@ func resourceVcdTmTier0GatewayRead(ctx context.Context, d *schema.ResourceData, 
 }
 
 func setTmTier0GatewayData(d *schema.ResourceData, t *govcd.TmTier0Gateway) error {
-	d.SetId(t.TmTier0Gateway.ID)
+	d.SetId(t.TmTier0Gateway.ID) // So far the API returns plain UUID (not URN)
 	dSet(d, "name", t.TmTier0Gateway.DisplayName)
 	dSet(d, "description", t.TmTier0Gateway.Description)
 	dSet(d, "parent_tier_0_id", t.TmTier0Gateway.ParentTier0ID)

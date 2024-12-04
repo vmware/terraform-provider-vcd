@@ -6,15 +6,39 @@ description: |-
   Provides a VMware Cloud Foundation Tenant Manager Provider Gateway resource.
 ---
 
-# vcd\_tm\_ip\_space
+# vcd\_tm\_provider\_gateway
 
 Provides a VMware Cloud Foundation Tenant Manager Provider Gateway resource.
 
-~> Only `System Administrator` can create this resource.
-
-## Example Usage (Adding NSX-T ALB Service Engine Group)
+## Example Usage
 
 ```hcl
+data "vcd_tm_region" "demo" {
+  name = "region-one"
+}
+
+data "vcd_tm_tier0_gateway" "demo" {
+  name      = "my-tier0-gateway"
+  region_id = data.vcd_tm_region.demo.id
+}
+
+data "vcd_tm_ip_space" "demo" {
+  name      = "demo-ip-space"
+  region_id = data.vcd_tm_region.demo.id
+}
+
+data "vcd_tm_ip_space" "demo2" {
+  name      = "demo-ip-space-2"
+  region_id = data.vcd_tm_region.demo.id
+}
+
+resource "vcd_tm_provider_gateway" "demo" {
+  name                  = "Demo Provider Gateway"
+  description           = "Terraform Provider Gateway"
+  region_id             = data.vcd_tm_region.demo.id
+  nsxt_tier0_gateway_id = data.vcd_tm_tier0_gateway.demo.id
+  ip_space_ids          = [ data.vcd_tm_ip_space.demo.id, data.vcd_tm_ip_space.demo2.id]
+}
 
 ```
 
@@ -22,23 +46,12 @@ Provides a VMware Cloud Foundation Tenant Manager Provider Gateway resource.
 
 The following arguments are supported:
 
-* `name` - (Required) A name for NSX-T ALB Service Engine Group
-* `description` - (Optional) An optional description NSX-T ALB Service Engine Group
-* `alb_cloud_id` - (Required) A reference NSX-T ALB Cloud. Can be looked up using `vcd_nsxt_alb_cloud` resource or data
-  source
+* `name` - (Required) A name for Provider Gateway
+* `description` - (Optional) A description for Provider Gateway
+* `region_id` - (Required) A Region ID for 
+* `nsxt_tier0_gateway_id` - (Required) An existing NSX-T Tier 0 Gateway
+* `ip_space_ids` - (Required) A set of IP Space IDs that should be assigned to this Provider Gateway
 
-
-## Attribute Reference
-
-The following attributes are exported on this resource:
-
-* `max_virtual_services` - Maximum number of virtual services this NSX-T ALB Service Engine Group can run
-* `reserved_virtual_services` - Number of reserved virtual services
-* `deployed_virtual_services` - Number of deployed virtual services
-* `ha_mode` defines High Availability Mode for Service Engine Group. One off:
-  * ELASTIC_N_PLUS_M_BUFFER - Service Engines will scale out to N active nodes with M nodes as buffer.
-  * ELASTIC_ACTIVE_ACTIVE - Active-Active with scale out.
-  * LEGACY_ACTIVE_STANDBY - Traditional single Active-Standby configuration
 
 ## Importing
 

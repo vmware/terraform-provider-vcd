@@ -188,6 +188,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_tm_content_library_item":                      datasourceVcdTmContentLibraryItem(),                    // 4.0
 	"vcd_tm_ip_space":                                  datasourceVcdTmIpSpace(),                               // 4.0
 	"vcd_tm_tier0_gateway":                             datasourceVcdTmTier0Gateway(),                          // 4.0
+	"vcd_tm_provider_gateway":                          datasourceVcdTmProviderGateway(),                       // 4.0
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -322,6 +323,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_tm_region":                                    resourceVcdTmRegion(),                                // 4.0
 	"vcd_tm_org_vdc":                                   resourceTmOrgVdc(),                                   // 4.0
 	"vcd_tm_ip_space":                                  resourceVcdTmIpSpace(),                               // 4.0
+	"vcd_tm_provider_gateway":                          resourceVcdTmProviderGateway(),                       // 4.0
 }
 
 // Provider returns a terraform.ResourceProvider.
