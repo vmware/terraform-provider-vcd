@@ -82,6 +82,9 @@ resource "vcd_tm_nsxt_manager" "nsx_manager" {
 // only if a Region is already configured in TM. Otherwise, it returns a Region resource HCL as first returned parameter
 // and its HCL reference as second one, only if "createRegion=true" in the testing configuration
 func getRegionHcl(t *testing.T, vCenterHclRef, nsxManagerHclRef string) (string, string) {
+	if testConfig.Tm.Region == "" {
+		t.Fatalf("the property tm.region is required but it is not present in testing JSON")
+	}
 	vcdClient := createTemporaryVCDConnection(false)
 	region, err := vcdClient.GetRegionByName(testConfig.Tm.Region)
 	if err == nil {
@@ -107,12 +110,49 @@ data "vcd_tm_supervisor" "supervisor" {
 }
 
 resource "vcd_tm_region" "region" {
-  name                 = "` + t.Name() + `"
-  description          = "` + t.Name() + `"
+  name                 = "` + testConfig.Tm.Region + `"
+  description          = "` + testConfig.Tm.Region + `"
   is_enabled           = true
   nsx_manager_id       = ` + nsxManagerHclRef + `.id
   supervisor_ids       = [data.vcd_tm_supervisor.supervisor.id]
   storage_policy_names = ["` + testConfig.Tm.VcenterStorageProfile + `"]
 }
 `, "vcd_tm_region.region"
+}
+
+// getContentLibraryHcl gets a Content Library data source as first returned parameter and its HCL reference as second one,
+// only if a Content Library is already configured in TM. Otherwise, it returns a Content Library resource HCL as first returned parameter
+// and its HCL reference as second one
+func getContentLibraryHcl(t *testing.T, regionHclRef string) (string, string) {
+	if testConfig.Tm.ContentLibrary == "" {
+		t.Fatalf("the property tm.contentLibrary is required but it is not present in testing JSON")
+	}
+	if testConfig.Tm.RegionStoragePolicy == "" {
+		t.Fatalf("the property tm.regionStoragePolicy is required but it is not present in testing JSON")
+	}
+	vcdClient := createTemporaryVCDConnection(false)
+	cl, err := vcdClient.GetContentLibraryByName(testConfig.Tm.ContentLibrary)
+	if err == nil {
+		return `
+data "vcd_tm_content_library" "content_library" {
+  name = "` + cl.ContentLibrary.Name + `"
+}
+`, "data.vcd_tm_content_library.content_library"
+	}
+	if !govcd.ContainsNotFound(err) {
+		t.Fatal(err)
+		return "", ""
+	}
+	return `
+data "vcd_tm_region_storage_policy" "region_storage_policy" {
+  region_id = ` + regionHclRef + `.id 
+  name      = "` + testConfig.Tm.RegionStoragePolicy + `"
+}
+
+resource "vcd_tm_content_library" "content_library" {
+  name                 = "` + testConfig.Tm.ContentLibrary + `"
+  description          = "` + testConfig.Tm.ContentLibrary + `"
+  storage_class_ids    = [data.vcd_tm_region_storage_policy.region_storage_policy.id]
+}
+`, "vcd_tm_content_library.content_library"
 }

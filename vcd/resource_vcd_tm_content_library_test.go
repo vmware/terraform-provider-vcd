@@ -30,6 +30,13 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 
 	preRequisites := vCenterHcl + nsxManagerHcl + regionHcl
 
+	// TODO: TM: There shouldn't be a need to create `preRequisites` separately, but region
+	// creation fails if it is spawned instantly after adding vCenter, therefore this extra step
+	// give time (with additional 'refresh' and 'refresh storage policies' operations on vCenter)
+	skipBinaryTest := "# skip-binary-test: prerequisite buildup for acceptance tests"
+	configText0 := templateFill(vCenterHcl+nsxManagerHcl+skipBinaryTest, params)
+	params["FuncName"] = t.Name() + "-step0"
+
 	configText1 := templateFill(preRequisites+testAccVcdTmContentLibraryStep1, params)
 	params["FuncName"] = t.Name() + "-step2"
 	configText2 := templateFill(preRequisites+testAccVcdTmContentLibraryStep2, params)
@@ -46,6 +53,9 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
+			{
+				Config: configText0,
+			},
 			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(

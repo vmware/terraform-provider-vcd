@@ -111,7 +111,7 @@ func TestAccVcdTmIpSpace(t *testing.T) {
 				ResourceName:      "vcd_tm_ip_space.test",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateId:     params["RegionName"].(string) + ImportSeparator + params["Testname"].(string) + "-updated",
+				ImportStateId:     testConfig.Tm.Region + ImportSeparator + params["Testname"].(string) + "-updated",
 			},
 		},
 	})
