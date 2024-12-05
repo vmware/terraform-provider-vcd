@@ -1,3 +1,9 @@
+## 3.14.1 (December 5, 2024)
+
+### IMPROVEMENTS
+* Add support of CSE 4.2.2 and 4.2.3 versions by improving `vcd_cse_kubernetes cluster` and updating
+  the installation guide and examples ([#1357](https://github.com/vmware/terraform-provider-vcd/pull/1357))
+
 ## 3.14.0 (September 17, 2024)
 
 ### FEATURES
