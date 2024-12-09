@@ -10,6 +10,20 @@ import (
 	"github.com/vmware/go-vcloud-director/v3/util"
 )
 
+// type operationType string
+
+// const (
+// 	crudCreate operationType = "CREATE"
+// 	crudUpdate operationType = "UPDATE"
+// )
+
+const (
+	crudCreate = iota
+	crudUpdate
+	crudRead
+	crudDelete
+)
+
 // crudConfig defines a generic approach for managing Terraform resources where the parent entity is
 // a standard OpenAPI entity and the outer entity should satisfy 'updateDeleter' type constraint
 // (have 'Update' and 'Delete' pointer receiver methods)
@@ -20,7 +34,7 @@ type crudConfig[O updateDeleter[O, I], I any] struct {
 	// getTypeFunc is responsible for converting schema fields to inner type
 	getTypeFunc func(*VCDClient, *schema.ResourceData) (*I, error)
 	// stateStoreFunc is responsible for storing state
-	stateStoreFunc func(d *schema.ResourceData, outerType O) error
+	stateStoreFunc func(vcdClient *VCDClient, d *schema.ResourceData, outerType O) error
 
 	// createFunc is the function that can create an outer entity based on inner entity config
 	// (which is created by 'getTypeFunc')
@@ -80,7 +94,7 @@ func createResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema
 		return diag.Errorf("error creating %s: %s", c.entityLabel, err)
 	}
 
-	err = c.stateStoreFunc(d, createdEntity)
+	err = c.stateStoreFunc(vcdClient, d, createdEntity)
 	if err != nil {
 		return diag.Errorf("error storing %s to state during create: %s", c.entityLabel, err)
 	}
@@ -113,7 +127,7 @@ func updateResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema
 	return c.resourceReadFunc(ctx, d, meta)
 }
 
-func readResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.ResourceData, _ interface{}, c crudConfig[O, I]) diag.Diagnostics {
+func readResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.ResourceData, meta interface{}, c crudConfig[O, I]) diag.Diagnostics {
 	retrievedEntity, err := c.getEntityFunc(d.Id())
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
@@ -129,7 +143,8 @@ func readResource[O updateDeleter[O, I], I any](_ context.Context, d *schema.Res
 		return diag.Errorf("error executing read %s hooks: %s", c.entityLabel, err)
 	}
 
-	err = c.stateStoreFunc(d, retrievedEntity)
+	vcdClient := meta.(*VCDClient)
+	err = c.stateStoreFunc(vcdClient, d, retrievedEntity)
 	if err != nil {
 		return diag.Errorf("error storing %s to state during resource read: %s", c.entityLabel, err)
 	}
@@ -219,7 +234,7 @@ type dsReadConfig[O any, I any] struct {
 	entityLabel string
 
 	// stateStoreFunc is responsible for storing state
-	stateStoreFunc func(d *schema.ResourceData, outerType O) error
+	stateStoreFunc func(vcdClient *VCDClient, d *schema.ResourceData, outerType O) error
 
 	// getEntityFunc is a function that retrieves the entity
 	// It will use ID for resources and Name for data sources
@@ -227,14 +242,15 @@ type dsReadConfig[O any, I any] struct {
 }
 
 // readDatasource will read a data source by a 'name' field in Terraform schema
-func readDatasource[O any, I any](_ context.Context, d *schema.ResourceData, _ interface{}, c dsReadConfig[O, I]) diag.Diagnostics {
+func readDatasource[O any, I any](_ context.Context, d *schema.ResourceData, meta interface{}, c dsReadConfig[O, I]) diag.Diagnostics {
 	entityName := d.Get("name").(string)
 	retrievedEntity, err := c.getEntityFunc(entityName)
 	if err != nil {
 		return diag.Errorf("error getting %s by Name '%s': %s", c.entityLabel, entityName, err)
 	}
 
-	err = c.stateStoreFunc(d, retrievedEntity)
+	vcdClient := meta.(*VCDClient)
+	err = c.stateStoreFunc(vcdClient, d, retrievedEntity)
 	if err != nil {
 		return diag.Errorf("error storing %s to state during data source read: %s", c.entityLabel, err)
 	}

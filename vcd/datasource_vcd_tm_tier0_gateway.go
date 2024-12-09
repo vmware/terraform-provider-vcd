@@ -60,7 +60,7 @@ func resourceVcdTmTier0GatewayRead(ctx context.Context, d *schema.ResourceData, 
 	return readDatasource(ctx, d, meta, c)
 }
 
-func setTmTier0GatewayData(d *schema.ResourceData, t *govcd.TmTier0Gateway) error {
+func setTmTier0GatewayData(_ *VCDClient, d *schema.ResourceData, t *govcd.TmTier0Gateway) error {
 	d.SetId(t.TmTier0Gateway.ID) // So far the API returns plain UUID (not URN)
 	dSet(d, "name", t.TmTier0Gateway.DisplayName)
 	dSet(d, "description", t.TmTier0Gateway.Description)

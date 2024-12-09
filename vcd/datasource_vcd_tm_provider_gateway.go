@@ -20,6 +20,11 @@ func datasourceVcdTmProviderGateway() *schema.Resource {
 				Required:    true,
 				Description: fmt.Sprintf("Name of %s", labelTmProviderGateway),
 			},
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: fmt.Sprintf("Description of %s", labelTmProviderGateway),
+			},
 			"region_id": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -40,10 +45,10 @@ func datasourceVcdTmProviderGateway() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"description": {
+			"status": {
 				Type:        schema.TypeString,
-				Optional:    true,
-				Description: fmt.Sprintf("Description of %s", labelTmProviderGateway),
+				Computed:    true,
+				Description: fmt.Sprintf("Status of %s", labelTmProviderGateway),
 			},
 		},
 	}

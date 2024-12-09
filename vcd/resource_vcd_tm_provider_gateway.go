@@ -11,6 +11,12 @@ import (
 )
 
 const labelTmProviderGateway = "TM Provider Gateway"
+const labelTmProviderGatewayIpSpaceAssociations = "TM IP Space Associations"
+
+// TM Provider Gateway has an asymmetric API - it requires are least one IP Space reference when
+// creating a Provider Gateway, but it will not return Associated IP Spaces afterwards. Instead,
+// to update associated IP Spaces one must use separate API endpoint and structure
+// (`TmIpSpaceAssociation`) to manage associations after initial Provider Gateway creation
 
 func resourceVcdTmProviderGateway() *schema.Resource {
 	return &schema.Resource{
@@ -27,6 +33,11 @@ func resourceVcdTmProviderGateway() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: fmt.Sprintf("Name of %s", labelTmProviderGateway),
+			},
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: fmt.Sprintf("Description of %s", labelTmProviderGateway),
 			},
 			"region_id": {
 				Type:        schema.TypeString,
@@ -48,10 +59,10 @@ func resourceVcdTmProviderGateway() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"description": {
+			"status": {
 				Type:        schema.TypeString,
-				Optional:    true,
-				Description: fmt.Sprintf("Description of %s", labelTmProviderGateway),
+				Computed:    true,
+				Description: fmt.Sprintf("Status of %s", labelTmProviderGateway),
 			},
 		},
 	}
@@ -71,18 +82,67 @@ func resourceVcdTmProviderGatewayCreate(ctx context.Context, d *schema.ResourceD
 
 func resourceVcdTmProviderGatewayUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	c := crudConfig[*govcd.TmProviderGateway, types.TmProviderGateway]{
-		entityLabel:      labelTmProviderGateway,
-		getTypeFunc:      getTmProviderGatewayType,
-		getEntityFunc:    vcdClient.GetTmProviderGatewayById,
-		resourceReadFunc: resourceVcdTmProviderGatewayRead,
+
+	// Update IP Space associations using separate endpoint (more details at the top of file)
+	if d.HasChange("ip_space_ids") {
+
+		previous, new := d.GetChange("ip_space_ids")
+		previousSet := previous.(*schema.Set)
+		newSet := new.(*schema.Set)
+
+		toRemoveSet := previousSet.Difference(newSet)
+		toAddSet := newSet.Difference(previousSet)
+
+		// Remove
+		existingIpSpaceAssociations, err := vcdClient.GetAllTmIpSpaceAssociationsByProviderGatewayId(d.Id())
+		if err != nil {
+			return diag.Errorf("error reading %s for update: %s", labelTmProviderGatewayIpSpaceAssociations, err)
+		}
+
+		for _, singleIpSpaceId := range convertSchemaSetToSliceOfStrings(toRemoveSet) {
+			for _, singleAssociation := range existingIpSpaceAssociations {
+				if singleAssociation.TmIpSpaceAssociation.IPSpaceRef.ID == singleIpSpaceId {
+					err = singleAssociation.Delete()
+					if err != nil {
+						return diag.Errorf("error removing %s '%s' for %s '%s': %s",
+							labelTmProviderGatewayIpSpaceAssociations, singleAssociation.TmIpSpaceAssociation.ID, labelTmIpSpace, singleIpSpaceId, err)
+					}
+				}
+			}
+		}
+
+		// Add new
+		for _, addIpSpaceId := range convertSchemaSetToSliceOfStrings(toAddSet) {
+			at := &types.TmIpSpaceAssociation{
+				IPSpaceRef:         &types.OpenApiReference{ID: addIpSpaceId},
+				ProviderGatewayRef: &types.OpenApiReference{ID: d.Id()},
+			}
+			_, err := vcdClient.CreateTmIpSpaceAssociation(at)
+			if err != nil {
+				return diag.Errorf("error adding new %s for %s with ID '%s': %s",
+					labelTmProviderGatewayIpSpaceAssociations, labelTmIpSpace, addIpSpaceId, err)
+			}
+		}
 	}
 
-	return updateResource(ctx, d, meta, c)
+	// This is the default entity update path - other fields can be updated, by updating IP Space itself
+	if d.HasChangeExcept("ip_space_ids") {
+		c := crudConfig[*govcd.TmProviderGateway, types.TmProviderGateway]{
+			entityLabel:      labelTmProviderGateway,
+			getTypeFunc:      getTmProviderGatewayType,
+			getEntityFunc:    vcdClient.GetTmProviderGatewayById,
+			resourceReadFunc: resourceVcdTmProviderGatewayRead,
+		}
+
+		return updateResource(ctx, d, meta, c)
+	}
+
+	return nil
 }
 
 func resourceVcdTmProviderGatewayRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+
 	c := crudConfig[*govcd.TmProviderGateway, types.TmProviderGateway]{
 		entityLabel:    labelTmProviderGateway,
 		getEntityFunc:  vcdClient.GetTmProviderGatewayById,
@@ -120,10 +180,21 @@ func getTmProviderGatewayType(vcdClient *VCDClient, d *schema.ResourceData) (*ty
 	ipSpaceIds := convertSchemaSetToSliceOfStrings(d.Get("ip_space_ids").(*schema.Set))
 	t.IPSpaceRefs = convertSliceOfStringsToOpenApiReferenceIds(ipSpaceIds)
 
+	// Update operation fails if the ID is not set for update
+	if d.Id() != "" {
+		t.ID = d.Id()
+	}
+
+	// IP Spaces associations are populated on create only. Updates are done using separate endpoint
+	// (more details at the top of file)
+	if d.Id() != "" {
+		t.IPSpaceRefs = []types.OpenApiReference{}
+	}
+
 	return t, nil
 }
 
-func setTmProviderGatewayData(d *schema.ResourceData, p *govcd.TmProviderGateway) error {
+func setTmProviderGatewayData(vcdClient *VCDClient, d *schema.ResourceData, p *govcd.TmProviderGateway) error {
 	if p == nil || p.TmProviderGateway == nil {
 		return fmt.Errorf("nil entity received")
 	}
@@ -133,8 +204,19 @@ func setTmProviderGatewayData(d *schema.ResourceData, p *govcd.TmProviderGateway
 	dSet(d, "description", p.TmProviderGateway.Description)
 	dSet(d, "region_id", p.TmProviderGateway.RegionRef.ID)
 	dSet(d, "nsxt_tier0_gateway_id", p.TmProviderGateway.BackingRef.ID)
+	dSet(d, "status", p.TmProviderGateway.Status)
 
-	err := d.Set("ip_space_ids", extractIdsFromOpenApiReferences(p.TmProviderGateway.IPSpaceRefs))
+	// IP Space Associations have to be read separatelly after creation (more details at the top of file)
+	associations, err := vcdClient.GetAllTmIpSpaceAssociationsByProviderGatewayId(p.TmProviderGateway.ID)
+	if err != nil {
+		return fmt.Errorf("error retrieving %s for %s", labelTmProviderGatewayIpSpaceAssociations, labelTmProviderGateway)
+	}
+	associationIds := make([]string, len(associations))
+	for index, singleAssociation := range associations {
+		associationIds[index] = singleAssociation.TmIpSpaceAssociation.IPSpaceRef.ID
+	}
+
+	err = d.Set("ip_space_ids", associationIds)
 	if err != nil {
 		return fmt.Errorf("error storing 'ip_space_ids': %s", err)
 	}

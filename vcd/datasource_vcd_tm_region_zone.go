@@ -79,7 +79,7 @@ func resourceVcdTmRegionZoneRead(ctx context.Context, d *schema.ResourceData, me
 	return readDatasource(ctx, d, meta, c)
 }
 
-func setZoneData(d *schema.ResourceData, z *govcd.Zone) error {
+func setZoneData(_ *VCDClient, d *schema.ResourceData, z *govcd.Zone) error {
 	if z == nil || z.Zone == nil {
 		return fmt.Errorf("nil %s", labelTmRegionZone)
 	}
