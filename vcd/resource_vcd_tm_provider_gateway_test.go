@@ -21,12 +21,13 @@ func TestAccVcdTmProviderGateway(t *testing.T) {
 	ipSpace2Hcl, ipSpace2HclRef := getIpSpaceHcl(t, regionHclRef, "2", "2")
 
 	var params = StringMap{
-		"Testname":   t.Name(),
-		"VcenterRef": vCenterHclRef,
-		"RegionId":   fmt.Sprintf("%s.id", regionHclRef),
-		"RegionName": t.Name(),
-		"IpSpace1Id": fmt.Sprintf("%s.id", ipSpace1HclRef),
-		"IpSpace2Id": fmt.Sprintf("%s.id", ipSpace2HclRef),
+		"Testname":     t.Name(),
+		"VcenterRef":   vCenterHclRef,
+		"RegionId":     fmt.Sprintf("%s.id", regionHclRef),
+		"RegionName":   t.Name(),
+		"IpSpace1Id":   fmt.Sprintf("%s.id", ipSpace1HclRef),
+		"IpSpace2Id":   fmt.Sprintf("%s.id", ipSpace2HclRef),
+		"Tier0Gateway": testConfig.Tm.NsxtTier0Gateway,
 
 		"Tags": "tm",
 	}
@@ -44,11 +45,13 @@ func TestAccVcdTmProviderGateway(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step2"
 	configText2 := templateFill(preRequisites+testAccVcdTmProviderGatewayStep2, params)
 	params["FuncName"] = t.Name() + "-step3"
-	configText3 := templateFill(preRequisites+testAccVcdTmProviderGatewayStep3DS, params)
+	configText3 := templateFill(preRequisites+testAccVcdTmProviderGatewayStep3, params)
+	params["FuncName"] = t.Name() + "-step4"
+	configText4 := templateFill(preRequisites+testAccVcdTmProviderGatewayStep4DS, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION step1: %s\n", configText1)
 	debugPrintf("#[DEBUG] CONFIGURATION step2: %s\n", configText2)
-	debugPrintf("#[DEBUG] CONFIGURATION step3: %s\n", configText3)
+	debugPrintf("#[DEBUG] CONFIGURATION step4: %s\n", configText4)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -66,25 +69,7 @@ func TestAccVcdTmProviderGateway(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					cachedIpSpaceId.cacheTestResourceFieldValue("vcd_tm_ip_space.test", "id"),
 					resource.TestCheckResourceAttrSet("vcd_tm_ip_space.test", "id"),
-					resource.TestCheckResourceAttrSet("vcd_tm_ip_space.test", "status"),
 					resource.TestCheckResourceAttr("vcd_tm_ip_space.test", "name", t.Name()),
-					resource.TestCheckResourceAttr("vcd_tm_ip_space.test", "description", "description test"),
-					resource.TestCheckResourceAttr("vcd_tm_ip_space.test", "external_scope", "12.12.0.0/16"),
-					resource.TestCheckResourceAttr("vcd_tm_ip_space.test", "default_quota_max_subnet_size", "24"),
-					resource.TestCheckResourceAttr("vcd_tm_ip_space.test", "default_quota_max_cidr_count", "1"),
-					resource.TestCheckResourceAttr("vcd_tm_ip_space.test", "default_quota_max_ip_count", "1"),
-					resource.TestCheckResourceAttr("vcd_tm_ip_space.test", "internal_scope.#", "3"),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_tm_ip_space.test", "internal_scope.*", map[string]string{
-						"name": "scope1",
-						"cidr": "10.0.0.0/24",
-					}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_tm_ip_space.test", "internal_scope.*", map[string]string{
-						"cidr": "11.0.0.0/26",
-					}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_tm_ip_space.test", "internal_scope.*", map[string]string{
-						"name": "scope3",
-						"cidr": "12.0.0.0/27",
-					}),
 				),
 			},
 			{
@@ -92,31 +77,26 @@ func TestAccVcdTmProviderGateway(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					cachedIpSpaceId.testCheckCachedResourceFieldValue("vcd_tm_ip_space.test", "id"),
 					resource.TestCheckResourceAttrSet("vcd_tm_ip_space.test", "id"),
-					resource.TestCheckResourceAttr("vcd_tm_ip_space.test", "status", "REALIZED"),
-					resource.TestCheckResourceAttr("vcd_tm_ip_space.test", "name", t.Name()+"-updated"),
-					resource.TestCheckResourceAttr("vcd_tm_ip_space.test", "description", "description test - update"),
-					resource.TestCheckResourceAttr("vcd_tm_ip_space.test", "external_scope", "12.12.0.0/20"),
-					resource.TestCheckResourceAttr("vcd_tm_ip_space.test", "default_quota_max_subnet_size", "25"),
-					resource.TestCheckResourceAttr("vcd_tm_ip_space.test", "default_quota_max_cidr_count", "-1"),
-					resource.TestCheckResourceAttr("vcd_tm_ip_space.test", "default_quota_max_ip_count", "-1"),
-					resource.TestCheckResourceAttr("vcd_tm_ip_space.test", "internal_scope.#", "1"),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_tm_ip_space.test", "internal_scope.*", map[string]string{
-						"name": "scope3",
-						"cidr": "12.0.0.0/27",
-					}),
 				),
 			},
 			{
 				Config: configText3,
 				Check: resource.ComposeTestCheckFunc(
-					resourceFieldsEqual("vcd_tm_ip_space.test", "data.vcd_tm_ip_space.test", nil),
+					cachedIpSpaceId.testCheckCachedResourceFieldValue("vcd_tm_ip_space.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_tm_ip_space.test", "id"),
 				),
 			},
 			{
-				ResourceName:      "vcd_tm_ip_space.test",
+				Config: configText4,
+				Check: resource.ComposeTestCheckFunc(
+					resourceFieldsEqual("vcd_tm_provider_gateway.test", "data.vcd_tm_provider_gateway.test", nil),
+				),
+			},
+			{
+				ResourceName:      "vcd_tm_provider_gateway.test",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateId:     testConfig.Tm.Region + ImportSeparator + params["Testname"].(string) + "-updated",
+				ImportStateId:     params["Testname"].(string) + "-updated",
 			},
 		},
 	})
@@ -124,54 +104,76 @@ func TestAccVcdTmProviderGateway(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdTmProviderGatewayStep1 = `
+const testAccVcdTmProviderGatewayPrereqs = `
 resource "vcd_tm_ip_space" "test" {
   name                          = "{{.Testname}}"
   description                   = "description test"
   region_id                     = {{.RegionId}}
-  external_scope                = "12.12.0.0/16"
+  external_scope                = "12.12.0.0/30"
   default_quota_max_subnet_size = 24
   default_quota_max_cidr_count  = 1
   default_quota_max_ip_count    = 1
 
   internal_scope {
     name = "scope1"
-    cidr = "10.0.0.0/24"
-  }
-
-  internal_scope {
-    cidr = "11.0.0.0/26"
-  }
-
-  internal_scope {
-    name = "scope3"
-    cidr = "12.0.0.0/27"
+    cidr = "10.0.0.0/28"
   }
 }
-`
 
-const testAccVcdTmProviderGatewayStep2 = `
-resource "vcd_tm_ip_space" "test" {
-  name                          = "{{.Testname}}-updated"
-  description                   = "description test - update"
+resource "vcd_tm_ip_space" "test2" {
+  name                          = "{{.Testname}}-2"
+  description                   = "description test"
   region_id                     = {{.RegionId}}
-  external_scope                = "12.12.0.0/20"
-  default_quota_max_subnet_size = 25
-  default_quota_max_cidr_count  = -1
-  default_quota_max_ip_count    = -1
+  external_scope                = "13.12.0.0/30"
+  default_quota_max_subnet_size = 24
+  default_quota_max_cidr_count  = 1
+  default_quota_max_ip_count    = 1
 
   internal_scope {
-     name = "scope3"
-	 cidr = "12.0.0.0/27"
+    name = "scope1"
+    cidr = "9.0.0.0/28"
   }
+}
+
+data "vcd_tm_tier0_gateway" "test" {
+  name      = "{{.Tier0Gateway}}"
+  region_id = {{.RegionId}}
+}
+
+`
+
+const testAccVcdTmProviderGatewayStep1 = testAccVcdTmProviderGatewayPrereqs + `
+resource "vcd_tm_provider_gateway" "test" {
+  name                  = "{{.Testname}}"
+  description           = "Made using Terraform"
+  region_id             = {{.RegionId}}
+  nsxt_tier0_gateway_id = data.vcd_tm_tier0_gateway.test.id
+  ip_space_ids          = [ vcd_tm_ip_space.test.id ]
 }
 `
 
-const testAccVcdTmProviderGatewayStep3DS = testAccVcdTmProviderGatewayStep2 + `
-data "vcd_tm_ip_space" "test" {
-  name      = vcd_tm_ip_space.test.name
-  region_id = {{.RegionId}}
+const testAccVcdTmProviderGatewayStep2 = testAccVcdTmProviderGatewayPrereqs + `
+resource "vcd_tm_provider_gateway" "test" {
+  name                  = "{{.Testname}}"
+  description           = "Made using Terraform"
+  region_id             = {{.RegionId}}
+  nsxt_tier0_gateway_id = data.vcd_tm_tier0_gateway.test.id
+  ip_space_ids          = [ vcd_tm_ip_space.test2.id ]
+}
+`
 
-  depends_on = [ vcd_tm_ip_space.test ]
+const testAccVcdTmProviderGatewayStep3 = testAccVcdTmProviderGatewayPrereqs + `
+resource "vcd_tm_provider_gateway" "test" {
+  name                  = "{{.Testname}}-updated"
+  description           = "Made using Terraform"
+  region_id             = {{.RegionId}}
+  nsxt_tier0_gateway_id = data.vcd_tm_tier0_gateway.test.id
+  ip_space_ids          = [ vcd_tm_ip_space.test2.id, vcd_tm_ip_space.test.id ]
+}
+`
+
+const testAccVcdTmProviderGatewayStep4DS = testAccVcdTmProviderGatewayStep3 + `
+data "vcd_tm_provider_gateway" "test" {
+  name = vcd_tm_provider_gateway.test.name
 }
 `

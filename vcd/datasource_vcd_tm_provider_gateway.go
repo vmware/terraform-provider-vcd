@@ -22,24 +22,22 @@ func datasourceVcdTmProviderGateway() *schema.Resource {
 			},
 			"description": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Computed:    true,
 				Description: fmt.Sprintf("Description of %s", labelTmProviderGateway),
 			},
 			"region_id": {
 				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
+				Computed:    true,
 				Description: fmt.Sprintf("Parent %s of %s", labelTmRegion, labelTmProviderGateway),
 			},
 			"nsxt_tier0_gateway_id": {
 				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
+				Computed:    true,
 				Description: fmt.Sprintf("Parent %s of %s", labelTmTier0Gateway, labelTmProviderGateway),
 			},
 			"ip_space_ids": {
 				Type:        schema.TypeSet,
-				Required:    true,
+				Computed:    true,
 				Description: fmt.Sprintf("A set of supervisor IDs used in this %s", labelTmRegion),
 				Elem: &schema.Schema{
 					Type: schema.TypeString,

@@ -165,7 +165,12 @@ func resourceVcdTmProviderGatewayDelete(ctx context.Context, d *schema.ResourceD
 func resourceVcdTmProviderGatewayImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
-	d.SetId(vcdClient.Org)
+	providerGateway, err := vcdClient.GetTmProviderGatewayByName(d.Id())
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving Provider Gateway: %s", err)
+	}
+
+	d.SetId(providerGateway.TmProviderGateway.ID)
 	return []*schema.ResourceData{d}, nil
 }
 
