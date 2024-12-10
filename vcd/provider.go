@@ -182,6 +182,8 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_tm_supervisor":                                datasourceVcdTmSupervisor(),                            // 4.0
 	"vcd_tm_supervisor_zone":                           datasourceVcdTmSupervisorZone(),                        // 4.0
 	"vcd_tm_region":                                    datasourceVcdTmRegion(),                                // 4.0
+	"vcd_tm_org_vdc":                                   datasourceVcdTmOrgVdc(),                                // 4.0
+	"vcd_tm_region_zone":                               datasourceVcdTmRegionZone(),                            // 4.0
 	"vcd_tm_nsxt_manager":                              datasourceVcdTmNsxtManager(),                           // 4.0
 	"vcd_tm_vcenter":                                   datasourceVcdTmVcenter(),                               // 4.0
 	"vcd_tm_content_library_item":                      datasourceVcdTmContentLibraryItem(),                    // 4.0
@@ -317,6 +319,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_tm_content_library_item":                      resourceVcdTmContentLibraryItem(),                    // 4.0
 	"vcd_tm_org":                                       resourceVcdTmOrg(),                                   // 4.0
 	"vcd_tm_region":                                    resourceVcdTmRegion(),                                // 4.0
+	"vcd_tm_org_vdc":                                   resourceTmOrgVdc(),                                   // 4.0
 }
 
 // Provider returns a terraform.ResourceProvider.
