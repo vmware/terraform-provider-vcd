@@ -11,12 +11,12 @@
 #   Other than that, this snippet should be applied as it is.
 # ------------------------------------------------------------------------------------------------------------
 
-# VCD Provider configuration. It must be at least v3.12.0 and configured with a System administrator account.
+# VCD Provider configuration. It must be v3.14.1 and configured with a System administrator account.
 terraform {
   required_providers {
     vcd = {
       source  = "vmware/vcd"
-      version = ">= 3.12"
+      version = "3.14.1"
     }
   }
 }
