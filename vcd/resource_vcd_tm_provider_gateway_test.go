@@ -96,7 +96,7 @@ func TestAccVcdTmProviderGateway(t *testing.T) {
 				ResourceName:      "vcd_tm_provider_gateway.test",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateId:     params["Testname"].(string) + "-updated",
+				ImportStateId:     testConfig.Tm.Region + ImportSeparator + params["Testname"].(string) + "-updated",
 			},
 		},
 	})
@@ -174,6 +174,7 @@ resource "vcd_tm_provider_gateway" "test" {
 
 const testAccVcdTmProviderGatewayStep4DS = testAccVcdTmProviderGatewayStep3 + `
 data "vcd_tm_provider_gateway" "test" {
-  name = vcd_tm_provider_gateway.test.name
+  name      = vcd_tm_provider_gateway.test.name
+  region_id = {{.RegionId}}
 }
 `

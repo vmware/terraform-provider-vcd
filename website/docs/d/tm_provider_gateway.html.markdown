@@ -13,7 +13,14 @@ Provides a VMware Cloud Foundation Tenant Manager Provider Gateway data source.
 ## Example Usage
 
 ```hcl
+data "vcd_tm_region" "demo" {
+  name = "region-one"
+}
 
+data "vcd_tm_provider_gateway" "demo" {
+  name      = "Demo Provider Gateway"
+  region_id = data.vcd_tm_region.demo.id
+}
 ```
 
 ## Argument Reference
@@ -21,6 +28,8 @@ Provides a VMware Cloud Foundation Tenant Manager Provider Gateway data source.
 The following arguments are supported:
 
 * `name` - (Required) The name of Provider Gateway
+* `region_id` - (Required) An ID of Region. Can be looked up using
+  [vcd_tm_region](/providers/vmware/vcd/latest/docs/data-sources/tm_region) data source
 
 
 ## Attribute Reference

@@ -20,15 +20,15 @@ func datasourceVcdTmProviderGateway() *schema.Resource {
 				Required:    true,
 				Description: fmt.Sprintf("Name of %s", labelTmProviderGateway),
 			},
+			"region_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: fmt.Sprintf("Parent %s of %s", labelTmRegion, labelTmProviderGateway),
+			},
 			"description": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: fmt.Sprintf("Description of %s", labelTmProviderGateway),
-			},
-			"region_id": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: fmt.Sprintf("Parent %s of %s", labelTmRegion, labelTmProviderGateway),
 			},
 			"nsxt_tier0_gateway_id": {
 				Type:        schema.TypeString,
@@ -54,9 +54,12 @@ func datasourceVcdTmProviderGateway() *schema.Resource {
 
 func datasourceVcdTmProviderGatewayRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
+	getProviderGateway := func(name string) (*govcd.TmProviderGateway, error) {
+		return vcdClient.GetTmProviderGatewayByNameAndRegionId(name, d.Get("region_id").(string))
+	}
 	c := dsReadConfig[*govcd.TmProviderGateway, types.TmProviderGateway]{
 		entityLabel:    labelTmProviderGateway,
-		getEntityFunc:  vcdClient.GetTmProviderGatewayByName,
+		getEntityFunc:  getProviderGateway,
 		stateStoreFunc: setTmProviderGatewayData,
 	}
 	return readDatasource(ctx, d, meta, c)

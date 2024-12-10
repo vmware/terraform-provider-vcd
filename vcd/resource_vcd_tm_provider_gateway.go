@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -93,6 +94,21 @@ func resourceVcdTmProviderGatewayUpdate(ctx context.Context, d *schema.ResourceD
 		toRemoveSet := previousSet.Difference(newSet)
 		toAddSet := newSet.Difference(previousSet)
 
+		// Adding new ones first, because it can happen that all previous IP Spaces are removed and
+		// new ones added, however API prohibits removal of all IP Space associations for Provider
+		// Gateway (at least one IP Space must always be associated)
+		for _, addIpSpaceId := range convertSchemaSetToSliceOfStrings(toAddSet) {
+			at := &types.TmIpSpaceAssociation{
+				IPSpaceRef:         &types.OpenApiReference{ID: addIpSpaceId},
+				ProviderGatewayRef: &types.OpenApiReference{ID: d.Id()},
+			}
+			_, err := vcdClient.CreateTmIpSpaceAssociation(at)
+			if err != nil {
+				return diag.Errorf("error adding new %s for %s with ID '%s': %s",
+					labelTmProviderGatewayIpSpaceAssociations, labelTmIpSpace, addIpSpaceId, err)
+			}
+		}
+
 		// Remove
 		existingIpSpaceAssociations, err := vcdClient.GetAllTmIpSpaceAssociationsByProviderGatewayId(d.Id())
 		if err != nil {
@@ -111,18 +127,6 @@ func resourceVcdTmProviderGatewayUpdate(ctx context.Context, d *schema.ResourceD
 			}
 		}
 
-		// Add new
-		for _, addIpSpaceId := range convertSchemaSetToSliceOfStrings(toAddSet) {
-			at := &types.TmIpSpaceAssociation{
-				IPSpaceRef:         &types.OpenApiReference{ID: addIpSpaceId},
-				ProviderGatewayRef: &types.OpenApiReference{ID: d.Id()},
-			}
-			_, err := vcdClient.CreateTmIpSpaceAssociation(at)
-			if err != nil {
-				return diag.Errorf("error adding new %s for %s with ID '%s': %s",
-					labelTmProviderGatewayIpSpaceAssociations, labelTmIpSpace, addIpSpaceId, err)
-			}
-		}
 	}
 
 	// This is the default entity update path - other fields can be updated, by updating IP Space itself
@@ -163,9 +167,19 @@ func resourceVcdTmProviderGatewayDelete(ctx context.Context, d *schema.ResourceD
 }
 
 func resourceVcdTmProviderGatewayImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	vcdClient := meta.(*VCDClient)
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 2 {
+		return nil, fmt.Errorf("resource name must be specified as region-name.provider-gateway-name")
+	}
+	regionName, providerGatewayName := resourceURI[0], resourceURI[1]
 
-	providerGateway, err := vcdClient.GetTmProviderGatewayByName(d.Id())
+	vcdClient := meta.(*VCDClient)
+	region, err := vcdClient.GetRegionByName(regionName)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving %s by name '%s': %s", labelTmRegion, regionName, err)
+	}
+
+	providerGateway, err := vcdClient.GetTmProviderGatewayByNameAndRegionId(providerGatewayName, region.Region.ID)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving Provider Gateway: %s", err)
 	}

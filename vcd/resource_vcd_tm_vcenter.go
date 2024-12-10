@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -232,6 +233,7 @@ func resourceVcdTmVcenterRead(ctx context.Context, d *schema.ResourceData, meta 
 		getEntityFunc:  fakeGetById, // TODO: TM: remove this function
 		stateStoreFunc: setTmVcenterData,
 		readHooks: []outerEntityHook[*govcd.VCenter]{
+			sleepHookVcenter(1 * time.Minute),
 			refreshVcenter(shouldRefresh),               // vCenter read can optionally trigger "refresh" operation
 			refreshVcenterPolicy(shouldRefreshPolicies), // vCenter read can optionally trigger "refresh policies" operation
 		},
@@ -322,6 +324,13 @@ func autoTrustHostCertificate(urlSchemaFieldName, trustSchemaFieldName string) s
 			return fmt.Errorf("error trusting '%s' certificate: %s", schemaUrl, err)
 		}
 
+		return nil
+	}
+}
+
+func sleepHookVcenter(d time.Duration) outerEntityHook[*govcd.VCenter] {
+	return func(v *govcd.VCenter) error {
+		time.Sleep(d)
 		return nil
 	}
 }

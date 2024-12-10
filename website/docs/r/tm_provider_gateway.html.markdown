@@ -65,7 +65,7 @@ supplying path for it. An example is below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_tm_provider_gateway.imported my-provider-gateway
+terraform import vcd_tm_provider_gateway.imported my-region-name.my-provider-gateway
 ```
 
-The above would import the `my-provider-gateway` Provider Gateway.
+The above would import the `my-provider-gateway` Provider Gateway in Region `my-region-name`

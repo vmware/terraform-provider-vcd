@@ -13,19 +13,26 @@ Provides a VMware Cloud Foundation Tenant Manager Tier 0 Gateway data source.
 ## Example Usage
 
 ```hcl
+data "vcd_tm_region" "demo" {
+  name = "region-one"
+}
 
+data "vcd_tm_tier0_gateway" "demo" {
+  name      = "my-tier0-gateway"
+  region_id = data.vcd_tm_region.demo.id
+}
 ```
 
 ## Argument Reference
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to which the edge gateway belongs. Optional if defined at provider level.
-* `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level.
-* `edge_gateway_id` - (Required) An ID of NSX-T Edge Gateway. Can be lookup up using
-  [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/data-sources/nsxt_edgegateway) data source
+* `name` - (Required) The name of TM Tier 0 Gateway originating in NSX-T 
+* `region_id` - (Required) An ID of Region. Can be looked up using
+  [vcd_tm_region](/providers/vmware/vcd/latest/docs/data-sources/tm_region) data source
 
 ## Attribute Reference
 
-All the arguments and attributes defined in
-[`vcd_tm_ip_space`](/providers/vmware/vcd/latest/docs/resources/tm_ip_space) resource are available.
+* `description` - Description of the Tier 0 Gateway
+* `parent_tier_0_id` - Parent Tier 0 Gateway ID if this is a Tier 0 VRF
+* `already_imported` - Boolean flag if the Tier 0 Gateway is already consumed
