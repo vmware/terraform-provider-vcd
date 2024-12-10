@@ -10,20 +10,6 @@ import (
 	"github.com/vmware/go-vcloud-director/v3/util"
 )
 
-// type operationType string
-
-// const (
-// 	crudCreate operationType = "CREATE"
-// 	crudUpdate operationType = "UPDATE"
-// )
-
-const (
-	crudCreate = iota
-	crudUpdate
-	crudRead
-	crudDelete
-)
-
 // crudConfig defines a generic approach for managing Terraform resources where the parent entity is
 // a standard OpenAPI entity and the outer entity should satisfy 'updateDeleter' type constraint
 // (have 'Update' and 'Delete' pointer receiver methods)

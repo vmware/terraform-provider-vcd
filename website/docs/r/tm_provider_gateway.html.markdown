@@ -37,7 +37,7 @@ resource "vcd_tm_provider_gateway" "demo" {
   description           = "Terraform Provider Gateway"
   region_id             = data.vcd_tm_region.demo.id
   nsxt_tier0_gateway_id = data.vcd_tm_tier0_gateway.demo.id
-  ip_space_ids          = [ data.vcd_tm_ip_space.demo.id, data.vcd_tm_ip_space.demo2.id]
+  ip_space_ids          = [data.vcd_tm_ip_space.demo.id, data.vcd_tm_ip_space.demo2.id]
 }
 
 ```
