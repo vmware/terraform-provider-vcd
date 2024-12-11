@@ -39,7 +39,6 @@ resource "vcd_tm_provider_gateway" "demo" {
   nsxt_tier0_gateway_id = data.vcd_tm_tier0_gateway.demo.id
   ip_space_ids          = [data.vcd_tm_ip_space.demo.id, data.vcd_tm_ip_space.demo2.id]
 }
-
 ```
 
 ## Argument Reference
@@ -51,7 +50,6 @@ The following arguments are supported:
 * `region_id` - (Required) A Region ID for 
 * `nsxt_tier0_gateway_id` - (Required) An existing NSX-T Tier 0 Gateway
 * `ip_space_ids` - (Required) A set of IP Space IDs that should be assigned to this Provider Gateway
-
 
 ## Importing
 
