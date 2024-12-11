@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -232,6 +233,12 @@ func resourceVcdTmVcenterRead(ctx context.Context, d *schema.ResourceData, meta 
 		getEntityFunc:  fakeGetById, // TODO: TM: remove this function
 		stateStoreFunc: setTmVcenterData,
 		readHooks: []outerEntityHook[*govcd.VCenter]{
+			// TODO: TM ensure that the vCenter listener state is "CONNECTED"  before triggering
+			// refresh as it will fail otherwise. At the moment it has a delay before it becomes
+			// CONNECTED after creation task succeeds. It should not be needed once vCenter creation
+			// task ensures that the listener is connected.
+			waitForListenerStatusConnected,
+
 			refreshVcenter(shouldRefresh),               // vCenter read can optionally trigger "refresh" operation
 			refreshVcenterPolicy(shouldRefreshPolicies), // vCenter read can optionally trigger "refresh policies" operation
 		},
@@ -277,7 +284,7 @@ func disableVcenter(v *govcd.VCenter) error {
 func refreshVcenter(execute bool) outerEntityHook[*govcd.VCenter] {
 	return func(v *govcd.VCenter) error {
 		if execute {
-			err := v.Refresh()
+			err := v.RefreshVcenter()
 			if err != nil {
 				return fmt.Errorf("error refreshing vCenter: %s", err)
 			}
@@ -298,6 +305,24 @@ func refreshVcenterPolicy(execute bool) outerEntityHook[*govcd.VCenter] {
 		}
 		return nil
 	}
+}
+
+// TODO: TM: should not be required because a successful vCenter creation task should work
+func waitForListenerStatusConnected(v *govcd.VCenter) error {
+	for c := 0; c < 20; c++ {
+		err := v.Refresh()
+		if err != nil {
+			return fmt.Errorf("error refreshing vCenter: %s", err)
+		}
+
+		if v.VSphereVCenter.ListenerState == "CONNECTED" {
+			return nil
+		}
+
+		time.Sleep(2 * time.Second)
+	}
+
+	return fmt.Errorf("failed waiting for listener state to become 'CONNECTED', got '%s'", v.VSphereVCenter.ListenerState)
 }
 
 // autoTrustHostCertificate can automatically add host certificate to trusted ones
