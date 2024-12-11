@@ -85,7 +85,10 @@ func setStorageClassData(d *schema.ResourceData, sc *types.StorageClass) error {
 	if len(sc.Zones) > 0 {
 		zoneIds = extractIdsFromOpenApiReferences(sc.Zones)
 	}
-	dSet(d, "zone_ids", zoneIds)
+	err := d.Set("zone_ids", zoneIds)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

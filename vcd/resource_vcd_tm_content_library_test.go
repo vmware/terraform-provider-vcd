@@ -49,6 +49,8 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 	}
 
 	resourceName := "vcd_tm_content_library.cl"
+	dsRegionStoragePolicy := "data.vcd_tm_region_storage_policy.sp"
+	dsStorageClass := "data.vcd_tm_storage_class.sc"
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -59,6 +61,22 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
+					// Region Storage Policy
+					resource.TestCheckResourceAttr(dsRegionStoragePolicy, "name", testConfig.Tm.RegionStoragePolicy),
+					resource.TestCheckResourceAttrPair(dsRegionStoragePolicy, "region_id", regionHclRef, "id"),
+					resource.TestCheckResourceAttrSet(dsRegionStoragePolicy, "description"),
+					resource.TestCheckResourceAttr(dsRegionStoragePolicy, "status", "READY"),
+					resource.TestCheckResourceAttrSet(dsRegionStoragePolicy, "storage_capacity_mb"),
+					resource.TestCheckResourceAttrSet(dsRegionStoragePolicy, "storage_consumed_mb"),
+
+					// Storage Class
+					resource.TestCheckResourceAttr(dsStorageClass, "name", testConfig.Tm.RegionStoragePolicy),
+					resource.TestCheckResourceAttrPair(dsStorageClass, "region_id", regionHclRef, "id"),
+					resource.TestCheckResourceAttrSet(dsStorageClass, "storage_capacity_mib"),
+					resource.TestCheckResourceAttrSet(dsStorageClass, "storage_consumed_mib"),
+					resource.TestMatchResourceAttr(dsStorageClass, "zone_ids.#", regexp.MustCompile("[0-9]+")),
+
+					// Content Library
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceName, "description", t.Name()),
 					resource.TestCheckResourceAttr(resourceName, "storage_class_ids.#", "1"),
@@ -96,11 +114,16 @@ data "vcd_tm_region_storage_policy" "sp" {
   name      = "{{.RegionStoragePolicy}}"
 }
 
+data "vcd_tm_storage_class" "sc" {
+  region_id = {{.RegionId}}
+  name      = "{{.RegionStoragePolicy}}"
+}
+
 resource "vcd_tm_content_library" "cl" {
   name = "{{.Name}}"
   description = "{{.Name}}"
   storage_class_ids = [
-    data.vcd_tm_region_storage_policy.sp.id
+    data.vcd_tm_storage_class.sc.id
   ]
 }
 `
