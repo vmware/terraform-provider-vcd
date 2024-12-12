@@ -109,7 +109,7 @@ func resourceVcdTmProviderGatewayUpdate(ctx context.Context, d *schema.ResourceD
 			}
 		}
 
-		// Remove
+		// Remove associations that are no more in configuration, but still attached
 		existingIpSpaceAssociations, err := vcdClient.GetAllTmIpSpaceAssociationsByProviderGatewayId(d.Id())
 		if err != nil {
 			return diag.Errorf("error reading %s for update: %s", labelTmProviderGatewayIpSpaceAssociations, err)
