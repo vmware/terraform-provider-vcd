@@ -53,6 +53,7 @@ func resourceVcdTmOrg() *schema.Resource {
 			"is_classic_tenant": {
 				Type:        schema.TypeBool,
 				Optional:    true,
+				ForceNew:    true, // Cannot be changed once created. Also, just one (1) Classic Organization can exist in TM
 				Description: fmt.Sprintf("Defines whether the %s is a classic VRA-style tenant", labelTmOrg),
 			},
 			"managed_by_id": {
@@ -160,7 +161,7 @@ func resourceVcdTmOrgDelete(ctx context.Context, d *schema.ResourceData, meta in
 	return deleteResource(ctx, d, meta, c)
 }
 
-// disableTmOrg disables Org which is usefull before deletion as a non-disabled Org cannot be
+// disableTmOrg disables Org which is useful before deletion as a non-disabled Org cannot be
 // removed
 func disableTmOrg(t *govcd.TmOrg) error {
 	if t.TmOrg.IsEnabled {
