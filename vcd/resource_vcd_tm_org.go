@@ -50,6 +50,11 @@ func resourceVcdTmOrg() *schema.Resource {
 				Optional:    true,
 				Description: fmt.Sprintf("Enables this organization to manage other %ss", labelTmOrg),
 			},
+			"is_classic_tenant": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: fmt.Sprintf("Defines whether the %s is a classic VRA-style tenant", labelTmOrg),
+			},
 			"managed_by_id": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -99,11 +104,6 @@ func resourceVcdTmOrg() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: fmt.Sprintf("Number of directly managed %ss", labelTmOrg),
-			},
-			"is_classic_tenant": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: fmt.Sprintf("Defines whether the %s is a classic VRA-style tenant", labelTmOrg),
 			},
 		},
 	}
@@ -204,11 +204,12 @@ func resourceVcdTmOrgImport(ctx context.Context, d *schema.ResourceData, meta in
 
 func getTmOrgType(_ *VCDClient, d *schema.ResourceData) (*types.TmOrg, error) {
 	t := &types.TmOrg{
-		Name:          d.Get("name").(string),
-		DisplayName:   d.Get("display_name").(string),
-		Description:   d.Get("description").(string),
-		IsEnabled:     d.Get("is_enabled").(bool),
-		CanManageOrgs: d.Get("is_subprovider").(bool),
+		Name:            d.Get("name").(string),
+		DisplayName:     d.Get("display_name").(string),
+		Description:     d.Get("description").(string),
+		IsEnabled:       d.Get("is_enabled").(bool),
+		CanManageOrgs:   d.Get("is_subprovider").(bool),
+		IsClassicTenant: d.Get("is_classic_tenant").(bool),
 	}
 
 	return t, nil

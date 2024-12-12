@@ -55,6 +55,7 @@ The following arguments are supported:
    currently published to the Organization and mark that Rights Bundle as publish all.
  * Clone all default roles currently published to the Organization into Global Roles in the
    Organization and marks them all publish all.
+* `is_classic_tenant` - (Optional) Defines if this Organization is a classic VRA style tenant. Defaults to `false`.
 
 ## Attribute Reference
 
@@ -70,7 +71,6 @@ The following attributes are exported on this resource:
 * `disk_count` - Number of disks belonging to this Organization
 * `can_publish` - Defines if this Organization can publish catalogs externally
 * `directly_managed_org_count` - Number of directly managed Organizations
-* `is_classic_tenant` - Defines if this Organization is a classic VRA style tenant
 
 ## Importing
 
