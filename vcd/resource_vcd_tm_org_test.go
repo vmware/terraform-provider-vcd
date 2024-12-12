@@ -180,8 +180,7 @@ data "vcd_tm_org" "test" {
 }
 `
 
-// TestAccVcdTmOrgClassicTenant tests a Tenant Manager Organization configured as "Classic Tenant".
-// Only one of those can exist in TM. The field cannot be updated neither.
+// TestAccVcdTmOrgClassicTenant tests a Tenant Manager Organization configured as "Classic Tenant"
 func TestAccVcdTmOrgClassicTenant(t *testing.T) {
 	preTestChecks(t)
 
