@@ -200,7 +200,7 @@ func getTmVdcType(_ *VCDClient, d *schema.ResourceData) (*types.TmVdc, error) {
 	return t, nil
 }
 
-func setTmVdcData(d *schema.ResourceData, vdc *govcd.TmVdc) error {
+func setTmVdcData(_ *VCDClient, d *schema.ResourceData, vdc *govcd.TmVdc) error {
 	if vdc == nil {
 		return fmt.Errorf("provided VDC is nil")
 	}

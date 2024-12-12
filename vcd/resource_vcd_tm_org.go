@@ -214,7 +214,7 @@ func getTmOrgType(_ *VCDClient, d *schema.ResourceData) (*types.TmOrg, error) {
 	return t, nil
 }
 
-func setTmOrgData(d *schema.ResourceData, org *govcd.TmOrg) error {
+func setTmOrgData(_ *VCDClient, d *schema.ResourceData, org *govcd.TmOrg) error {
 	if org == nil || org.TmOrg == nil {
 		return fmt.Errorf("cannot save state for nil Org")
 	}
