@@ -350,10 +350,3 @@ func autoTrustHostCertificate(urlSchemaFieldName, trustSchemaFieldName string) s
 		return nil
 	}
 }
-
-func sleepHookVcenter(d time.Duration) outerEntityHook[*govcd.VCenter] {
-	return func(v *govcd.VCenter) error {
-		time.Sleep(d)
-		return nil
-	}
-}
