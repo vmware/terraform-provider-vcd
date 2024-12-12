@@ -214,7 +214,7 @@ func getTmIpSpaceType(vcdClient *VCDClient, d *schema.ResourceData) (*types.TmIp
 	return t, nil
 }
 
-func setTmIpSpaceData(d *schema.ResourceData, i *govcd.TmIpSpace) error {
+func setTmIpSpaceData(_ *VCDClient, d *schema.ResourceData, i *govcd.TmIpSpace) error {
 	if i == nil || i.TmIpSpace == nil {
 		return fmt.Errorf("nil %s received", labelTmIpSpace)
 	}

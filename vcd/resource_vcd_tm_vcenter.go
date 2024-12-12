@@ -136,7 +136,7 @@ func getTmVcenterType(_ *VCDClient, d *schema.ResourceData) (*types.VSphereVirtu
 	return t, nil
 }
 
-func setTmVcenterData(d *schema.ResourceData, v *govcd.VCenter) error {
+func setTmVcenterData(_ *VCDClient, d *schema.ResourceData, v *govcd.VCenter) error {
 	if v == nil || v.VSphereVCenter == nil {
 		return fmt.Errorf("nil object for %s", labelTmVirtualCenter)
 	}
