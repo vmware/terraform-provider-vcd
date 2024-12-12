@@ -56,8 +56,7 @@ The following arguments are supported:
   * Clone all default roles currently published to the Organization into Global Roles in the
     Organization and marks them all publish all.
 * `is_classic_tenant` - (Optional) Defines if this Organization is a classic VRA style tenant. Defaults to `false`. Cannot be
-  changed after creation (changing it will force the re-creation of the Organization). Also, **only one (1) classic** Organization
-  can exist in Tenant Manager.
+  changed after creation (changing it will force the re-creation of the Organization)
 
 ## Attribute Reference
 

@@ -53,7 +53,7 @@ func resourceVcdTmOrg() *schema.Resource {
 			"is_classic_tenant": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				ForceNew:    true, // Cannot be changed once created. Also, just one (1) Classic Organization can exist in TM
+				ForceNew:    true, // Cannot be changed once created
 				Description: fmt.Sprintf("Defines whether the %s is a classic VRA-style tenant", labelTmOrg),
 			},
 			"managed_by_id": {
