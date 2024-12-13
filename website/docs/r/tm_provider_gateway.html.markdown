@@ -51,6 +51,15 @@ The following arguments are supported:
 * `nsxt_tier0_gateway_id` - (Required) An existing NSX-T Tier 0 Gateway
 * `ip_space_ids` - (Required) A set of IP Space IDs that should be assigned to this Provider Gateway
 
+## Attribute Reference
+
+* `status` - Current status of the entity. Possible values are:
+ * `PENDING` - Desired entity configuration has been received by system and is pending realization
+ * `CONFIGURING` - The system is in process of realizing the entity
+ * `REALIZED` - The entity is successfully realized in the system
+ * `REALIZATION_FAILED` - There are some issues and the system is not able to realize the entity
+ * `UNKNOWN` - Current state of entity is unknown
+
 ## Importing
 
 ~> **Note:** The current implementation of Terraform import can only import resources into the

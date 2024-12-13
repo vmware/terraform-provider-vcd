@@ -51,13 +51,14 @@ func TestAccVcdTmProviderGateway(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION step1: %s\n", configText1)
 	debugPrintf("#[DEBUG] CONFIGURATION step2: %s\n", configText2)
+	debugPrintf("#[DEBUG] CONFIGURATION step3: %s\n", configText3)
 	debugPrintf("#[DEBUG] CONFIGURATION step4: %s\n", configText4)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 
-	cachedIpSpaceId := &testCachedFieldValue{}
+	cachedProviderGateway := &testCachedFieldValue{}
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
@@ -67,23 +68,37 @@ func TestAccVcdTmProviderGateway(t *testing.T) {
 			{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
-					cachedIpSpaceId.cacheTestResourceFieldValue("vcd_tm_ip_space.test", "id"),
-					resource.TestCheckResourceAttrSet("vcd_tm_ip_space.test", "id"),
-					resource.TestCheckResourceAttr("vcd_tm_ip_space.test", "name", t.Name()),
+					cachedProviderGateway.cacheTestResourceFieldValue("vcd_tm_provider_gateway.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_tm_provider_gateway.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_tm_provider_gateway.test", "region_id"),
+					resource.TestCheckResourceAttrSet("vcd_tm_provider_gateway.test", "nsxt_tier0_gateway_id"),
+					resource.TestCheckResourceAttr("vcd_tm_provider_gateway.test", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_tm_provider_gateway.test", "description", "Made using Terraform"),
+					resource.TestCheckResourceAttr("vcd_tm_provider_gateway.test", "ip_space_ids.#", "1"),
 				),
 			},
 			{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
-					cachedIpSpaceId.testCheckCachedResourceFieldValue("vcd_tm_ip_space.test", "id"),
-					resource.TestCheckResourceAttrSet("vcd_tm_ip_space.test", "id"),
+					cachedProviderGateway.testCheckCachedResourceFieldValue("vcd_tm_provider_gateway.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_tm_provider_gateway.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_tm_provider_gateway.test", "region_id"),
+					resource.TestCheckResourceAttrSet("vcd_tm_provider_gateway.test", "nsxt_tier0_gateway_id"),
+					resource.TestCheckResourceAttr("vcd_tm_provider_gateway.test", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_tm_provider_gateway.test", "description", "Made using Terraform updated"),
+					resource.TestCheckResourceAttr("vcd_tm_provider_gateway.test", "ip_space_ids.#", "1"),
 				),
 			},
 			{
 				Config: configText3,
 				Check: resource.ComposeTestCheckFunc(
-					cachedIpSpaceId.testCheckCachedResourceFieldValue("vcd_tm_ip_space.test", "id"),
-					resource.TestCheckResourceAttrSet("vcd_tm_ip_space.test", "id"),
+					cachedProviderGateway.testCheckCachedResourceFieldValue("vcd_tm_provider_gateway.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_tm_provider_gateway.test", "id"),
+					resource.TestCheckResourceAttrSet("vcd_tm_provider_gateway.test", "region_id"),
+					resource.TestCheckResourceAttrSet("vcd_tm_provider_gateway.test", "nsxt_tier0_gateway_id"),
+					resource.TestCheckResourceAttr("vcd_tm_provider_gateway.test", "name", t.Name()+"-updated"),
+					resource.TestCheckResourceAttr("vcd_tm_provider_gateway.test", "description", ""),
+					resource.TestCheckResourceAttr("vcd_tm_provider_gateway.test", "ip_space_ids.#", "2"),
 				),
 			},
 			{
@@ -139,7 +154,6 @@ data "vcd_tm_tier0_gateway" "test" {
   name      = "{{.Tier0Gateway}}"
   region_id = {{.RegionId}}
 }
-
 `
 
 const testAccVcdTmProviderGatewayStep1 = testAccVcdTmProviderGatewayPrereqs + `
@@ -155,7 +169,7 @@ resource "vcd_tm_provider_gateway" "test" {
 const testAccVcdTmProviderGatewayStep2 = testAccVcdTmProviderGatewayPrereqs + `
 resource "vcd_tm_provider_gateway" "test" {
   name                  = "{{.Testname}}"
-  description           = "Made using Terraform"
+  description           = "Made using Terraform updated"
   region_id             = {{.RegionId}}
   nsxt_tier0_gateway_id = data.vcd_tm_tier0_gateway.test.id
   ip_space_ids          = [ vcd_tm_ip_space.test2.id ]
@@ -165,7 +179,6 @@ resource "vcd_tm_provider_gateway" "test" {
 const testAccVcdTmProviderGatewayStep3 = testAccVcdTmProviderGatewayPrereqs + `
 resource "vcd_tm_provider_gateway" "test" {
   name                  = "{{.Testname}}-updated"
-  description           = "Made using Terraform"
   region_id             = {{.RegionId}}
   nsxt_tier0_gateway_id = data.vcd_tm_tier0_gateway.test.id
   ip_space_ids          = [ vcd_tm_ip_space.test2.id, vcd_tm_ip_space.test.id ]
