@@ -86,7 +86,6 @@ func resourceVcdTmProviderGatewayUpdate(ctx context.Context, d *schema.ResourceD
 
 	// Update IP Space associations using separate endpoint (more details at the top of file)
 	if d.HasChange("ip_space_ids") {
-
 		previous, new := d.GetChange("ip_space_ids")
 		previousSet := previous.(*schema.Set)
 		newSet := new.(*schema.Set)
@@ -97,36 +96,16 @@ func resourceVcdTmProviderGatewayUpdate(ctx context.Context, d *schema.ResourceD
 		// Adding new ones first, because it can happen that all previous IP Spaces are removed and
 		// new ones added, however API prohibits removal of all IP Space associations for Provider
 		// Gateway (at least one IP Space must always be associated)
-		for _, addIpSpaceId := range convertSchemaSetToSliceOfStrings(toAddSet) {
-			at := &types.TmIpSpaceAssociation{
-				IPSpaceRef:         &types.OpenApiReference{ID: addIpSpaceId},
-				ProviderGatewayRef: &types.OpenApiReference{ID: d.Id()},
-			}
-			_, err := vcdClient.CreateTmIpSpaceAssociation(at)
-			if err != nil {
-				return diag.Errorf("error adding new %s for %s with ID '%s': %s",
-					labelTmProviderGatewayIpSpaceAssociations, labelTmIpSpace, addIpSpaceId, err)
-			}
-		}
-
-		// Remove associations that are no more in configuration, but still attached
-		existingIpSpaceAssociations, err := vcdClient.GetAllTmIpSpaceAssociationsByProviderGatewayId(d.Id())
+		err := addIpSpaceAssociations(vcdClient, d.Id(), convertSchemaSetToSliceOfStrings(toAddSet))
 		if err != nil {
-			return diag.Errorf("error reading %s for update: %s", labelTmProviderGatewayIpSpaceAssociations, err)
+			return diag.FromErr(err)
 		}
 
-		for _, singleIpSpaceId := range convertSchemaSetToSliceOfStrings(toRemoveSet) {
-			for _, singleAssociation := range existingIpSpaceAssociations {
-				if singleAssociation.TmIpSpaceAssociation.IPSpaceRef.ID == singleIpSpaceId {
-					err = singleAssociation.Delete()
-					if err != nil {
-						return diag.Errorf("error removing %s '%s' for %s '%s': %s",
-							labelTmProviderGatewayIpSpaceAssociations, singleAssociation.TmIpSpaceAssociation.ID, labelTmIpSpace, singleIpSpaceId, err)
-					}
-				}
-			}
+		// Remove associations that are no more in configuration
+		err = removeIpSpaceAssociations(vcdClient, d.Id(), convertSchemaSetToSliceOfStrings(toRemoveSet))
+		if err != nil {
+			return diag.FromErr(err)
 		}
-
 	}
 
 	// This is the default entity update path - other fields can be updated, by updating IP Space itself
@@ -238,6 +217,43 @@ func setTmProviderGatewayData(vcdClient *VCDClient, d *schema.ResourceData, p *g
 	err = d.Set("ip_space_ids", associationIds)
 	if err != nil {
 		return fmt.Errorf("error storing 'ip_space_ids': %s", err)
+	}
+
+	return nil
+}
+
+func addIpSpaceAssociations(vcdClient *VCDClient, providerGatewayId string, addIpSpaceIds []string) error {
+	for _, addIpSpaceId := range addIpSpaceIds {
+		at := &types.TmIpSpaceAssociation{
+			IPSpaceRef:         &types.OpenApiReference{ID: addIpSpaceId},
+			ProviderGatewayRef: &types.OpenApiReference{ID: providerGatewayId},
+		}
+		_, err := vcdClient.CreateTmIpSpaceAssociation(at)
+		if err != nil {
+			return fmt.Errorf("error adding new %s for %s with ID '%s': %s",
+				labelTmProviderGatewayIpSpaceAssociations, labelTmIpSpace, addIpSpaceId, err)
+		}
+	}
+
+	return nil
+}
+
+func removeIpSpaceAssociations(vcdClient *VCDClient, providerGatewayId string, removeIpSpaceIds []string) error {
+	existingIpSpaceAssociations, err := vcdClient.GetAllTmIpSpaceAssociationsByProviderGatewayId(providerGatewayId)
+	if err != nil {
+		return fmt.Errorf("error reading %s for update: %s", labelTmProviderGatewayIpSpaceAssociations, err)
+	}
+
+	for _, singleIpSpaceId := range removeIpSpaceIds {
+		for _, singleAssociation := range existingIpSpaceAssociations {
+			if singleAssociation.TmIpSpaceAssociation.IPSpaceRef.ID == singleIpSpaceId {
+				err = singleAssociation.Delete()
+				if err != nil {
+					return fmt.Errorf("error removing %s '%s' for %s '%s': %s",
+						labelTmProviderGatewayIpSpaceAssociations, singleAssociation.TmIpSpaceAssociation.ID, labelTmIpSpace, singleIpSpaceId, err)
+				}
+			}
+		}
 	}
 
 	return nil

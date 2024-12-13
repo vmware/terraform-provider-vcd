@@ -26,6 +26,7 @@ func TestAccVcdTmProviderGateway(t *testing.T) {
 		"RegionId":     fmt.Sprintf("%s.id", regionHclRef),
 		"RegionName":   t.Name(),
 		"IpSpace1Id":   fmt.Sprintf("%s.id", ipSpace1HclRef),
+		"IpSpace1Ref":  ipSpace1HclRef,
 		"IpSpace2Id":   fmt.Sprintf("%s.id", ipSpace2HclRef),
 		"Tier0Gateway": testConfig.Tm.NsxtTier0Gateway,
 
@@ -98,7 +99,7 @@ func TestAccVcdTmProviderGateway(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_tm_provider_gateway.test", "nsxt_tier0_gateway_id"),
 					resource.TestCheckResourceAttr("vcd_tm_provider_gateway.test", "name", t.Name()+"-updated"),
 					resource.TestCheckResourceAttr("vcd_tm_provider_gateway.test", "description", ""),
-					resource.TestCheckResourceAttr("vcd_tm_provider_gateway.test", "ip_space_ids.#", "2"),
+					resource.TestCheckResourceAttr("vcd_tm_provider_gateway.test", "ip_space_ids.#", "3"),
 				),
 			},
 			{
@@ -181,7 +182,7 @@ resource "vcd_tm_provider_gateway" "test" {
   name                  = "{{.Testname}}-updated"
   region_id             = {{.RegionId}}
   nsxt_tier0_gateway_id = data.vcd_tm_tier0_gateway.test.id
-  ip_space_ids          = [ vcd_tm_ip_space.test2.id, vcd_tm_ip_space.test.id ]
+  ip_space_ids          = [ vcd_tm_ip_space.test2.id, vcd_tm_ip_space.test.id, {{.IpSpace1Ref}} ]
 }
 `
 
