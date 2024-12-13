@@ -26,7 +26,6 @@ func TestAccVcdTmProviderGateway(t *testing.T) {
 		"RegionId":     fmt.Sprintf("%s.id", regionHclRef),
 		"RegionName":   t.Name(),
 		"IpSpace1Id":   fmt.Sprintf("%s.id", ipSpace1HclRef),
-		"IpSpace1Ref":  ipSpace1HclRef,
 		"IpSpace2Id":   fmt.Sprintf("%s.id", ipSpace2HclRef),
 		"Tier0Gateway": testConfig.Tm.NsxtTier0Gateway,
 
@@ -182,7 +181,7 @@ resource "vcd_tm_provider_gateway" "test" {
   name                  = "{{.Testname}}-updated"
   region_id             = {{.RegionId}}
   nsxt_tier0_gateway_id = data.vcd_tm_tier0_gateway.test.id
-  ip_space_ids          = [ vcd_tm_ip_space.test2.id, vcd_tm_ip_space.test.id, {{.IpSpace1Ref}} ]
+  ip_space_ids          = [ vcd_tm_ip_space.test2.id, vcd_tm_ip_space.test.id, {{.IpSpace1Id}} ]
 }
 `
 

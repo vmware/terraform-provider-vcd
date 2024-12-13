@@ -173,5 +173,5 @@ resource "vcd_tm_ip_space" "test-` + nameSuffix + `" {
     cidr = "32.0.` + octet3 + `.0/24"
   }
 }
-	`, `vcd_tm_ip_space.test`
+	`, `vcd_tm_ip_space.test-` + nameSuffix
 }
