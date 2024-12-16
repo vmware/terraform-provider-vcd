@@ -187,6 +187,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_tm_vcenter":                                   datasourceVcdTmVcenter(),                               // 4.0
 	"vcd_tm_content_library_item":                      datasourceVcdTmContentLibraryItem(),                    // 4.0
 	"vcd_tm_ip_space":                                  datasourceVcdTmIpSpace(),                               // 4.0
+	"vcd_tm_edge_cluster":                              datasourceVcdTmEdgeCluster(),                           // 4.0
 }
 
 var globalResourceMap = map[string]*schema.Resource{
