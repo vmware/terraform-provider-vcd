@@ -13,10 +13,16 @@ Provides a VMware Cloud Foundation Tenant Manager Edge Cluster data source.
 ## Example Usage
 
 ```hcl
-data "vcd_tm_edge_cluster" "a" {
-  name             = "vcfcons-vc03-edge"
+data "vcd_tm_region" "demo" {
+  name = "region-one"
+}
+
+data "vcd_tm_edge_cluster" "demo" { 
+  name             = "my-edge-cluster"
+  region_id        = data.vcd_tm_region.demo.id
   sync_before_read = true
 }
+
 ```
 
 ## Argument Reference
@@ -24,7 +30,10 @@ data "vcd_tm_edge_cluster" "a" {
 The following arguments are supported:
 
 * `name` - (Required) The name of Edge Cluster
-* `sync_before_read` - (Optional) Set to true `false`
+* `region_id` - (Required) The ID of parent region. Can be looked up using
+  [`vcd_tm_region`](/providers/vmware/vcd/latest/docs/data-sources/tm_region) data source
+* `sync_before_read` - (Optional) Set to true to trigger Sync before attempting to search for Edge
+  Cluster . Default `false`.
 
 ## Attribute Reference
 

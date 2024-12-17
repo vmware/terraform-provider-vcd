@@ -15,7 +15,7 @@ const labelTmEdgeClusterSync = "TM Edge Cluster Sync"
 
 func datasourceVcdTmEdgeCluster() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: resourceVcdTmEdgeClusterRead,
+		ReadContext: datasourceVcdTmEdgeClusterRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -25,7 +25,7 @@ func datasourceVcdTmEdgeCluster() *schema.Resource {
 			},
 			"region_id": {
 				Type:        schema.TypeString,
-				Computed:    true,
+				Required:    true,
 				Description: fmt.Sprintf("Region ID of  %s", labelTmEdgeCluster),
 			},
 			"sync_before_read": {
@@ -78,19 +78,19 @@ func datasourceVcdTmEdgeCluster() *schema.Resource {
 	}
 }
 
-func resourceVcdTmEdgeClusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdTmEdgeClusterRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-	if d.Get("sync_before_read").(bool) {
-		err := vcdClient.TmSyncEdgeClusters()
-		if err != nil {
-			return diag.Errorf("error syncing %s before lookup: %s", labelTmEdgeClusterSync, err)
-		}
+
+	regionId := d.Get("region_id").(string)
+	getByName := func(name string) (*govcd.TmEdgeCluster, error) {
+		return vcdClient.GetTmEdgeClusterByNameAndRegionId(name, regionId)
 	}
 
 	c := dsReadConfig[*govcd.TmEdgeCluster, types.TmEdgeCluster]{
 		entityLabel:    labelTmEdgeCluster,
-		getEntityFunc:  vcdClient.GetTmEdgeClusterByName,
+		getEntityFunc:  getByName,
 		stateStoreFunc: setTmEdgeClusterData,
+		preReadHooks:   []schemaHook{syncTmEdgeClustersBeforeReadHook},
 	}
 	return readDatasource(ctx, d, meta, c)
 }
@@ -103,7 +103,11 @@ func setTmEdgeClusterData(_ *VCDClient, d *schema.ResourceData, t *govcd.TmEdgeC
 	d.SetId(t.TmEdgeCluster.ID)
 	dSet(d, "status", t.TmEdgeCluster.Status)
 	dSet(d, "health_status", t.TmEdgeCluster.HealthStatus)
-	dSet(d, "region_id", t.TmEdgeCluster.RegionRef.ID)
+
+	dSet(d, "region_id", "")
+	if t.TmEdgeCluster.RegionRef != nil {
+		dSet(d, "region_id", t.TmEdgeCluster.RegionRef.ID)
+	}
 	dSet(d, "deployment_type", t.TmEdgeCluster.DeploymentType)
 	dSet(d, "node_count", t.TmEdgeCluster.NodeCount)
 	dSet(d, "org_count", t.TmEdgeCluster.OrgCount)
@@ -111,5 +115,15 @@ func setTmEdgeClusterData(_ *VCDClient, d *schema.ResourceData, t *govcd.TmEdgeC
 	dSet(d, "average_cpu_usage_percentage", t.TmEdgeCluster.AvgCPUUsagePercentage)
 	dSet(d, "average_memory_usage_percentage", t.TmEdgeCluster.AvgMemoryUsagePercentage)
 
+	return nil
+}
+
+func syncTmEdgeClustersBeforeReadHook(vcdClient *VCDClient, d *schema.ResourceData) error {
+	if d.Get("sync_before_read").(bool) {
+		err := vcdClient.TmSyncEdgeClusters()
+		if err != nil {
+			return fmt.Errorf("error syncing %s before lookup: %s", labelTmEdgeClusterSync, err)
+		}
+	}
 	return nil
 }
