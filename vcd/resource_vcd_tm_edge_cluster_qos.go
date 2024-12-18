@@ -70,17 +70,21 @@ func resourceVcdTmEdgeClusterQos() *schema.Resource {
 func resourceVcdTmEdgeClusterQosCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
-	// The Edge Cluster must already be existing that is handled by 'vcd_tm_edge_cluster'
-	// This is not a "real" entity creation, rather a lookup of existing one
-	lookupEdgeClusterById := func(_ *types.TmEdgeCluster) (*govcd.TmEdgeCluster, error) {
-		return vcdClient.GetTmEdgeClusterById(d.Get("edge_cluster_id").(string))
+	// The Edge Cluster is already existing that is handled by 'vcd_tm_edge_cluster' data source.
+	// This is not a "real" entity creation, rather a lookup and update of existing one
+	createQosConfigInEdgeCluster := func(config *types.TmEdgeCluster) (*govcd.TmEdgeCluster, error) {
+		ec, err := vcdClient.GetTmEdgeClusterById(d.Get("edge_cluster_id").(string))
+		if err != nil {
+			return nil, fmt.Errorf("error looking up %s by ID: %s", labelTmEdgeCluster, err)
+		}
+		return ec.Update(config)
 	}
 
 	c := crudConfig[*govcd.TmEdgeCluster, types.TmEdgeCluster]{
 		entityLabel:      labelTmEdgeClusterQos,
 		getTypeFunc:      getTmEdgeClusterQosType,
 		stateStoreFunc:   setTmEdgeClusterQosData,
-		createFunc:       lookupEdgeClusterById,
+		createFunc:       createQosConfigInEdgeCluster,
 		resourceReadFunc: resourceVcdTmEdgeClusterQosRead,
 	}
 	return createResource(ctx, d, meta, c)
@@ -134,20 +138,7 @@ func resourceVcdTmEdgeClusterQosImport(ctx context.Context, d *schema.ResourceDa
 
 func getTmEdgeClusterQosType(vcdClient *VCDClient, d *schema.ResourceData) (*types.TmEdgeCluster, error) {
 	// Only the QoS configuration is updatable, everything else is read-only
-	t := &types.TmEdgeCluster{
-		DefaultQosConfig: types.TmEdgeClusterDefaultQosConfig{
-			// IngressProfile: &types.TmEdgeClusterQosProfile{
-			// 	CommittedBandwidthMbps: mustStrToInt(d.Get("ingress_committed_bandwidth_mbps").(string)),
-			// 	BurstSizeBytes:         mustStrToInt(d.Get("ingress_burst_size_bytes").(string)),
-			// 	Type:                   "DEFAULT",
-			// },
-			// EgressProfile: &types.TmEdgeClusterQosProfile{
-			// 	CommittedBandwidthMbps: mustStrToInt(d.Get("egress_committed_bandwidth_mbps").(string)),
-			// 	BurstSizeBytes:         mustStrToInt(d.Get("egress_burst_size_bytes").(string)),
-			// 	Type:                   "DEFAULT",
-			// },
-		},
-	}
+	t := &types.TmEdgeCluster{DefaultQosConfig: types.TmEdgeClusterDefaultQosConfig{}}
 
 	// Ingress setup
 	// Only initialize IngressProfile type if at least one of the fields is set
@@ -157,13 +148,11 @@ func getTmEdgeClusterQosType(vcdClient *VCDClient, d *schema.ResourceData) (*typ
 		t.DefaultQosConfig.IngressProfile = &types.TmEdgeClusterQosProfile{Type: "DEFAULT"}
 
 		if ingressCommittedBandwidthMbps != "" {
-			intIngressCommittedBandwidthMbps := mustStrToInt(ingressCommittedBandwidthMbps)
-			t.DefaultQosConfig.IngressProfile.CommittedBandwidthMbps = intIngressCommittedBandwidthMbps
+			t.DefaultQosConfig.IngressProfile.CommittedBandwidthMbps = mustStrToInt(ingressCommittedBandwidthMbps)
 		}
 
 		if ingressBurstSizeBytes != "" {
-			intIngressBurstSizeBytes := mustStrToInt(ingressBurstSizeBytes)
-			t.DefaultQosConfig.IngressProfile.BurstSizeBytes = intIngressBurstSizeBytes
+			t.DefaultQosConfig.IngressProfile.BurstSizeBytes = mustStrToInt(ingressBurstSizeBytes)
 		}
 	}
 
@@ -175,13 +164,11 @@ func getTmEdgeClusterQosType(vcdClient *VCDClient, d *schema.ResourceData) (*typ
 		t.DefaultQosConfig.EgressProfile = &types.TmEdgeClusterQosProfile{Type: "DEFAULT"}
 
 		if egressCommittedBandwidthMbps != "" {
-			integressCommittedBandwidthMbps := mustStrToInt(egressCommittedBandwidthMbps)
-			t.DefaultQosConfig.EgressProfile.CommittedBandwidthMbps = integressCommittedBandwidthMbps
+			t.DefaultQosConfig.EgressProfile.CommittedBandwidthMbps = mustStrToInt(egressCommittedBandwidthMbps)
 		}
 
 		if egressBurstSizeBytes != "" {
-			integressBurstSizeBytes := mustStrToInt(egressBurstSizeBytes)
-			t.DefaultQosConfig.EgressProfile.BurstSizeBytes = integressBurstSizeBytes
+			t.DefaultQosConfig.EgressProfile.BurstSizeBytes = mustStrToInt(egressBurstSizeBytes)
 		}
 	}
 
@@ -202,26 +189,23 @@ func setTmEdgeClusterQosData(_ *VCDClient, d *schema.ResourceData, t *govcd.TmEd
 	}
 
 	dSet(d, "ingress_committed_bandwidth_mbps", nil)
-	if t.TmEdgeCluster.DefaultQosConfig.IngressProfile != nil {
-		strValue := strconv.Itoa(t.TmEdgeCluster.DefaultQosConfig.IngressProfile.CommittedBandwidthMbps)
-		dSet(d, "ingress_committed_bandwidth_mbps", strValue)
-	}
 	dSet(d, "ingress_burst_size_bytes", nil)
 	if t.TmEdgeCluster.DefaultQosConfig.IngressProfile != nil {
 		strValue := strconv.Itoa(t.TmEdgeCluster.DefaultQosConfig.IngressProfile.BurstSizeBytes)
 		dSet(d, "ingress_burst_size_bytes", strValue)
+
+		strValueCommitted := strconv.Itoa(t.TmEdgeCluster.DefaultQosConfig.IngressProfile.CommittedBandwidthMbps)
+		dSet(d, "ingress_committed_bandwidth_mbps", strValueCommitted)
 	}
 
 	dSet(d, "egress_committed_bandwidth_mbps", nil)
-	if t.TmEdgeCluster.DefaultQosConfig.EgressProfile != nil {
-		strValue := strconv.Itoa(t.TmEdgeCluster.DefaultQosConfig.EgressProfile.CommittedBandwidthMbps)
-		dSet(d, "egress_committed_bandwidth_mbps", strValue)
-	}
-
 	dSet(d, "egress_burst_size_bytes", nil)
 	if t.TmEdgeCluster.DefaultQosConfig.EgressProfile != nil {
-		strValue := strconv.Itoa(t.TmEdgeCluster.DefaultQosConfig.EgressProfile.BurstSizeBytes)
-		dSet(d, "ingress_burst_size_bytes", strValue)
+		strValueCommitted := strconv.Itoa(t.TmEdgeCluster.DefaultQosConfig.EgressProfile.CommittedBandwidthMbps)
+		dSet(d, "egress_committed_bandwidth_mbps", strValueCommitted)
+
+		strValueBurstSize := strconv.Itoa(t.TmEdgeCluster.DefaultQosConfig.EgressProfile.BurstSizeBytes)
+		dSet(d, "egress_burst_size_bytes", strValueBurstSize)
 	}
 
 	return nil
