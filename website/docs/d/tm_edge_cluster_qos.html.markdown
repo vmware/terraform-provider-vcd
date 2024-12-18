@@ -17,7 +17,7 @@ data "vcd_tm_region" "demo" {
   name = "region-one"
 }
 
-data "vcd_tm_edge_cluster" "demo" { 
+data "vcd_tm_edge_cluster" "demo" {
   name             = "my-edge-cluster"
   region_id        = data.vcd_tm_region.demo.id
   sync_before_read = true

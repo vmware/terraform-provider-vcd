@@ -21,7 +21,7 @@ data "vcd_tm_region" "demo" {
   name = "region-one"
 }
 
-data "vcd_tm_edge_cluster" "demo" { 
+data "vcd_tm_edge_cluster" "demo" {
   name             = "my-edge-cluster"
   region_id        = data.vcd_tm_region.demo.id
   sync_before_read = true
@@ -30,10 +30,10 @@ data "vcd_tm_edge_cluster" "demo" {
 resource "vcd_tm_edge_cluster_qos" "demo" {
   edge_cluster_id = data.vcd_tm_edge_cluster.demo.id
 
-  egress_committed_bandwidth_mbps = 1
-  egress_burst_size_bytes = 2
+  egress_committed_bandwidth_mbps  = 1
+  egress_burst_size_bytes          = 2
   ingress_committed_bandwidth_mbps = 3
-  ingress_burst_size_bytes = 4
+  ingress_burst_size_bytes         = 4
 }
 ```
 
