@@ -132,7 +132,7 @@ func TestAccVcdTmEdgeCluster(t *testing.T) {
 }
 
 const testAccVcdTmEdgeClusterQosStep1 = `
-data "vcd_tm_edge_cluster" "demo" { 
+data "vcd_tm_edge_cluster" "demo" {
   name             = "{{.EdgeClusterName}}"
   region_id        = {{.RegionId}}
   sync_before_read = true
@@ -157,7 +157,7 @@ resource "vcd_tm_edge_cluster_qos" "demo" {
 // const testAccVcdTmEdgeClusterQosStep3DS = testAccVcdTmEdgeClusterQosStep2
 
 const testAccVcdTmEdgeClusterQosStep3 = `
-data "vcd_tm_edge_cluster" "demo" { 
+data "vcd_tm_edge_cluster" "demo" {
   name             = "{{.EdgeClusterName}}"
   region_id        = {{.RegionId}}
   sync_before_read = true
