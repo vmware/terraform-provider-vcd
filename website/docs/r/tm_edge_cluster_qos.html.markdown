@@ -43,13 +43,13 @@ The following arguments are supported:
 
 * `edge_cluster_id` - (Required) An ID of Edge Cluster. Can be looked up using
   [vcd_tm_edge_cluster](/providers/vmware/vcd/latest/docs/data-sources/tm_edge_cluster) data source
-* `egress_committed_bandwidth_mbps` - (Optional) Committed egress bandwidth specified in Mbps. Bandwidth is
-	limited to line rate when the value configured is greater than line rate. Traffic exceeding
-	bandwidth will be dropped. 
+* `egress_committed_bandwidth_mbps` - (Optional) Committed egress bandwidth specified in Mbps.
+  Bandwidth is limited to line rate when the value configured is greater than line rate. Traffic
+  exceeding bandwidth will be dropped
 * `egress_burst_size_bytes` - (Optional) Egress burst size in bytes
 * `ingress_committed_bandwidth_mbps` - (Optional) Committed ingress bandwidth specified in Mbps.
-	Bandwidth is limited to line rate when the value configured is greater than line rate. Traffic
-	exceeding bandwidth will be dropped. 
+  Bandwidth is limited to line rate when the value configured is greater than line rate. Traffic
+  exceeding bandwidth will be dropped
 * `ingress_burst_size_bytes` - (Optional) Ingres burst size in bytes
 
 -> Choosing to set _egress_ or _ingress_ requires both of that traffic direction must be set
