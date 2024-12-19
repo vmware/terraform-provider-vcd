@@ -44,7 +44,7 @@ func datasourceVcdTmEdgeClusterQos() *schema.Resource {
 			"egress_burst_size_bytes": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: fmt.Sprintf("Ingress burst size bytes for %s", labelTmEdgeCluster),
+				Description: fmt.Sprintf("Egress burst size bytes for %s", labelTmEdgeCluster),
 			},
 		},
 	}

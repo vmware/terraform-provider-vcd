@@ -252,7 +252,6 @@ func readDatasource[O any, I any](_ context.Context, d *schema.ResourceData, met
 		util.Logger.Printf("[DEBUG] Overriding %s field 'name' to '%s' for datasource lookup", c.entityLabel, c.overrideDefaultNameField)
 	}
 	entityName := d.Get(fieldName).(string)
-
 	retrievedEntity, err := c.getEntityFunc(entityName)
 	if err != nil {
 		return diag.Errorf("error getting %s by Name '%s': %s", c.entityLabel, entityName, err)

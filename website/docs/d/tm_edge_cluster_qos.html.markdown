@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_tm_edge_cluster_qos"
 sidebar_current: "docs-vcd-data-source-tm-edge-cluster-qos"
 description: |-
-  Provides a VMware Cloud Foundation Tenant Manager Edge Cluster QoS.
+  Provides a VMware Cloud Foundation Tenant Manager Edge Cluster QoS data source.
 ---
 
 # vcd\_tm\_edge\_cluster\_qos
 
-Provides a VMware Cloud Foundation Tenant Manager Edge Cluster QoS.
+Provides a VMware Cloud Foundation Tenant Manager Edge Cluster QoS data source.
 
 ## Example Usage
 

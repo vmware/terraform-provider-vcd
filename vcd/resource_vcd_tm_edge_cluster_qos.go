@@ -36,28 +36,28 @@ func resourceVcdTmEdgeClusterQos() *schema.Resource {
 				Description: fmt.Sprintf("Region ID of  %s", labelTmEdgeCluster),
 			},
 			"ingress_committed_bandwidth_mbps": {
-				Type:         schema.TypeString,
+				Type:         schema.TypeString, // string + validation due to usual problem of differentiation between 0 and empty value for TypeInt
 				Optional:     true,
 				Description:  fmt.Sprintf("Ingress committed bandwidth in Mbps for %s", labelTmEdgeCluster),
 				ValidateFunc: emptyOrIsIntAndAtLeast(1),
 				RequiredWith: []string{"ingress_burst_size_bytes"},
 			},
 			"ingress_burst_size_bytes": {
-				Type:         schema.TypeString,
+				Type:         schema.TypeString, // string + validation due to usual problem of differentiation between 0 and empty value for TypeInt
 				Optional:     true,
 				Description:  fmt.Sprintf("Ingress burst size bytes for %s", labelTmEdgeCluster),
 				ValidateFunc: emptyOrIsIntAndAtLeast(1),
 				RequiredWith: []string{"ingress_committed_bandwidth_mbps"},
 			},
 			"egress_committed_bandwidth_mbps": {
-				Type:         schema.TypeString,
+				Type:         schema.TypeString, // string + validation due to usual problem of differentiation between 0 and empty value for TypeInt
 				Optional:     true,
 				Description:  fmt.Sprintf("Egress committed bandwidth in Mbps for %s", labelTmEdgeCluster),
 				ValidateFunc: emptyOrIsIntAndAtLeast(1),
 				RequiredWith: []string{"egress_burst_size_bytes"},
 			},
 			"egress_burst_size_bytes": {
-				Type:         schema.TypeString,
+				Type:         schema.TypeString, // string + validation due to usual problem of differentiation between 0 and empty value for TypeInt
 				Optional:     true,
 				Description:  fmt.Sprintf("Ingress burst size bytes for %s", labelTmEdgeCluster),
 				ValidateFunc: emptyOrIsIntAndAtLeast(1),
@@ -92,7 +92,6 @@ func resourceVcdTmEdgeClusterQosCreate(ctx context.Context, d *schema.ResourceDa
 
 func resourceVcdTmEdgeClusterQosUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-
 	c := crudConfig[*govcd.TmEdgeCluster, types.TmEdgeCluster]{
 		entityLabel:      labelTmEdgeClusterQos,
 		getTypeFunc:      getTmEdgeClusterQosType,
@@ -115,7 +114,6 @@ func resourceVcdTmEdgeClusterQosRead(ctx context.Context, d *schema.ResourceData
 
 func resourceVcdTmEdgeClusterQosDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
-
 	c := crudConfig[*govcd.TmEdgeCluster, types.TmEdgeCluster]{
 		entityLabel:   labelTmEdgeClusterQos,
 		getEntityFunc: vcdClient.GetTmEdgeClusterById,
@@ -126,7 +124,6 @@ func resourceVcdTmEdgeClusterQosDelete(ctx context.Context, d *schema.ResourceDa
 
 func resourceVcdTmEdgeClusterQosImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
-
 	ec, err := vcdClient.GetTmEdgeClusterByName(d.Id())
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving %s by Name '%s': %s", labelTmEdgeClusterQos, d.Id(), err)
