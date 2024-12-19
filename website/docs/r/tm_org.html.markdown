@@ -40,21 +40,23 @@ The following arguments are supported:
 * `name` - (Required) A name for Organization with which users log in to it as it will be used in
   the URL. The Org must be disabled to or transition from previous disabled state
   (`is_enabled=false`) to change a name because it changes tenant login URL
-* `display_name` - (Required) A human readable name for Organization
+* `display_name` - (Required) A human-readable name for Organization
 * `description` - (Optional) An optional description for Organization
 * `is_enabled` - (Optional) Defines if Organization is enabled. Default `true`. **Note:**
   Organization has to be disabled before removal and this resource will automatically disable it if
   the resource is destroyed.
 * `is_subprovider` - (Optional) Enables this Organization to manage other Organizations. **Note**:
-  This value cannot updated as there may be any number of Rights Bundles granting sub-provider rights
+  This value cannot be updated as there may be any number of Rights Bundles granting sub-provider rights
   to this Org. Instead, unpublish any rights bundles that have the `Org Traverse` right from this Org.
   This can be toggled to true to automatically perform the following steps:
- * Publish the Default Sub-Provider Entitlement Rights Bundle to the Organization
- * Publish the Sub-Provider Administrator global role (if it exists) to the Organization
- * Create a Default Rights Bundle in the Organization containing all publishable rights that are
-   currently published to the Organization and mark that Rights Bundle as publish all.
- * Clone all default roles currently published to the Organization into Global Roles in the
-   Organization and marks them all publish all.
+  * Publish the Default Sub-Provider Entitlement Rights Bundle to the Organization
+  * Publish the Sub-Provider Administrator global role (if it exists) to the Organization
+  * Create a Default Rights Bundle in the Organization containing all publishable rights that are
+    currently published to the Organization and mark that Rights Bundle as publish all.
+  * Clone all default roles currently published to the Organization into Global Roles in the
+    Organization and marks them all publish all.
+* `is_classic_tenant` - (Optional) Defines if this Organization is a classic VRA style tenant. Defaults to `false`. Cannot be
+  changed after creation (changing it will force the re-creation of the Organization)
 
 ## Attribute Reference
 
@@ -70,7 +72,6 @@ The following attributes are exported on this resource:
 * `disk_count` - Number of disks belonging to this Organization
 * `can_publish` - Defines if this Organization can publish catalogs externally
 * `directly_managed_org_count` - Number of directly managed Organizations
-* `is_classic_tenant` - Defines if this Organization is a classic VRA style tenant
 
 ## Importing
 
