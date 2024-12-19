@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
 page_title: "VMware Cloud Director: vcd_tm_provider_gateway"
-sidebar_current: "docs-vcd-data-source-tm-tier0-gateway"
+sidebar_current: "docs-vcd-data-source-tm-provider-gateway"
 description: |-
   Provides a VMware Cloud Foundation Tenant Manager Provider Gateway data source.
 ---

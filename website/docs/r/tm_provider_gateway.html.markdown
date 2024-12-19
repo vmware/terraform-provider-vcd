@@ -47,7 +47,7 @@ The following arguments are supported:
 
 * `name` - (Required) A name for Provider Gateway
 * `description` - (Optional) A description for Provider Gateway
-* `region_id` - (Required) A Region ID for 
+* `region_id` - (Required) A Region ID for Provider Gateway
 * `nsxt_tier0_gateway_id` - (Required) An existing NSX-T Tier 0 Gateway
 * `ip_space_ids` - (Required) A set of IP Space IDs that should be assigned to this Provider Gateway
 

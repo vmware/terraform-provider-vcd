@@ -14,7 +14,7 @@ const labelTmTier0Gateway = "TM Tier 0 Gateway"
 
 func datasourceVcdTmTier0Gateway() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: resourceVcdTmTier0GatewayRead,
+		ReadContext: datasourceVcdTmTier0GatewayRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -46,7 +46,7 @@ func datasourceVcdTmTier0Gateway() *schema.Resource {
 	}
 }
 
-func resourceVcdTmTier0GatewayRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdTmTier0GatewayRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	getT0ByName := func(name string) (*govcd.TmTier0Gateway, error) {
 		return vcdClient.GetTmTier0GatewayWithContextByName(name, d.Get("region_id").(string), true)
