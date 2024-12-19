@@ -180,8 +180,6 @@ resource "vcd_tm_edge_cluster_qos" "demo" {
 }
 `
 
-// const testAccVcdTmEdgeClusterQosStep3DS = testAccVcdTmEdgeClusterQosStep2
-
 const testAccVcdTmEdgeClusterQosStep3 = `
 data "vcd_tm_edge_cluster" "demo" {
   name             = "{{.EdgeClusterName}}"

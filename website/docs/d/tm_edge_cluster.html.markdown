@@ -22,7 +22,6 @@ data "vcd_tm_edge_cluster" "demo" {
   region_id        = data.vcd_tm_region.demo.id
   sync_before_read = true
 }
-
 ```
 
 ## Argument Reference
