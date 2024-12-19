@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -124,9 +125,21 @@ func resourceVcdTmEdgeClusterQosDelete(ctx context.Context, d *schema.ResourceDa
 
 func resourceVcdTmEdgeClusterQosImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
-	ec, err := vcdClient.GetTmEdgeClusterByName(d.Id())
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 2 {
+		return nil, fmt.Errorf("resource name must be specified as region-name.edge-cluster-name")
+	}
+	regionName, edgeClusterName := resourceURI[0], resourceURI[1]
+
+	region, err := vcdClient.GetRegionByName(regionName)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving %s by Name '%s': %s", labelTmEdgeClusterQos, d.Id(), err)
+		return nil, fmt.Errorf("error retrieving %s by name '%s': %s", labelTmRegion, regionName, err)
+	}
+
+	ec, err := vcdClient.GetTmEdgeClusterByNameAndRegionId(edgeClusterName, region.Region.ID)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving %s by Name '%s' in %s '%s': %s",
+			labelTmEdgeClusterQos, edgeClusterName, labelTmRegion, regionName, err)
 	}
 
 	d.SetId(ec.TmEdgeCluster.ID)

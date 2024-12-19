@@ -41,10 +41,16 @@ func TestAccVcdTmEdgeCluster(t *testing.T) {
 	configText2 := templateFill(preRequisites+testAccVcdTmEdgeClusterQosStep2, params)
 	params["FuncName"] = t.Name() + "-step3"
 	configText3 := templateFill(preRequisites+testAccVcdTmEdgeClusterQosStep3, params)
+	params["FuncName"] = t.Name() + "-step4"
+	configText4 := templateFill(preRequisites+testAccVcdTmEdgeClusterQosStep4, params)
+	params["FuncName"] = t.Name() + "-step5"
+	configText5 := templateFill(preRequisites+testAccVcdTmEdgeClusterQosStep5, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION step1: %s\n", configText1)
 	debugPrintf("#[DEBUG] CONFIGURATION step2: %s\n", configText2)
-	debugPrintf("#[DEBUG] CONFIGURATION step4: %s\n", configText3)
+	debugPrintf("#[DEBUG] CONFIGURATION step3: %s\n", configText3)
+	debugPrintf("#[DEBUG] CONFIGURATION step4: %s\n", configText4)
+	debugPrintf("#[DEBUG] CONFIGURATION step5: %s\n", configText5)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -107,7 +113,7 @@ func TestAccVcdTmEdgeCluster(t *testing.T) {
 				ResourceName:      "vcd_tm_edge_cluster_qos.demo",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateId:     testConfig.Tm.NsxtEdgeCluster,
+				ImportStateId:     testConfig.Tm.Region + ImportSeparator + params["EdgeClusterName"].(string),
 			},
 			{
 				// Ensuring that the resource is removed (therefore QoS settings must be unset)
@@ -123,6 +129,26 @@ func TestAccVcdTmEdgeCluster(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_tm_edge_cluster_qos.demo2", "egress_burst_size_bytes", ""),
 					resource.TestCheckResourceAttr("data.vcd_tm_edge_cluster_qos.demo2", "ingress_committed_bandwidth_mbps", ""),
 					resource.TestCheckResourceAttr("data.vcd_tm_edge_cluster_qos.demo2", "ingress_burst_size_bytes", ""),
+				),
+			},
+			{
+				// Ensuring that the resource is removed (therefore QoS settings must be unset)
+				Config: configText4,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_tm_edge_cluster_qos.demo", "egress_committed_bandwidth_mbps", "7"),
+					resource.TestCheckResourceAttr("vcd_tm_edge_cluster_qos.demo", "egress_burst_size_bytes", "8"),
+					resource.TestCheckResourceAttr("vcd_tm_edge_cluster_qos.demo", "ingress_committed_bandwidth_mbps", ""),
+					resource.TestCheckResourceAttr("vcd_tm_edge_cluster_qos.demo", "ingress_burst_size_bytes", ""),
+				),
+			},
+			{
+				// Ensuring that the resource is removed (therefore QoS settings must be unset)
+				Config: configText5,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_tm_edge_cluster_qos.demo", "egress_committed_bandwidth_mbps", ""),
+					resource.TestCheckResourceAttr("vcd_tm_edge_cluster_qos.demo", "egress_burst_size_bytes", ""),
+					resource.TestCheckResourceAttr("vcd_tm_edge_cluster_qos.demo", "ingress_committed_bandwidth_mbps", "5"),
+					resource.TestCheckResourceAttr("vcd_tm_edge_cluster_qos.demo", "ingress_burst_size_bytes", "6"),
 				),
 			},
 		},
@@ -166,4 +192,26 @@ data "vcd_tm_edge_cluster" "demo" {
 data "vcd_tm_edge_cluster_qos" "demo2" {
   edge_cluster_id = data.vcd_tm_edge_cluster.demo.id
 }  
+`
+
+// egress only
+const testAccVcdTmEdgeClusterQosStep4 = testAccVcdTmEdgeClusterQosStep1 + `
+resource "vcd_tm_edge_cluster_qos" "demo" {
+  edge_cluster_id = data.vcd_tm_edge_cluster.demo.id
+
+  egress_committed_bandwidth_mbps  = 7
+  egress_burst_size_bytes          = 8
+
+}
+`
+
+// ingress only
+const testAccVcdTmEdgeClusterQosStep5 = testAccVcdTmEdgeClusterQosStep1 + `
+resource "vcd_tm_edge_cluster_qos" "demo" {
+  edge_cluster_id = data.vcd_tm_edge_cluster.demo.id
+
+  ingress_committed_bandwidth_mbps  = 5
+  ingress_burst_size_bytes          = 6
+
+}
 `

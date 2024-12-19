@@ -32,7 +32,7 @@ func datasourceVcdTmEdgeCluster() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: fmt.Sprintf(" %s", labelTmEdgeCluster),
+				Description: fmt.Sprintf("Will trigger SYNC operation before looking for a given %s", labelTmEdgeCluster),
 			},
 			"node_count": {
 				Type:        schema.TypeInt,
