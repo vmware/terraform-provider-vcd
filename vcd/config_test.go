@@ -119,6 +119,7 @@ type TestConfig struct {
 		NsxtManagerUsername string `json:"nsxtManagerUsername"`
 		NsxtManagerPassword string `json:"nsxtManagerPassword"`
 		NsxtManagerUrl      string `json:"nsxtManagerUrl"`
+		NsxtEdgeCluster     string `json:"nsxtEdgeCluster"`
 		NsxtTier0Gateway    string `json:"nsxtTier0Gateway"`
 
 		CreateVcenter         bool   `json:"createVcenter"`

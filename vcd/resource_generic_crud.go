@@ -95,6 +95,10 @@ func updateResource[O updateDeleter[O, I], I any](ctx context.Context, d *schema
 		return diag.Errorf("error getting %s type on update: %s", c.entityLabel, err)
 	}
 
+	if d.Id() == "" {
+		return diag.Errorf("empty id for updating %s", c.entityLabel)
+	}
+
 	retrievedEntity, err := c.getEntityFunc(d.Id())
 	if err != nil {
 		return diag.Errorf("error getting %s for update: %s", c.entityLabel, err)
@@ -225,17 +229,34 @@ type dsReadConfig[O any, I any] struct {
 	// getEntityFunc is a function that retrieves the entity
 	// It will use ID for resources and Name for data sources
 	getEntityFunc func(idOrName string) (O, error)
+
+	// preReadHooks will be executed before the entity is created
+	preReadHooks []schemaHook
+
+	// overrideDefaultNameField permits to override default field ('name') that passed to
+	// getEntityFunc. The field must be a string (schema.TypeString)
+	overrideDefaultNameField string
 }
 
 // readDatasource will read a data source by a 'name' field in Terraform schema
 func readDatasource[O any, I any](_ context.Context, d *schema.ResourceData, meta interface{}, c dsReadConfig[O, I]) diag.Diagnostics {
-	entityName := d.Get("name").(string)
+	vcdClient := meta.(*VCDClient)
+	err := execSchemaHook(vcdClient, d, c.preReadHooks)
+	if err != nil {
+		return diag.Errorf("error executing pre-read %s hooks: %s", c.entityLabel, err)
+	}
+
+	fieldName := "name"
+	if c.overrideDefaultNameField != "" {
+		fieldName = c.overrideDefaultNameField
+		util.Logger.Printf("[DEBUG] Overriding %s field 'name' to '%s' for datasource lookup", c.entityLabel, c.overrideDefaultNameField)
+	}
+	entityName := d.Get(fieldName).(string)
 	retrievedEntity, err := c.getEntityFunc(entityName)
 	if err != nil {
 		return diag.Errorf("error getting %s by Name '%s': %s", c.entityLabel, entityName, err)
 	}
 
-	vcdClient := meta.(*VCDClient)
 	err = c.stateStoreFunc(vcdClient, d, retrievedEntity)
 	if err != nil {
 		return diag.Errorf("error storing %s to state during data source read: %s", c.entityLabel, err)
