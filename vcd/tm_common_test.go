@@ -156,3 +156,22 @@ resource "vcd_tm_content_library" "content_library" {
 }
 `, "vcd_tm_content_library.content_library"
 }
+
+func getIpSpaceHcl(t *testing.T, regionHclRef, nameSuffix, octet3 string) (string, string) {
+	return `
+resource "vcd_tm_ip_space" "test-` + nameSuffix + `" {
+  name                          = "` + t.Name() + nameSuffix + `"
+  description                   = "Made using Terraform"
+  region_id                     = ` + regionHclRef + `.id
+  external_scope                = "43.12.` + octet3 + `.0/30"
+  default_quota_max_subnet_size = 24
+  default_quota_max_cidr_count  = 1
+  default_quota_max_ip_count    = 1
+
+  internal_scope {
+    name = "scope3"
+    cidr = "32.0.` + octet3 + `.0/24"
+  }
+}
+	`, `vcd_tm_ip_space.test-` + nameSuffix
+}
