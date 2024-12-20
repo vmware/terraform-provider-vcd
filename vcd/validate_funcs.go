@@ -171,31 +171,6 @@ func IsIntAndAtLeast(min int) schema.SchemaValidateFunc {
 	}
 }
 
-// emptyOrIsIntAndAtLeast returns a SchemaValidateFunc which tests if the provided value is empty or
-// its string value convertable to int and is at least min (inclusive)
-func emptyOrIsIntAndAtLeast(min int) schema.SchemaValidateFunc {
-	return func(i interface{}, k string) (warnings []string, errors []error) {
-		strValue := i.(string)
-		// validation passes when empty
-		if strValue == "" {
-			return warnings, errors
-		}
-
-		value, err := strconv.Atoi(strValue)
-		if err != nil {
-			errors = append(errors, fmt.Errorf("expected type of %s to be integer", k))
-			return warnings, errors
-		}
-
-		if value < min {
-			errors = append(errors, fmt.Errorf("expected %s to be empty or at least (%d), got %d", k, min, value))
-			return warnings, errors
-		}
-
-		return warnings, errors
-	}
-}
-
 // IsFloatAndBetween returns a SchemaValidateFunc which tests if the provided value convertable to
 // float64 and is between min and max (inclusive).
 func IsFloatAndBetween(min, max float64) schema.SchemaValidateFunc {

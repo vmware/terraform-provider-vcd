@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v3/govcd"
 	"github.com/vmware/go-vcloud-director/v3/types/v56"
 )
@@ -37,31 +38,39 @@ func resourceVcdTmEdgeClusterQos() *schema.Resource {
 				Description: fmt.Sprintf("Region ID of  %s", labelTmEdgeCluster),
 			},
 			"ingress_committed_bandwidth_mbps": {
-				Type:         schema.TypeString, // string + validation due to usual problem of differentiation between 0 and empty value for TypeInt
-				Optional:     true,
-				Description:  fmt.Sprintf("Ingress committed bandwidth in Mbps for %s", labelTmEdgeCluster),
-				ValidateFunc: emptyOrIsIntAndAtLeast(1),
+				Type:        schema.TypeString, // string + validation due to usual problem of differentiation between 0 and empty value for TypeInt
+				Optional:    true,
+				Description: fmt.Sprintf("Ingress committed bandwidth in Mbps for %s", labelTmEdgeCluster),
+				ValidateDiagFunc: validation.AnyDiag(
+					validation.ToDiagFunc(validation.StringIsEmpty),
+					validation.ToDiagFunc(IsIntAndAtLeast(1))),
 				RequiredWith: []string{"ingress_burst_size_bytes"},
 			},
 			"ingress_burst_size_bytes": {
-				Type:         schema.TypeString, // string + validation due to usual problem of differentiation between 0 and empty value for TypeInt
-				Optional:     true,
-				Description:  fmt.Sprintf("Ingress burst size bytes for %s", labelTmEdgeCluster),
-				ValidateFunc: emptyOrIsIntAndAtLeast(1),
+				Type:        schema.TypeString, // string + validation due to usual problem of differentiation between 0 and empty value for TypeInt
+				Optional:    true,
+				Description: fmt.Sprintf("Ingress burst size bytes for %s", labelTmEdgeCluster),
+				ValidateDiagFunc: validation.AnyDiag(
+					validation.ToDiagFunc(validation.StringIsEmpty),
+					validation.ToDiagFunc(IsIntAndAtLeast(1))),
 				RequiredWith: []string{"ingress_committed_bandwidth_mbps"},
 			},
 			"egress_committed_bandwidth_mbps": {
-				Type:         schema.TypeString, // string + validation due to usual problem of differentiation between 0 and empty value for TypeInt
-				Optional:     true,
-				Description:  fmt.Sprintf("Egress committed bandwidth in Mbps for %s", labelTmEdgeCluster),
-				ValidateFunc: emptyOrIsIntAndAtLeast(1),
+				Type:        schema.TypeString, // string + validation due to usual problem of differentiation between 0 and empty value for TypeInt
+				Optional:    true,
+				Description: fmt.Sprintf("Egress committed bandwidth in Mbps for %s", labelTmEdgeCluster),
+				ValidateDiagFunc: validation.AnyDiag(
+					validation.ToDiagFunc(validation.StringIsEmpty),
+					validation.ToDiagFunc(IsIntAndAtLeast(1))),
 				RequiredWith: []string{"egress_burst_size_bytes"},
 			},
 			"egress_burst_size_bytes": {
-				Type:         schema.TypeString, // string + validation due to usual problem of differentiation between 0 and empty value for TypeInt
-				Optional:     true,
-				Description:  fmt.Sprintf("Ingress burst size bytes for %s", labelTmEdgeCluster),
-				ValidateFunc: emptyOrIsIntAndAtLeast(1),
+				Type:        schema.TypeString, // string + validation due to usual problem of differentiation between 0 and empty value for TypeInt
+				Optional:    true,
+				Description: fmt.Sprintf("Ingress burst size bytes for %s", labelTmEdgeCluster),
+				ValidateDiagFunc: validation.AnyDiag(
+					validation.ToDiagFunc(validation.StringIsEmpty),
+					validation.ToDiagFunc(IsIntAndAtLeast(1))),
 				RequiredWith: []string{"egress_committed_bandwidth_mbps"},
 			},
 		},
