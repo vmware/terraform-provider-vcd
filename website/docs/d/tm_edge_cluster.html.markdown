@@ -38,7 +38,7 @@ The following arguments are supported:
 
 * `node_count` - Number of transport nodes in the Edge Cluster. If this information is not
   available, it will be set to `-1`
-* `org_count` - Number of organization using this Edge Cluster
+* `org_count` - Number of organizations using this Edge Cluster
 * `vpc_count` - Number of VPCs using this Edge Cluster
 * `average_cpu_usage_percentage` - Average CPU utilization percentage across all member nodes
 * `average_memory_usage_percentage` - Average RAM utilization percentage across all member nodes
