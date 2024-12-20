@@ -51,7 +51,7 @@ The following arguments are supported:
 * `ingress_committed_bandwidth_mbps` - (Optional) Committed ingress bandwidth specified in Mbps.
   Bandwidth is limited to line rate. Traffic exceeding bandwidth will be dropped. Required with
   `ingress_burst_size_bytes`
-* `ingress_burst_size_bytes` - (Optional) Ingres burst size in bytes. Required with
+* `ingress_burst_size_bytes` - (Optional) Ingress burst size in bytes. Required with
   `ingress_committed_bandwidth_mbps`
 
 ## Importing
