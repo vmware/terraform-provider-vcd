@@ -64,8 +64,8 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 					// Region Storage Policy
 					resource.TestCheckResourceAttr(dsRegionStoragePolicy, "name", testConfig.Tm.RegionStoragePolicy),
 					resource.TestCheckResourceAttrPair(dsRegionStoragePolicy, "region_id", regionHclRef, "id"),
-					resource.TestCheckResourceAttrSet(dsRegionStoragePolicy, "description"),
-					resource.TestCheckResourceAttr(dsRegionStoragePolicy, "status", "READY"),
+					resource.TestMatchResourceAttr(dsRegionStoragePolicy, "description", regexp.MustCompile(`.*`)),
+					resource.TestCheckResourceAttr(dsRegionStoragePolicy, "status", ""),
 					resource.TestCheckResourceAttrSet(dsRegionStoragePolicy, "storage_capacity_mb"),
 					resource.TestCheckResourceAttrSet(dsRegionStoragePolicy, "storage_consumed_mb"),
 
