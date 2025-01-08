@@ -22,13 +22,11 @@ func resourceVcdTmContentLibrary() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true, // TODO: TM: Update not supported
 				Description: "The name of the Content Library",
 			},
 			"storage_class_ids": {
 				Type:        schema.TypeSet,
 				Required:    true,
-				ForceNew:    true, // TODO: TM: Update not supported
 				Description: "A set of storage class IDs used by this Content Library",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -54,7 +52,6 @@ func resourceVcdTmContentLibrary() *schema.Resource {
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true, // TODO: TM: Update not supported
 				Description: "The description of the Content Library",
 			},
 			"is_shared": {
