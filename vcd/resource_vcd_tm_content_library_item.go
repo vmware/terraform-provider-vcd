@@ -218,7 +218,7 @@ func getContentLibraryItemType(_ *VCDClient, d *schema.ResourceData) (*types.Con
 	return t, nil
 }
 
-func setContentLibraryItemData(d *schema.ResourceData, cli *govcd.ContentLibraryItem) error {
+func setContentLibraryItemData(_ *VCDClient, d *schema.ResourceData, cli *govcd.ContentLibraryItem) error {
 	if cli == nil || cli.ContentLibraryItem == nil {
 		return fmt.Errorf("cannot save state for nil Content Library Item")
 	}

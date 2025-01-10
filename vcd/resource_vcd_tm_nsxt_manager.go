@@ -144,7 +144,7 @@ func getNsxtManagerType(_ *VCDClient, d *schema.ResourceData) (*types.NsxtManage
 	return t, nil
 }
 
-func setNsxtManagerData(d *schema.ResourceData, t *govcd.NsxtManagerOpenApi) error {
+func setNsxtManagerData(_ *VCDClient, d *schema.ResourceData, t *govcd.NsxtManagerOpenApi) error {
 	if t == nil || t.NsxtManagerOpenApi == nil {
 		return fmt.Errorf("nil object for %s", labelNsxtManager)
 	}

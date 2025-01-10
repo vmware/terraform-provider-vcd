@@ -3,6 +3,7 @@ package vcd
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -85,7 +86,7 @@ func datasourceTmContentLibraryItemRead(_ context.Context, d *schema.ResourceDat
 		return diag.Errorf("error retrieving Content Library Item: %s", err)
 	}
 
-	err = setContentLibraryItemData(d, cli)
+	err = setContentLibraryItemData(vcdClient, d, cli)
 	if err != nil {
 		return diag.FromErr(err)
 	}

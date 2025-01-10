@@ -58,6 +58,8 @@
     "createNsxtManager": true,
     "nsxtManagerUsername": "admin",
     "nsxtManagerPassword": "",
-    "nsxtManagerUrl": "https://nsxmanager.my-company.com"
+    "nsxtManagerUrl": "https://nsxmanager.my-company.com",
+    "nsxtTier0Gateway": "existing-t0-gateway",
+    "nsxtEdgeCluster": "existing-edge-cluster"
   }
 }

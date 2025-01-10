@@ -184,7 +184,7 @@ func getRegionType(vcdClient *VCDClient, d *schema.ResourceData) (*types.Region,
 	return t, nil
 }
 
-func setRegionData(d *schema.ResourceData, r *govcd.Region) error {
+func setRegionData(_ *VCDClient, d *schema.ResourceData, r *govcd.Region) error {
 	if r == nil || r.Region == nil {
 		return fmt.Errorf("nil Region entity")
 	}

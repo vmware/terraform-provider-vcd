@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -414,4 +415,15 @@ func firstNonEmpty(args ...string) string {
 		}
 	}
 	return ""
+}
+
+// mustStrToInt will convert string to int and panic if an error while convert occurs
+// Note. It is convenient to use for inline type conversions, but the string _must be_ validated before
+// e.g. field validation using `ValidateFunc: IsIntAndAtLeast(1), `
+func mustStrToInt(s string) int {
+	v, err := strconv.Atoi(s)
+	if err != nil {
+		panic(fmt.Sprintf("failed converting '%s' to int: %s", s, err))
+	}
+	return v
 }
