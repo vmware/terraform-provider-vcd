@@ -131,7 +131,7 @@ func getContentLibraryHcl(t *testing.T, regionHclRef string) (string, string) {
 		t.Fatalf("the property tm.regionStoragePolicy is required but it is not present in testing JSON")
 	}
 	vcdClient := createTemporaryVCDConnection(false)
-	cl, err := vcdClient.GetContentLibraryByName(testConfig.Tm.ContentLibrary)
+	cl, err := vcdClient.GetContentLibraryByName(testConfig.Tm.ContentLibrary, nil)
 	if err == nil {
 		return `
 data "vcd_tm_content_library" "content_library" {
