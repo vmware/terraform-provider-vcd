@@ -23,7 +23,7 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 	var params = StringMap{
 		"Name":                t.Name(),
 		"RegionId":            fmt.Sprintf("%s.id", regionHclRef),
-		"RegionStoragePolicy": testConfig.Tm.RegionStoragePolicy,
+		"RegionStoragePolicy": testConfig.Tm.StorageClass,
 		"Tags":                "tm",
 	}
 	testParamsNotEmpty(t, params)
@@ -68,7 +68,7 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					// Region Storage Policy
-					resource.TestCheckResourceAttr(dsRegionStoragePolicy, "name", testConfig.Tm.RegionStoragePolicy),
+					resource.TestCheckResourceAttr(dsRegionStoragePolicy, "name", testConfig.Tm.StorageClass),
 					resource.TestCheckResourceAttrPair(dsRegionStoragePolicy, "region_id", regionHclRef, "id"),
 					resource.TestMatchResourceAttr(dsRegionStoragePolicy, "description", regexp.MustCompile(`.*`)),
 					resource.TestCheckResourceAttr(dsRegionStoragePolicy, "status", ""),
@@ -76,7 +76,7 @@ func TestAccVcdTmContentLibrary(t *testing.T) {
 					resource.TestCheckResourceAttrSet(dsRegionStoragePolicy, "storage_consumed_mb"),
 
 					// Storage Class
-					resource.TestCheckResourceAttr(dsStorageClass, "name", testConfig.Tm.RegionStoragePolicy),
+					resource.TestCheckResourceAttr(dsStorageClass, "name", testConfig.Tm.StorageClass),
 					resource.TestCheckResourceAttrPair(dsStorageClass, "region_id", regionHclRef, "id"),
 					resource.TestCheckResourceAttrSet(dsStorageClass, "storage_capacity_mib"),
 					resource.TestCheckResourceAttrSet(dsStorageClass, "storage_consumed_mib"),
