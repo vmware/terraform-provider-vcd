@@ -156,3 +156,33 @@ In this block, the `vmware` part of the source corresponds to the directory
 Note that `versions.tf` is generated when you run the `terraform 0.13upgrade` command. If you have run such command,
 you need to edit the file and make sure the **`source`** path corresponds to the one installed, or remove the file
 altogether if you have already the right block in your script.
+
+## Contributing
+
+The Terraform Provider for VMware Cloud Director is the work of many contributors and the project team appreciates your help!
+
+If you discover a bug or would like to suggest an enhancement, submit [an issue][provider-issues].
+
+If you would like to submit a pull request, please read the [contribution guidelines][provider-contributing] to get started. In case of enhancement or feature contribution, we kindly ask you to open an issue to discuss it beforehand.
+
+## Troubleshooting the Provider
+
+Read [TROUBLESHOOTING.md][troubleshooting] to learn how to configure and understand logs, and how to
+diagnose common errors.
+
+## Support
+
+Because this Terraform provider is developed as an open-source project and follows standard GitHub community practices, we encourage customers to submit bug reports and enhancement requests directly in the project's GitHub repository. However, we recognize that some situations may require formal technical support through our Global Support Services (GSS) process. In those cases, please open a case through the Broadcom support portal, referencing the provider, the provider version, and any related GitHub issue(s). When opening your case, please select VMware ESXi as the Product and choose VCF Terraform from the components drop-down menu.
+
+## License
+
+© Broadcom. All Rights Reserved.
+The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
+
+The Terraform Provider for VMware Cloud Director is available under the
+[Mozilla Public License, version 2.0][provider-license] license.
+
+[provider-contributing]: CONTRIBUTING.md
+[provider-issues]: https://github.com/vmware/terraform-provider-vcd/issues/new/choose
+[provider-license]: LICENSE
+[troubleshooting]: TROUBLESHOOTING.md
