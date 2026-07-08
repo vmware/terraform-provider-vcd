@@ -2,6 +2,17 @@
 
 Changes in progress for v4.0.0 are available at [.changes/v4.0.0](https://github.com/vmware/terraform-provider-vcd/tree/main/.changes/v4.0.0) until the release.
 
+## 3.14.2 (July 8, 2026)
+
+### NOTES
+* Bumps golang.org/x/crypto from 0.23.0 to 0.31.0 and its related packages to address CVE-2024-45337
+  ([#1368](https://github.com/vmware/terraform-provider-vcd/pull/1368))
+* Bumps golang.org/x/net from 0.25.0 to 0.33.0 and its related packages to address CVE-2024-45338
+  ([#1378](https://github.com/vmware/terraform-provider-vcd/pull/1378))
+* Bump golang dependencies ([#1421](https://github.com/vmware/terraform-provider-vcd/pull/1421))
+* Bump staticcheck to 2026.1 and fix staticcheck issues ([#1421](https://github.com/vmware/terraform-provider-vcd/pull/1421))
+* Bump gosec to v2.27.1 and fix gosec issues ([#1421](https://github.com/vmware/terraform-provider-vcd/pull/1421))
+
 ## 3.14.1 (December 5, 2024)
 
 ### IMPROVEMENTS
