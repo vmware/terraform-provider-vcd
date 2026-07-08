@@ -804,7 +804,7 @@ func TestAccVcdCatalogVAppTemplateOverwriteExistingItem(t *testing.T) {
 	// Get the data from configuration file. This client is still inactive at this point
 	vcdClient, err := getTestVCDFromJson(testConfig)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatalf("%s", err.Error())
 	}
 	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg, testConfig.Provider.ApiToken, testConfig.Provider.ApiTokenFile, testConfig.Provider.ServiceAccountTokenFile)
 	if err != nil {

@@ -60,7 +60,7 @@ Tagged tests can also run using make
   make testacc
   make testcatalog
 `
-	t.Logf(helpText)
+	t.Logf("%s", helpText)
 }
 
 // For troubleshooting:

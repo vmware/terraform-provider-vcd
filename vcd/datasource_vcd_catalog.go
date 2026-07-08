@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -183,7 +184,7 @@ func getCatalogFromResource(catalogName string, d *schema.ResourceData, meta int
 		if len(orgNames) > 0 {
 			message = fmt.Sprintf("%s\nThere are catalogs with the same name in other orgs: %v", message, orgNames)
 		}
-		return nil, fmt.Errorf(message)
+		return nil, errors.New(message)
 	}
 	return vcdClient.Client.GetAdminCatalogByHref(catalogRecord.HREF)
 }
