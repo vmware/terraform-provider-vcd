@@ -60,7 +60,7 @@ Tagged tests can also run using make
   make testacc
   make testcatalog
 `
-	t.Logf(helpText)
+	t.Logf("%s", helpText)
 }
 
 // For troubleshooting:
@@ -123,7 +123,7 @@ func getMajorVersionFromFile(fileName string) string {
 	if len(versionList) == 0 {
 		panic(fmt.Sprintf("empty or non-formatted version found in file %s", fileName))
 	}
-	if versionList[0] == nil || len(versionList[0]) < 2 {
+	if len(versionList[0]) < 2 {
 		panic(fmt.Sprintf("unable to extract major version from file %s", fileName))
 	}
 	// A successful match will look like

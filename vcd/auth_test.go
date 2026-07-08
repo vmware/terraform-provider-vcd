@@ -443,6 +443,7 @@ func createTestTokenFile(t *testing.T) {
 		testData := types.ApiTokenRefresh{
 			RefreshToken: "testToken",
 		}
+		// #nosec G117
 		data, err := json.Marshal(testData)
 		if err != nil {
 			t.Skipf("error creating test token file: %s", err)

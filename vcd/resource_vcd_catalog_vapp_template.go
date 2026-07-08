@@ -669,7 +669,7 @@ func finishHandlingTask(d *schema.ResourceData, task govcd.Task, itemName string
 				log.Printf("VCD Error importing new catalog item: %s", err)
 				return diag.Errorf("VCD Error importing new catalog item: %s", err)
 			}
-			logForScreen("vcd_catalog_item", fmt.Sprintf("vcd_catalog_item."+itemName+": VCD import catalog item progress "+progress+"%%\n"))
+			logForScreen("vcd_catalog_item", fmt.Sprintf("vcd_catalog_item.%s: VCD import catalog item progress %s%%\n", itemName, progress))
 			if progress == "100" {
 				break
 			}
