@@ -385,7 +385,7 @@ func setNsxtAppPortProfileData(vcdClient *VCDClient, d *schema.ResourceData, app
 	// "read" returns 'null' for this field even in API V36.2 so it cannot be set
 	// dSet(d, "context_id", appPortProfile.ContextEntityId)
 
-	if appPortProfile.ApplicationPorts != nil && len(appPortProfile.ApplicationPorts) > 0 {
+	if len(appPortProfile.ApplicationPorts) > 0 {
 
 		resultSet := make([]interface{}, len(appPortProfile.ApplicationPorts))
 

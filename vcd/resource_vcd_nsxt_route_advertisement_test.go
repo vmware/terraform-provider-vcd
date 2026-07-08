@@ -328,7 +328,7 @@ func testAccCheckNsxtRouteAdvertisement(vdcName, edgeGatewayName string) resourc
 			return fmt.Errorf("error destroying route advertisement. Wanted routeAdvertisement.Enable false, Got %t", routeAdvertisement.Enable)
 		}
 
-		if routeAdvertisement.Subnets != nil && len(routeAdvertisement.Subnets) > 0 {
+		if len(routeAdvertisement.Subnets) > 0 {
 			return fmt.Errorf("error destroying route advertisement. Wanted 0 routeAdvertisement.Subnets, got %d", len(routeAdvertisement.Subnets))
 		}
 
@@ -364,7 +364,7 @@ func testAccCheckNsxtRouteAdvertisementVdcGroup(org, vdcGroupName, edgeGatewayNa
 			return fmt.Errorf("error destroying route advertisement. Wanted routeAdvertisement.Enable false, Got %t", routeAdvertisement.Enable)
 		}
 
-		if routeAdvertisement.Subnets != nil && len(routeAdvertisement.Subnets) > 0 {
+		if len(routeAdvertisement.Subnets) > 0 {
 			return fmt.Errorf("error destroying route advertisement. Wanted 0 routeAdvertisement.Subnets, got %d", len(routeAdvertisement.Subnets))
 		}
 
