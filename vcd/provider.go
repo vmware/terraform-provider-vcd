@@ -258,6 +258,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_alb_virtual_service":                     resourceVcdAlbVirtualService(),                       // 3.5
 	"vcd_vdc_group":                                    resourceVdcGroup(),                                   // 3.5
 	"vcd_nsxt_distributed_firewall":                    resourceVcdNsxtDistributedFirewall(),                 // 3.6
+	"vcd_nsxt_network_context_profile":                 resourceVcdNsxtNetworkContextProfile(),               // 4.0
 	"vcd_security_tag":                                 resourceVcdSecurityTag(),                             // 3.7
 	"vcd_nsxt_route_advertisement":                     resourceVcdNsxtRouteAdvertisement(),                  // 3.7
 	"vcd_org_vdc_access_control":                       resourceVcdOrgVdcAccessControl(),                     // 3.7
