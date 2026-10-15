@@ -517,8 +517,8 @@ translation or paravirtualization. Useful for hypervisor nesting provided underl
 example for usage details.
 * `customization` - (Optional; *v2.5+*) A block to define for guest customization options. See [Customization](#customization-block)
 * `guest_properties` - (Optional; *v2.5+*) Key value map of guest properties
-* `description`  - (Optional; *v2.9+*) The VM description. Note: for VM from Template `description` is read only. Currently, this field has
-  the description of the OVA used to create the VM.
+* `description` - (Optional; *v2.9+*) The VM description. From v3.14.3, changing only this field does not
+  require powering off the VM, including VMs created from a vApp template.
 * `override_template_disk` - (Optional; *v2.7+*) Allows to update internal disk in template before first VM boot. Disk is matched by `bus_type`, `bus_number` and `unit_number`. See [Override template Disk](#override-template-disk) below for details.
 * `consolidate_disks_on_create` - (Optional; *3.12+*) Performs disk consolidation during creation.
   The main use case is when one wants to grow template disk size using `override_template_disk` in
@@ -543,6 +543,7 @@ example for usage details.
 * `cpu_hot_add_enabled` - (Optional; *v3.0+*) True if the virtual machine supports addition of virtual CPUs while powered on. Default is `false`.
 * `memory_hot_add_enabled` - (Optional; *v3.0+*) True if the virtual machine supports addition of memory while powered on. Default is `false`.
 * `prevent_update_power_off` - (Optional; *v3.0+*) True if the update of resource should fail when virtual machine power off needed. Default is `false`.
+  From v3.14.3, changing only `description` is allowed while the VM is powered on and this option is `true`.
 * `sizing_policy_id` (Optional; *v3.0+*, *vCD 10.0+*) VM sizing policy ID. To be used, it needs to be assigned to [Org VDC](/providers/vmware/vcd/latest/docs/resources/org_vdc)
   using `vcd_org_vdc.vm_sizing_policy_ids` (and `vcd_org_vdc.default_compute_policy_id` to make it default).
   In this case, if the sizing policy is not set, it will pick the VDC default on creation. It must be set explicitly
@@ -971,11 +972,12 @@ The following additional attributes are exported:
 These fields can be updated only when VM is **powered off** (provider automatically restarts the VM):
 
 `cpu_cores`, `power_on`, `disk`, `expose_hardware_virtualization`, `boot_image`, `hardware_version`, `os_type`,
-`description`, `cpu_hot_add_enabled`, `memory_hot_add_enabled`, `network`, `firmware`, `boot_options.efi_secure_boot`
+`cpu_hot_add_enabled`, `memory_hot_add_enabled`, `network`, `firmware`, `boot_options.efi_secure_boot`
 
 These fields can be updated when VM is **powered on**:
 
-`memory`, `cpus`, `network`, `metadata`, `guest_properties`, `sizing_policy_id`, `placement_policy_id`, `boot_options (except efi_secure_boot)` 
+`memory`, `cpus`, `network`, `metadata`, `guest_properties`, `sizing_policy_id`, `placement_policy_id`, `boot_options (except efi_secure_boot)`,
+`description`
 
 Notes about **removing** `network`:
 

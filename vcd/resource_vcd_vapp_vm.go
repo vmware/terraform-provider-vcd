@@ -1799,6 +1799,20 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 		}
 	}
 
+	// The description does not require a power off. It is updated with the current VM spec section,
+	// as updateAdvancedComputeSettings does. When the VM spec section is changed in the cold update,
+	// the description is sent together with it
+	if d.HasChange("description") && !d.HasChanges("hardware_version", "os_type", "firmware") {
+		vmSpecSection := vm.VM.VmSpecSection
+		// update treats same values as changes and fails, with no values provided - no changes are made for that section
+		vmSpecSection.DiskSection = nil
+
+		_, err = vm.UpdateVmSpecSection(vmSpecSection, d.Get("description").(string))
+		if err != nil {
+			return diag.Errorf("error changing VM description: %s", err)
+		}
+	}
+
 	// * Primary NIC cannot be removed on a powered on VM
 	if d.HasChange("network") && !isPrimaryNicRemoved(d) {
 		networkConnectionSection, err := networksToConfig(d, vapp)
@@ -1938,7 +1952,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 
 	// this represents fields which have to be changed in cold (with VM power off)
 	if d.HasChanges("cpu_cores", "power_on", "disk", "expose_hardware_virtualization", "boot_image",
-		"hardware_version", "os_type", "description", "cpu_hot_add_enabled",
+		"hardware_version", "os_type", "cpu_hot_add_enabled",
 		"memory_hot_add_enabled", "firmware", "boot_options.0.efi_secure_boot") || memoryNeedsColdChange || cpusNeedsColdChange || networksNeedsColdChange {
 
 		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t),"+
@@ -2048,7 +2062,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		}
 
 		// updating fields of VM spec section
-		if d.HasChange("hardware_version") || d.HasChange("os_type") || d.HasChange("description") || d.HasChange("firmware") {
+		if d.HasChange("hardware_version") || d.HasChange("os_type") || d.HasChange("firmware") {
 			vmSpecSection := vm.VM.VmSpecSection
 			description := vm.VM.Description
 			if d.HasChange("hardware_version") {
