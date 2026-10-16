@@ -1,3 +1,7 @@
+## 3.14.3 (Unreleased)
+
+Changes in progress for v3.14.3 are available at [.changes/v3.14.3](https://github.com/vmware/terraform-provider-vcd/tree/main/.changes/v3.14.3) until the release.
+
 ## 3.14.2 (July 8, 2026)
 
 ### NOTES
