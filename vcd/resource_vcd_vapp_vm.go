@@ -1804,6 +1804,10 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 	// the description is sent together with it
 	if d.HasChange("description") && !d.HasChanges("hardware_version", "os_type", "firmware") {
 		vmSpecSection := vm.VM.VmSpecSection
+		if vmSpecSection == nil {
+			// fields of the VM spec section may be omitted when updating an existing VM
+			vmSpecSection = &types.VmSpecSection{}
+		}
 		// update treats same values as changes and fails, with no values provided - no changes are made for that section
 		vmSpecSection.DiskSection = nil
 
@@ -1957,13 +1961,13 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 
 		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t),"+
 			"power_on(%t), disk(%t), expose_hardware_virtualization(%t),"+
-			" boot_image(%t), hardware_version(%t), os_type(%t), description(%t),"+
+			" boot_image(%t), hardware_version(%t), os_type(%t),"+
 			"cpu_hot_add_enabled(%t), memory_hot_add_enabled(%t), firmware(%t),"+
 			"efi_secure_boot(%t) network(%t)",
 			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"),
 			d.HasChange("power_on"), d.HasChange("disk"), d.HasChange("expose_hardware_virtualization"),
 			d.HasChange("boot_image"), d.HasChange("hardware_version"), d.HasChange("os_type"),
-			d.HasChange("description"), d.HasChange("cpu_hot_add_enabled"),
+			d.HasChange("cpu_hot_add_enabled"),
 			d.HasChange("memory_hot_add_enabled"), d.HasChange("firmware"),
 			d.HasChange("boot_options.0.efi_secure_boot"), d.HasChange("network"))
 
