@@ -75,6 +75,7 @@ func TestAccVcdStandaloneHotUpdateVm(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "description", "hot update description"),
 
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_hot_add_enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_hot_add_enabled", "true"),
@@ -103,12 +104,13 @@ func TestAccVcdStandaloneHotUpdateVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, `storage_profile`, params["StorageProfile"].(string)),
 				),
 			},
-			// Step 1 - update - network changes
+			// Step 1 - update - network and description changes
 			{
 				Config: configTextVMUpdateStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "description", "hot update description changed"),
 
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_hot_add_enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_hot_add_enabled", "true"),
@@ -234,6 +236,7 @@ resource "vcd_vm" "{{.VMName}}" {
 
   name          = "{{.VMName}}"
   computer_name = "compNameUp"
+  description   = "hot update description"
 
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
@@ -280,6 +283,10 @@ resource "vcd_vm" "{{.VMName}}" {
 
   computer_name = "compNameUp"
   name          = "{{.VMName}}"
+  description   = "hot update description changed"
+
+  # description and the other changes in this step must not power off the VM
+  prevent_update_power_off = true
 
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"

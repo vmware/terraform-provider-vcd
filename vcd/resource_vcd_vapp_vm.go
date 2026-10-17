@@ -1799,6 +1799,24 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 		}
 	}
 
+	// The description does not require a power off. It is updated with the current VM spec section,
+	// as updateAdvancedComputeSettings does. When the VM spec section is changed in the cold update,
+	// the description is sent together with it
+	if d.HasChange("description") && !d.HasChanges("hardware_version", "os_type", "firmware") {
+		vmSpecSection := vm.VM.VmSpecSection
+		if vmSpecSection == nil {
+			// fields of the VM spec section may be omitted when updating an existing VM
+			vmSpecSection = &types.VmSpecSection{}
+		}
+		// update treats same values as changes and fails, with no values provided - no changes are made for that section
+		vmSpecSection.DiskSection = nil
+
+		_, err = vm.UpdateVmSpecSection(vmSpecSection, d.Get("description").(string))
+		if err != nil {
+			return diag.Errorf("error changing VM description: %s", err)
+		}
+	}
+
 	// * Primary NIC cannot be removed on a powered on VM
 	if d.HasChange("network") && !isPrimaryNicRemoved(d) {
 		networkConnectionSection, err := networksToConfig(d, vapp)
@@ -1938,18 +1956,18 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 
 	// this represents fields which have to be changed in cold (with VM power off)
 	if d.HasChanges("cpu_cores", "power_on", "disk", "expose_hardware_virtualization", "boot_image",
-		"hardware_version", "os_type", "description", "cpu_hot_add_enabled",
+		"hardware_version", "os_type", "cpu_hot_add_enabled",
 		"memory_hot_add_enabled", "firmware", "boot_options.0.efi_secure_boot") || memoryNeedsColdChange || cpusNeedsColdChange || networksNeedsColdChange {
 
 		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t),"+
 			"power_on(%t), disk(%t), expose_hardware_virtualization(%t),"+
-			" boot_image(%t), hardware_version(%t), os_type(%t), description(%t),"+
+			" boot_image(%t), hardware_version(%t), os_type(%t),"+
 			"cpu_hot_add_enabled(%t), memory_hot_add_enabled(%t), firmware(%t),"+
 			"efi_secure_boot(%t) network(%t)",
 			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"),
 			d.HasChange("power_on"), d.HasChange("disk"), d.HasChange("expose_hardware_virtualization"),
 			d.HasChange("boot_image"), d.HasChange("hardware_version"), d.HasChange("os_type"),
-			d.HasChange("description"), d.HasChange("cpu_hot_add_enabled"),
+			d.HasChange("cpu_hot_add_enabled"),
 			d.HasChange("memory_hot_add_enabled"), d.HasChange("firmware"),
 			d.HasChange("boot_options.0.efi_secure_boot"), d.HasChange("network"))
 
@@ -2048,7 +2066,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		}
 
 		// updating fields of VM spec section
-		if d.HasChange("hardware_version") || d.HasChange("os_type") || d.HasChange("description") || d.HasChange("firmware") {
+		if d.HasChange("hardware_version") || d.HasChange("os_type") || d.HasChange("firmware") {
 			vmSpecSection := vm.VM.VmSpecSection
 			description := vm.VM.Description
 			if d.HasChange("hardware_version") {

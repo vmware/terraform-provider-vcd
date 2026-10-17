@@ -97,6 +97,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(hotVappName, hotVmName1, "vcd_vapp_vm."+hotVmName1, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "name", hotVmName1),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "description", "hot update description"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "cpu_hot_add_enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "memory_hot_add_enabled", "true"),
@@ -129,12 +130,13 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 					testMatchResourceAttrWhenVersionMatches("vcd_vapp_vm."+hotVmName1, "inherited_metadata.vm.origin.type", regexp.MustCompile(`^com\.vmware\.vcloud\.entity\.\w+$`), ">= 38.1"),
 				),
 			},
-			// Step 1 - update - network changes
+			// Step 1 - update - network and description changes
 			{
 				Config: configTextVMUpdateStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(hotVappName, hotVmName1, "vcd_vapp_vm."+hotVmName1, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "name", hotVmName1),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "description", "hot update description changed"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "cpu_hot_add_enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "memory_hot_add_enabled", "true"),
@@ -341,6 +343,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   vapp_name     = vcd_vapp.{{.VAppName}}.name
   name          = "{{.VMName}}"
   computer_name = "compNameUp"
+  description   = "hot update description"
 
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
@@ -388,6 +391,10 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   vapp_name     = vcd_vapp.{{.VAppName}}.name
   computer_name = "compNameUp"
   name          = "{{.VMName}}"
+  description   = "hot update description changed"
+
+  # description and the other changes in this step must not power off the VM
+  prevent_update_power_off = true
 
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
