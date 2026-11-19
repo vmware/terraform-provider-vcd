@@ -1017,7 +1017,13 @@ func vmList(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (list []s
 		})
 	}
 	if vmType == vappVmType {
-		return genericResourceList(d, "vcd_vapp_vm", []string{org.Org.Name, vdc.Vdc.Name, vappName}, items)
+		ancestors := []string{org.Org.Name, vdc.Vdc.Name}
+		// Without a 'parent', VMs from all vApps are listed, and the vApp name of each one
+		// comes from its reference
+		if vappName != "" {
+			ancestors = append(ancestors, vappName)
+		}
+		return genericResourceList(d, "vcd_vapp_vm", ancestors, items)
 	}
 	return genericResourceList(d, "vcd_vm", []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
